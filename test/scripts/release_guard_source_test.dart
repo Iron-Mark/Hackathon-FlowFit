@@ -291,6 +291,11 @@ void main() {
     );
   });
 
+  test('GitHub workflows opt JavaScript actions into Node 24', () {
+    expect(ciWorkflow, contains('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24'));
+    expect(pagesWorkflow, contains('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24'));
+  });
+
   test('ci keeps web Wasm and Android generated artifacts isolated', () {
     expect(ciWorkflow, contains('Flutter web Wasm release build'));
     expect(ciWorkflow, contains('--wasm'));
