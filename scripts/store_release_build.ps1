@@ -16,6 +16,7 @@ $artifactManifest = New-Object System.Collections.Generic.List[object]
 $strictAuditRanThisInvocation = $false
 $supabaseClientConfig = $null
 $resolvedWebReleaseConfig = $null
+$generatedAndroidSigningFiles = New-Object System.Collections.Generic.List[string]
 
 function Invoke-OptionalCommand {
     param(
@@ -349,6 +350,17 @@ function Get-RequiredEnv {
     return $value.Trim()
 }
 
+function Get-OptionalEnv {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $value = [Environment]::GetEnvironmentVariable($Name)
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return ''
+    }
+
+    return $value.Trim()
+}
+
 function Assert-ProductionValue {
     param(
         [Parameter(Mandatory = $true)]
@@ -609,6 +621,85 @@ function Assert-AndroidSigning {
     }
 }
 
+function Initialize-AndroidSigningFromEnv {
+    $keyPropertiesPath = Join-Path $repoRoot 'android/key.properties'
+    if (Test-Path $keyPropertiesPath) {
+        return
+    }
+
+    $keystoreBase64 = Get-OptionalEnv 'FLOWFIT_ANDROID_KEYSTORE_BASE64'
+    $storePassword = Get-OptionalEnv 'FLOWFIT_ANDROID_KEYSTORE_PASSWORD'
+    $keyAlias = Get-OptionalEnv 'FLOWFIT_ANDROID_KEY_ALIAS'
+    $keyPassword = Get-OptionalEnv 'FLOWFIT_ANDROID_KEY_PASSWORD'
+    $provided = @($keystoreBase64, $storePassword, $keyAlias, $keyPassword) |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+
+    if ($provided.Count -eq 0) {
+        return
+    }
+
+    if ($provided.Count -ne 4) {
+        throw 'Android signing env is incomplete. Set FLOWFIT_ANDROID_KEYSTORE_BASE64, FLOWFIT_ANDROID_KEYSTORE_PASSWORD, FLOWFIT_ANDROID_KEY_ALIAS, and FLOWFIT_ANDROID_KEY_PASSWORD together.'
+    }
+
+    foreach ($entry in @{
+        FLOWFIT_ANDROID_KEYSTORE_PASSWORD = $storePassword
+        FLOWFIT_ANDROID_KEY_ALIAS = $keyAlias
+        FLOWFIT_ANDROID_KEY_PASSWORD = $keyPassword
+    }.GetEnumerator()) {
+        if ($entry.Value -match 'YOUR_|REPLACE_WITH') {
+            throw "$($entry.Key) contains a placeholder value."
+        }
+        if ($entry.Value -match "[\r\n]") {
+            throw "$($entry.Key) must be a single-line value."
+        }
+    }
+
+    $storeFileName = Get-OptionalEnv 'FLOWFIT_ANDROID_KEYSTORE_FILE_NAME'
+    if ([string]::IsNullOrWhiteSpace($storeFileName)) {
+        $storeFileName = 'upload-keystore.jks'
+    }
+    if (
+        $storeFileName -match '[\\/]' -or
+        $storeFileName -match '^\.' -or
+        $storeFileName -notmatch '\.(jks|keystore)$'
+    ) {
+        throw 'FLOWFIT_ANDROID_KEYSTORE_FILE_NAME must be a simple .jks or .keystore file name.'
+    }
+
+    try {
+        $keystoreBytes = [Convert]::FromBase64String($keystoreBase64)
+    } catch {
+        throw 'FLOWFIT_ANDROID_KEYSTORE_BASE64 is not valid base64.'
+    }
+
+    $androidDir = Join-Path $repoRoot 'android'
+    $storeFilePath = Join-Path $androidDir $storeFileName
+    if (Test-Path -LiteralPath $storeFilePath) {
+        throw "Refusing to overwrite existing Android upload keystore: $storeFilePath. Remove it or set FLOWFIT_ANDROID_KEYSTORE_FILE_NAME to an unused file name."
+    }
+
+    [System.IO.File]::WriteAllBytes($storeFilePath, $keystoreBytes)
+    $script:generatedAndroidSigningFiles.Add($storeFilePath)
+
+    $propertiesContent = @(
+        "storePassword=$storePassword"
+        "keyPassword=$keyPassword"
+        "keyAlias=$keyAlias"
+        "storeFile=$storeFileName"
+    ) -join [Environment]::NewLine
+    Set-Content -LiteralPath $keyPropertiesPath -Value $propertiesContent -NoNewline
+    $script:generatedAndroidSigningFiles.Add($keyPropertiesPath)
+}
+
+function Remove-GeneratedAndroidSigningFiles {
+    foreach ($path in @($script:generatedAndroidSigningFiles.ToArray())) {
+        if (-not [string]::IsNullOrWhiteSpace($path) -and (Test-Path -LiteralPath $path)) {
+            Remove-Item -LiteralPath $path -Force
+        }
+    }
+}
+
 function Assert-WebCompliancePages {
     param(
         [Parameter(Mandatory = $true)]
@@ -826,6 +917,9 @@ try {
 
     Assert-CleanGitTree
     Assert-SupabaseClientConfig
+    if ($Target -eq 'Android' -or $Target -eq 'All' -or $RunStrictAudit) {
+        Initialize-AndroidSigningFromEnv
+    }
 
     if ($RunStrictAudit) {
         $strictAuditScript = Join-Path $repoRoot 'scripts/release_readiness_audit.ps1'
@@ -882,5 +976,6 @@ try {
     Write-Host "Store release build finished. Artifact manifest: $manifestPath"
 }
 finally {
+    Remove-GeneratedAndroidSigningFiles
     Pop-Location
 }

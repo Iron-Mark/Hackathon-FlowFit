@@ -418,8 +418,19 @@ function Test-ReleaseEnvTemplate {
     if ($content -match 'sb_secret_|service_role|dnasghxxqwibwqnljvxr') {
         Add-Fail 'Release env template' '.env.release.example contains a server-only key marker or old Supabase project ref.'
     } else {
-        Add-Pass 'Release env template' '.env.release.example lists required non-secret release inputs without server-only keys.'
+        Add-Pass 'Release env template' '.env.release.example lists release inputs and secret placeholders without server-only keys.'
     }
+}
+
+function Get-OptionalEnv {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    $value = [Environment]::GetEnvironmentVariable($Name)
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return ''
+    }
+
+    return $value.Trim()
 }
 
 function Test-SupabaseMigration {
@@ -650,6 +661,36 @@ function Test-AndroidReleaseConfig {
     $keyPropertiesPath = 'android/key.properties'
     $keyProperties = Read-Properties $keyPropertiesPath
     if ($keyProperties.Count -eq 0) {
+        $signingEnv = @{
+            FLOWFIT_ANDROID_KEYSTORE_BASE64 = Get-OptionalEnv 'FLOWFIT_ANDROID_KEYSTORE_BASE64'
+            FLOWFIT_ANDROID_KEYSTORE_PASSWORD = Get-OptionalEnv 'FLOWFIT_ANDROID_KEYSTORE_PASSWORD'
+            FLOWFIT_ANDROID_KEY_ALIAS = Get-OptionalEnv 'FLOWFIT_ANDROID_KEY_ALIAS'
+            FLOWFIT_ANDROID_KEY_PASSWORD = Get-OptionalEnv 'FLOWFIT_ANDROID_KEY_PASSWORD'
+        }
+        $providedSigningEnv = @($signingEnv.Values | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        if ($providedSigningEnv.Count -eq 4) {
+            foreach ($field in @('FLOWFIT_ANDROID_KEYSTORE_PASSWORD', 'FLOWFIT_ANDROID_KEY_ALIAS', 'FLOWFIT_ANDROID_KEY_PASSWORD')) {
+                if ($signingEnv[$field] -match 'REPLACE_WITH|YOUR_') {
+                    Add-Fail 'Android upload signing' "$field contains a placeholder value."
+                    return
+                }
+            }
+            try {
+                $null = [Convert]::FromBase64String($signingEnv['FLOWFIT_ANDROID_KEYSTORE_BASE64'])
+            } catch {
+                Add-Fail 'Android upload signing' 'FLOWFIT_ANDROID_KEYSTORE_BASE64 is not valid base64.'
+                return
+            }
+
+            Add-Pass 'Android upload signing' 'Android upload signing env secrets are present for CI/local release materialization.'
+            return
+        }
+
+        if ($providedSigningEnv.Count -gt 0) {
+            Add-Fail 'Android upload signing' 'Android signing env is incomplete. Set FLOWFIT_ANDROID_KEYSTORE_BASE64, FLOWFIT_ANDROID_KEYSTORE_PASSWORD, FLOWFIT_ANDROID_KEY_ALIAS, and FLOWFIT_ANDROID_KEY_PASSWORD together.'
+            return
+        }
+
         Add-Warn 'Android upload signing' 'Missing android/key.properties; Play Store upload artifact cannot be produced yet.'
         return
     }

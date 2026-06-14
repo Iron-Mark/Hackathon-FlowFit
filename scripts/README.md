@@ -95,9 +95,12 @@ It also passes `FLOWFIT_SUPPORT_EMAIL`, defaulting to `support@flowfit.com`
 when the environment does not override it. It passes placeholder Supabase
 client values as Dart defines only for compile smoke coverage. Its App Bundle
 proves release compilation, but it is not a Play Store upload artifact. Real
-Play Store builds require `android/key.properties`, a maintainer-owned package
-ID, real Supabase client env, and matching Dart auth-scheme/support-email
-defines.
+Play Store builds require either ignored `android/key.properties` plus the
+referenced upload keystore, or wrapper-managed signing env secrets
+(`FLOWFIT_ANDROID_KEYSTORE_BASE64`, `FLOWFIT_ANDROID_KEYSTORE_PASSWORD`,
+`FLOWFIT_ANDROID_KEY_ALIAS`, and `FLOWFIT_ANDROID_KEY_PASSWORD`). They also
+require a maintainer-owned package ID, real Supabase client env, and matching
+Dart auth-scheme/support-email defines.
 The strict audit and production wrapper reject `com.flowfit.smoke`,
 `com.example.*`, `com.yourcompany.*`, reserved `.example`, `.invalid`, `.test`,
 and localhost web hosts.
@@ -177,6 +180,11 @@ $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
 $env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
+# Optional Android wrapper signing path for CI/ephemeral release machines:
+$env:FLOWFIT_ANDROID_KEYSTORE_BASE64 = 'REPLACE_WITH_BASE64_ENCODED_UPLOAD_KEYSTORE'
+$env:FLOWFIT_ANDROID_KEYSTORE_PASSWORD = 'REPLACE_WITH_UPLOAD_KEYSTORE_PASSWORD'
+$env:FLOWFIT_ANDROID_KEY_ALIAS = 'upload'
+$env:FLOWFIT_ANDROID_KEY_PASSWORD = 'REPLACE_WITH_UPLOAD_KEY_PASSWORD'
 # Optional on macOS when Xcode signing needs an explicit export profile:
 $env:FLOWFIT_IOS_EXPORT_OPTIONS_PLIST = "$HOME/export_options.plist"
 ```
@@ -227,7 +235,10 @@ pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudi
 ```
 
 The Android target requires ignored `android/key.properties` and the referenced
-upload keystore. Every target requires real Supabase client values from
+upload keystore, or the signing env variables above. When signing env variables
+are used, `scripts/store_release_build.ps1` writes ignored signing files before
+the build and removes them before exit. It fails instead of overwriting an
+existing keystore file. Every target requires real Supabase client values from
 `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, or the local fallback
 `lib/secrets.dart`; the wrapper passes those values to Flutter as
 `--dart-define` inputs and never writes them to the artifact manifest. The iOS

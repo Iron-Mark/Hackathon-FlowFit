@@ -146,6 +146,50 @@ void main() {
     expect(storeReleaseBuild, contains('Import-ReleaseEnvFile'));
   });
 
+  test(
+    'store release wrapper can materialize Android signing from env secrets',
+    () {
+      for (final name in [
+        'FLOWFIT_ANDROID_KEYSTORE_BASE64',
+        'FLOWFIT_ANDROID_KEYSTORE_PASSWORD',
+        'FLOWFIT_ANDROID_KEY_ALIAS',
+        'FLOWFIT_ANDROID_KEY_PASSWORD',
+      ]) {
+        expect(storeReleaseBuild, contains(name));
+        expect(releaseEnvExample, contains(name));
+      }
+
+      expect(storeReleaseBuild, contains('Initialize-AndroidSigningFromEnv'));
+      expect(storeReleaseBuild, contains('Convert]::FromBase64String'));
+      expect(storeReleaseBuild, contains('android/key.properties'));
+      expect(
+        storeReleaseBuild,
+        contains('Remove-GeneratedAndroidSigningFiles'),
+      );
+      expect(readinessAudit, contains('FLOWFIT_ANDROID_KEYSTORE_BASE64'));
+    },
+  );
+
+  test('store release wrapper refuses to overwrite existing env keystore', () {
+    expect(
+      storeReleaseBuild,
+      contains('Refusing to overwrite existing Android upload keystore'),
+    );
+    expect(
+      storeReleaseBuild,
+      contains(r'Test-Path -LiteralPath $storeFilePath'),
+    );
+  });
+
+  test(
+    'store release wrapper signing env fixture cleans up only generated files',
+    () {
+      final result = _runAndroidSigningEnvFixture();
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      expect(result.stdout, contains('ANDROID_SIGNING_ENV_FIXTURE_OK'));
+    },
+  );
+
   test('release env template lists required store inputs', () {
     for (final name in [
       'FLOWFIT_SUPPORT_EMAIL',
@@ -530,6 +574,145 @@ void main() {
   test('Supabase auth password policy matches app minimum length', () {
     expect(supabaseConfig, contains('minimum_password_length = 8'));
   });
+}
+
+ProcessResult _runAndroidSigningEnvFixture() {
+  final tempDir = Directory.systemTemp.createTempSync(
+    'flowfit_android_signing_fixture_',
+  );
+  try {
+    final fixtureScript = File(
+      '${tempDir.path}${Platform.pathSeparator}android_signing_fixture.ps1',
+    );
+    fixtureScript.writeAsStringSync(r'''
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$RepoRoot,
+    [Parameter(Mandatory = $true)]
+    [string]$FixtureRoot
+)
+
+$ErrorActionPreference = 'Stop'
+
+function Assert-Condition {
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$Condition,
+        [Parameter(Mandatory = $true)]
+        [string]$Message
+    )
+
+    if (-not $Condition) {
+        throw $Message
+    }
+}
+
+$storeReleaseBuildPath = Join-Path $RepoRoot 'scripts/store_release_build.ps1'
+$tokens = $null
+$parseErrors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile(
+    $storeReleaseBuildPath,
+    [ref]$tokens,
+    [ref]$parseErrors
+)
+if ($parseErrors.Count -gt 0) {
+    throw ($parseErrors | Out-String)
+}
+
+foreach ($name in @(
+    'Get-OptionalEnv',
+    'Initialize-AndroidSigningFromEnv',
+    'Remove-GeneratedAndroidSigningFiles'
+)) {
+    $functionAst = $ast.Find({
+        param($node)
+        $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+            $node.Name -eq $name
+    }, $true)
+    Assert-Condition ($null -ne $functionAst) "Missing function in production script: $name"
+    Invoke-Expression $functionAst.Extent.Text
+}
+
+$repoRoot = (Resolve-Path $FixtureRoot).Path
+$androidDir = Join-Path $repoRoot 'android'
+New-Item -ItemType Directory -Force -Path $androidDir | Out-Null
+
+$script:generatedAndroidSigningFiles = New-Object System.Collections.Generic.List[string]
+[Environment]::SetEnvironmentVariable('FLOWFIT_ANDROID_KEYSTORE_BASE64', 'ZmFrZS1rZXlzdG9yZQ==', 'Process')
+[Environment]::SetEnvironmentVariable('FLOWFIT_ANDROID_KEYSTORE_PASSWORD', 'store-password', 'Process')
+[Environment]::SetEnvironmentVariable('FLOWFIT_ANDROID_KEY_ALIAS', 'upload', 'Process')
+[Environment]::SetEnvironmentVariable('FLOWFIT_ANDROID_KEY_PASSWORD', 'key-password', 'Process')
+
+$keyPropertiesPath = Join-Path $repoRoot 'android/key.properties'
+$keystorePath = Join-Path $repoRoot 'android/upload-keystore.jks'
+
+try {
+    Initialize-AndroidSigningFromEnv
+
+    Assert-Condition (Test-Path -LiteralPath $keyPropertiesPath) 'Generated key.properties was not created.'
+    Assert-Condition (Test-Path -LiteralPath $keystorePath) 'Generated keystore was not created.'
+
+    $properties = Get-Content -Raw -LiteralPath $keyPropertiesPath
+    Assert-Condition ($properties.Contains('storePassword=store-password')) 'Generated key.properties is missing storePassword.'
+    Assert-Condition ($properties.Contains('keyPassword=key-password')) 'Generated key.properties is missing keyPassword.'
+    Assert-Condition ($properties.Contains('keyAlias=upload')) 'Generated key.properties is missing keyAlias.'
+    Assert-Condition ($properties.Contains('storeFile=upload-keystore.jks')) 'Generated key.properties is missing storeFile.'
+
+    $keystoreText = [System.Text.Encoding]::UTF8.GetString(
+        [System.IO.File]::ReadAllBytes($keystorePath)
+    )
+    Assert-Condition ($keystoreText -eq 'fake-keystore') 'Generated keystore bytes do not match env base64.'
+
+    Remove-GeneratedAndroidSigningFiles
+
+    Assert-Condition (-not (Test-Path -LiteralPath $keyPropertiesPath)) 'Generated key.properties was not removed.'
+    Assert-Condition (-not (Test-Path -LiteralPath $keystorePath)) 'Generated keystore was not removed.'
+
+    $script:generatedAndroidSigningFiles = New-Object System.Collections.Generic.List[string]
+    Set-Content -LiteralPath $keystorePath -Value 'existing-keystore' -NoNewline
+
+    try {
+        Initialize-AndroidSigningFromEnv
+        throw 'Expected overwrite failure did not occur.'
+    } catch {
+        if ($_.Exception.Message -notmatch 'Refusing to overwrite existing Android upload keystore') {
+            throw
+        }
+    }
+
+    Assert-Condition (-not (Test-Path -LiteralPath $keyPropertiesPath)) 'key.properties was created after overwrite refusal.'
+    Assert-Condition (Test-Path -LiteralPath $keystorePath) 'Existing keystore was removed after overwrite refusal.'
+    Assert-Condition ((Get-Content -Raw -LiteralPath $keystorePath) -eq 'existing-keystore') 'Existing keystore contents changed.'
+
+    Remove-GeneratedAndroidSigningFiles
+    Assert-Condition (Test-Path -LiteralPath $keystorePath) 'Cleanup removed an existing keystore not created by this invocation.'
+
+    Write-Output 'ANDROID_SIGNING_ENV_FIXTURE_OK'
+} finally {
+    foreach ($name in @(
+        'FLOWFIT_ANDROID_KEYSTORE_BASE64',
+        'FLOWFIT_ANDROID_KEYSTORE_PASSWORD',
+        'FLOWFIT_ANDROID_KEY_ALIAS',
+        'FLOWFIT_ANDROID_KEY_PASSWORD',
+        'FLOWFIT_ANDROID_KEYSTORE_FILE_NAME'
+    )) {
+        [Environment]::SetEnvironmentVariable($name, $null, 'Process')
+    }
+}
+''');
+
+    return Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      fixtureScript.path,
+      '-RepoRoot',
+      Directory.current.path,
+      '-FixtureRoot',
+      tempDir.path,
+    ]);
+  } finally {
+    tempDir.deleteSync(recursive: true);
+  }
 }
 
 ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {

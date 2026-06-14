@@ -53,7 +53,11 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Confirm signed release builds fail if `FLOWFIT_ANDROID_APPLICATION_ID`,
       `FLOWFIT_AUTH_SCHEME`, or matching Dart defines are still placeholders,
       examples, or smoke values.
-- [ ] Generate upload keystore and configure `android/key.properties`.
+- [ ] Generate upload keystore and configure either ignored
+      `android/key.properties` plus the referenced keystore, or CI/release env
+      secrets `FLOWFIT_ANDROID_KEYSTORE_BASE64`,
+      `FLOWFIT_ANDROID_KEYSTORE_PASSWORD`, `FLOWFIT_ANDROID_KEY_ALIAS`, and
+      `FLOWFIT_ANDROID_KEY_PASSWORD`.
 - [ ] Add production auth schemes to Supabase redirect URLs.
 - [ ] Build upload artifact:
       `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android`.

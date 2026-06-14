@@ -68,9 +68,17 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1 `
 
 ## Android Play Store Setup
 
-1. Copy `android/key.properties.example` to `android/key.properties`.
-2. Generate or place the upload keystore in `android/upload-keystore.jks`.
-3. Set production package/auth values in `android/gradle.properties`:
+1. Use either an ignored local signing file or CI-safe signing env secrets:
+   - Local file path: copy `android/key.properties.example` to
+     `android/key.properties`, then generate or place the upload keystore in
+     `android/upload-keystore.jks`.
+   - Env/CI path: set `FLOWFIT_ANDROID_KEYSTORE_BASE64`,
+     `FLOWFIT_ANDROID_KEYSTORE_PASSWORD`, `FLOWFIT_ANDROID_KEY_ALIAS`, and
+     `FLOWFIT_ANDROID_KEY_PASSWORD`. `scripts/store_release_build.ps1`
+     materializes ignored signing files for the build and removes them before
+     exit when it created them. If `FLOWFIT_ANDROID_KEYSTORE_FILE_NAME`
+     points to an existing file, the wrapper fails instead of overwriting it.
+2. Set production package/auth values in `android/gradle.properties`:
 
 ```properties
 FLOWFIT_ANDROID_APPLICATION_ID=com.oldstlabs.flowfit
@@ -111,20 +119,24 @@ can use ignored `lib/secrets.dart` as a local fallback. The values must contain
 a real Supabase Project URL and current `sb_publishable_` key, not
 placeholders, the old project ref, a service-role key, or a secret key.
 
-For CI, provide those Gradle properties as environment variables before running
-Flutter:
+For CI or an ephemeral release machine, provide those Gradle properties plus
+the signing env secrets, then run the release wrapper instead of committing key
+material:
 
 ```powershell
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
 $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
 $env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
-flutter build appbundle --release --no-pub `
-  --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit `
-  --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com `
-  --dart-define=SUPABASE_URL=$env:SUPABASE_URL `
-  --dart-define=SUPABASE_PUBLISHABLE_KEY=$env:SUPABASE_PUBLISHABLE_KEY
+$env:FLOWFIT_ANDROID_KEYSTORE_BASE64 = 'REPLACE_WITH_BASE64_ENCODED_UPLOAD_KEYSTORE'
+$env:FLOWFIT_ANDROID_KEYSTORE_PASSWORD = 'REPLACE_WITH_UPLOAD_KEYSTORE_PASSWORD'
+$env:FLOWFIT_ANDROID_KEY_ALIAS = 'upload'
+$env:FLOWFIT_ANDROID_KEY_PASSWORD = 'REPLACE_WITH_UPLOAD_KEY_PASSWORD'
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android
 ```
+
+Direct `flutter build appbundle` still requires ignored `android/key.properties`
+and the referenced keystore to exist before Gradle runs.
 
 If no `android/key.properties` exists, the repo still falls back to debug
 signing only when Gradle property `FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true`
