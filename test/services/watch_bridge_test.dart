@@ -26,12 +26,14 @@ void main() {
     group('connectToWatch', () {
       test('returns true when connection succeeds', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'connectWatch') {
-            return true;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'connectWatch') {
+                return true;
+              }
+              return null;
+            });
 
         final result = await service.connectToWatch();
         expect(result, true);
@@ -39,12 +41,14 @@ void main() {
 
       test('returns false when connection fails', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'connectWatch') {
-            return false;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'connectWatch') {
+                return false;
+              }
+              return null;
+            });
 
         final result = await service.connectToWatch();
         expect(result, false);
@@ -52,23 +56,27 @@ void main() {
 
       test('throws SensorError on PlatformException', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'connectWatch') {
-            throw PlatformException(
-              code: 'CONNECTION_FAILED',
-              message: 'Unable to connect',
-            );
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'connectWatch') {
+                throw PlatformException(
+                  code: 'CONNECTION_FAILED',
+                  message: 'Unable to connect',
+                );
+              }
+              return null;
+            });
 
         expect(
           () => service.connectToWatch(),
-          throwsA(isA<SensorError>().having(
-            (e) => e.code,
-            'code',
-            SensorErrorCode.connectionFailed,
-          )),
+          throwsA(
+            isA<SensorError>().having(
+              (e) => e.code,
+              'code',
+              SensorErrorCode.connectionFailed,
+            ),
+          ),
         );
       });
     });
@@ -76,27 +84,31 @@ void main() {
     group('disconnectFromWatch', () {
       test('completes successfully', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'disconnectWatch') {
-            return null;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'disconnectWatch') {
+                return null;
+              }
+              return null;
+            });
 
         await expectLater(service.disconnectFromWatch(), completes);
       });
 
       test('throws SensorError on PlatformException', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'disconnectWatch') {
-            throw PlatformException(
-              code: 'UNKNOWN',
-              message: 'Disconnect failed',
-            );
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'disconnectWatch') {
+                throw PlatformException(
+                  code: 'UNKNOWN',
+                  message: 'Disconnect failed',
+                );
+              }
+              return null;
+            });
 
         expect(
           () => service.disconnectFromWatch(),
@@ -108,12 +120,14 @@ void main() {
     group('isWatchConnected', () {
       test('returns true when watch is connected', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'isWatchConnected') {
-            return true;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'isWatchConnected') {
+                return true;
+              }
+              return null;
+            });
 
         final result = await service.isWatchConnected();
         expect(result, true);
@@ -121,12 +135,14 @@ void main() {
 
       test('returns false when watch is not connected', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'isWatchConnected') {
-            return false;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'isWatchConnected') {
+                return false;
+              }
+              return null;
+            });
 
         final result = await service.isWatchConnected();
         expect(result, false);
@@ -136,12 +152,14 @@ void main() {
     group('startHeartRateTracking', () {
       test('returns true when tracking starts successfully', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'startHeartRate') {
-            return true;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'startHeartRate') {
+                return true;
+              }
+              return null;
+            });
 
         final result = await service.startHeartRateTracking();
         expect(result, true);
@@ -149,12 +167,14 @@ void main() {
 
       test('returns false when tracking fails to start', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'startHeartRate') {
-            return false;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'startHeartRate') {
+                return false;
+              }
+              return null;
+            });
 
         final result = await service.startHeartRateTracking();
         expect(result, false);
@@ -162,23 +182,27 @@ void main() {
 
       test('throws SensorError on PlatformException', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'startHeartRate') {
-            throw PlatformException(
-              code: 'SENSOR_UNAVAILABLE',
-              message: 'Sensor not available',
-            );
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'startHeartRate') {
+                throw PlatformException(
+                  code: 'SENSOR_UNAVAILABLE',
+                  message: 'Sensor not available',
+                );
+              }
+              return null;
+            });
 
         expect(
           () => service.startHeartRateTracking(),
-          throwsA(isA<SensorError>().having(
-            (e) => e.code,
-            'code',
-            SensorErrorCode.sensorUnavailable,
-          )),
+          throwsA(
+            isA<SensorError>().having(
+              (e) => e.code,
+              'code',
+              SensorErrorCode.sensorUnavailable,
+            ),
+          ),
         );
       });
     });
@@ -186,27 +210,31 @@ void main() {
     group('stopHeartRateTracking', () {
       test('completes successfully', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'stopHeartRate') {
-            return null;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'stopHeartRate') {
+                return null;
+              }
+              return null;
+            });
 
         await expectLater(service.stopHeartRateTracking(), completes);
       });
 
       test('throws SensorError on PlatformException', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'stopHeartRate') {
-            throw PlatformException(
-              code: 'UNKNOWN',
-              message: 'Stop failed',
-            );
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'stopHeartRate') {
+                throw PlatformException(
+                  code: 'UNKNOWN',
+                  message: 'Stop failed',
+                );
+              }
+              return null;
+            });
 
         expect(
           () => service.stopHeartRateTracking(),
@@ -218,16 +246,18 @@ void main() {
     group('getCurrentHeartRate', () {
       test('returns HeartRateData when data is available', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'getCurrentHeartRate') {
-            return {
-              'bpm': 75,
-              'timestamp': DateTime.now().millisecondsSinceEpoch,
-              'status': 'active',
-            };
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'getCurrentHeartRate') {
+                return {
+                  'bpm': 75,
+                  'timestamp': DateTime.now().millisecondsSinceEpoch,
+                  'status': 'active',
+                };
+              }
+              return null;
+            });
 
         final result = await service.getCurrentHeartRate();
         expect(result, isNotNull);
@@ -237,12 +267,14 @@ void main() {
 
       test('returns null when no data is available', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'getCurrentHeartRate') {
-            return null;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'getCurrentHeartRate') {
+                return null;
+              }
+              return null;
+            });
 
         final result = await service.getCurrentHeartRate();
         expect(result, isNull);
@@ -250,15 +282,17 @@ void main() {
 
       test('throws SensorError on PlatformException', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'getCurrentHeartRate') {
-            throw PlatformException(
-              code: 'SENSOR_UNAVAILABLE',
-              message: 'Cannot read heart rate',
-            );
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'getCurrentHeartRate') {
+                throw PlatformException(
+                  code: 'SENSOR_UNAVAILABLE',
+                  message: 'Cannot read heart rate',
+                );
+              }
+              return null;
+            });
 
         expect(
           () => service.getCurrentHeartRate(),
@@ -270,58 +304,70 @@ void main() {
     group('error handling', () {
       test('maps PERMISSION_DENIED to correct error code', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          throw PlatformException(
-            code: 'PERMISSION_DENIED',
-            message: 'Permission denied',
-          );
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              throw PlatformException(
+                code: 'PERMISSION_DENIED',
+                message: 'Permission denied',
+              );
+            });
 
         expect(
           () => service.connectToWatch(),
-          throwsA(isA<SensorError>().having(
-            (e) => e.code,
-            'code',
-            SensorErrorCode.permissionDenied,
-          )),
+          throwsA(
+            isA<SensorError>().having(
+              (e) => e.code,
+              'code',
+              SensorErrorCode.permissionDenied,
+            ),
+          ),
         );
       });
 
       test('maps SERVICE_UNAVAILABLE to correct error code', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          throw PlatformException(
-            code: 'SERVICE_UNAVAILABLE',
-            message: 'Service unavailable',
-          );
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              throw PlatformException(
+                code: 'SERVICE_UNAVAILABLE',
+                message: 'Service unavailable',
+              );
+            });
 
         expect(
           () => service.connectToWatch(),
-          throwsA(isA<SensorError>().having(
-            (e) => e.code,
-            'code',
-            SensorErrorCode.serviceUnavailable,
-          )),
+          throwsA(
+            isA<SensorError>().having(
+              (e) => e.code,
+              'code',
+              SensorErrorCode.serviceUnavailable,
+            ),
+          ),
         );
       });
 
       test('maps TIMEOUT to correct error code', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(methodChannel, (MethodCall methodCall) async {
-          throw PlatformException(
-            code: 'TIMEOUT',
-            message: 'Operation timed out',
-          );
-        });
+            .setMockMethodCallHandler(methodChannel, (
+              MethodCall methodCall,
+            ) async {
+              throw PlatformException(
+                code: 'TIMEOUT',
+                message: 'Operation timed out',
+              );
+            });
 
         expect(
           () => service.connectToWatch(),
-          throwsA(isA<SensorError>().having(
-            (e) => e.code,
-            'code',
-            SensorErrorCode.timeout,
-          )),
+          throwsA(
+            isA<SensorError>().having(
+              (e) => e.code,
+              'code',
+              SensorErrorCode.timeout,
+            ),
+          ),
         );
       });
     });
@@ -345,8 +391,10 @@ void main() {
       });
 
       test('stopPermissionMonitoring can be called', () {
-        service.startPermissionMonitoring(interval: const Duration(milliseconds: 100));
-        
+        service.startPermissionMonitoring(
+          interval: const Duration(milliseconds: 100),
+        );
+
         // Verify stopPermissionMonitoring can be called
         expect(() => service.stopPermissionMonitoring(), returnsNormally);
       });
@@ -355,7 +403,7 @@ void main() {
         // Create a new service instance for this test
         final testService = WatchBridgeService();
         testService.dispose();
-        
+
         // After dispose, the stream controller should be closed
         // We can't directly test this without exposing internals,
         // but we can verify dispose completes without error
@@ -364,13 +412,13 @@ void main() {
     });
 
     group('openAppSettings', () {
-      test('openAppSettings throws SensorError when plugin not available', () async {
-        // In test environment without plugin, should throw SensorError
-        expect(
-          () => service.openAppSettings(),
-          throwsA(isA<SensorError>()),
-        );
-      });
+      test(
+        'openAppSettings throws SensorError when plugin not available',
+        () async {
+          // In test environment without plugin, should throw SensorError
+          expect(() => service.openAppSettings(), throwsA(isA<SensorError>()));
+        },
+      );
     });
 
     group('watch-to-phone sync', () {
@@ -383,13 +431,15 @@ void main() {
 
       test('sendHeartRateToPhone returns true on success', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(syncChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'sendHeartRateToPhone') {
-            expect(methodCall.arguments['data'], isNotNull);
-            return true;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(syncChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'sendHeartRateToPhone') {
+                expect(methodCall.arguments['data'], isNotNull);
+                return true;
+              }
+              return null;
+            });
 
         final heartRateData = HeartRateData(
           bpm: 75,
@@ -403,12 +453,14 @@ void main() {
 
       test('sendHeartRateToPhone returns false on failure', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(syncChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'sendHeartRateToPhone') {
-            return false;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(syncChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'sendHeartRateToPhone') {
+                return false;
+              }
+              return null;
+            });
 
         final heartRateData = HeartRateData(
           bpm: 75,
@@ -420,40 +472,55 @@ void main() {
         expect(result, false);
       });
 
-      test('checkPhoneConnection returns true when phone is connected', () async {
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(syncChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'checkPhoneConnection') {
-            return true;
-          }
-          return null;
-        });
+      test(
+        'checkPhoneConnection returns true when phone is connected',
+        () async {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(syncChannel, (
+                MethodCall methodCall,
+              ) async {
+                if (methodCall.method == 'checkPhoneConnection') {
+                  return true;
+                }
+                return null;
+              });
 
-        final result = await service.checkPhoneConnection();
-        expect(result, true);
-      });
+          final result = await service.checkPhoneConnection();
+          expect(result, true);
+        },
+      );
 
-      test('checkPhoneConnection returns false when phone is not connected', () async {
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(syncChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'checkPhoneConnection') {
-            return false;
-          }
-          return null;
-        });
+      test(
+        'checkPhoneConnection returns false when phone is not connected',
+        () async {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(syncChannel, (
+                MethodCall methodCall,
+              ) async {
+                if (methodCall.method == 'checkPhoneConnection') {
+                  return false;
+                }
+                return null;
+              });
 
-        final result = await service.checkPhoneConnection();
-        expect(result, false);
-      });
+          final result = await service.checkPhoneConnection();
+          expect(result, false);
+        },
+      );
 
       test('checkPhoneConnection returns false on error', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(syncChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'checkPhoneConnection') {
-            throw PlatformException(code: 'ERROR', message: 'Connection check failed');
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(syncChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'checkPhoneConnection') {
+                throw PlatformException(
+                  code: 'ERROR',
+                  message: 'Connection check failed',
+                );
+              }
+              return null;
+            });
 
         final result = await service.checkPhoneConnection();
         expect(result, false);
@@ -461,38 +528,50 @@ void main() {
 
       test('getConnectedNodesCount returns node count', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(syncChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'getConnectedNodesCount') {
-            return 2;
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(syncChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'getConnectedNodesCount') {
+                return 2;
+              }
+              return null;
+            });
 
         final result = await service.getConnectedNodesCount();
         expect(result, 2);
       });
 
-      test('getConnectedNodesCount returns 0 when no nodes connected', () async {
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(syncChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'getConnectedNodesCount') {
-            return 0;
-          }
-          return null;
-        });
+      test(
+        'getConnectedNodesCount returns 0 when no nodes connected',
+        () async {
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(syncChannel, (
+                MethodCall methodCall,
+              ) async {
+                if (methodCall.method == 'getConnectedNodesCount') {
+                  return 0;
+                }
+                return null;
+              });
 
-        final result = await service.getConnectedNodesCount();
-        expect(result, 0);
-      });
+          final result = await service.getConnectedNodesCount();
+          expect(result, 0);
+        },
+      );
 
       test('getConnectedNodesCount returns 0 on error', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-            .setMockMethodCallHandler(syncChannel, (MethodCall methodCall) async {
-          if (methodCall.method == 'getConnectedNodesCount') {
-            throw PlatformException(code: 'ERROR', message: 'Failed to get count');
-          }
-          return null;
-        });
+            .setMockMethodCallHandler(syncChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'getConnectedNodesCount') {
+                throw PlatformException(
+                  code: 'ERROR',
+                  message: 'Failed to get count',
+                );
+              }
+              return null;
+            });
 
         final result = await service.getConnectedNodesCount();
         expect(result, 0);
@@ -516,14 +595,14 @@ void main() {
 
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockStreamHandler(
-          eventChannel,
-          MockStreamHandler.inline(
-            onListen: (arguments, events) {
-              events.success(testData);
-              return null;
-            },
-          ),
-        );
+              eventChannel,
+              MockStreamHandler.inline(
+                onListen: (arguments, events) {
+                  events.success(testData);
+                  return;
+                },
+              ),
+            );
 
         final stream = service.heartRateStream;
         final heartRateData = await stream.first;
@@ -546,15 +625,15 @@ void main() {
 
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockStreamHandler(
-          eventChannel,
-          MockStreamHandler.inline(
-            onListen: (arguments, events) {
-              events.success(testData1);
-              events.success(testData2);
-              return null;
-            },
-          ),
-        );
+              eventChannel,
+              MockStreamHandler.inline(
+                onListen: (arguments, events) {
+                  events.success(testData1);
+                  events.success(testData2);
+                  return;
+                },
+              ),
+            );
 
         final stream = service.heartRateStream;
         final heartRateList = await stream.take(2).toList();
@@ -567,21 +646,18 @@ void main() {
       test('throws SensorError on invalid data format', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockStreamHandler(
-          eventChannel,
-          MockStreamHandler.inline(
-            onListen: (arguments, events) {
-              events.success({'invalid': 'data'});
-              return null;
-            },
-          ),
-        );
+              eventChannel,
+              MockStreamHandler.inline(
+                onListen: (arguments, events) {
+                  events.success({'invalid': 'data'});
+                  return;
+                },
+              ),
+            );
 
         final stream = service.heartRateStream;
-        
-        expect(
-          () => stream.first,
-          throwsA(isA<SensorError>()),
-        );
+
+        expect(() => stream.first, throwsA(isA<SensorError>()));
       });
 
       test('handles stream cancellation', () async {
@@ -589,17 +665,17 @@ void main() {
 
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockStreamHandler(
-          eventChannel,
-          MockStreamHandler.inline(
-            onListen: (arguments, events) {
-              return null;
-            },
-            onCancel: (arguments) {
-              cancelCalled = true;
-              return null;
-            },
-          ),
-        );
+              eventChannel,
+              MockStreamHandler.inline(
+                onListen: (arguments, events) {
+                  return;
+                },
+                onCancel: (arguments) {
+                  cancelCalled = true;
+                  return;
+                },
+              ),
+            );
 
         final stream = service.heartRateStream;
         final subscription = stream.listen((_) {});

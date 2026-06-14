@@ -21,13 +21,18 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
-            core_providers.currentHeartRateProvider.overrideWith((ref) => Stream.value(HeartRateData(bpm: 68, ibiValues: [], timestamp: DateTime.now(), status: HeartRateStatus.active)),),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: StatsSection(),
+            core_providers.currentHeartRateProvider.overrideWith(
+              (ref) => Stream.value(
+                HeartRateData(
+                  bpm: 68,
+                  ibiValues: [],
+                  timestamp: DateTime.now(),
+                  status: HeartRateStatus.active,
+                ),
+              ),
             ),
-          ),
+          ],
+          child: const MaterialApp(home: Scaffold(body: StatsSection())),
         ),
       );
 
@@ -36,7 +41,9 @@ void main() {
       expect(find.text('Track Your Activity'), findsOneWidget);
     });
 
-    testWidgets('displays stats when data is loaded', (WidgetTester tester) async {
+    testWidgets('displays stats when data is loaded', (
+      WidgetTester tester,
+    ) async {
       final testStats = DailyStats(
         steps: 6504,
         stepsGoal: 10000,
@@ -48,13 +55,18 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
-            core_providers.currentHeartRateProvider.overrideWith((ref) => Stream.value(HeartRateData(bpm: 68, ibiValues: [], timestamp: DateTime.now(), status: HeartRateStatus.active)),),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: StatsSection(),
+            core_providers.currentHeartRateProvider.overrideWith(
+              (ref) => Stream.value(
+                HeartRateData(
+                  bpm: 68,
+                  ibiValues: [],
+                  timestamp: DateTime.now(),
+                  status: HeartRateStatus.active,
+                ),
+              ),
             ),
-          ),
+          ],
+          child: const MaterialApp(home: Scaffold(body: StatsSection())),
         ),
       );
 
@@ -62,31 +74,38 @@ void main() {
 
       // Check for StepsCard
       expect(find.byType(StepsCard), findsOneWidget);
-      
+
       // Check for MoodCard and CardioComparisonCard
       expect(find.byType(MoodCard), findsOneWidget);
       expect(find.byType(CardioComparisonCard), findsOneWidget);
-      
+
       // Check for stats values
       expect(find.text('6504 / 10000'), findsOneWidget);
       expect(find.text('387'), findsOneWidget);
       expect(find.text('45'), findsOneWidget);
     });
 
-    testWidgets('displays error state when data fails to load', (WidgetTester tester) async {
+    testWidgets('displays error state when data fails to load', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async {
               throw Exception('Failed to load');
             }),
-            core_providers.currentHeartRateProvider.overrideWith((ref) => Stream.value(HeartRateData(bpm: 68, ibiValues: [], timestamp: DateTime.now(), status: HeartRateStatus.active)),),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: StatsSection(),
+            core_providers.currentHeartRateProvider.overrideWith(
+              (ref) => Stream.value(
+                HeartRateData(
+                  bpm: 68,
+                  ibiValues: [],
+                  timestamp: DateTime.now(),
+                  status: HeartRateStatus.active,
+                ),
+              ),
             ),
-          ),
+          ],
+          child: const MaterialApp(home: Scaffold(body: StatsSection())),
         ),
       );
 
@@ -109,7 +128,16 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
-            core_providers.currentHeartRateProvider.overrideWith((ref) => Stream.value(HeartRateData(bpm: 68, ibiValues: [], timestamp: DateTime.now(), status: HeartRateStatus.active)),),
+            core_providers.currentHeartRateProvider.overrideWith(
+              (ref) => Stream.value(
+                HeartRateData(
+                  bpm: 68,
+                  ibiValues: [],
+                  timestamp: DateTime.now(),
+                  status: HeartRateStatus.active,
+                ),
+              ),
+            ),
           ],
           child: MaterialApp(
             theme: ThemeData(
@@ -119,9 +147,7 @@ void main() {
                 onSurface: Colors.black,
               ),
             ),
-            home: Scaffold(
-              body: StatsSection(),
-            ),
+            home: const Scaffold(body: StatsSection()),
           ),
         ),
       );
@@ -134,7 +160,9 @@ void main() {
   });
 
   group('StepsCard', () {
-    testWidgets('displays all required information', (WidgetTester tester) async {
+    testWidgets('displays all required information', (
+      WidgetTester tester,
+    ) async {
       final stats = DailyStats(
         steps: 6504,
         stepsGoal: 10000,
@@ -144,29 +172,29 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: StepsCard(stats: stats),
-          ),
+          home: Scaffold(body: StepsCard(stats: stats)),
         ),
       );
 
       // Check for steps label
       expect(find.text('Steps'), findsOneWidget);
-      
+
       // Check for steps value
       expect(find.text('6504 / 10000'), findsOneWidget);
-      
+
       // Check for percentage
       expect(find.text('65%'), findsOneWidget);
-      
+
       // Check for progress bar
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
-      
+
       // Check for icon
       expect(find.byIcon(Icons.directions_walk), findsOneWidget);
     });
 
-    testWidgets('calculates progress percentage correctly', (WidgetTester tester) async {
+    testWidgets('calculates progress percentage correctly', (
+      WidgetTester tester,
+    ) async {
       final stats = DailyStats(
         steps: 5000,
         stepsGoal: 10000,
@@ -176,9 +204,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: StepsCard(stats: stats),
-          ),
+          home: Scaffold(body: StepsCard(stats: stats)),
         ),
       );
 
@@ -195,9 +221,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: StepsCard(stats: stats),
-          ),
+          home: Scaffold(body: StepsCard(stats: stats)),
         ),
       );
 
@@ -215,9 +239,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: StepsCard(stats: stats),
-          ),
+          home: Scaffold(body: StepsCard(stats: stats)),
         ),
       );
 
@@ -241,9 +263,7 @@ void main() {
               surface: Colors.white,
             ),
           ),
-          home: Scaffold(
-            body: StepsCard(stats: stats),
-          ),
+          home: Scaffold(body: StepsCard(stats: stats)),
         ),
       );
 
@@ -253,9 +273,11 @@ void main() {
   });
 
   group('CompactStatsCard', () {
-    testWidgets('displays all required information', (WidgetTester tester) async {
+    testWidgets('displays all required information', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: CompactStatsCard(
               icon: Icons.local_fire_department,
@@ -272,11 +294,13 @@ void main() {
       expect(find.byIcon(Icons.local_fire_department), findsOneWidget);
     });
 
-    testWidgets('uses provided color for icon container', (WidgetTester tester) async {
+    testWidgets('uses provided color for icon container', (
+      WidgetTester tester,
+    ) async {
       const testColor = Colors.red;
 
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: CompactStatsCard(
               icon: Icons.local_fire_department,
@@ -289,13 +313,17 @@ void main() {
       );
 
       // Find the icon
-      final icon = tester.widget<Icon>(find.byIcon(Icons.local_fire_department));
+      final icon = tester.widget<Icon>(
+        find.byIcon(Icons.local_fire_department),
+      );
       expect(icon.color, testColor);
     });
 
-    testWidgets('displays active minutes correctly', (WidgetTester tester) async {
+    testWidgets('displays active minutes correctly', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: CompactStatsCard(
               icon: Icons.timer,
@@ -321,7 +349,7 @@ void main() {
               onSurface: Colors.black,
             ),
           ),
-          home: Scaffold(
+          home: const Scaffold(
             body: CompactStatsCard(
               icon: Icons.timer,
               value: '45',
@@ -338,7 +366,9 @@ void main() {
   });
 
   group('StatsSection Layout', () {
-    testWidgets('displays cards in correct layout', (WidgetTester tester) async {
+    testWidgets('displays cards in correct layout', (
+      WidgetTester tester,
+    ) async {
       final testStats = DailyStats(
         steps: 6504,
         stepsGoal: 10000,
@@ -351,11 +381,7 @@ void main() {
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: StatsSection(),
-            ),
-          ),
+          child: const MaterialApp(home: Scaffold(body: StatsSection())),
         ),
       );
 
@@ -363,14 +389,16 @@ void main() {
 
       // Verify StepsCard is full width (appears before Row)
       expect(find.byType(StepsCard), findsOneWidget);
-      
+
       // Verify Mood and Cardio cards are in a Row
       expect(find.byType(Row), findsWidgets);
       expect(find.byType(MoodCard), findsOneWidget);
       expect(find.byType(CardioComparisonCard), findsOneWidget);
     });
 
-    testWidgets('has proper spacing between cards', (WidgetTester tester) async {
+    testWidgets('has proper spacing between cards', (
+      WidgetTester tester,
+    ) async {
       final testStats = DailyStats(
         steps: 6504,
         stepsGoal: 10000,
@@ -383,11 +411,7 @@ void main() {
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: StatsSection(),
-            ),
-          ),
+          child: const MaterialApp(home: Scaffold(body: StatsSection())),
         ),
       );
 

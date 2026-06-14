@@ -29,6 +29,16 @@ import 'screens/onboarding/survey_body_measurements_screen.dart';
 import 'screens/onboarding/survey_activity_goals_screen.dart';
 import 'screens/onboarding/survey_daily_targets_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/onboarding/buddy_welcome_screen.dart';
+import 'screens/onboarding/buddy_intro_screen.dart';
+import 'screens/onboarding/buddy_hatch_screen.dart';
+import 'screens/onboarding/buddy_color_selection_screen.dart';
+import 'screens/onboarding/buddy_naming_screen.dart';
+import 'screens/onboarding/goal_selection_screen.dart';
+import 'screens/onboarding/notification_permission_screen.dart';
+import 'screens/onboarding/buddy_ready_screen.dart';
+import 'screens/onboarding/buddy_profile_setup_screen.dart';
+import 'screens/onboarding/buddy_completion_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/font_demo_screen.dart';
 import 'screens/profile/settings/general/privacy_policy_screen.dart';
@@ -45,6 +55,7 @@ import 'screens/profile/settings/delete_account_screen.dart';
 import 'screens/profile/goals/weight_goals_screen.dart';
 import 'screens/profile/goals/fitness_goals_screen.dart';
 import 'screens/profile/goals/nutrition_goals_screen.dart';
+import 'screens/profile/buddy_customization_screen.dart';
 // import 'widgets/debug_route_menu.dart';
 import 'screens/workout/workout_type_selection_screen.dart';
 import 'screens/workout/running/running_setup_screen.dart';
@@ -62,7 +73,6 @@ import 'screens/workout/resistance/resistance_summary_screen.dart';
 import 'screens/wellness/wellness_tracker_page.dart';
 import 'screens/wellness/wellness_onboarding_screen.dart';
 import 'screens/wellness/wellness_settings_screen.dart';
-import 'widgets/debug_route_menu.dart';
 import 'features/yolo_camera/presentation/screens/yolo_debug_screen.dart';
 
 Future<void> main() async {
@@ -99,12 +109,6 @@ class FlowFitPhoneApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use YOLO debug screen in debug builds, otherwise use environment variable or default
-    const bool kDebugMode = bool.fromEnvironment('dart.vm.product') == false;
-    final String initialRoute = kDebugMode
-        ? '/yolo-debug'
-        : const String.fromEnvironment('INITIAL_ROUTE', defaultValue: '/');
-
     return MultiProvider(
       providers: [
         Provider<HeartBpmAdapter>(create: (_) => HeartBpmAdapter()),
@@ -140,10 +144,6 @@ class FlowFitPhoneApp extends StatelessWidget {
           update: (_, useCase, __) => ActivityClassifierViewModel(useCase),
         ),
       ],
-      // Read an optional compile-time environment variable `INITIAL_ROUTE`.
-      // This allows developers to quickly jump to a route when running the app
-      // without editing code. Example:
-      // flutter run -d <device-id> -t lib/main.dart --dart-define=INITIAL_ROUTE=/font-demo
       child: MaterialApp(
         // Add navigator key for deep link handling
         navigatorKey: DeepLinkHandler.navigatorKey,

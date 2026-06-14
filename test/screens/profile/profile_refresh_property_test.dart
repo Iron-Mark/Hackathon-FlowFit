@@ -27,7 +27,7 @@ void main() {
           'very-long-user-id-with-many-characters-1234567890',
         ];
 
-        for (final userId in testCases) {
+        for (final _ in testCases) {
           // Arrange: Create a mock profile notifier
           final mockNotifier = MockProfileNotifier();
           when(mockNotifier.loadProfile()).thenAnswer((_) async {});
@@ -93,7 +93,6 @@ void main() {
       ];
 
       for (final testCase in testCases) {
-        final userId = testCase['userId'] as String;
         final refreshCount = testCase['refreshCount'] as int;
 
         // Arrange

@@ -72,7 +72,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               .read(profileRepositoryProvider)
               .hasCompletedSurvey(next.user!.id);
 
-          if (!mounted) return;
+          if (!context.mounted) return;
 
           if (hasCompletedSurvey) {
             // Navigate to dashboard if onboarding is complete
@@ -87,7 +87,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         } catch (e) {
           // If there's an error checking survey status, default to dashboard
-          if (!mounted) return;
+          if (!context.mounted) return;
           Navigator.pushReplacementNamed(context, '/dashboard');
         }
       } else if (next.errorMessage != null) {
@@ -152,7 +152,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Enter your email',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -205,7 +207,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -228,7 +232,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         _obscurePassword
                             ? SolarIconsOutline.eyeClosed
                             : SolarIconsOutline.eye,
-                        color: AppTheme.text.withOpacity(0.6),
+                        color: AppTheme.text.withValues(alpha: 0.6),
                       ),
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
@@ -312,19 +316,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Row(
                   children: [
                     Expanded(
-                      child: Divider(color: AppTheme.text.withOpacity(0.1)),
+                      child: Divider(
+                        color: AppTheme.text.withValues(alpha: 0.1),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         'Or sign in with',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.text.withOpacity(0.5),
+                          color: AppTheme.text.withValues(alpha: 0.5),
                         ),
                       ),
                     ),
                     Expanded(
-                      child: Divider(color: AppTheme.text.withOpacity(0.1)),
+                      child: Divider(
+                        color: AppTheme.text.withValues(alpha: 0.1),
+                      ),
                     ),
                   ],
                 ),
@@ -341,7 +349,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.text,
-                      side: BorderSide(color: AppTheme.text.withOpacity(0.1)),
+                      side: BorderSide(
+                        color: AppTheme.text.withValues(alpha: 0.1),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -374,7 +384,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.text,
-                      side: BorderSide(color: AppTheme.text.withOpacity(0.1)),
+                      side: BorderSide(
+                        color: AppTheme.text.withValues(alpha: 0.1),
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -402,7 +414,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
+                      const Text(
                         "Don't have an account? ",
                         style: TextStyle(color: AppTheme.text),
                       ),

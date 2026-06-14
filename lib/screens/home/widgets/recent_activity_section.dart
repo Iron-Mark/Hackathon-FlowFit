@@ -7,14 +7,14 @@ import '../../../providers/dashboard_providers.dart';
 import '../../../widgets/mood_change_badge.dart';
 
 /// RecentActivitySection widget displays recent workout history
-/// 
+///
 /// Shows:
 /// - Section header "Your Recent Activity"
 /// - List of ActivityCard widgets
 /// - Loading skeleton placeholders
 /// - Error state UI
 /// - Empty state UI
-/// 
+///
 /// Requirements: 4.1, 4.2, 4.6, 4.7, 4.8, 9.3
 class RecentActivitySection extends ConsumerWidget {
   const RecentActivitySection({super.key});
@@ -38,7 +38,7 @@ class RecentActivitySection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Activity content
         recentActivitiesAsync.when(
           data: (activities) => _buildActivityContent(context, activities),
@@ -49,7 +49,10 @@ class RecentActivitySection extends ConsumerWidget {
     );
   }
 
-  Widget _buildActivityContent(BuildContext context, List<RecentActivity> activities) {
+  Widget _buildActivityContent(
+    BuildContext context,
+    List<RecentActivity> activities,
+  ) {
     if (activities.isEmpty) {
       return _buildEmptyState(context);
     }
@@ -69,7 +72,7 @@ class RecentActivitySection extends ConsumerWidget {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
@@ -79,7 +82,7 @@ class RecentActivitySection extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -90,7 +93,7 @@ class RecentActivitySection extends ConsumerWidget {
             Icon(
               Icons.fitness_center_outlined,
               size: 48,
-              color: theme.colorScheme.onSurface.withOpacity(0.4),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 16),
             Text(
@@ -103,7 +106,7 @@ class RecentActivitySection extends ConsumerWidget {
             Text(
               'Let\'s get started!',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -114,7 +117,7 @@ class RecentActivitySection extends ConsumerWidget {
 
   Widget _buildLoadingSkeleton(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
@@ -128,7 +131,7 @@ class RecentActivitySection extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -142,7 +145,7 @@ class RecentActivitySection extends ConsumerWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
@@ -156,7 +159,9 @@ class RecentActivitySection extends ConsumerWidget {
                             width: 120,
                             height: 16,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.onSurface.withOpacity(0.1),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -165,7 +170,9 @@ class RecentActivitySection extends ConsumerWidget {
                             width: 80,
                             height: 12,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.onSurface.withOpacity(0.1),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(4),
                             ),
                           ),
@@ -184,7 +191,7 @@ class RecentActivitySection extends ConsumerWidget {
 
   Widget _buildErrorState(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
@@ -194,7 +201,7 @@ class RecentActivitySection extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -202,11 +209,7 @@ class RecentActivitySection extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
             const SizedBox(height: 16),
             Text(
               'Failed to load activities',
@@ -218,7 +221,7 @@ class RecentActivitySection extends ConsumerWidget {
             Text(
               'Pull to refresh',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -229,27 +232,24 @@ class RecentActivitySection extends ConsumerWidget {
 }
 
 /// ActivityCard displays a single workout activity
-/// 
+///
 /// Shows:
 /// - Activity type icon with color
 /// - Activity name
 /// - Activity details
 /// - Activity date label
-/// 
+///
 /// Activity type mappings:
 /// - run → running icon, primary color
 /// - walk → walking icon, green (#10B981)
 /// - workout → dumbbells icon, error color
 /// - cycle → bicycling icon, purple (#9333EA)
-/// 
+///
 /// Requirements: 4.2, 4.6, 4.8
 class ActivityCard extends StatelessWidget {
   final RecentActivity activity;
 
-  const ActivityCard({
-    super.key,
-    required this.activity,
-  });
+  const ActivityCard({super.key, required this.activity});
 
   /// Maps activity type to icon
   IconData _getActivityIcon(String type) {
@@ -270,7 +270,7 @@ class ActivityCard extends StatelessWidget {
   /// Maps activity type to color
   Color _getActivityColor(BuildContext context, String type) {
     final theme = Theme.of(context);
-    
+
     switch (type) {
       case 'run':
         return theme.colorScheme.primary;
@@ -306,7 +306,7 @@ class ActivityCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -319,17 +319,13 @@ class ActivityCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: activityColor.withOpacity(0.1),
+                  color: activityColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  activityIcon,
-                  size: 24,
-                  color: activityColor,
-                ),
+                child: Icon(activityIcon, size: 24, color: activityColor),
               ),
               const SizedBox(width: 12),
-              
+
               // Activity info
               Expanded(
                 child: Column(
@@ -358,7 +354,9 @@ class ActivityCard extends StatelessWidget {
                     Text(
                       activity.details,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                     // Mood boost text
@@ -376,12 +374,12 @@ class ActivityCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              
+
               // Date label
               Text(
                 activity.dateLabel,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               ),
             ],

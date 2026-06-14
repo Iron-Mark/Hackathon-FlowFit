@@ -65,6 +65,8 @@ dependencies:
   image_picker: ^1.1.2 # For selecting background images for share cards
   image: ^4.0.0 # For camera image conversion (YUV to RGB)
 
+  gotrue: ^2.16.0
+  path: ^1.9.1
 flutter:
   assets:
     - assets/model/activity_tracker.tflite
@@ -131,3 +133,4 @@ dev_dependencies:
   # Linting
   flutter_lints: ^3.0.2 # SAFE UPGRADE: New lint rules
 
+  state_notifier: ^1.0.0

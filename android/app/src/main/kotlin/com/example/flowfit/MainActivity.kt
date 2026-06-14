@@ -17,12 +17,16 @@ import io.flutter.plugins.GeneratedPluginRegistrant
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.EventChannel
+import com.google.android.gms.wearable.MessageClient
+import com.google.android.gms.wearable.Wearable
 import com.samsung.wearable_rotary.WearableRotaryPlugin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.json.JSONArray
+import org.json.JSONObject
 
 class MainActivity: FlutterActivity() {
     companion object {
@@ -43,7 +47,31 @@ class MainActivity: FlutterActivity() {
     private val scope = CoroutineScope(Dispatchers.Main)
     
     private var lastHeartRateData: Map<String, Any?>? = null
-    
+
+    // Foreground Wearable message listener — receives watch messages when app is in foreground.
+    // This is more reliable than WearableListenerService on devices with aggressive battery saving.
+    private val wearableMessageListener = MessageClient.OnMessageReceivedListener { event ->
+        Log.i(TAG, "📨 Direct Wearable message received: path=${event.path}")
+        val jsonData = String(event.data, Charsets.UTF_8)
+        try {
+            when (event.path) {
+                "/heart_rate" -> {
+                    Log.i(TAG, "💓 HR data (direct): $jsonData")
+                    val map = parseJsonToMap(jsonData)
+                    mainHandler.post { PhoneDataListenerService.eventSink?.success(map) }
+                }
+                "/sensor_data" -> {
+                    Log.i(TAG, "📊 Sensor batch (direct): ${jsonData.take(80)}...")
+                    val map = parseJsonToMap(jsonData)
+                    mainHandler.post { PhoneDataListenerService.sensorBatchEventSink?.success(map) }
+                }
+                else -> Log.d(TAG, "Unhandled direct message path: ${event.path}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error handling direct Wearable message", e)
+        }
+    }
+
     // Wake lock to keep tracking when screen is off
     private var wakeLock: PowerManager.WakeLock? = null
     private var isTrackingActive = false
@@ -791,24 +819,72 @@ class MainActivity: FlutterActivity() {
     }
 
     /**
+     * Helper to parse a JSON string into a Map for Flutter EventChannel.
+     * Mirrors the parsing in PhoneDataListenerService.
+     */
+    private fun parseJsonToMap(jsonString: String): Map<String, Any?> {
+        val obj = JSONObject(jsonString)
+        return obj.toFlatMap()
+    }
+
+    private fun JSONObject.toFlatMap(): Map<String, Any?> {
+        val map = mutableMapOf<String, Any?>()
+        keys().forEach { key ->
+            map[key] = when (val v = get(key)) {
+                is JSONObject -> v.toFlatMap()
+                is JSONArray  -> v.toFlatList()
+                JSONObject.NULL -> null
+                else -> v
+            }
+        }
+        return map
+    }
+
+    private fun JSONArray.toFlatList(): List<Any?> {
+        val list = mutableListOf<Any?>()
+        for (i in 0 until length()) {
+            list.add(when (val v = get(i)) {
+                is JSONObject -> v.toFlatMap()
+                is JSONArray  -> v.toFlatList()
+                JSONObject.NULL -> null
+                else -> v
+            })
+        }
+        return list
+    }
+
+    /**
      * Handle onPause lifecycle event
-     * Keep tracking active but log the state
+     * Keep tracking active but log the state.
+     * Also unregister foreground Wearable listener.
      */
     override fun onPause() {
+        try {
+            Wearable.getMessageClient(this).removeListener(wearableMessageListener)
+            Log.i(TAG, "Foreground Wearable listener unregistered")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not unregister Wearable listener: ${e.message}")
+        }
         super.onPause()
         if (isTrackingActive) {
             Log.i(TAG, "Activity paused but tracking continues with wake lock")
         }
     }
-    
+
     /**
      * Handle onResume lifecycle event
-     * Refresh wake lock if tracking is active
+     * Refresh wake lock if tracking is active.
+     * Also register foreground Wearable listener so watch messages are received reliably.
      */
     override fun onResume() {
         super.onResume()
+        try {
+            Wearable.getMessageClient(this).addListener(wearableMessageListener)
+            Log.i(TAG, "✅ Foreground Wearable listener registered — will receive watch messages directly")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not register Wearable listener: ${e.message}")
+        }
         if (isTrackingActive) {
-            // Refresh wake lock to ensure it's still held
             acquireWakeLock()
             Log.i(TAG, "Activity resumed, wake lock refreshed")
         }

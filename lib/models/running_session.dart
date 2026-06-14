@@ -1,6 +1,7 @@
 import 'package:latlong2/latlong.dart';
 import 'workout_session.dart';
 import 'mood_rating.dart';
+import 'activity_mode_detection.dart';
 
 /// Goal type for running workouts
 enum GoalType {
@@ -18,36 +19,45 @@ enum GoalType {
 }
 
 /// Running workout session with GPS tracking
-/// 
+///
 /// Extends WorkoutSession with running-specific fields including
 /// distance, pace, route tracking, and elevation data.
 class RunningSession extends WorkoutSession {
   /// Type of goal (distance or duration based)
   final GoalType goalType;
-  
+
   /// Target distance in kilometers (if distance goal)
   final double? targetDistance;
-  
+
   /// Target duration in minutes (if duration goal)
   final int? targetDuration;
-  
+
   /// Current distance covered in kilometers
   final double currentDistance;
-  
+
   /// Average pace in minutes per kilometer
   final double? avgPace;
-  
+
   /// GPS route points
   final List<LatLng> routePoints;
-  
+
   /// Encoded route polyline for storage
   final String? routePolyline;
-  
+
   /// Total elevation gain in meters
   final int? elevationGain;
-  
+
   /// Total steps counted during workout
   final int? steps;
+
+  /// AI Activity mode detections throughout workout
+  final List<ActivityModeDetection>? activityModeHistory;
+
+  /// Average activity mode probabilities [stress, cardio, strength]
+  final List<double>? avgActivityProbabilities;
+
+  /// Dominant activity mode during workout
+  final String? dominantActivityMode;
 
   RunningSession({
     required super.id,
@@ -62,6 +72,9 @@ class RunningSession extends WorkoutSession {
     this.routePolyline,
     this.elevationGain,
     this.steps,
+    this.activityModeHistory,
+    this.avgActivityProbabilities,
+    this.dominantActivityMode,
     super.endTime,
     super.durationSeconds,
     super.preMood,
@@ -78,9 +91,9 @@ class RunningSession extends WorkoutSession {
   double get progressPercentage {
     if (goalType == GoalType.distance && targetDistance != null) {
       return (currentDistance / targetDistance!).clamp(0.0, 1.0);
-    } else if (goalType == GoalType.duration && 
-               targetDuration != null && 
-               durationSeconds != null) {
+    } else if (goalType == GoalType.duration &&
+        targetDuration != null &&
+        durationSeconds != null) {
       return (durationSeconds! / (targetDuration! * 60)).clamp(0.0, 1.0);
     }
     return 0.0;
@@ -181,7 +194,7 @@ class RunningSession extends WorkoutSession {
       routePolyline: json['route_polyline'] as String?,
       elevationGain: json['elevation_gain_m'] as int?,
       steps: json['steps'] as int?,
-      endTime: json['end_time'] != null 
+      endTime: json['end_time'] != null
           ? DateTime.parse(json['end_time'] as String)
           : null,
       durationSeconds: json['duration_seconds'] as int?,

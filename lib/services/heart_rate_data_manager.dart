@@ -30,9 +30,9 @@ class HeartRateDataManager {
     this.maxBufferSize = 100,
     this.maxDatabaseRecords = 10000,
     int ibiHistorySize = 10,
-  })  : _dbService = dbService ?? DatabaseService.instance,
-        _logger = logger ?? Logger(),
-        _ibiHistory = IbiHistoryManager(maxHistorySize: ibiHistorySize);
+  }) : _dbService = dbService ?? DatabaseService.instance,
+       _logger = logger ?? Logger(),
+       _ibiHistory = IbiHistoryManager(maxHistorySize: ibiHistorySize);
 
   /// Stream of heart rate data updates
   Stream<TrackedData> get dataStream => _dataStreamController.stream;
@@ -54,7 +54,9 @@ class HeartRateDataManager {
       // Update IBI history
       if (data.hasIbiData) {
         _ibiHistory.addIbiValues(data.ibiValues);
-        _logger.d('IBI history updated: ${_ibiHistory.size} values, HRV: ${_ibiHistory.calculateHRV().toStringAsFixed(1)}');
+        _logger.d(
+          'IBI history updated: ${_ibiHistory.size} values, HRV: ${_ibiHistory.calculateHRV().toStringAsFixed(1)}',
+        );
       }
 
       // Add to buffer
@@ -68,7 +70,9 @@ class HeartRateDataManager {
         await _flushBuffer();
       }
 
-      _logger.d('Data added: $data (buffer: ${_dataBuffer.length}/$maxBufferSize)');
+      _logger.d(
+        'Data added: $data (buffer: ${_dataBuffer.length}/$maxBufferSize)',
+      );
     } catch (e, stackTrace) {
       _logger.e('Error adding data', error: e, stackTrace: stackTrace);
     }
@@ -97,7 +101,9 @@ class HeartRateDataManager {
         await _flushBuffer();
       }
 
-      _logger.d('Batch added: ${dataList.length} records (buffer: ${_dataBuffer.length}/$maxBufferSize)');
+      _logger.d(
+        'Batch added: ${dataList.length} records (buffer: ${_dataBuffer.length}/$maxBufferSize)',
+      );
     } catch (e, stackTrace) {
       _logger.e('Error adding batch', error: e, stackTrace: stackTrace);
     }
@@ -143,13 +149,16 @@ class HeartRateDataManager {
         _logger.w('Database size exceeded: $totalRecords/$maxDatabaseRecords');
 
         // Delete oldest synced records
-        final recordsToDelete = totalRecords - maxDatabaseRecords;
         final deleted = await _dbService.deleteOldData(daysToKeep: 7);
 
         _logger.i('Cleaned up $deleted old records');
       }
     } catch (e, stackTrace) {
-      _logger.e('Error checking database size', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Error checking database size',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -194,7 +203,11 @@ class HeartRateDataManager {
 
       return [...bufferData, ...dbData];
     } catch (e, stackTrace) {
-      _logger.e('Error getting data by date range', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Error getting data by date range',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return [];
     }
   }
@@ -241,11 +254,9 @@ class DataSyncManager {
   final Logger _logger;
   Timer? _syncTimer;
 
-  DataSyncManager({
-    DatabaseService? dbService,
-    Logger? logger,
-  })  : _dbService = dbService ?? DatabaseService.instance,
-        _logger = logger ?? Logger();
+  DataSyncManager({DatabaseService? dbService, Logger? logger})
+    : _dbService = dbService ?? DatabaseService.instance,
+      _logger = logger ?? Logger();
 
   /// Start periodic sync (every N minutes)
   void startPeriodicSync({Duration interval = const Duration(minutes: 15)}) {

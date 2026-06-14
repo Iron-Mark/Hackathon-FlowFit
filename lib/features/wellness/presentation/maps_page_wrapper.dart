@@ -4,15 +4,33 @@ import 'package:provider/provider.dart';
 import 'package:flowfit/services/watch_bridge.dart';
 import 'package:flowfit/models/heart_rate_data.dart' as hr_model;
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart' as maplat;
 import '../data/geofence_repository.dart';
 import '../services/geofence_service.dart';
 import 'maps_page.dart';
 import '../services/notification_service.dart';
 import '../services/mood_tracker_service.dart';
 
+void routeWellnessNotificationTap(String payload, GeofenceService service) {
+  if (payload.isEmpty) return;
+  if (payload.startsWith('focus:')) {
+    final id = payload.replaceFirst('focus:', '');
+    service.requestFocus(id);
+  } else if (payload == 'add_sanctuary') {
+    service.requestFocus('add_sanctuary');
+  }
+}
+
 class MapsPageWrapper extends StatefulWidget {
   final bool autoStartMoodTracker;
-  const MapsPageWrapper({super.key, this.autoStartMoodTracker = true});
+  final bool enableDeviceServices;
+
+  const MapsPageWrapper({
+    super.key,
+    this.autoStartMoodTracker = true,
+    this.enableDeviceServices = true,
+  });
+
   @override
   State<MapsPageWrapper> createState() => _MapsPageWrapperState();
 }
@@ -20,7 +38,7 @@ class MapsPageWrapper extends StatefulWidget {
 class _MapsPageWrapperState extends State<MapsPageWrapper> {
   late final GeofenceRepository _repo;
   late final GeofenceService _service;
-  late final WatchBridgeService _watchBridge;
+  WatchBridgeService? _watchBridge;
   late final MoodTrackerService _moodTracker;
   StreamSubscription<String>? _notificationTapSub;
 
@@ -29,7 +47,10 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
     super.initState();
     _repo = InMemoryGeofenceRepository();
     _service = GeofenceService(repository: _repo);
-    _watchBridge = WatchBridgeService();
+    final watchBridge = widget.enableDeviceServices
+        ? WatchBridgeService()
+        : null;
+    _watchBridge = watchBridge;
 
     // transform heart rate stream to mood stream using a simple heuristic
     Stream<MoodState> hrToMood(Stream<hr_model.HeartRateData> s) {
@@ -46,30 +67,32 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
     _moodTracker = MoodTrackerService(
       repository: _repo,
       service: _service,
-      moodStreamOverride: hrToMood(_watchBridge.heartRateStream),
-      currentPositionGetter: () async => await Geolocator.getCurrentPosition(),
+      moodStreamOverride: watchBridge == null
+          ? const Stream<MoodState>.empty()
+          : hrToMood(watchBridge.heartRateStream),
+      currentPositionGetter: widget.enableDeviceServices
+          ? () async => await Geolocator.getCurrentPosition()
+          : null,
     );
-    // Initialize notifications and start mood tracking (best-effort)
-    NotificationService.init();
-    // Start watch permission/connection monitoring and attempt to start HR tracking
-    _watchBridge.startPermissionMonitoring();
-    _watchBridge.startConnectionMonitoring();
-    try {
-      _watchBridge.connectToWatch().then((connected) {
-        if (connected) _watchBridge.startHeartRateTracking();
-      });
-    } catch (_) {}
+    if (widget.enableDeviceServices) {
+      // Initialize notifications and start mood tracking (best-effort)
+      NotificationService.init();
+      // Start watch permission/connection monitoring and attempt to start HR tracking
+      watchBridge?.startPermissionMonitoring();
+      watchBridge?.startConnectionMonitoring();
+      try {
+        watchBridge?.connectToWatch().then((connected) {
+          if (connected) watchBridge.startHeartRateTracking();
+        });
+      } catch (_) {}
+    }
     if (widget.autoStartMoodTracker) {
       _moodTracker.startMonitoring();
     }
-    _notificationTapSub = NotificationService.onNotificationTap.listen((payload) {
-      if (payload.isEmpty) return;
-      if (payload.startsWith('focus:')) {
-        final id = payload.replaceFirst('focus:', '');
-        _service.requestFocus(id);
-      } else if (payload == 'add_sanctuary') {
-        _service.requestFocus('add_sanctuary');
-      }
+    _notificationTapSub = NotificationService.onNotificationTap.listen((
+      payload,
+    ) {
+      routeWellnessNotificationTap(payload, _service);
     });
   }
 
@@ -77,6 +100,10 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
   void dispose() {
     _notificationTapSub?.cancel();
     _moodTracker.stopMonitoring();
+    _watchBridge?.stopPermissionMonitoring();
+    _watchBridge?.stopConnectionMonitoring();
+    _service.dispose();
+    _repo.dispose();
     super.dispose();
   }
 
@@ -88,7 +115,13 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
         ChangeNotifierProvider<GeofenceService>.value(value: _service),
         Provider<MoodTrackerService>.value(value: _moodTracker),
       ],
-      child: const WellnessMapsPage(),
+      child: WellnessMapsPage(
+        initialCenter: widget.enableDeviceServices
+            ? null
+            : const maplat.LatLng(0, 0),
+        enableLocationServices: widget.enableDeviceServices,
+        renderMapLayers: widget.enableDeviceServices,
+      ),
     );
   }
 }

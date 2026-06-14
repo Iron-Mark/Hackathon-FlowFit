@@ -7,22 +7,19 @@ class HealthTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: Column(
         children: [
-          const PageHeader(
-            title: 'Daily Log',
-            subtitle: 'Today, November 25',
-          ),
+          const PageHeader(title: 'Daily Log', subtitle: 'Today, November 25'),
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
-                  
+
                   // Food Intake Card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -33,7 +30,7 @@ class HealthTab extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -50,9 +47,8 @@ class HealthTab extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Food Intake',
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -64,9 +60,14 @@ class HealthTab extends StatelessWidget {
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.primary.withOpacity(0.1),
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -79,22 +80,25 @@ class HealthTab extends StatelessWidget {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 16),
-                          
+
                           // Progress Bar
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: LinearProgressIndicator(
                               value: 0.61,
                               minHeight: 8,
-                              backgroundColor: theme.colorScheme.surfaceVariant,
-                              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.primary,
+                              ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Meal Type Tabs
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -110,20 +114,24 @@ class HealthTab extends StatelessWidget {
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Food Items
-                          _buildFoodItem(context, 'Oatmeal with Berries', '350 kcal'),
+                          _buildFoodItem(
+                            context,
+                            'Oatmeal with Berries',
+                            '350 kcal',
+                          ),
                           const SizedBox(height: 12),
                           _buildFoodItem(context, 'Black Coffee', '5 kcal'),
                         ],
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Hydration Card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -134,7 +142,7 @@ class HealthTab extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -151,9 +159,8 @@ class HealthTab extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Hydration',
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -165,9 +172,12 @@ class HealthTab extends StatelessWidget {
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: Colors.cyan.withOpacity(0.1),
+                                  color: Colors.cyan.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -180,9 +190,9 @@ class HealthTab extends StatelessWidget {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 32),
-                          
+
                           // Circular Progress
                           Center(
                             child: Stack(
@@ -194,8 +204,13 @@ class HealthTab extends StatelessWidget {
                                   child: CircularProgressIndicator(
                                     value: 0.6,
                                     strokeWidth: 8,
-                                    backgroundColor: theme.colorScheme.surfaceVariant,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.cyan),
+                                    backgroundColor: theme
+                                        .colorScheme
+                                        .surfaceContainerHighest,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          Colors.cyan,
+                                        ),
                                   ),
                                 ),
                                 Column(
@@ -203,25 +218,29 @@ class HealthTab extends StatelessWidget {
                                   children: [
                                     Text(
                                       '60%',
-                                      style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.headlineSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       'of daily goal',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                     ),
                                   ],
                                 ),
                               ],
                             ),
                           ),
-                          
+
                           const SizedBox(height: 32),
-                          
+
                           // Water buttons
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -235,9 +254,9 @@ class HealthTab extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Sleep Card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -248,7 +267,7 @@ class HealthTab extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -265,9 +284,8 @@ class HealthTab extends StatelessWidget {
                                 children: [
                                   Text(
                                     'Sleep',
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -279,9 +297,12 @@ class HealthTab extends StatelessWidget {
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.1),
+                                  color: Colors.green.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -294,9 +315,9 @@ class HealthTab extends StatelessWidget {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 20),
-                          
+
                           // Sleep Time Cards
                           Row(
                             children: [
@@ -304,24 +325,31 @@ class HealthTab extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.surfaceVariant,
+                                    color: theme
+                                        .colorScheme
+                                        .surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Start',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.onSurfaceVariant,
-                                        ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         '11:30 PM',
-                                        style: theme.textTheme.bodyLarge?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -332,24 +360,31 @@ class HealthTab extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.surfaceVariant,
+                                    color: theme
+                                        .colorScheme
+                                        .surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'End',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.onSurfaceVariant,
-                                        ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         '7:00 AM',
-                                        style: theme.textTheme.bodyLarge?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -361,7 +396,7 @@ class HealthTab extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -374,11 +409,13 @@ class HealthTab extends StatelessWidget {
 
   Widget _buildMealTab(BuildContext context, String label, bool isSelected) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isSelected ? theme.colorScheme.surfaceVariant : Colors.transparent,
+        color: isSelected
+            ? theme.colorScheme.surfaceContainerHighest
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -392,14 +429,14 @@ class HealthTab extends StatelessWidget {
 
   Widget _buildFoodItem(BuildContext context, String name, String calories) {
     final theme = Theme.of(context);
-    
+
     return Row(
       children: [
         Container(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceVariant,
+            color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),
         ),
@@ -429,12 +466,12 @@ class HealthTab extends StatelessWidget {
 
   Widget _buildWaterButton(BuildContext context, String label) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: 64,
       height: 64,
       decoration: BoxDecoration(
-        color: Colors.cyan.withOpacity(0.1),
+        color: Colors.cyan.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: IconButton(

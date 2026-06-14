@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/mood_rating.dart';
 
 /// Mood transformation card showing pre/post workout mood change
-/// 
+///
 /// Displays mood improvement with gradient background and celebration text.
 /// Requirements: 11.1, 11.2
 class MoodTransformationCard extends StatelessWidget {
@@ -41,7 +41,7 @@ class MoodTransformationCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: gradientColors.first.withOpacity(0.3),
+            color: gradientColors.first.withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -61,10 +61,7 @@ class MoodTransformationCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                '🚀',
-                style: TextStyle(fontSize: 24),
-              ),
+              const Text('🚀', style: TextStyle(fontSize: 24)),
             ],
           ),
           const SizedBox(height: 20),
@@ -74,25 +71,19 @@ class MoodTransformationCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Pre-mood
-              Text(
-                preMood!.emoji,
-                style: const TextStyle(fontSize: 48),
-              ),
+              Text(preMood!.emoji, style: const TextStyle(fontSize: 48)),
               const SizedBox(width: 16),
 
               // Arrow
               Icon(
                 Icons.arrow_forward_rounded,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 size: 32,
               ),
               const SizedBox(width: 16),
 
               // Post-mood
-              Text(
-                postMood!.emoji,
-                style: const TextStyle(fontSize: 48),
-              ),
+              Text(postMood!.emoji, style: const TextStyle(fontSize: 48)),
             ],
           ),
           const SizedBox(height: 16),

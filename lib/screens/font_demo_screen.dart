@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class FontDemoScreen extends StatelessWidget {
-  const FontDemoScreen({Key? key}) : super(key: key);
+  const FontDemoScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -67,9 +67,9 @@ class FontDemoScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
-            Text(
+            const Text(
               'Compare with a system font: This should look different if GeneralSans is applied.',
-              style: const TextStyle(fontFamily: 'Roboto', fontSize: 14),
+              style: TextStyle(fontFamily: 'Roboto', fontSize: 14),
             ),
           ],
         ),

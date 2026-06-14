@@ -15,6 +15,22 @@ class User {
     this.emailConfirmedAt,
   });
 
+  User copyWith({
+    String? id,
+    String? email,
+    String? fullName,
+    DateTime? createdAt,
+    DateTime? emailConfirmedAt,
+  }) {
+    return User(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      fullName: fullName ?? this.fullName,
+      createdAt: createdAt ?? this.createdAt,
+      emailConfirmedAt: emailConfirmedAt ?? this.emailConfirmedAt,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -28,9 +44,9 @@ class User {
 
   @override
   int get hashCode =>
-      id.hashCode ^ 
-      email.hashCode ^ 
-      fullName.hashCode ^ 
+      id.hashCode ^
+      email.hashCode ^
+      fullName.hashCode ^
       createdAt.hashCode ^
       emailConfirmedAt.hashCode;
 

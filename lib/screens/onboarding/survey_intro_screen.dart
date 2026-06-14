@@ -56,7 +56,7 @@ class _SurveyIntroScreenState extends ConsumerState<SurveyIntroScreen>
     // Get user data from auth state
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
-    final userName = user?.email?.split('@').first ?? 'there';
+    final userName = user?.email.split('@').first ?? 'there';
     final userId = user?.id;
 
     // Also check for args passed from signup

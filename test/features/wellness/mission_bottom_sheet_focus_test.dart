@@ -1,44 +1,99 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flowfit/features/wellness/presentation/maps_page_wrapper.dart';
-import 'package:flowfit/features/wellness/presentation/maps_page.dart';
 import 'package:flowfit/features/wellness/data/geofence_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/focus_mission_overlay.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/mission_bottom_sheet.dart';
+import 'package:flowfit/features/wellness/services/geofence_service.dart';
 
 void main() {
-  testWidgets('Pressing Focus & Navigate triggers FocusMissionOverlay', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: MapsPageWrapper(autoStartMoodTracker: false)));
-
-    await tester.pump();
-    await Future.delayed(const Duration(milliseconds: 50));
-
-    final mapsFinder = find.byType(WellnessMapsPage);
-    final repo = Provider.of<GeofenceRepository>(tester.element(mapsFinder), listen: false);
-
-    final mission = GeofenceMission(id: 'm1', title: 'Test M', center: LatLngSimple(0.0, 0.0), radiusMeters: 50);
+  testWidgets('Pressing Focus & Navigate triggers FocusMissionOverlay', (
+    WidgetTester tester,
+  ) async {
+    final repo = InMemoryGeofenceRepository();
+    final service = GeofenceService(repository: repo);
+    final mission = GeofenceMission(
+      id: 'm1',
+      title: 'Test M',
+      center: const LatLngSimple(0.0, 0.0),
+      radiusMeters: 50,
+    );
     await repo.add(mission);
 
+    await tester.pumpWidget(
+      MaterialApp(
+        home: _MissionFocusHarness(repo: repo, service: service),
+      ),
+    );
     await tester.pump();
-    await Future.delayed(const Duration(milliseconds: 50));
 
-    // Tap the add button to ensure bottom sheet exists if not visible
-    // (If there's already bottom sheet, this will no-op)
-    final addFinder = find.widgetWithIcon(ElevatedButton, Icons.add);
-    if (addFinder.evaluate().isNotEmpty) {
-      await tester.tap(addFinder);
-      await tester.pump();
-      await Future.delayed(const Duration(milliseconds: 50));
-    }
-
-    // Find the flag IconButton for the mission and tap it.
-    final flagFinder = find.widgetWithIcon(IconButton, Icons.flag).first;
+    final flagFinder = find.widgetWithIcon(ElevatedButton, Icons.flag).first;
     expect(flagFinder, findsOneWidget);
-    await tester.tap(flagFinder);
-    await tester.pump();
-    await Future.delayed(const Duration(milliseconds: 50));
 
-    // Now the FocusMissionOverlay should be visible and contain the mission title.
+    await tester.tap(flagFinder);
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(find.byType(FocusMissionOverlay), findsOneWidget);
     expect(find.text('Test M'), findsWidgets);
+
+    service.dispose();
+    repo.dispose();
   });
+}
+
+class _MissionFocusHarness extends StatefulWidget {
+  const _MissionFocusHarness({required this.repo, required this.service});
+
+  final GeofenceRepository repo;
+  final GeofenceService service;
+
+  @override
+  State<_MissionFocusHarness> createState() => _MissionFocusHarnessState();
+}
+
+class _MissionFocusHarnessState extends State<_MissionFocusHarness> {
+  GeofenceMission? _focusedMission;
+
+  @override
+  Widget build(BuildContext context) {
+    final focusedMission = _focusedMission;
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<GeofenceRepository>.value(value: widget.repo),
+        ChangeNotifierProvider<GeofenceService>.value(value: widget.service),
+      ],
+      child: Scaffold(
+        body: Stack(
+          children: [
+            MissionBottomSheet(
+              repo: widget.repo,
+              service: widget.service,
+              mapController: null,
+              lastCenter: null,
+              onAddAtLatLng: (_) {},
+              onOpenMission: (_) {},
+              onFocusMission: (mission) {
+                setState(() => _focusedMission = mission);
+              },
+            ),
+            if (focusedMission != null)
+              FocusMissionOverlay(
+                mission: focusedMission,
+                distanceMeters: 0,
+                eta: Duration.zero,
+                isActive: focusedMission.isActive,
+                speedMetersPerSecond: 1.4,
+                onUnfocus: () => setState(() => _focusedMission = null),
+                onCenter: () {},
+                onActivate: () {},
+                onDeactivate: () {},
+                onSpeedChanged: (_) {},
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

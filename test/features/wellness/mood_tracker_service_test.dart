@@ -12,18 +12,32 @@ void main() {
   test('MoodTracker triggers focus to nearest mission', () async {
     final controller = StreamController<MoodState>();
     final repo = InMemoryGeofenceRepository();
-    final service = GeofenceService(repository: repo, positionStreamOverride: null);
+    final service = GeofenceService(
+      repository: repo,
+      positionStreamOverride: null,
+    );
     final tracker = MoodTrackerService(
       repository: repo,
       service: service,
       moodStreamOverride: controller.stream,
-      currentPositionGetter: () async => Position(latitude: 0.0, longitude: 0.0, timestamp: DateTime.now(), accuracy: 1.0, altitude: 0.0, heading: 0.0, speed: 0.0, speedAccuracy: 0.0, headingAccuracy: 0.0, altitudeAccuracy: 0.0),
+      currentPositionGetter: () async => Position(
+        latitude: 0.0,
+        longitude: 0.0,
+        timestamp: DateTime.now(),
+        accuracy: 1.0,
+        altitude: 0.0,
+        heading: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+        headingAccuracy: 0.0,
+        altitudeAccuracy: 0.0,
+      ),
     );
 
     final mission = GeofenceMission(
       id: 'm1',
       title: 'Sanctuary',
-      center: LatLngSimple(0.0, 0.0),
+      center: const LatLngSimple(0.0, 0.0),
       radiusMeters: 100,
       type: MissionType.sanctuary,
     );

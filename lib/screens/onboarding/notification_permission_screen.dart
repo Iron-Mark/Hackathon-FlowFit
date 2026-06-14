@@ -50,10 +50,10 @@ class NotificationPermissionScreen extends ConsumerWidget {
               const Spacer(),
 
               // Buddy animation (thinking)
-              Center(
+              const Center(
                 child: BuddyIdleAnimation(
                   child: BuddyCharacterWidget(
-                    color: const Color(0xFF4ECDC4),
+                    color: Color(0xFF4ECDC4),
                     size: 120,
                   ),
                 ),
@@ -80,12 +80,12 @@ class NotificationPermissionScreen extends ConsumerWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFF4ECDC4).withOpacity(0.3),
+                    color: const Color(0xFF4ECDC4).withValues(alpha: 0.3),
                     width: 2,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

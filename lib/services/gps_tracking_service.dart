@@ -5,7 +5,8 @@ import 'package:latlong2/latlong.dart';
 /// Service for GPS tracking during workouts
 class GPSTrackingService {
   StreamSubscription<Position>? _positionSubscription;
-  final StreamController<LatLng> _locationController = StreamController<LatLng>.broadcast();
+  final StreamController<LatLng> _locationController =
+      StreamController<LatLng>.broadcast();
 
   /// Stream of GPS location updates
   Stream<LatLng> get locationStream => _locationController.stream;
@@ -32,14 +33,17 @@ class GPSTrackingService {
     }
 
     // Start position stream with 10m distance filter to reduce battery usage
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Update every 10 meters
-      ),
-    ).listen((Position position) {
-      _locationController.add(LatLng(position.latitude, position.longitude));
-    });
+    _positionSubscription =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10, // Update every 10 meters
+          ),
+        ).listen((Position position) {
+          _locationController.add(
+            LatLng(position.latitude, position.longitude),
+          );
+        });
   }
 
   /// Stops GPS tracking
@@ -51,7 +55,7 @@ class GPSTrackingService {
   /// Gets current GPS location
   Future<LatLng> getCurrentLocation() async {
     final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
     return LatLng(position.latitude, position.longitude);
   }
@@ -77,14 +81,14 @@ class GPSTrackingService {
   Future<bool> hasLocationPermission() async {
     final permission = await Geolocator.checkPermission();
     return permission == LocationPermission.always ||
-           permission == LocationPermission.whileInUse;
+        permission == LocationPermission.whileInUse;
   }
 
   /// Requests location permissions
   Future<bool> requestLocationPermission() async {
     final permission = await Geolocator.requestPermission();
     return permission == LocationPermission.always ||
-           permission == LocationPermission.whileInUse;
+        permission == LocationPermission.whileInUse;
   }
 
   /// Disposes resources

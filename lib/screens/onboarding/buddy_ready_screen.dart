@@ -90,7 +90,10 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.userFriendlyMessage ?? 'Saved offline! We\'ll sync when you\'re back online.'),
+              content: Text(
+                e.userFriendlyMessage ??
+                    'Saved offline! We\'ll sync when you\'re back online.',
+              ),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 3),
             ),
@@ -110,7 +113,10 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(e.userFriendlyMessage ?? 'Failed to save your Buddy. Please try again!'),
+              content: Text(
+                e.userFriendlyMessage ??
+                    'Failed to save your Buddy. Please try again!',
+              ),
               backgroundColor: Colors.red,
               action: SnackBarAction(
                 label: 'Retry',
@@ -127,7 +133,9 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Oops! Something went wrong. Please try again!'),
+            content: const Text(
+              'Oops! Something went wrong. Please try again!',
+            ),
             backgroundColor: Colors.red,
             action: SnackBarAction(
               label: 'Retry',
@@ -192,7 +200,7 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -239,13 +247,13 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF4ECDC4).withOpacity(0.2),
-                          const Color(0xFF66BB6A).withOpacity(0.2),
+                          const Color(0xFF4ECDC4).withValues(alpha: 0.2),
+                          const Color(0xFF66BB6A).withValues(alpha: 0.2),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFF4ECDC4).withOpacity(0.5),
+                        color: const Color(0xFF4ECDC4).withValues(alpha: 0.5),
                         width: 2,
                       ),
                     ),

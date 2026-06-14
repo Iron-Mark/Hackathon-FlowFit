@@ -30,12 +30,18 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
       final preMood = workoutFlow.preMood;
 
       // Start the running session
-      await ref.read(runningSessionProvider.notifier).startSession(
-        goalType: _goalType,
-        targetDistance: _goalType == GoalType.distance ? _targetDistance : null,
-        targetDuration: _goalType == GoalType.duration ? _targetDuration : null,
-        preMood: preMood,
-      );
+      await ref
+          .read(runningSessionProvider.notifier)
+          .startSession(
+            goalType: _goalType,
+            targetDistance: _goalType == GoalType.distance
+                ? _targetDistance
+                : null,
+            targetDuration: _goalType == GoalType.duration
+                ? _targetDuration
+                : null,
+            preMood: preMood,
+          );
 
       if (mounted) {
         // Navigate to active running screen
@@ -90,9 +96,9 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                   color: Colors.grey[600],
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Goal type selection
               Container(
                 padding: const EdgeInsets.all(20),
@@ -101,7 +107,7 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -141,9 +147,9 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Target value
               Container(
                 padding: const EdgeInsets.all(20),
@@ -152,7 +158,7 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -162,14 +168,16 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _goalType == GoalType.distance ? 'Target Distance' : 'Target Duration',
+                      _goalType == GoalType.distance
+                          ? 'Target Distance'
+                          : 'Target Duration',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _goalType == GoalType.distance 
+                      _goalType == GoalType.distance
                           ? '${_targetDistance.toStringAsFixed(1)} km'
                           : '$_targetDuration min',
                       style: theme.textTheme.displaySmall?.copyWith(
@@ -179,8 +187,8 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                     ),
                     const SizedBox(height: 16),
                     Slider(
-                      value: _goalType == GoalType.distance 
-                          ? _targetDistance 
+                      value: _goalType == GoalType.distance
+                          ? _targetDistance
                           : _targetDuration.toDouble(),
                       min: _goalType == GoalType.distance ? 1.0 : 5.0,
                       max: _goalType == GoalType.distance ? 20.0 : 120.0,
@@ -199,9 +207,9 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                   ],
                 ),
               ),
-              
+
               const Spacer(),
-              
+
               // Start button
               SizedBox(
                 height: 56,
@@ -213,7 +221,9 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Icon(SolarIconsBold.play),
@@ -255,14 +265,12 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFF3B82F6).withOpacity(0.1)
+          color: isSelected
+              ? const Color(0xFF3B82F6).withValues(alpha: 0.1)
               : Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected 
-                ? const Color(0xFF3B82F6)
-                : Colors.transparent,
+            color: isSelected ? const Color(0xFF3B82F6) : Colors.transparent,
             width: 2,
           ),
         ),
@@ -271,18 +279,14 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
             Icon(
               icon,
               size: 32,
-              color: isSelected 
-                  ? const Color(0xFF3B82F6)
-                  : Colors.grey[600],
+              color: isSelected ? const Color(0xFF3B82F6) : Colors.grey[600],
             ),
             const SizedBox(height: 8),
             Text(
               label,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: isSelected 
-                    ? const Color(0xFF3B82F6)
-                    : Colors.grey[600],
+                color: isSelected ? const Color(0xFF3B82F6) : Colors.grey[600],
               ),
             ),
           ],

@@ -25,23 +25,29 @@ class GeofenceEvent {
 
 class GeofenceService extends ChangeNotifier {
   final GeofenceRepository repository;
-  final StreamController<String> _focusRequestController = StreamController.broadcast();
+  final StreamController<String> _focusRequestController =
+      StreamController.broadcast();
   StreamSubscription<Position>? _positionSub;
   StreamSubscription<dynamic>? _nativeSub;
   final Stream<Position>? _positionStreamOverride;
-  final StreamController<GeofenceEvent> _eventController = StreamController.broadcast();
+  final StreamController<GeofenceEvent> _eventController =
+      StreamController.broadcast();
 
   // For target missions we track lastPos and cumulative distances
   final Map<String, Position> _lastPositionForMission = {};
   final Map<String, double> _cumulativeDistanceForMission = {};
 
-  GeofenceService({required this.repository, Stream<Position>? positionStreamOverride}) : _positionStreamOverride = positionStreamOverride;
+  GeofenceService({
+    required this.repository,
+    Stream<Position>? positionStreamOverride,
+  }) : _positionStreamOverride = positionStreamOverride;
 
   Stream<GeofenceEvent> get events => _eventController.stream;
 
   Stream<String> get focusRequests => _focusRequestController.stream;
 
-  double getProgress(String missionId) => _cumulativeDistanceForMission[missionId] ?? 0.0;
+  double getProgress(String missionId) =>
+      _cumulativeDistanceForMission[missionId] ?? 0.0;
 
   Future<void> startMonitoring({bool requirePermissions = true}) async {
     if (requirePermissions) {
@@ -49,19 +55,25 @@ class GeofenceService extends ChangeNotifier {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
         // bail
         return;
       }
     }
 
-    final locationSettings = const LocationSettings(
+    const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 5, // small filter
     );
-    _positionSub ??= (_positionStreamOverride ?? Geolocator.getPositionStream(locationSettings: locationSettings)).listen((pos) async {
-      await _handlePosition(pos);
-    });
+    _positionSub ??=
+        (_positionStreamOverride ??
+                Geolocator.getPositionStream(
+                  locationSettings: locationSettings,
+                ))
+            .listen((pos) async {
+              await _handlePosition(pos);
+            });
 
     // Listen to native geofence events if available (method channel)
     _nativeSub ??= GeofenceNative.events.listen((dynamic event) {
@@ -72,7 +84,24 @@ class GeofenceService extends ChangeNotifier {
         final lat = (map['lat'] as num?)?.toDouble();
         final lon = (map['lon'] as num?)?.toDouble();
         if (type == 'entered') {
-          _eventController.add(GeofenceEvent(missionId: id, type: GeofenceEventType.entered, position: Position(latitude: lat ?? 0.0, longitude: lon ?? 0.0, timestamp: DateTime.now(), accuracy: 0.0, altitude: 0.0, heading: 0.0, speed: 0.0, speedAccuracy: 0.0, headingAccuracy: 0.0, altitudeAccuracy: 0.0)));
+          _eventController.add(
+            GeofenceEvent(
+              missionId: id,
+              type: GeofenceEventType.entered,
+              position: Position(
+                latitude: lat ?? 0.0,
+                longitude: lon ?? 0.0,
+                timestamp: DateTime.now(),
+                accuracy: 0.0,
+                altitude: 0.0,
+                heading: 0.0,
+                speed: 0.0,
+                speedAccuracy: 0.0,
+                headingAccuracy: 0.0,
+                altitudeAccuracy: 0.0,
+              ),
+            ),
+          );
         }
       } catch (_) {}
     }, onError: (_) {});
@@ -94,13 +123,42 @@ class GeofenceService extends ChangeNotifier {
           final typeStr = e['type']?.toString().toLowerCase() ?? '';
           final lat = (e['lat'] as num?)?.toDouble();
           final lon = (e['lon'] as num?)?.toDouble();
-          final pos = Position(latitude: lat ?? 0.0, longitude: lon ?? 0.0, timestamp: DateTime.now(), accuracy: 0.0, altitude: 0.0, heading: 0.0, speed: 0.0, speedAccuracy: 0.0, headingAccuracy: 0.0, altitudeAccuracy: 0.0);
+          final pos = Position(
+            latitude: lat ?? 0.0,
+            longitude: lon ?? 0.0,
+            timestamp: DateTime.now(),
+            accuracy: 0.0,
+            altitude: 0.0,
+            heading: 0.0,
+            speed: 0.0,
+            speedAccuracy: 0.0,
+            headingAccuracy: 0.0,
+            altitudeAccuracy: 0.0,
+          );
           if (typeStr.contains('enter')) {
-            _eventController.add(GeofenceEvent(missionId: id, type: GeofenceEventType.entered, position: pos));
+            _eventController.add(
+              GeofenceEvent(
+                missionId: id,
+                type: GeofenceEventType.entered,
+                position: pos,
+              ),
+            );
           } else if (typeStr.contains('exit')) {
-            _eventController.add(GeofenceEvent(missionId: id, type: GeofenceEventType.exited, position: pos));
+            _eventController.add(
+              GeofenceEvent(
+                missionId: id,
+                type: GeofenceEventType.exited,
+                position: pos,
+              ),
+            );
           } else if (typeStr.contains('dwell')) {
-            _eventController.add(GeofenceEvent(missionId: id, type: GeofenceEventType.targetReached, position: pos));
+            _eventController.add(
+              GeofenceEvent(
+                missionId: id,
+                type: GeofenceEventType.targetReached,
+                position: pos,
+              ),
+            );
           }
         } catch (_) {}
       }, onError: (_) {});
@@ -115,7 +173,9 @@ class GeofenceService extends ChangeNotifier {
   Future<void> activateMission(String id) async {
     final mission = repository.getById(id);
     if (mission == null) return;
-    repository.update(mission.copyWith(isActive: true, status: GeofenceStatus.unknown));
+    repository.update(
+      mission.copyWith(isActive: true, status: GeofenceStatus.unknown),
+    );
     _cumulativeDistanceForMission[id] = 0.0;
     _lastPositionForMission.remove(id);
     notifyListeners();
@@ -143,7 +203,9 @@ class GeofenceService extends ChangeNotifier {
   }
 
   Future<void> _handlePosition(Position pos) async {
-    final missions = (await repository.getAll()).where((m) => m.isActive).toList();
+    final missions = (await repository.getAll())
+        .where((m) => m.isActive)
+        .toList();
     for (final m in missions) {
       final dist = Geolocator.distanceBetween(
         pos.latitude,
@@ -156,35 +218,81 @@ class GeofenceService extends ChangeNotifier {
       final prev = m.status;
 
       // Update repository mission status
-      await repository.update(m.copyWith(status: isInside ? GeofenceStatus.inside : GeofenceStatus.outside));
-      
+      await repository.update(
+        m.copyWith(
+          status: isInside ? GeofenceStatus.inside : GeofenceStatus.outside,
+        ),
+      );
+
       // Enter/Exit detection
       if (prev != GeofenceStatus.inside && isInside) {
-        _eventController.add(GeofenceEvent(missionId: m.id, type: GeofenceEventType.entered, position: pos));
+        _eventController.add(
+          GeofenceEvent(
+            missionId: m.id,
+            type: GeofenceEventType.entered,
+            position: pos,
+          ),
+        );
       }
       if (prev == GeofenceStatus.inside && !isInside) {
-        _eventController.add(GeofenceEvent(missionId: m.id, type: GeofenceEventType.exited, position: pos));
+        _eventController.add(
+          GeofenceEvent(
+            missionId: m.id,
+            type: GeofenceEventType.exited,
+            position: pos,
+          ),
+        );
       }
 
       // Special behavior per mission type
-        if (m.type == MissionType.safetyNet && !isInside) {
+      if (m.type == MissionType.safetyNet && !isInside) {
         // If outside and safety net active, alert
-        _eventController.add(GeofenceEvent(missionId: m.id, type: GeofenceEventType.outsideAlert, position: pos, value: dist));
-          // Show local notification
-          NotificationService.showNotification(title: '${m.title} - Outside', body: 'You are ${dist.toStringAsFixed(1)} m outside the safety radius.');
+        _eventController.add(
+          GeofenceEvent(
+            missionId: m.id,
+            type: GeofenceEventType.outsideAlert,
+            position: pos,
+            value: dist,
+          ),
+        );
+        // Show local notification
+        NotificationService.showNotification(
+          title: '${m.title} - Outside',
+          body:
+              'You are ${dist.toStringAsFixed(1)} m outside the safety radius.',
+        );
       }
 
       if (m.type == MissionType.target) {
         // accumulate distance travelled while active
         final lastPos = _lastPositionForMission[m.id];
         if (lastPos != null) {
-          final delta = Geolocator.distanceBetween(lastPos.latitude, lastPos.longitude, pos.latitude, pos.longitude);
-          _cumulativeDistanceForMission[m.id] = (_cumulativeDistanceForMission[m.id] ?? 0.0) + delta;
-          final reached = (m.targetDistanceMeters ?? double.infinity) <= (_cumulativeDistanceForMission[m.id] ?? 0);
-          _eventController.add(GeofenceEvent(missionId: m.id, type: GeofenceEventType.targetReached, position: pos, value: _cumulativeDistanceForMission[m.id]));
+          final delta = Geolocator.distanceBetween(
+            lastPos.latitude,
+            lastPos.longitude,
+            pos.latitude,
+            pos.longitude,
+          );
+          _cumulativeDistanceForMission[m.id] =
+              (_cumulativeDistanceForMission[m.id] ?? 0.0) + delta;
+          final reached =
+              (m.targetDistanceMeters ?? double.infinity) <=
+              (_cumulativeDistanceForMission[m.id] ?? 0);
+          _eventController.add(
+            GeofenceEvent(
+              missionId: m.id,
+              type: GeofenceEventType.targetReached,
+              position: pos,
+              value: _cumulativeDistanceForMission[m.id],
+            ),
+          );
           if (reached) {
             // Show notification for target reached
-            NotificationService.showNotification(title: '${m.title} - Target reached', body: 'Good job! You reached ${m.targetDistanceMeters?.toStringAsFixed(0) ?? 0} m');
+            NotificationService.showNotification(
+              title: '${m.title} - Target reached',
+              body:
+                  'Good job! You reached ${m.targetDistanceMeters?.toStringAsFixed(0) ?? 0} m',
+            );
           }
           if (reached) {
             // consider deactivating or notify the mission complete

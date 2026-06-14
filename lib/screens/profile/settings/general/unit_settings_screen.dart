@@ -87,47 +87,37 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
                 color: theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
-                children: [
-                  _buildRadioItem(
-                    context,
-                    'Metric',
-                    'Kilometers, Kilograms, Celsius',
-                    _measurementSystem,
-                    (value) {
-                      setState(() {
-                        _measurementSystem = value!;
-                        _distanceUnit = 'Kilometers';
-                        _weightUnit = 'Kilograms';
-                        _heightUnit = 'Centimeters';
-                        _temperatureUnit = 'Celsius';
-                      });
-                    },
-                  ),
-                  Divider(
-                    height: 1,
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.3,
+              child: RadioGroup<String>(
+                groupValue: _measurementSystem,
+                onChanged: (value) {
+                  if (value != null) {
+                    _updateMeasurementSystem(value);
+                  }
+                },
+                child: Column(
+                  children: [
+                    _buildRadioItem(
+                      context,
+                      'Metric',
+                      'Kilometers, Kilograms, Celsius',
+                      _updateMeasurementSystem,
                     ),
-                    indent: 16,
-                    endIndent: 16,
-                  ),
-                  _buildRadioItem(
-                    context,
-                    'Imperial',
-                    'Miles, Pounds, Fahrenheit',
-                    _measurementSystem,
-                    (value) {
-                      setState(() {
-                        _measurementSystem = value!;
-                        _distanceUnit = 'Miles';
-                        _weightUnit = 'Pounds';
-                        _heightUnit = 'Feet/Inches';
-                        _temperatureUnit = 'Fahrenheit';
-                      });
-                    },
-                  ),
-                ],
+                    Divider(
+                      height: 1,
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.3,
+                      ),
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+                    _buildRadioItem(
+                      context,
+                      'Imperial',
+                      'Miles, Pounds, Fahrenheit',
+                      _updateMeasurementSystem,
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -191,12 +181,28 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
     );
   }
 
+  void _updateMeasurementSystem(String value) {
+    setState(() {
+      _measurementSystem = value;
+      if (value == 'Metric') {
+        _distanceUnit = 'Kilometers';
+        _weightUnit = 'Kilograms';
+        _heightUnit = 'Centimeters';
+        _temperatureUnit = 'Celsius';
+      } else {
+        _distanceUnit = 'Miles';
+        _weightUnit = 'Pounds';
+        _heightUnit = 'Feet/Inches';
+        _temperatureUnit = 'Fahrenheit';
+      }
+    });
+  }
+
   Widget _buildRadioItem(
     BuildContext context,
     String title,
     String subtitle,
-    String groupValue,
-    ValueChanged<String?> onChanged,
+    ValueChanged<String> onChanged,
   ) {
     final theme = Theme.of(context);
 
@@ -226,12 +232,7 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
                 ],
               ),
             ),
-            Radio<String>(
-              value: title,
-              groupValue: groupValue,
-              onChanged: onChanged,
-              activeColor: theme.colorScheme.primary,
-            ),
+            Radio<String>(value: title, activeColor: theme.colorScheme.primary),
           ],
         ),
       ),

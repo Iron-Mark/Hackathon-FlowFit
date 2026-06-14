@@ -6,7 +6,6 @@ import 'home/home_screen.dart';
 import 'health/health_screen.dart';
 import 'track/track_screen.dart';
 import 'progress/progress_screen.dart';
-import 'profile/profile_screen.dart';
 import 'profile/kids_profile_screen.dart';
 // Keep tab imports for future use
 // ignore: unused_import

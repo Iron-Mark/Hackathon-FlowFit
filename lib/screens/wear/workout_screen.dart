@@ -5,11 +5,7 @@ class WorkoutScreen extends StatefulWidget {
   final WearShape shape;
   final WearMode mode;
 
-  const WorkoutScreen({
-    super.key,
-    required this.shape,
-    required this.mode,
-  });
+  const WorkoutScreen({super.key, required this.shape, required this.mode});
 
   @override
   State<WorkoutScreen> createState() => _WorkoutScreenState();
@@ -17,9 +13,9 @@ class WorkoutScreen extends StatefulWidget {
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isTracking = false;
-  int _duration = 0;
-  int _heartRate = 72;
-  int _calories = 0;
+  final int _duration = 0;
+  final int _heartRate = 72;
+  final int _calories = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -86,13 +82,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             color: Colors.white,
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey[400],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[400])),
       ],
     );
   }
@@ -109,10 +99,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           shape: const CircleBorder(),
           padding: const EdgeInsets.all(20),
         ),
-        child: Icon(
-          _isTracking ? Icons.stop : Icons.play_arrow,
-          size: 48,
-        ),
+        child: Icon(_isTracking ? Icons.stop : Icons.play_arrow, size: 48),
       ),
     );
   }
@@ -133,10 +120,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         const SizedBox(height: 12),
         Text(
           '$_heartRate BPM',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey[400],
-          ),
+          style: TextStyle(fontSize: 16, color: Colors.grey[400]),
           textAlign: TextAlign.center,
         ),
       ],

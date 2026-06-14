@@ -8,8 +8,8 @@ plugins {
 
 android {
     namespace = "com.example.flowfit"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 36  // Use Android 15 (API 36) - required by plugins
+    ndkVersion = "28.0.13004108"  // Updated to match ultralytics_yolo requirement
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -32,7 +32,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 30  // Required for Wear OS 3.0+ and Samsung Health Sensor API (article recommends 23, but 30 needed for Samsung Health)
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36  // Use Android 15 (API 36) - required by plugins
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

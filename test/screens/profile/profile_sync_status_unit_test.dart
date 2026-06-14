@@ -215,17 +215,17 @@ void main() {
 
       // Test with count > 0
       const count1 = 5;
-      final message1 = count1 > 0 ? 'Pending sync ($count1)' : 'Pending sync';
+      const message1 = count1 > 0 ? 'Pending sync ($count1)' : 'Pending sync';
       expect(message1, equals('Pending sync (5)'));
 
       // Test with count = 0
       const count2 = 0;
-      final message2 = count2 > 0 ? 'Pending sync ($count2)' : 'Pending sync';
+      const message2 = count2 > 0 ? 'Pending sync ($count2)' : 'Pending sync';
       expect(message2, equals('Pending sync'));
 
       // Test with count = 1
       const count3 = 1;
-      final message3 = count3 > 0 ? 'Pending sync ($count3)' : 'Pending sync';
+      const message3 = count3 > 0 ? 'Pending sync ($count3)' : 'Pending sync';
       expect(message3, equals('Pending sync (1)'));
     });
 

@@ -31,12 +31,10 @@ class AppTheme {
       secondary: lightBlue,
       tertiary: cyan,
       surface: white,
-      background: lightGray,
       error: Colors.red.shade600,
       onPrimary: white,
       onSecondary: white,
       onSurface: black,
-      onBackground: black,
     ),
     // fontFamily uses the 'family' value you register in `pubspec.yaml` fonts.
     // Example registration is shown in docs/ADD_CUSTOM_FONTS.md and pubspec.yaml
@@ -182,11 +180,11 @@ class AppTheme {
       fillColor: white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: darkGray.withOpacity(0.3)),
+        borderSide: BorderSide(color: darkGray.withValues(alpha: 0.3)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: darkGray.withOpacity(0.3)),
+        borderSide: BorderSide(color: darkGray.withValues(alpha: 0.3)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -202,7 +200,7 @@ class AppTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       hintStyle: TextStyle(
-        color: darkGray.withOpacity(0.6),
+        color: darkGray.withValues(alpha: 0.6),
         fontSize: 14,
         letterSpacing: -0.7,
       ),
@@ -224,12 +222,10 @@ class AppTheme {
       secondary: lightBlue,
       tertiary: cyan,
       surface: const Color(0xFF1F1F1F),
-      background: black,
       error: Colors.red.shade400,
       onPrimary: white,
       onSecondary: white,
       onSurface: white,
-      onBackground: white,
     ),
     fontFamily: 'GeneralSans',
     fontFamilyFallback: const ['Roboto', 'Noto Sans'],

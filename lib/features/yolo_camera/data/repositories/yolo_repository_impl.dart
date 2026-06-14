@@ -1,5 +1,5 @@
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:ultralytics_yolo/yolo.dart';
 import 'package:image/image.dart' as img;
 import '../../domain/entities/detection_result.dart';
@@ -10,7 +10,6 @@ class YoloRepositoryImpl implements YoloRepository {
   YOLO? _poseDetector;
 
   final String _objectModelPath = 'yolov11s_food';
-  final String _poseModelPath = 'yolov11n_pose';
 
   @override
   Future<void> initObjectDetector() async {
@@ -37,7 +36,7 @@ class YoloRepositoryImpl implements YoloRepository {
     return;
 
     // Commented out until compatible model is available
-    // _poseDetector = YOLO(modelPath: _poseModelPath, task: YOLOTask.pose);
+    // _poseDetector = YOLO(modelPath: 'yolov11n_pose', task: YOLOTask.pose);
     // await _poseDetector!.loadModel();
   }
 
@@ -56,7 +55,7 @@ class YoloRepositoryImpl implements YoloRepository {
       final boxes = results['boxes'] as List<dynamic>? ?? [];
       return _parseDetectionResults(boxes);
     } catch (e) {
-      print('Object detection error: $e');
+      debugPrint('Object detection error: $e');
       return [];
     }
   }
@@ -79,7 +78,7 @@ class YoloRepositoryImpl implements YoloRepository {
           [];
       return _parseDetectionResults(poses, isPose: true);
     } catch (e) {
-      print('Pose detection error: $e');
+      debugPrint('Pose detection error: $e');
       return [];
     }
   }
@@ -121,7 +120,7 @@ class YoloRepositoryImpl implements YoloRepository {
         return _parseDetectionResults(poses, isPose: true);
       }
     } catch (e) {
-      print('Static image detection error: $e');
+      debugPrint('Static image detection error: $e');
       return [];
     }
   }
@@ -139,7 +138,7 @@ class YoloRepositoryImpl implements YoloRepository {
 
       return jpegBytes;
     } catch (e) {
-      print('Image conversion error: $e');
+      debugPrint('Image conversion error: $e');
       rethrow;
     }
   }
@@ -219,7 +218,7 @@ class YoloRepositoryImpl implements YoloRepository {
           keypoints: keypoints,
         );
       } catch (e) {
-        print('Error parsing detection result: $e');
+        debugPrint('Error parsing detection result: $e');
         return DetectionResult(
           label: 'Error',
           confidence: 0.0,

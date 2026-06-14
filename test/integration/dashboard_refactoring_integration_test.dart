@@ -14,8 +14,8 @@ import 'package:flowfit/presentation/notifiers/auth_notifier.dart';
 import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
 import 'package:flowfit/screens/dashboard_screen.dart';
+import 'package:flowfit/screens/profile/kids_profile_screen.dart';
 import 'package:flowfit/screens/profile/profile_screen.dart';
-import 'package:flowfit/screens/onboarding/survey_basic_info_screen.dart';
 
 /// Integration tests for dashboard refactoring merge feature.
 ///
@@ -125,11 +125,11 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Tap button to navigate to dashboard with initial tab
         await tester.tap(find.text('Open Dashboard'));
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify we're on the dashboard
         expect(find.byType(DashboardScreen), findsOneWidget);
@@ -140,8 +140,8 @@ void main() {
         );
         expect(bottomNavBar.currentIndex, 4);
 
-        // Verify ProfileScreen is displayed
-        expect(find.byType(ProfileScreen), findsOneWidget);
+        // Dashboard now routes the profile tab to the kids profile surface.
+        expect(find.byType(KidsProfileScreen), findsOneWidget);
 
         container.dispose();
       },
@@ -191,10 +191,10 @@ void main() {
             child: const MaterialApp(home: ProfileScreen()),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify no photo initially
-        final key = 'profile_image_$testUserId';
+        const key = 'profile_image_$testUserId';
         expect(prefs.getString(key), isNull);
 
         // Simulate saving a photo path
@@ -263,13 +263,13 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Find and tap logout button
         final logoutTile = find.text('Logout');
         expect(logoutTile, findsOneWidget);
         await tester.tap(logoutTile);
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify confirmation dialog appears
         expect(find.text('Are you sure you want to logout?'), findsOneWidget);
@@ -277,19 +277,19 @@ void main() {
 
         // Tap cancel first
         await tester.tap(find.text('Cancel'));
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Dialog should close, still on profile screen
         expect(find.text('Logout Test User'), findsOneWidget);
 
         // Tap logout again
         await tester.tap(logoutTile);
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Confirm logout this time - find the button widget specifically
         final logoutButton = find.widgetWithText(TextButton, 'Logout');
         await tester.tap(logoutButton);
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify auth state changed to unauthenticated
         final authState = container.read(authNotifierProvider);
@@ -367,14 +367,14 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Find and tap edit profile button
         final editButton = find.byKey(const Key('edit_profile_button'));
         expect(editButton, findsOneWidget);
 
         await tester.tap(editButton);
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify haptic feedback was triggered
         expect(
@@ -434,7 +434,7 @@ void main() {
             child: const MaterialApp(home: ProfileScreen()),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify initial profile data
         expect(find.text('Refresh Test User'), findsOneWidget);
@@ -445,7 +445,7 @@ void main() {
 
         // Trigger pull-to-refresh
         await tester.drag(refreshIndicator, const Offset(0, 300));
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify success message appears
         expect(find.text('Profile refreshed successfully'), findsOneWidget);
@@ -500,7 +500,7 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify we're on the dashboard
         expect(find.byType(DashboardScreen), findsOneWidget);
@@ -579,11 +579,11 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Navigate to dashboard
         await tester.tap(find.text('Open Dashboard'));
-        await tester.pumpAndSettle();
+        await pumpRouteTransition(tester);
 
         // Verify we're on the dashboard
         expect(find.byType(DashboardScreen), findsOneWidget);
@@ -599,6 +599,12 @@ void main() {
       timeout: const Timeout(Duration(minutes: 1)),
     );
   });
+}
+
+Future<void> pumpRouteTransition(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(seconds: 1));
+  await tester.pump();
 }
 
 /// Mock AuthNotifier for testing
@@ -662,21 +668,6 @@ class MockProfileRepository implements ProfileRepository {
 
   @override
   Future<void> deleteLocalProfile(String userId) async {
-    _profiles.remove(userId);
-  }
-
-  @override
-  Future<UserProfile?> getRemoteProfile(String userId) async {
-    return _profiles[userId];
-  }
-
-  @override
-  Future<void> saveRemoteProfile(UserProfile profile) async {
-    _profiles[profile.userId] = profile;
-  }
-
-  @override
-  Future<void> deleteRemoteProfile(String userId) async {
     _profiles.remove(userId);
   }
 

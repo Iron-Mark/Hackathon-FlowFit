@@ -57,6 +57,11 @@ class MockProfileRepository implements ProfileRepository {
   Stream<SyncStatus> watchSyncStatus(String userId) {
     return Stream.value(SyncStatus.synced);
   }
+
+  @override
+  Future<bool> hasCompletedSurvey(String userId) async {
+    return _localProfile != null;
+  }
 }
 
 void main() {

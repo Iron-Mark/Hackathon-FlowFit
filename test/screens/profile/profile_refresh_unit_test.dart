@@ -41,7 +41,7 @@ void main() {
       // Arrange: Create a ProviderContainer
       final container = ProviderContainer();
 
-      final userId = 'test-user-123';
+      const userId = 'test-user-123';
 
       // Act: Invalidate providers (simulating refresh)
       container.invalidate(profileNotifierProvider(userId));

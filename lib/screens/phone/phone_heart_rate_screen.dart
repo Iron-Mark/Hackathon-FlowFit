@@ -1,8 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../models/tracked_data.dart';
+import '../../models/heart_rate_data.dart';
+import '../../models/sensor_batch.dart';
+import '../../models/sensor_status.dart';
+import '../../services/phone_data_listener.dart';
 
 /// Screen for displaying heart rate data received from Galaxy Watch
 /// Shows real-time BPM, IBI values, and connection status
@@ -14,20 +16,17 @@ class PhoneHeartRateScreen extends StatefulWidget {
 }
 
 class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
-  static const EventChannel _eventChannel =
-      EventChannel('com.flowfit.phone/heartrate');
-  static const EventChannel _sensorBatchEventChannel =
-      EventChannel('com.flowfit.phone/sensor_data');
+  final PhoneDataListener _dataListener = PhoneDataListener();
 
   final List<TrackedData> _receivedData = [];
-  StreamSubscription? _subscription;
-  StreamSubscription? _sensorBatchSubscription;
+  StreamSubscription<HeartRateData>? _subscription;
+  StreamSubscription<SensorBatch>? _sensorBatchSubscription;
   bool _isConnected = false;
   DateTime? _lastDataTime;
-  
+
   // Test mode state
   bool _isTestMode = false;
-  Map<String, dynamic>? _lastSensorBatch;
+  SensorBatch? _lastSensorBatch;
   int _totalBatchesReceived = 0;
 
   @override
@@ -38,41 +37,38 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
   }
 
   void _listenToWatchData() {
-    _subscription = _eventChannel.receiveBroadcastStream().listen(
-      (data) {
-        try {
-          // Android sends data as Map directly, not as JSON string
-          final jsonData = data is String ? jsonDecode(data) : data;
+    _subscription = _dataListener.heartRateStream.listen(
+      (heartRateData) {
+        setState(() {
+          _isConnected = true;
+          _lastDataTime = DateTime.now();
 
-          setState(() {
-            _isConnected = true;
-            _lastDataTime = DateTime.now();
+          // Convert to TrackedData for display (only if bpm is available)
+          if (heartRateData.bpm != null) {
+            final ibiValues = heartRateData.ibiValues;
+            final hrv = ibiValues.length >= 2
+                ? TrackedData.calculateHRV(ibiValues)
+                : 0.0;
 
-            if (jsonData is List) {
-              // Batch data
-              final batch = jsonData
-                  .map((item) => TrackedData.fromJson(Map<String, dynamic>.from(item as Map)))
-                  .toList();
-              _receivedData.addAll(batch);
-              
-              // Keep only last 100 readings
-              if (_receivedData.length > 100) {
-                _receivedData.removeRange(0, _receivedData.length - 100);
-              }
-            } else {
-              // Single data point
-              final trackedData = TrackedData.fromJson(Map<String, dynamic>.from(jsonData as Map));
-              _receivedData.add(trackedData);
-              
-              // Keep only last 100 readings
-              if (_receivedData.length > 100) {
-                _receivedData.removeAt(0);
-              }
+            final trackedData = TrackedData(
+              hr: heartRateData.bpm!,
+              ibiValues: ibiValues,
+              hrv: hrv,
+              spo2: 0, // Not available from watch yet
+              timestamp: heartRateData.timestamp,
+              status: heartRateData.status == SensorStatus.active
+                  ? SensorStatus.active
+                  : SensorStatus.inactive,
+            );
+
+            _receivedData.add(trackedData);
+
+            // Keep only last 100 readings
+            if (_receivedData.length > 100) {
+              _receivedData.removeAt(0);
             }
-          });
-        } catch (e) {
-          debugPrint('Error parsing watch data: $e');
-        }
+          }
+        });
       },
       onError: (error) {
         debugPrint('Error receiving watch data: $error');
@@ -84,22 +80,18 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
   }
 
   void _listenToSensorBatches() {
-    _sensorBatchSubscription = _sensorBatchEventChannel.receiveBroadcastStream().listen(
-      (data) {
-        try {
-          final jsonData = data as Map;
-          
-          setState(() {
-            _lastSensorBatch = Map<String, dynamic>.from(jsonData);
-            _totalBatchesReceived++;
-            _isConnected = true;
-            _lastDataTime = DateTime.now();
-          });
-          
-          debugPrint('📦 Received sensor batch: ${_lastSensorBatch?['count']} samples, BPM: ${_lastSensorBatch?['bpm']}');
-        } catch (e) {
-          debugPrint('Error parsing sensor batch: $e');
-        }
+    _sensorBatchSubscription = _dataListener.sensorBatchStream.listen(
+      (batchData) {
+        setState(() {
+          _lastSensorBatch = batchData;
+          _totalBatchesReceived++;
+          _isConnected = true;
+          _lastDataTime = DateTime.now();
+        });
+
+        debugPrint(
+          '📦 Received sensor batch: ${batchData.sampleCount} samples',
+        );
       },
       onError: (error) {
         debugPrint('Error receiving sensor batch: $error');
@@ -154,9 +146,7 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
           ),
         ],
       ),
-      body: _receivedData.isEmpty
-          ? _buildEmptyState()
-          : _buildDataList(),
+      body: _receivedData.isEmpty ? _buildEmptyState() : _buildDataList(),
     );
   }
 
@@ -165,11 +155,7 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.watch,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.watch, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 24),
           Text(
             'No data received yet',
@@ -182,10 +168,7 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
           const SizedBox(height: 12),
           Text(
             'Start heart rate tracking on your watch',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -200,29 +183,23 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
     return Column(
       children: [
         // Test mode display
-        if (_isTestMode) ...[
-          _buildTestModeDisplay(),
-          const Divider(),
-        ],
-        
+        if (_isTestMode) ...[_buildTestModeDisplay(), const Divider()],
+
         // Large BPM display at top
         if (latestData != null) _buildLatestBpmCard(latestData),
-        
+
         // Data freshness indicator
         if (_lastDataTime != null)
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text(
               'Last updated: ${_formatTimestamp(_lastDataTime!)}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ),
-        
+
         const Divider(),
-        
+
         // List of all readings
         if (!_isTestMode)
           Expanded(
@@ -283,10 +260,7 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
               const SizedBox(height: 16),
               Text(
                 'IBI: ${data.ibiValues.take(5).join(", ")}${data.ibiValues.length > 5 ? "..." : ""} ms',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
               ),
             ],
           ],
@@ -297,10 +271,7 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
 
   Widget _buildDataTile(TrackedData data, bool isLatest) {
     return ListTile(
-      leading: Icon(
-        Icons.favorite,
-        color: isLatest ? Colors.red : Colors.grey,
-      ),
+      leading: Icon(Icons.favorite, color: isLatest ? Colors.red : Colors.grey),
       title: Text(
         'HR: ${data.hr} bpm',
         style: TextStyle(
@@ -308,13 +279,15 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
         ),
       ),
       subtitle: data.ibiValues.isNotEmpty
-          ? Text('IBI: ${data.ibiValues.take(4).join(", ")}${data.ibiValues.length > 4 ? "..." : ""} ms')
+          ? Text(
+              'IBI: ${data.ibiValues.take(4).join(", ")}${data.ibiValues.length > 4 ? "..." : ""} ms',
+            )
           : const Text('No IBI data'),
       trailing: isLatest
           ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
@@ -332,7 +305,7 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
 
   Widget _buildTestModeDisplay() {
     final batch = _lastSensorBatch;
-    
+
     return Card(
       margin: const EdgeInsets.all(16),
       color: Colors.teal.shade50,
@@ -341,11 +314,11 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.bug_report, color: Colors.teal),
-                const SizedBox(width: 8),
-                const Text(
+                Icon(Icons.bug_report, color: Colors.teal),
+                SizedBox(width: 8),
+                Text(
                   'Test Mode - Sensor Batch Data',
                   style: TextStyle(
                     fontSize: 16,
@@ -358,10 +331,13 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
             const SizedBox(height: 16),
             if (batch != null) ...[
               _buildTestRow('Total Batches Received', '$_totalBatchesReceived'),
-              _buildTestRow('Sample Count', '${batch['count'] ?? '--'}'),
-              _buildTestRow('Heart Rate', '${batch['bpm'] ?? '--'} bpm'),
-              _buildTestRow('Sample Rate', '${batch['sample_rate'] ?? '--'} Hz'),
-              _buildTestRow('Timestamp', '${batch['timestamp'] ?? '--'}'),
+              _buildTestRow('Sample Count', '${batch.sampleCount}'),
+              _buildTestRow(
+                'Heart Rate',
+                '${batch.samples.isNotEmpty ? batch.samples[0][3].toInt() : '--'} bpm',
+              ),
+              _buildTestRow('Sample Rate', '32 Hz'),
+              _buildTestRow('Timestamp', '${batch.timestamp}'),
               const SizedBox(height: 12),
               const Text(
                 'Accelerometer Samples (first 3):',
@@ -372,10 +348,13 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              if (batch['accelerometer'] != null) ...[
-                ..._buildAccelerometerSamples(batch['accelerometer'] as List),
+              if (batch.samples.isNotEmpty) ...[
+                ..._buildAccelerometerSamplesFromBatch(batch),
               ] else
-                const Text('No accelerometer data', style: TextStyle(color: Colors.grey)),
+                const Text(
+                  'No accelerometer data',
+                  style: TextStyle(color: Colors.grey),
+                ),
             ] else
               const Text(
                 'No sensor batch received yet',
@@ -395,10 +374,7 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
           ),
           Text(
             value,
@@ -413,20 +389,21 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
     );
   }
 
-  List<Widget> _buildAccelerometerSamples(List samples) {
+  List<Widget> _buildAccelerometerSamplesFromBatch(SensorBatch batch) {
     final widgets = <Widget>[];
-    final samplesToShow = samples.take(3).toList();
-    
+    final samplesToShow = batch.samples.take(3).toList();
+
     for (var i = 0; i < samplesToShow.length; i++) {
-      final sample = samplesToShow[i] as List;
-      if (sample.length >= 3) {
+      final sample = samplesToShow[i];
+      if (sample.length >= 4) {
         widgets.add(
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 2.0),
             child: Text(
-              'Sample ${i + 1}: X=${(sample[0] as num).toStringAsFixed(2)}, '
-              'Y=${(sample[1] as num).toStringAsFixed(2)}, '
-              'Z=${(sample[2] as num).toStringAsFixed(2)} m/s²',
+              'Sample ${i + 1}: X=${sample[0].toStringAsFixed(2)}, '
+              'Y=${sample[1].toStringAsFixed(2)}, '
+              'Z=${sample[2].toStringAsFixed(2)} m/s², '
+              'BPM=${sample[3].toInt()}',
               style: const TextStyle(
                 fontSize: 12,
                 fontFamily: 'monospace',
@@ -437,23 +414,23 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
         );
       }
     }
-    
-    if (samples.length > 3) {
+
+    if (batch.samples.length > 3) {
       widgets.add(
         Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
-            '... and ${samples.length - 3} more samples',
-            style: TextStyle(
+            '... and ${batch.samples.length - 3} more samples',
+            style: const TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: Colors.grey,
               fontStyle: FontStyle.italic,
             ),
           ),
         ),
       );
     }
-    
+
     return widgets;
   }
 

@@ -101,7 +101,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 Text(
                   'Enter your current password and choose a new one',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.text.withOpacity(0.7),
+                    color: AppTheme.text.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -125,7 +125,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Enter current password',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -141,7 +143,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         _obscureCurrentPassword
                             ? SolarIconsOutline.eyeClosed
                             : SolarIconsOutline.eye,
-                        color: AppTheme.text.withOpacity(0.5),
+                        color: AppTheme.text.withValues(alpha: 0.5),
                       ),
                       onPressed: () {
                         setState(() {
@@ -177,7 +179,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Enter new password',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -193,7 +197,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         _obscureNewPassword
                             ? SolarIconsOutline.eyeClosed
                             : SolarIconsOutline.eye,
-                        color: AppTheme.text.withOpacity(0.5),
+                        color: AppTheme.text.withValues(alpha: 0.5),
                       ),
                       onPressed: () {
                         setState(() {
@@ -232,7 +236,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Confirm new password',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -248,7 +254,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         _obscureConfirmPassword
                             ? SolarIconsOutline.eyeClosed
                             : SolarIconsOutline.eye,
-                        color: AppTheme.text.withOpacity(0.5),
+                        color: AppTheme.text.withValues(alpha: 0.5),
                       ),
                       onPressed: () {
                         setState(() {

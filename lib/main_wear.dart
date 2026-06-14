@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:wear_plus/wear_plus.dart';
 import 'screens/wear/wear_dashboard.dart';
 
-void main() => runApp(const WearApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const WearApp());
+}
 
 class WearApp extends StatelessWidget {
   const WearApp({super.key});
@@ -15,18 +18,19 @@ class WearApp extends StatelessWidget {
           builder: (context, mode, child) {
             // Adapt theme based on ambient mode (VGV best practice)
             final isAmbient = mode == WearMode.ambient;
-            
+
             return MaterialApp(
               title: 'FlowFit Wear',
               debugShowCheckedModeBanner: false,
               theme: ThemeData(
                 useMaterial3: true, // Use Material 3 (VGV recommendation)
-                visualDensity: VisualDensity.compact, // Compact for small screens
+                visualDensity:
+                    VisualDensity.compact, // Compact for small screens
                 colorScheme: isAmbient
                     ? const ColorScheme.dark(
                         // Monochromatic for ambient mode (battery saving)
                         primary: Colors.white24,
-                        onBackground: Colors.white10,
+                        surface: Colors.black,
                         onSurface: Colors.white10,
                       )
                     : const ColorScheme.dark(
@@ -34,7 +38,7 @@ class WearApp extends StatelessWidget {
                         primary: Color(0xFF00B5FF),
                         secondary: Colors.blueAccent,
                         surface: Colors.black,
-                        background: Colors.black,
+                        onSurface: Colors.white,
                       ),
                 scaffoldBackgroundColor: Colors.black,
                 elevatedButtonTheme: ElevatedButtonThemeData(
@@ -47,16 +51,19 @@ class WearApp extends StatelessWidget {
                 ),
                 // Optimize text for small screens
                 textTheme: const TextTheme(
-                  displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                  displayMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  displayLarge: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  displayMedium: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                   bodyLarge: TextStyle(fontSize: 16),
                   bodyMedium: TextStyle(fontSize: 14),
                 ),
               ),
-              home: WearDashboard(
-                shape: shape,
-                mode: mode,
-              ),
+              home: WearDashboard(shape: shape, mode: mode),
             );
           },
         );

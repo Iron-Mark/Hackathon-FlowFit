@@ -19,7 +19,7 @@ void main() {
       expect(profile.isKidsMode, true);
     });
 
-    test('should default isKidsMode to false', () {
+    test('should default isKidsMode to true', () {
       final now = DateTime.now();
       final profile = UserProfile(
         userId: 'test-user-id',
@@ -27,7 +27,7 @@ void main() {
         updatedAt: now,
       );
 
-      expect(profile.isKidsMode, false);
+      expect(profile.isKidsMode, true);
     });
 
     test('should serialize nickname and isKidsMode to JSON', () {

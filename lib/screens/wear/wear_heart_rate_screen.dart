@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:wear_plus/wear_plus.dart';
 import 'dart:async';
 import '../../services/watch_bridge.dart';
-import '../../services/watch_to_phone_sync.dart';
 import '../../models/heart_rate_data.dart';
 import 'sensor_permission_rationale_screen.dart';
 
@@ -13,19 +12,19 @@ class WearColors {
   // Primary blue for main interactive elements
   // Contrast with black: 8.6:1, with white text: 4.5:1
   static const Color primaryBlue = Color(0xFF2196F3);
-  
+
   // Dark blue for pressed/active states
   // Contrast with black: 6.3:1, with white text: 5.7:1
   static const Color darkBlue = Color(0xFF1976D2);
-  
+
   // Light blue-grey for disabled states (60% opacity)
   // Contrast with black: 3.2:1 (for large text)
   static const Color lightBlueGrey = Color(0xFF90CAF9);
-  
+
   // Teal for success states
   // Contrast with black: 9.1:1, with white text: 4.2:1
   static const Color teal = Color(0xFF00BCD4);
-  
+
   // Red for error states
   // Contrast with black: 5.9:1, with white text: 4.8:1
   static const Color errorRed = Color(0xFFF44336);
@@ -55,25 +54,22 @@ class WearHeartRateScreen extends StatefulWidget {
 class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     with TickerProviderStateMixin {
   final WatchBridgeService _watchBridge = WatchBridgeService();
-  final WatchToPhoneSync _phoneSync = WatchToPhoneSync();
-  
+
   HeartRateData? _currentHeartRate;
   bool _isMonitoring = false;
   bool _isConnected = false;
   bool _isSending = false;
-  bool _isPhoneConnected = false;
   String _statusMessage = 'Ready';
   bool _isAccelerometerActive = false;
   String? _errorMessage;
-  
+
   // Test mode state (Requirements: 8.5)
   bool _isTestMode = false;
   Map<String, dynamic>? _testModeData;
   Timer? _testModeTimer;
-  
+
   StreamSubscription? _heartRateSubscription;
   StreamSubscription? _transmissionSubscription;
-  Timer? _phoneConnectionCheckTimer;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
   late AnimationController _transmissionController;
@@ -92,19 +88,19 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    
+
     _pulseController.repeat(reverse: true);
-    
+
     // Transmission animation (under 300ms for accessibility - Requirements 5.4, 3.5)
     _transmissionController = AnimationController(
       duration: const Duration(milliseconds: 250),
       vsync: this,
     );
-    
+
     _transmissionAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
       CurvedAnimation(parent: _transmissionController, curve: Curves.easeOut),
     );
@@ -115,27 +111,29 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   /// Requirements: 5.4, 3.5
   void _setupTransmissionListener() {
     const transmissionChannel = EventChannel('com.flowfit.watch/transmission');
-    
-    _transmissionSubscription = transmissionChannel.receiveBroadcastStream().listen(
-      (event) {
-        if (mounted && _isAccelerometerActive) {
-          // Trigger transmission animation (scale animation under 300ms)
-          _transmissionController.forward(from: 0.0).then((_) {
-            if (mounted) {
-              _transmissionController.reverse();
+
+    _transmissionSubscription = transmissionChannel
+        .receiveBroadcastStream()
+        .listen(
+          (event) {
+            if (mounted && _isAccelerometerActive) {
+              // Trigger transmission animation (scale animation under 300ms)
+              _transmissionController.forward(from: 0.0).then((_) {
+                if (mounted) {
+                  _transmissionController.reverse();
+                }
+              });
             }
-          });
-        }
-      },
-      onError: (error) {
-        debugPrint('Transmission event error: $error');
-      },
-    );
+          },
+          onError: (error) {
+            debugPrint('Transmission event error: $error');
+          },
+        );
   }
 
   Future<void> _checkConnection() async {
     if (!mounted) return;
-    
+
     setState(() {
       _statusMessage = 'Checking permissions...';
     });
@@ -143,37 +141,38 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     try {
       // CRITICAL: Check permissions first (Requirements: 7.3)
       final permissionStatus = await _watchBridge.checkPermission();
-      
+
       if (permissionStatus != 'granted') {
         if (!mounted) return;
         setState(() {
           _statusMessage = 'Requesting permission...';
         });
-        
+
         // Request permission
         final granted = await _watchBridge.requestPermission();
-        
+
         if (!granted) {
           if (!mounted) return;
-          
+
           // Show permission rationale screen (Requirements: 7.4)
           final result = await Navigator.of(context).push<bool>(
             MaterialPageRoute(
               builder: (context) => const SensorPermissionRationaleScreen(),
             ),
           );
-          
+
           // If user granted permission from rationale screen, continue
           if (result == true) {
             // Re-check connection after permission grant
             await _checkConnection();
             return;
           }
-          
+
           setState(() {
             _isConnected = false;
             _statusMessage = 'Permission denied';
-            _errorMessage = 'Sensor permission required for heart rate monitoring';
+            _errorMessage =
+                'Sensor permission required for heart rate monitoring';
           });
           return;
         }
@@ -186,7 +185,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
 
       // Connect to Samsung Health SDK
       final connected = await _watchBridge.connectToWatch();
-      
+
       if (!connected) {
         if (!mounted) return;
         setState(() {
@@ -197,17 +196,10 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         return;
       }
 
-      // Check phone connection (Requirements: Communication errors)
-      final phoneConnected = await _phoneSync.checkPhoneConnection();
-      
       if (!mounted) return;
       setState(() {
         _isConnected = true;
-        _isPhoneConnected = phoneConnected;
-        _statusMessage = phoneConnected ? 'Ready' : 'Phone disconnected';
-        if (!phoneConnected) {
-          _errorMessage = 'Phone not connected. Data will be collected but not transmitted.';
-        }
+        _statusMessage = 'Ready';
       });
     } catch (e) {
       if (!mounted) return;
@@ -249,7 +241,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       });
 
       final started = await _watchBridge.startHeartRateTracking();
-      
+
       if (!started) {
         setState(() {
           _statusMessage = 'Start failed';
@@ -265,9 +257,6 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         _errorMessage = null;
       });
 
-      // Start periodic phone connection check (Requirements: Communication errors)
-      _startPhoneConnectionCheck();
-
       _heartRateSubscription = _watchBridge.heartRateStream.listen(
         (heartRateData) {
           if (mounted) {
@@ -282,15 +271,18 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
             // Requirements: 6.5 - Handle sensor initialization failures
             final errorString = error.toString();
             String errorMessage = 'Heart rate sensor error occurred';
-            
+
             if (errorString.contains('ACCELEROMETER_UNAVAILABLE')) {
-              errorMessage = 'Accelerometer not available. Continuing with heart rate only.';
+              errorMessage =
+                  'Accelerometer not available. Continuing with heart rate only.';
             } else if (errorString.contains('SENSOR_INITIALIZATION_FAILED')) {
-              errorMessage = 'Sensor initialization failed. Tap retry to try again.';
+              errorMessage =
+                  'Sensor initialization failed. Tap retry to try again.';
             } else if (errorString.contains('ACCELEROMETER_ERROR')) {
-              errorMessage = 'Accelerometer error. Continuing with heart rate only.';
+              errorMessage =
+                  'Accelerometer error. Continuing with heart rate only.';
             }
-            
+
             setState(() {
               _isMonitoring = false;
               _statusMessage = 'Error';
@@ -311,43 +303,11 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     }
   }
 
-  /// Periodically check phone connection status during monitoring
-  /// Requirements: Communication errors - Handle phone disconnection
-  void _startPhoneConnectionCheck() {
-    _phoneConnectionCheckTimer?.cancel();
-    _phoneConnectionCheckTimer = Timer.periodic(
-      const Duration(seconds: 5),
-      (timer) async {
-        if (!_isMonitoring) {
-          timer.cancel();
-          return;
-        }
-        
-        try {
-          final phoneConnected = await _phoneSync.checkPhoneConnection();
-          if (mounted && _isPhoneConnected != phoneConnected) {
-            setState(() {
-              _isPhoneConnected = phoneConnected;
-              if (!phoneConnected) {
-                _errorMessage = 'Phone disconnected. Continuing data collection.';
-              } else {
-                _errorMessage = null;
-              }
-            });
-          }
-        } catch (e) {
-          debugPrint('Phone connection check error: $e');
-        }
-      },
-    );
-  }
-
   Future<void> _stopMonitoring() async {
     try {
       await _watchBridge.stopHeartRateTracking();
       await _heartRateSubscription?.cancel();
-      _phoneConnectionCheckTimer?.cancel();
-      
+
       setState(() {
         _isMonitoring = false;
         _isAccelerometerActive = false; // Accelerometer stops with heart rate
@@ -370,7 +330,9 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     });
 
     try {
-      final success = await _phoneSync.sendHeartRateToPhone(_currentHeartRate!);
+      final success = await _watchBridge.sendHeartRateToPhone(
+        _currentHeartRate!,
+      );
 
       if (mounted) {
         setState(() {
@@ -411,7 +373,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     setState(() {
       _isTestMode = !_isTestMode;
     });
-    
+
     if (_isTestMode) {
       _startTestModeUpdates();
     } else {
@@ -430,7 +392,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
           timer.cancel();
           return;
         }
-        
+
         try {
           final data = await _watchBridge.getTestModeData();
           if (mounted) {
@@ -459,7 +421,6 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   void dispose() {
     _heartRateSubscription?.cancel();
     _transmissionSubscription?.cancel();
-    _phoneConnectionCheckTimer?.cancel();
     _testModeTimer?.cancel();
     _pulseController.dispose();
     _transmissionController.dispose();
@@ -470,7 +431,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   @override
   Widget build(BuildContext context) {
     final isAmbient = widget.mode == WearMode.ambient;
-    
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -549,7 +510,9 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
               scale: _transmissionAnimation.value,
               child: Icon(
                 Icons.sensors,
-                color: _isAccelerometerActive ? WearColors.primaryBlue : Colors.grey,
+                color: _isAccelerometerActive
+                    ? WearColors.primaryBlue
+                    : Colors.grey,
                 size: 24,
               ),
             );
@@ -569,7 +532,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
 
   Widget _buildBpmDisplay() {
     final bpm = _currentHeartRate?.bpm;
-    
+
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
@@ -616,32 +579,33 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       height: 48, // WCAG 2.1 Level AA: minimum 48dp touch target
       child: ElevatedButton.icon(
         onPressed: _toggleMonitoring,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _isMonitoring ? WearColors.errorRed : WearColors.primaryBlue,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-        ).copyWith(
-          // Apply darkBlue to pressed/active states (Requirements: 4.2)
-          backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-            if (states.contains(WidgetState.pressed)) {
-              return _isMonitoring ? WearColors.errorRed.withValues(alpha: 0.8) : WearColors.darkBlue;
-            }
-            return _isMonitoring ? WearColors.errorRed : WearColors.primaryBlue;
-          }),
-        ),
-        icon: Icon(
-          _isMonitoring ? Icons.pause : Icons.play_arrow,
-          size: 20,
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              backgroundColor: _isMonitoring
+                  ? WearColors.errorRed
+                  : WearColors.primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ).copyWith(
+              // Apply darkBlue to pressed/active states (Requirements: 4.2)
+              backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.pressed)) {
+                  return _isMonitoring
+                      ? WearColors.errorRed.withValues(alpha: 0.8)
+                      : WearColors.darkBlue;
+                }
+                return _isMonitoring
+                    ? WearColors.errorRed
+                    : WearColors.primaryBlue;
+              }),
+            ),
+        icon: Icon(_isMonitoring ? Icons.pause : Icons.play_arrow, size: 20),
         label: Text(
           _isMonitoring ? 'Stop' : 'Start',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -656,27 +620,30 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       height: 48, // WCAG 2.1 Level AA: minimum 48dp touch target
       child: ElevatedButton.icon(
         onPressed: _isSending ? null : _sendToPhone,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: WearColors.primaryBlue,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: WearColors.lightBlueGrey.withValues(alpha: 0.6), // Requirements: 4.3
-          disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-        ).copyWith(
-          // Apply darkBlue to pressed/active states (Requirements: 4.2)
-          backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-            if (states.contains(WidgetState.disabled)) {
-              return WearColors.lightBlueGrey.withValues(alpha: 0.6);
-            }
-            if (states.contains(WidgetState.pressed)) {
-              return WearColors.darkBlue;
-            }
-            return WearColors.primaryBlue;
-          }),
-        ),
+        style:
+            ElevatedButton.styleFrom(
+              backgroundColor: WearColors.primaryBlue,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: WearColors.lightBlueGrey.withValues(
+                alpha: 0.6,
+              ), // Requirements: 4.3
+              disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ).copyWith(
+              // Apply darkBlue to pressed/active states (Requirements: 4.2)
+              backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.disabled)) {
+                  return WearColors.lightBlueGrey.withValues(alpha: 0.6);
+                }
+                if (states.contains(WidgetState.pressed)) {
+                  return WearColors.darkBlue;
+                }
+                return WearColors.primaryBlue;
+              }),
+            ),
         icon: _isSending
             ? const SizedBox(
                 width: 16,
@@ -689,10 +656,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
             : const Icon(Icons.phone_android, size: 18),
         label: Text(
           _isSending ? 'Sending' : 'Send',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -703,16 +667,13 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   /// Requirements: 5.5, 6.5 - Display error with retry option
   Widget _buildErrorDisplay() {
     final showRetry = _errorMessage?.contains('retry') ?? false;
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: WearColors.errorRed.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: WearColors.errorRed,
-          width: 1,
-        ),
+        border: Border.all(color: WearColors.errorRed, width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -756,16 +717,16 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: WearColors.primaryBlue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
                 ),
                 icon: const Icon(Icons.refresh, size: 16),
-                label: const Text(
-                  'Retry',
-                  style: TextStyle(fontSize: 12),
-                ),
+                label: const Text('Retry', style: TextStyle(fontSize: 12)),
               ),
             ),
           ],
@@ -798,16 +759,13 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   /// Requirements: 8.5, 11.2
   Widget _buildTestModeDisplay() {
     final data = _testModeData;
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: WearColors.teal.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: WearColors.teal,
-          width: 1,
-        ),
+        border: Border.all(color: WearColors.teal, width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -832,7 +790,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
           // Accelerometer X
           _buildTestModeRow(
             'Acc X',
-            data?['accelerometerX'] != null 
+            data?['accelerometerX'] != null
                 ? (data!['accelerometerX'] as double).toStringAsFixed(2)
                 : '--',
             'm/s²',
@@ -841,7 +799,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
           // Accelerometer Y
           _buildTestModeRow(
             'Acc Y',
-            data?['accelerometerY'] != null 
+            data?['accelerometerY'] != null
                 ? (data!['accelerometerY'] as double).toStringAsFixed(2)
                 : '--',
             'm/s²',
@@ -850,7 +808,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
           // Accelerometer Z
           _buildTestModeRow(
             'Acc Z',
-            data?['accelerometerZ'] != null 
+            data?['accelerometerZ'] != null
                 ? (data!['accelerometerZ'] as double).toStringAsFixed(2)
                 : '--',
             'm/s²',
@@ -884,10 +842,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.white70,
-          ),
+          style: const TextStyle(fontSize: 12, color: Colors.white70),
         ),
         Text(
           '$value $unit',
@@ -906,14 +861,14 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   /// Requirements: 4.1, 4.4, 4.5
   Widget _buildStatusIndicator() {
     Color statusColor = Colors.grey;
-    
+
     // Determine status color based on state
     if (_statusMessage == 'Sent!' || _statusMessage == 'Active') {
       // Success states use teal (Requirements: 4.4)
       statusColor = WearColors.teal;
-    } else if (_statusMessage.contains('Error') || 
-               _statusMessage.contains('Failed') || 
-               _statusMessage.contains('denied')) {
+    } else if (_statusMessage.contains('Error') ||
+        _statusMessage.contains('Failed') ||
+        _statusMessage.contains('denied')) {
       // Error states use errorRed (Requirements: 4.5)
       statusColor = WearColors.errorRed;
     } else if (_isConnected && _isMonitoring) {
@@ -933,18 +888,12 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         Container(
           width: 6,
           height: 6,
-          decoration: BoxDecoration(
-            color: statusColor,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
         ),
         const SizedBox(height: 2),
         Text(
           _statusMessage,
-          style: TextStyle(
-            fontSize: 10,
-            color: statusColor,
-          ),
+          style: TextStyle(fontSize: 10, color: statusColor),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -954,15 +903,11 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
 
   Widget _buildAmbientMode() {
     final bpm = _currentHeartRate?.bpm;
-    
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
-          Icons.favorite,
-          color: Colors.white24,
-          size: 24,
-        ),
+        const Icon(Icons.favorite, color: Colors.white24, size: 24),
         const SizedBox(height: 8),
         Text(
           bpm != null ? '$bpm' : '--',
@@ -974,10 +919,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         ),
         const Text(
           'BPM',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.white10,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.white10),
         ),
       ],
     );

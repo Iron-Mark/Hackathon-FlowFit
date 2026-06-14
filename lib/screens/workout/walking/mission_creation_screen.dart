@@ -8,7 +8,6 @@ import '../../../models/mood_rating.dart';
 import '../../../models/walking_session.dart';
 import '../../../providers/walking_session_provider.dart';
 import '../../../providers/running_session_provider.dart'; // For gpsTrackingServiceProvider
-import '../../../services/gps_tracking_service.dart';
 import 'active_walking_screen.dart';
 
 /// Mission creation screen with map and mission configuration
@@ -24,14 +23,15 @@ class MissionCreationScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<MissionCreationScreen> createState() => _MissionCreationScreenState();
+  ConsumerState<MissionCreationScreen> createState() =>
+      _MissionCreationScreenState();
 }
 
 class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  
+
   LatLng? _currentLocation;
   LatLng? _selectedLocation;
   double _distance = 500; // Default 500 meters
@@ -56,7 +56,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
     try {
       final gpsService = ref.read(gpsTrackingServiceProvider);
       final location = await gpsService.getCurrentLocation();
-      
+
       setState(() {
         _currentLocation = location;
         _selectedLocation = location;
@@ -98,10 +98,10 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text('Create Mission'),
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
       ),
       body: _isLoadingLocation
@@ -109,16 +109,10 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
           : Column(
               children: [
                 // Map Section (50% of screen)
-                Expanded(
-                  flex: 5,
-                  child: _buildMapSection(theme),
-                ),
+                Expanded(flex: 5, child: _buildMapSection(theme)),
 
                 // Configuration Section (50% of screen)
-                Expanded(
-                  flex: 5,
-                  child: _buildConfigurationSection(theme),
-                ),
+                Expanded(flex: 5, child: _buildConfigurationSection(theme)),
               ],
             ),
     );
@@ -128,9 +122,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
     if (_currentLocation == null) {
       return Container(
         color: theme.colorScheme.surface,
-        child: const Center(
-          child: Text('Location unavailable'),
-        ),
+        child: const Center(child: Text('Location unavailable')),
       );
     }
 
@@ -173,7 +165,8 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
                   ),
                 ),
                 // Selected location marker
-                if (_selectedLocation != null && _selectedLocation != _currentLocation)
+                if (_selectedLocation != null &&
+                    _selectedLocation != _currentLocation)
                   Marker(
                     point: _selectedLocation!,
                     width: 40,
@@ -187,14 +180,15 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
               ],
             ),
             // Circle for safety net missions
-            if (widget.missionType == MissionType.safetyNet && _selectedLocation != null)
+            if (widget.missionType == MissionType.safetyNet &&
+                _selectedLocation != null)
               CircleLayer(
                 circles: [
                   CircleMarker(
                     point: _selectedLocation!,
                     radius: _radius,
                     useRadiusInMeter: true,
-                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
                     borderColor: theme.colorScheme.primary,
                     borderStrokeWidth: 2,
                   ),
@@ -214,7 +208,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -243,7 +237,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -267,10 +261,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
 
             // Distance/Radius Input
             if (widget.missionType == MissionType.target) ...[
-              Text(
-                'Target Distance',
-                style: theme.textTheme.titleMedium,
-              ),
+              Text('Target Distance', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -294,7 +285,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -310,10 +301,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
             ],
 
             if (widget.missionType == MissionType.safetyNet) ...[
-              Text(
-                'Safe Zone Radius',
-                style: theme.textTheme.titleMedium,
-              ),
+              Text('Safe Zone Radius', style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -337,7 +325,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -377,7 +365,9 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
             SizedBox(
               height: 48,
               child: ElevatedButton(
-                onPressed: _selectedLocation != null ? () => _startMission(context) : null,
+                onPressed: _selectedLocation != null
+                    ? () => _startMission(context)
+                    : null,
                 child: const Text('Start Mission'),
               ),
             ),
@@ -395,7 +385,9 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
       id: const Uuid().v4(),
       type: widget.missionType,
       targetLocation: _selectedLocation!,
-      targetDistance: widget.missionType == MissionType.target ? _distance : null,
+      targetDistance: widget.missionType == MissionType.target
+          ? _distance
+          : null,
       radius: widget.missionType == MissionType.safetyNet ? _radius : null,
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim().isEmpty
@@ -404,18 +396,18 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
     );
 
     // Start walking session with mission
-    await ref.read(walkingSessionProvider.notifier).startSession(
-      mode: WalkingMode.mission,
-      mission: mission,
-      preMood: widget.preMood,
-    );
+    await ref
+        .read(walkingSessionProvider.notifier)
+        .startSession(
+          mode: WalkingMode.mission,
+          mission: mission,
+          preMood: widget.preMood,
+        );
 
     if (context.mounted) {
       // Navigate to active walking screen
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const ActiveWalkingScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const ActiveWalkingScreen()),
       );
     }
   }

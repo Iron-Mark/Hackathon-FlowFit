@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 /// routes for quick navigation while testing on a device.
 /// Only included when running in debug mode.
 class DebugRouteMenu extends StatelessWidget {
-  const DebugRouteMenu({Key? key, this.routes}) : super(key: key);
+  const DebugRouteMenu({super.key, this.routes});
 
   // Default list of routes that are useful to test. You may add more.
   final List<Map<String, String>>? routes;
@@ -54,7 +54,7 @@ class DebugRouteMenu extends StatelessWidget {
                 title: Text('Debug Navigation'),
                 subtitle: Text('Quickly jump to test screens'),
               ),
-              Divider(height: 1),
+              const Divider(height: 1),
               for (final item in routes)
                 ListTile(
                   title: Text(item['label'] ?? item['route']!),

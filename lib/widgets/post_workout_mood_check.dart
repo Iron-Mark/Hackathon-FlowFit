@@ -3,23 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/mood_tracking_provider.dart';
-import '../models/mood_rating.dart';
 
 /// Post-workout mood check screen
-/// 
+///
 /// Displays 5 emoji buttons for mood selection with auto-dismiss timer.
 /// Defaults to pre-workout mood if no selection within 15 seconds.
 /// Requirements: 10.1, 10.2, 10.4
 class PostWorkoutMoodCheck extends ConsumerStatefulWidget {
   final String sessionId;
-  
-  const PostWorkoutMoodCheck({
-    super.key,
-    required this.sessionId,
-  });
+
+  const PostWorkoutMoodCheck({super.key, required this.sessionId});
 
   @override
-  ConsumerState<PostWorkoutMoodCheck> createState() => _PostWorkoutMoodCheckState();
+  ConsumerState<PostWorkoutMoodCheck> createState() =>
+      _PostWorkoutMoodCheckState();
 }
 
 class _PostWorkoutMoodCheckState extends ConsumerState<PostWorkoutMoodCheck> {
@@ -87,7 +84,7 @@ class _PostWorkoutMoodCheckState extends ConsumerState<PostWorkoutMoodCheck> {
     final preMood = ref.watch(moodTrackingProvider).preMood;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -107,9 +104,14 @@ class _PostWorkoutMoodCheckState extends ConsumerState<PostWorkoutMoodCheck> {
               // Pre-mood reminder
               if (preMood != null) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -156,7 +158,12 @@ class _PostWorkoutMoodCheckState extends ConsumerState<PostWorkoutMoodCheck> {
     );
   }
 
-  Widget _buildMoodButton(BuildContext context, int value, String emoji, String label) {
+  Widget _buildMoodButton(
+    BuildContext context,
+    int value,
+    String emoji,
+    String label,
+  ) {
     final theme = Theme.of(context);
 
     return _MoodButtonWithAnimation(
@@ -183,7 +190,8 @@ class _MoodButtonWithAnimation extends StatefulWidget {
   });
 
   @override
-  State<_MoodButtonWithAnimation> createState() => _MoodButtonWithAnimationState();
+  State<_MoodButtonWithAnimation> createState() =>
+      _MoodButtonWithAnimationState();
 }
 
 class _MoodButtonWithAnimationState extends State<_MoodButtonWithAnimation>
@@ -198,9 +206,10 @@ class _MoodButtonWithAnimationState extends State<_MoodButtonWithAnimation>
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -229,14 +238,12 @@ class _MoodButtonWithAnimationState extends State<_MoodButtonWithAnimation>
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: widget.theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                color: widget.theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.5),
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Text(
-                  widget.emoji,
-                  style: const TextStyle(fontSize: 32),
-                ),
+                child: Text(widget.emoji, style: const TextStyle(fontSize: 32)),
               ),
             ),
           ),

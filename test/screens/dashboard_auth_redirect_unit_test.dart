@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flowfit/core/domain/entities/user_profile.dart' as core_profile;
+import 'package:flowfit/core/domain/repositories/profile_repository.dart'
+    as core_profile_repo;
 import 'package:flowfit/screens/dashboard_screen.dart';
 import 'package:flowfit/presentation/providers/providers.dart';
 import 'package:flowfit/domain/entities/auth_state.dart';
 import 'package:flowfit/domain/entities/user.dart';
 import 'package:flowfit/presentation/notifiers/auth_notifier.dart';
+import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
 
 void main() {
@@ -28,7 +32,12 @@ void main() {
       final testNotifier = TestAuthNotifier(AuthState.authenticated(mockUser));
 
       final container = ProviderContainer(
-        overrides: [authNotifierProvider.overrideWith((ref) => testNotifier)],
+        overrides: [
+          authNotifierProvider.overrideWith((ref) => testNotifier),
+          profileNotifierProvider.overrideWith(
+            (ref, userId) => TestProfileNotifier(userId),
+          ),
+        ],
       );
 
       final navigatedRoutes = <String>[];
@@ -59,14 +68,14 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await pumpDashboardRoute(tester);
 
       // Verify initial state
       expect(find.byType(DashboardScreen), findsOneWidget);
 
       // Act: Change to unauthenticated state
       testNotifier.simulateAuthStateChange(AuthState.unauthenticated());
-      await tester.pumpAndSettle();
+      await pumpDashboardRoute(tester);
 
       // Assert: Should navigate to welcome
       expect(
@@ -102,7 +111,12 @@ void main() {
       final testNotifier = TestAuthNotifier(AuthState.authenticated(mockUser));
 
       final container = ProviderContainer(
-        overrides: [authNotifierProvider.overrideWith((ref) => testNotifier)],
+        overrides: [
+          authNotifierProvider.overrideWith((ref) => testNotifier),
+          profileNotifierProvider.overrideWith(
+            (ref, userId) => TestProfileNotifier(userId),
+          ),
+        ],
       );
 
       // Act: Build dashboard
@@ -129,14 +143,14 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await pumpDashboardRoute(tester);
 
       // Verify dashboard is displayed
       expect(find.byType(DashboardScreen), findsOneWidget);
 
       // Act: Trigger auth state change
       testNotifier.simulateAuthStateChange(AuthState.unauthenticated());
-      await tester.pumpAndSettle();
+      await pumpDashboardRoute(tester);
 
       // Assert: Dashboard should no longer be in the tree
       expect(
@@ -181,7 +195,12 @@ void main() {
       final testNotifier = TestAuthNotifier(AuthState.authenticated(mockUser));
 
       final container = ProviderContainer(
-        overrides: [authNotifierProvider.overrideWith((ref) => testNotifier)],
+        overrides: [
+          authNotifierProvider.overrideWith((ref) => testNotifier),
+          profileNotifierProvider.overrideWith(
+            (ref, userId) => TestProfileNotifier(userId),
+          ),
+        ],
       );
 
       String? lastNavigatedRoute;
@@ -218,11 +237,11 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await pumpDashboardRoute(tester);
 
       // Act: Trigger auth state change
       testNotifier.simulateAuthStateChange(AuthState.unauthenticated());
-      await tester.pumpAndSettle();
+      await pumpDashboardRoute(tester);
 
       // Assert: Should use /welcome route, not /login
       expect(
@@ -256,7 +275,12 @@ void main() {
       final testNotifier = TestAuthNotifier(AuthState.authenticated(mockUser));
 
       final container = ProviderContainer(
-        overrides: [authNotifierProvider.overrideWith((ref) => testNotifier)],
+        overrides: [
+          authNotifierProvider.overrideWith((ref) => testNotifier),
+          profileNotifierProvider.overrideWith(
+            (ref, userId) => TestProfileNotifier(userId),
+          ),
+        ],
       );
 
       // Act: Build dashboard
@@ -283,7 +307,7 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await pumpDashboardRoute(tester);
 
       // Verify dashboard is mounted
       expect(find.byType(DashboardScreen), findsOneWidget);
@@ -300,7 +324,7 @@ void main() {
         reason: 'Should not throw error when widget is not mounted',
       );
 
-      await tester.pumpAndSettle();
+      await pumpDashboardRoute(tester);
 
       container.dispose();
     });
@@ -316,7 +340,12 @@ void main() {
         final testNotifier = TestAuthNotifier(AuthState.unauthenticated());
 
         final container = ProviderContainer(
-          overrides: [authNotifierProvider.overrideWith((ref) => testNotifier)],
+          overrides: [
+            authNotifierProvider.overrideWith((ref) => testNotifier),
+            profileNotifierProvider.overrideWith(
+              (ref, userId) => TestProfileNotifier(userId),
+            ),
+          ],
         );
 
         // Act: Build dashboard with unauthenticated user
@@ -343,7 +372,7 @@ void main() {
           ),
         );
 
-        await tester.pumpAndSettle();
+        await pumpDashboardRoute(tester);
 
         // Assert: Should redirect to welcome immediately
         expect(
@@ -362,6 +391,12 @@ void main() {
       },
     );
   });
+}
+
+Future<void> pumpDashboardRoute(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(seconds: 1));
+  await tester.pump();
 }
 
 /// Test implementation of AuthNotifier for testing purposes
@@ -413,5 +448,53 @@ class TestAuthRepository implements IAuthRepository {
   @override
   Stream<User?> authStateChanges() {
     return Stream.value(null);
+  }
+}
+
+class TestProfileNotifier extends ProfileNotifier {
+  TestProfileNotifier(String userId) : super(TestProfileRepository(), userId);
+
+  @override
+  Future<void> loadProfile() async {
+    state = const AsyncValue.data(null);
+  }
+}
+
+class TestProfileRepository implements core_profile_repo.ProfileRepository {
+  @override
+  Future<void> deleteLocalProfile(String userId) async {}
+
+  @override
+  Future<core_profile.UserProfile?> getBackendProfile(String userId) async {
+    return null;
+  }
+
+  @override
+  Future<core_profile.UserProfile?> getLocalProfile(String userId) async {
+    return null;
+  }
+
+  @override
+  Future<bool> hasCompletedSurvey(String userId) async {
+    return true;
+  }
+
+  @override
+  Future<bool> hasPendingSync(String userId) async {
+    return false;
+  }
+
+  @override
+  Future<void> saveBackendProfile(core_profile.UserProfile profile) async {}
+
+  @override
+  Future<void> saveLocalProfile(core_profile.UserProfile profile) async {}
+
+  @override
+  Future<void> syncProfile(String userId) async {}
+
+  @override
+  Stream<core_profile_repo.SyncStatus> watchSyncStatus(String userId) {
+    return Stream.value(core_profile_repo.SyncStatus.synced);
   }
 }

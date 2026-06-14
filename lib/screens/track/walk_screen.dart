@@ -71,7 +71,7 @@ class _WalkScreenState extends State<WalkScreen> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.blue.withOpacity(0.2),
+                  color: Colors.blue.withValues(alpha: 0.2),
                   blurRadius: 20,
                   spreadRadius: 5,
                 ),
@@ -89,23 +89,17 @@ class _WalkScreenState extends State<WalkScreen> {
                     color: Colors.blue,
                   ),
                 ),
-                const Text(
-                  'Duration',
-                  style: TextStyle(color: Colors.grey),
-                ),
+                const Text('Duration', style: TextStyle(color: Colors.grey)),
               ],
             ),
           ),
           const Spacer(),
-          
+
           // Flowy Companion
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SvgPicture.asset(
-                'assets/flowy.svg',
-                height: 100,
-              ),
+              SvgPicture.asset('assets/flowy.svg', height: 100),
               const SizedBox(width: 20),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -114,23 +108,20 @@ class _WalkScreenState extends State<WalkScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                     ),
                   ],
                 ),
                 child: const Text(
                   "Great job!\nKeep going!",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
           const Spacer(),
-          
+
           // Controls
           Padding(
             padding: const EdgeInsets.all(32.0),

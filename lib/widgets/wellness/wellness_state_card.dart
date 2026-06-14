@@ -5,16 +5,14 @@ import '../../models/wellness_state.dart';
 class WellnessStateCard extends StatefulWidget {
   final WellnessStateData state;
 
-  const WellnessStateCard({
-    super.key,
-    required this.state,
-  });
+  const WellnessStateCard({super.key, required this.state});
 
   @override
   State<WellnessStateCard> createState() => _WellnessStateCardState();
 }
 
-class _WellnessStateCardState extends State<WellnessStateCard> with SingleTickerProviderStateMixin {
+class _WellnessStateCardState extends State<WellnessStateCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
@@ -25,7 +23,7 @@ class _WellnessStateCardState extends State<WellnessStateCard> with SingleTicker
       duration: const Duration(milliseconds: 800),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
@@ -56,7 +54,7 @@ class _WellnessStateCardState extends State<WellnessStateCard> with SingleTicker
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -104,7 +102,9 @@ class _WellnessStateCardState extends State<WellnessStateCard> with SingleTicker
                 child: _buildMetric(
                   icon: Icons.favorite,
                   label: 'Heart Rate',
-                  value: widget.state.heartRate != null ? '${widget.state.heartRate} BPM' : '--',
+                  value: widget.state.heartRate != null
+                      ? '${widget.state.heartRate} BPM'
+                      : '--',
                   color: Colors.red,
                   showPulse: widget.state.heartRate != null,
                 ),
@@ -136,7 +136,7 @@ class _WellnessStateCardState extends State<WellnessStateCard> with SingleTicker
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import '../../../widgets/mood_transformation_card.dart';
 import '../../../models/walking_session.dart';
 import '../../../models/mission.dart';
 import '../../../providers/walking_session_provider.dart';
 import '../../../providers/running_session_provider.dart'; // For workoutSessionServiceProvider
-import '../../../services/workout_session_service.dart';
 import 'mission_creation_screen.dart';
 
 /// Walking summary screen with mood transformation, metrics, and map
@@ -22,20 +20,16 @@ class WalkingSummaryScreen extends ConsumerWidget {
 
     if (session == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Workout Complete'),
-        ),
-        body: const Center(
-          child: Text('No session data available'),
-        ),
+        appBar: AppBar(title: const Text('Workout Complete')),
+        body: const Center(child: Text('No session data available')),
       );
     }
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text('Workout Complete'),
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         automaticallyImplyLeading: false,
       ),
@@ -96,10 +90,7 @@ class WalkingSummaryScreen extends ConsumerWidget {
             ],
 
             // Secondary Metrics
-            Text(
-              'Additional Metrics',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('Additional Metrics', style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
             Row(
               children: [
@@ -160,7 +151,7 @@ class WalkingSummaryScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFBBF24).withOpacity(0.3),
+            color: const Color(0xFFFBBF24).withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -169,10 +160,7 @@ class WalkingSummaryScreen extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            '🎯',
-            style: TextStyle(fontSize: 32),
-          ),
+          const Text('🎯', style: TextStyle(fontSize: 32)),
           const SizedBox(width: 12),
           Text(
             'Mission Complete!',
@@ -198,11 +186,7 @@ class WalkingSummaryScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color: theme.colorScheme.primary,
-              size: 32,
-            ),
+            Icon(icon, color: theme.colorScheme.primary, size: 32),
             const SizedBox(height: 12),
             Text(
               value,
@@ -214,7 +198,7 @@ class WalkingSummaryScreen extends ConsumerWidget {
             Text(
               label,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -244,7 +228,7 @@ class WalkingSummaryScreen extends ConsumerWidget {
             Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -374,7 +358,7 @@ class WalkingSummaryScreen extends ConsumerWidget {
 
   void _createNextMission(BuildContext context, WidgetRef ref) {
     final session = ref.read(walkingSessionProvider);
-    
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => MissionCreationScreen(
@@ -395,9 +379,7 @@ class WalkingSummaryScreen extends ConsumerWidget {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       // Save session to database

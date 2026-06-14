@@ -28,7 +28,7 @@ class CardioDetectionBanner extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -39,10 +39,7 @@ class CardioDetectionBanner extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text(
-                  '💪',
-                  style: TextStyle(fontSize: 32),
-                ),
+                const Text('💪', style: TextStyle(fontSize: 32)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -125,9 +122,7 @@ class CardioDetectionBanner extends StatelessWidget {
               ),
               child: const Text(
                 'No Thanks',
-                style: TextStyle(
-                  fontFamily: 'GeneralSans',
-                ),
+                style: TextStyle(fontFamily: 'GeneralSans'),
               ),
             ),
           ],
@@ -147,9 +142,7 @@ class CardioDetectionBanner extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFFFF6B35),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         padding: const EdgeInsets.symmetric(vertical: 12),
         minimumSize: const Size(0, 48),
       ),

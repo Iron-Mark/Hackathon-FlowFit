@@ -8,12 +8,8 @@ void main() {
   group('HomeHeader', () {
     testWidgets('displays app title', (WidgetTester tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
-          ),
+        const ProviderScope(
+          child: MaterialApp(home: Scaffold(appBar: HomeHeader())),
         ),
       );
 
@@ -22,12 +18,8 @@ void main() {
 
     testWidgets('displays notification icon', (WidgetTester tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
-          ),
+        const ProviderScope(
+          child: MaterialApp(home: Scaffold(appBar: HomeHeader())),
         ),
       );
 
@@ -35,17 +27,13 @@ void main() {
       expect(find.byType(IconButton), findsOneWidget);
     });
 
-    testWidgets('hides badge when notification count is 0', (WidgetTester tester) async {
+    testWidgets('hides badge when notification count is 0', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            unreadNotificationsProvider.overrideWith((ref) => 0),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
-          ),
+          overrides: [unreadNotificationsProvider.overrideWith((ref) => 0)],
+          child: const MaterialApp(home: Scaffold(appBar: HomeHeader())),
         ),
       );
 
@@ -53,17 +41,13 @@ void main() {
       expect(find.text('0'), findsNothing);
     });
 
-    testWidgets('displays exact count when count <= 9', (WidgetTester tester) async {
+    testWidgets('displays exact count when count <= 9', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            unreadNotificationsProvider.overrideWith((ref) => 5),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
-          ),
+          overrides: [unreadNotificationsProvider.overrideWith((ref) => 5)],
+          child: const MaterialApp(home: Scaffold(appBar: HomeHeader())),
         ),
       );
 
@@ -73,48 +57,34 @@ void main() {
     testWidgets('displays "9+" when count > 9', (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            unreadNotificationsProvider.overrideWith((ref) => 15),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
-          ),
+          overrides: [unreadNotificationsProvider.overrideWith((ref) => 15)],
+          child: const MaterialApp(home: Scaffold(appBar: HomeHeader())),
         ),
       );
 
       expect(find.text('9+'), findsOneWidget);
     });
 
-    testWidgets('displays "9+" when count is exactly 10', (WidgetTester tester) async {
+    testWidgets('displays "9+" when count is exactly 10', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            unreadNotificationsProvider.overrideWith((ref) => 10),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
-          ),
+          overrides: [unreadNotificationsProvider.overrideWith((ref) => 10)],
+          child: const MaterialApp(home: Scaffold(appBar: HomeHeader())),
         ),
       );
 
       expect(find.text('9+'), findsOneWidget);
     });
 
-    testWidgets('displays exact count for boundary value 9', (WidgetTester tester) async {
+    testWidgets('displays exact count for boundary value 9', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            unreadNotificationsProvider.overrideWith((ref) => 9),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
-          ),
+          overrides: [unreadNotificationsProvider.overrideWith((ref) => 9)],
+          child: const MaterialApp(home: Scaffold(appBar: HomeHeader())),
         ),
       );
 
@@ -123,12 +93,8 @@ void main() {
 
     testWidgets('notification button has tooltip', (WidgetTester tester) async {
       await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
-          ),
+        const ProviderScope(
+          child: MaterialApp(home: Scaffold(appBar: HomeHeader())),
         ),
       );
 
@@ -147,9 +113,7 @@ void main() {
                 error: Colors.red,
               ),
             ),
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
+            home: const Scaffold(appBar: HomeHeader()),
           ),
         ),
       );
@@ -158,33 +122,31 @@ void main() {
       expect(appBar.backgroundColor, Colors.white);
     });
 
-    testWidgets('badge uses error color from theme', (WidgetTester tester) async {
+    testWidgets('badge uses error color from theme', (
+      WidgetTester tester,
+    ) async {
       const testErrorColor = Colors.red;
-      
+
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            unreadNotificationsProvider.overrideWith((ref) => 5),
-          ],
+          overrides: [unreadNotificationsProvider.overrideWith((ref) => 5)],
           child: MaterialApp(
             theme: ThemeData(
-              colorScheme: const ColorScheme.light(
-                error: testErrorColor,
-              ),
+              colorScheme: const ColorScheme.light(error: testErrorColor),
             ),
-            home: Scaffold(
-              appBar: const HomeHeader(),
-            ),
+            home: const Scaffold(appBar: HomeHeader()),
           ),
         ),
       );
 
       // Find the badge container
       final container = tester.widget<Container>(
-        find.descendant(
-          of: find.byType(Stack),
-          matching: find.byType(Container),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(Stack),
+              matching: find.byType(Container),
+            )
+            .first,
       );
 
       final decoration = container.decoration as BoxDecoration;

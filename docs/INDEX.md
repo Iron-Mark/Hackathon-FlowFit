@@ -1,100 +1,263 @@
 # FlowFit Documentation Index
 
-## 📚 Quick Navigation
+## 📚 Documentation Structure
 
-### 🚀 Getting Started
-- [GETTING_STARTED.md](GETTING_STARTED.md) - Initial setup and installation guide
-- [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - Project organization and architecture
-- [QUICK_TEST.md](QUICK_TEST.md) - Quick testing guide
-
-### 🔧 Implementation Guides
-- [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) - Overall implementation roadmap
-- [SMARTWATCH_TO_PHONE_DATA_FLOW.md](SMARTWATCH_TO_PHONE_DATA_FLOW.md) - Complete data flow documentation
-- [WATCH_TO_PHONE_COMPLETE_FLOW.md](WATCH_TO_PHONE_COMPLETE_FLOW.md) - Live data flow guide
-- [WORKING_KOTLIN_HR_FLOW_ANALYSIS.md](WORKING_KOTLIN_HR_FLOW_ANALYSIS.md) - Working Kotlin implementation analysis
-
-### 🐛 Troubleshooting & Fixes
-- [CONNECTION_TIMEOUT_FIX.md](CONNECTION_TIMEOUT_FIX.md) - Fix for missing connectService() call
-- [CONNECTION_CALLBACK_FIX.md](CONNECTION_CALLBACK_FIX.md) - Fix for multiple service instances
-- [ALL_ISSUES_FIXED.md](ALL_ISSUES_FIXED.md) - Complete summary of all fixes applied
-- [PHONE_RECEIVER_ISSUE.md](PHONE_RECEIVER_ISSUE.md) - Phone data reception troubleshooting
-- [PERMISSION_FIX.md](PERMISSION_FIX.md) - Permission handling fixes
-- [PERMISSION_FIX_APPLIED.md](PERMISSION_FIX_APPLIED.md) - Applied permission fixes
-- [SAMSUNG_HEALTH_SDK_ISSUE.md](SAMSUNG_HEALTH_SDK_ISSUE.md) - Samsung Health SDK issues
-
-### 📊 Architecture & Comparison
-- [CLEAN_ARCHITECTURE_GUIDE.md](CLEAN_ARCHITECTURE_GUIDE.md) - **NEW** Clean architecture with Riverpod guide
-- [ARCHITECTURE_DIAGRAM.md](ARCHITECTURE_DIAGRAM.md) - **NEW** Visual architecture diagrams
-- [MIGRATION_TO_CLEAN_ARCHITECTURE.md](MIGRATION_TO_CLEAN_ARCHITECTURE.md) - **NEW** Migration guide for existing screens
-- [KOTLIN_COMPARISON_ANALYSIS.md](KOTLIN_COMPARISON_ANALYSIS.md) - Native Kotlin vs Flutter bridge comparison
-- [ARCHITECTURE_FIX_NEEDED.md](ARCHITECTURE_FIX_NEEDED.md) - Architecture improvements needed
-- [FIX_FLUTTER.md](FIX_FLUTTER.md) - Flutter-specific fixes
-
-### 🔨 Build & Status
-- [BUILD_STATUS.md](BUILD_STATUS.md) - Current build status
-- [CRITICAL_FIX_APPLIED.md](CRITICAL_FIX_APPLIED.md) - Critical fixes applied
-- [FOLDER_REORGANIZATION.md](FOLDER_REORGANIZATION.md) - Project reorganization notes
-
-### 📱 Device & Platform
-- [DEVICE_REFERENCE.md](DEVICE_REFERENCE.md) - Device-specific information
-- [wearos.md](wearos.md) - Wear OS configuration and setup
-- [WATCH_UI_REDESIGN.md](WATCH_UI_REDESIGN.md) - Watch UI design notes
+All documentation has been organized into logical folders for easy navigation.
 
 ---
 
-## 🎯 Common Tasks
+## 📁 Root Directory
 
-### Setting Up Heart Rate Tracking
-1. Read [GETTING_STARTED.md](GETTING_STARTED.md)
-2. Follow [SMARTWATCH_TO_PHONE_DATA_FLOW.md](SMARTWATCH_TO_PHONE_DATA_FLOW.md)
-3. Check [CONNECTION_TIMEOUT_FIX.md](CONNECTION_TIMEOUT_FIX.md) if issues occur
+Essential documentation that should be easily accessible:
 
-### Understanding the Architecture
-1. **Start with [CLEAN_ARCHITECTURE_GUIDE.md](CLEAN_ARCHITECTURE_GUIDE.md)** - New clean architecture setup
-2. Review [ARCHITECTURE_DIAGRAM.md](ARCHITECTURE_DIAGRAM.md) - Visual diagrams
-3. See [KOTLIN_COMPARISON_ANALYSIS.md](KOTLIN_COMPARISON_ANALYSIS.md) - Native vs Flutter
-4. Check [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - File organization
-5. Read [WORKING_KOTLIN_HR_FLOW_ANALYSIS.md](WORKING_KOTLIN_HR_FLOW_ANALYSIS.md) - Working implementation
-
-### Troubleshooting Connection Issues
-1. Check [ALL_ISSUES_FIXED.md](ALL_ISSUES_FIXED.md) for known fixes
-2. Review [CONNECTION_CALLBACK_FIX.md](CONNECTION_CALLBACK_FIX.md)
-3. Verify [PHONE_RECEIVER_ISSUE.md](PHONE_RECEIVER_ISSUE.md)
-
-### Testing Data Flow
-1. Follow [WATCH_TO_PHONE_COMPLETE_FLOW.md](WATCH_TO_PHONE_COMPLETE_FLOW.md)
-2. Use [QUICK_TEST.md](QUICK_TEST.md) for quick verification
-3. Check [BUILD_STATUS.md](BUILD_STATUS.md) for current status
+- **README.md** - Main project overview and setup instructions
+- **QUICK_START.md** - Quick start guide for developers
+- **TROUBLESHOOTING.md** - Common issues and solutions
 
 ---
 
-## 📝 Document Status
+## 🎤 Presentation Documentation (`docs/presentation/`)
 
-### ✅ Complete & Current
-- **CLEAN_ARCHITECTURE_GUIDE.md** - NEW clean architecture documentation
-- **ARCHITECTURE_DIAGRAM.md** - NEW visual architecture diagrams
-- **MIGRATION_TO_CLEAN_ARCHITECTURE.md** - NEW migration guide
-- CONNECTION_TIMEOUT_FIX.md
-- CONNECTION_CALLBACK_FIX.md
-- ALL_ISSUES_FIXED.md
-- KOTLIN_COMPARISON_ANALYSIS.md
-- WATCH_TO_PHONE_COMPLETE_FLOW.md
-- PHONE_RECEIVER_ISSUE.md
+Documentation specifically for presenting the project to judges or stakeholders:
 
-### 📚 Reference Documents
-- SMARTWATCH_TO_PHONE_DATA_FLOW.md
-- WORKING_KOTLIN_HR_FLOW_ANALYSIS.md
-- PROJECT_STRUCTURE.md
-- wearos.md
+### Main Presentation Guide
+- **PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md** ⭐
+  - Complete presentation guide with layman's terms
+  - Technical deep dive on Wear OS integration
+  - Demo script and talking points
+  - Q&A preparation
+  - Data flow diagrams
 
-### 🗂️ Historical/Archive
-- ARCHITECTURE_FIX_NEEDED.md
-- CRITICAL_FIX_APPLIED.md
-- PERMISSION_FIX.md
-- PERMISSION_FIX_APPLIED.md
-- FOLDER_REORGANIZATION.md
+### Technical References
+- **SAMSUNG_TECHNOLOGIES_USED.md**
+  - Complete list of Samsung technologies used
+  - Samsung Health SDK details
+  - Integration architecture
+  - Talking points for judges
+
+- **WEAR_OS_INTEGRATION_SUMMARY.md**
+  - Quick technical summary
+  - Step-by-step data flow
+  - Performance metrics
+  - Demo checklist
 
 ---
 
-**Last Updated:** November 25, 2025  
-**Project:** FlowFit - Samsung Galaxy Watch Heart Rate Tracking
+## 🔧 Implementation Documentation (`docs/implementation/`)
+
+Technical implementation details and verification:
+
+### AI Classification
+- **AI_DETECTION_COMPLETE_IMPLEMENTATION.md**
+  - Complete AI detection implementation guide
+  - Architecture diagrams
+  - Code examples
+  - Data persistence strategy
+
+- **AI_CLASSIFICATION_VERIFICATION.md**
+  - Verification checklist
+  - Testing guide
+  - Debugging guide
+  - Performance metrics
+
+- **AI_LIVE_CLASSIFICATION_CONFIRMED.md** ✅
+  - Confirmation that AI is working
+  - Code verification
+  - Flow verification
+  - Testing checklist
+
+### Watch Integration
+- **ACTIVITY_AI_WATCH_INTEGRATION.md**
+  - Watch heart rate integration
+  - Data flow details
+  - UI feedback implementation
+
+### General Implementation
+- **FINAL_INTEGRATION_SUMMARY.md**
+  - Overall integration summary
+  - System architecture
+
+- **REAL_DATA_INTEGRATION.md**
+  - Real data vs simulated data
+  - Integration details
+
+- **SCHEMA_ALIGNMENT_FIX.md**
+  - Database schema fixes
+  - Alignment issues resolved
+
+- **FLOW_FIXED.md**
+  - Flow fixes and improvements
+
+---
+
+## ✨ Feature Documentation (`docs/features/`)
+
+Documentation for specific features implemented:
+
+### AI & Activity Classification
+- **AI_MODE_DETECTION_FEATURE.md**
+  - AI activity mode detection overview
+  - Feature description
+  - How it works
+
+- **AI_MODE_LIVE_DETECTION.md**
+  - Live detection implementation
+  - Continuous monitoring
+  - Real-time updates
+
+- **AI_INTEGRATION_UNIFIED.md**
+  - Unified AI integration approach
+
+- **SHARED_AI_CLASSIFIER_INTEGRATION.md**
+  - Shared classifier implementation
+
+### Workout Features
+- **RUNNING_FLOW_COMPLETE.md**
+  - Complete running workout flow
+  - From start to summary
+
+- **WORKOUT_FLOW_UI_UPDATE.md**
+  - Workout flow UI improvements
+
+- **SHARE_ACHIEVEMENT_FEATURE.md**
+  - Achievement sharing feature
+  - Social media integration
+
+### Wellness Features
+- **WELLNESS_TRACKER_COMPLETE.md**
+  - Complete wellness tracker implementation
+
+- **WELLNESS_TRACKER_IMPLEMENTATION.md**
+  - Implementation details
+
+- **WELLNESS_MAP_GPS_TRACKING.md**
+  - GPS tracking for wellness
+
+- **WELLNESS_STEP_COUNTER.md**
+  - Step counter implementation
+
+- **WELLNESS_BPM_FIXES.md**
+  - Heart rate fixes for wellness
+
+- **WELLNESS_UI_FIXES.md**
+  - UI improvements for wellness
+
+### Authentication & User Management
+- **AUTH_GUARDS_SUMMARY.md**
+  - Authentication guards implementation
+
+- **EMAIL_VERIFICATION_FLOW_UPDATE.md**
+  - Email verification flow
+
+### UI & UX Features
+- **UI_CONSISTENCY_IMPROVEMENTS.md**
+  - UI consistency updates
+
+- **SURVEY_HEADER_CONSISTENCY_UPDATE.md**
+  - Survey UI improvements
+
+- **MEASUREMENT_UNIT_TOGGLE_UPDATE.md**
+  - Unit toggle feature (kg/lbs, km/mi)
+
+### Navigation & Deep Links
+- **DEEP_LINK_QUICK_REF.md**
+  - Deep link implementation reference
+
+---
+
+## 🛠️ Scripts (`scripts/`)
+
+Build and deployment scripts:
+
+- **clean_build.bat** - Clean build script for Windows
+- **build_and_install.bat** - Build and install to device
+- **run_phone.bat** - Run phone app
+- **run_watch.bat** - Run watch app
+- **test-phone.bat** - Test phone app
+- **test-watch.bat** - Test watch app
+- **test_phone_receiver.sh** - Test phone data receiver (Linux/Mac)
+
+---
+
+## 🎯 Quick Navigation
+
+### For Presentation:
+1. Start with: `docs/presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md`
+2. Reference: `docs/presentation/SAMSUNG_TECHNOLOGIES_USED.md`
+3. Quick facts: `docs/presentation/WEAR_OS_INTEGRATION_SUMMARY.md`
+
+### For Development:
+1. Setup: `README.md` and `QUICK_START.md`
+2. Issues: `TROUBLESHOOTING.md`
+3. Implementation: `docs/implementation/`
+4. Features: `docs/features/`
+
+### For Verification:
+1. AI Working: `docs/implementation/AI_LIVE_CLASSIFICATION_CONFIRMED.md`
+2. Testing: `docs/implementation/AI_CLASSIFICATION_VERIFICATION.md`
+3. Complete Guide: `docs/implementation/AI_DETECTION_COMPLETE_IMPLEMENTATION.md`
+
+---
+
+## 📊 Documentation Statistics
+
+- **Total Documents:** 33 files
+- **Presentation Docs:** 3 files
+- **Implementation Docs:** 8 files
+- **Feature Docs:** 19 files
+- **Root Docs:** 3 files
+- **Scripts:** 8 files
+
+---
+
+## 🔍 Search Tips
+
+### Find by Topic:
+- **AI Classification:** Search for "AI_" prefix
+- **Wellness Features:** Search for "WELLNESS_" prefix
+- **Workout Features:** Search for "WORKOUT_" or "RUNNING_"
+- **UI/UX:** Search for "UI_" prefix
+- **Integration:** Look in `docs/implementation/`
+
+### Find by Purpose:
+- **Presenting:** `docs/presentation/`
+- **Building:** `scripts/`
+- **Understanding:** `docs/features/`
+- **Debugging:** `TROUBLESHOOTING.md` or `docs/implementation/`
+
+---
+
+## 📝 Documentation Conventions
+
+### File Naming:
+- **UPPERCASE_WITH_UNDERSCORES.md** - Documentation files
+- **lowercase_with_underscores.bat/sh** - Script files
+
+### Folder Structure:
+```
+flowfit/
+├── README.md                    # Main readme
+├── QUICK_START.md              # Quick start guide
+├── TROUBLESHOOTING.md          # Troubleshooting
+├── docs/
+│   ├── INDEX.md                # This file
+│   ├── presentation/           # For judges/stakeholders
+│   ├── implementation/         # Technical implementation
+│   └── features/               # Feature documentation
+└── scripts/                    # Build/deployment scripts
+```
+
+---
+
+## 🚀 Getting Started
+
+1. **New to the project?** Start with `README.md`
+2. **Want to run it?** Check `QUICK_START.md`
+3. **Preparing presentation?** Go to `docs/presentation/`
+4. **Need to verify AI?** See `docs/implementation/AI_LIVE_CLASSIFICATION_CONFIRMED.md`
+5. **Having issues?** Check `TROUBLESHOOTING.md`
+
+---
+
+**Last Updated:** November 29, 2025
+**Maintained By:** Development Team

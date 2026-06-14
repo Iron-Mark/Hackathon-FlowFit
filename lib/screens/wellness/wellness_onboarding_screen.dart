@@ -14,7 +14,8 @@ class WellnessOnboardingScreen extends StatefulWidget {
   }
 
   @override
-  State<WellnessOnboardingScreen> createState() => _WellnessOnboardingScreenState();
+  State<WellnessOnboardingScreen> createState() =>
+      _WellnessOnboardingScreenState();
 }
 
 class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
@@ -33,7 +34,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(WellnessOnboardingScreen._onboardingCompleteKey, true);
-    
+
     if (mounted) {
       Navigator.of(context).pushReplacementNamed('/wellness-tracker');
     }
@@ -41,10 +42,10 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
 
   Future<void> _checkPermissionsAndWatch() async {
     setState(() => _isCheckingPermissions = true);
-    
+
     // Simulate permission and watch connection check
     await Future.delayed(const Duration(seconds: 1));
-    
+
     setState(() {
       _hasPermissions = true;
       _isWatchConnected = true;
@@ -67,9 +68,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
                   return Expanded(
                     child: Container(
                       height: 4,
-                      margin: EdgeInsets.only(
-                        right: index < 2 ? 8 : 0,
-                      ),
+                      margin: EdgeInsets.only(right: index < 2 ? 8 : 0),
                       decoration: BoxDecoration(
                         color: index <= _currentPage
                             ? const Color(0xFF3B82F6)
@@ -81,7 +80,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
                 }),
               ),
             ),
-            
+
             // Page content
             Expanded(
               child: PageView(
@@ -89,14 +88,10 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
                 onPageChanged: (page) {
                   setState(() => _currentPage = page);
                 },
-                children: [
-                  _buildPage1(),
-                  _buildPage2(),
-                  _buildPage3(),
-                ],
+                children: [_buildPage1(), _buildPage2(), _buildPage3()],
               ),
             ),
-            
+
             // Navigation buttons
             Padding(
               padding: const EdgeInsets.all(20),
@@ -148,8 +143,8 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
                       onPressed: _isCheckingPermissions
                           ? null
                           : (_hasPermissions && _isWatchConnected
-                              ? _completeOnboarding
-                              : _checkPermissionsAndWatch),
+                                ? _completeOnboarding
+                                : _checkPermissionsAndWatch),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF3B82F6),
                         foregroundColor: Colors.white,
@@ -167,7 +162,9 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : Text(
@@ -199,7 +196,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -244,14 +241,10 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.spa,
-              size: 60,
-              color: Colors.green,
-            ),
+            child: const Icon(Icons.spa, size: 60, color: Colors.green),
           ),
           const SizedBox(height: 40),
           const Text(
@@ -307,14 +300,10 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: Colors.purple.withOpacity(0.1),
+              color: Colors.purple.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.lock,
-              size: 60,
-              color: Colors.purple,
-            ),
+            child: const Icon(Icons.lock, size: 60, color: Colors.purple),
           ),
           const SizedBox(height: 40),
           const Text(
@@ -345,7 +334,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -400,7 +389,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -411,7 +400,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF3B82F6).withOpacity(0.1),
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: const Color(0xFF3B82F6), size: 24),
@@ -453,11 +442,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
   }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          color: isSuccess ? Colors.green : Colors.orange,
-          size: 32,
-        ),
+        Icon(icon, color: isSuccess ? Colors.green : Colors.orange, size: 32),
         const SizedBox(width: 16),
         Expanded(
           child: Column(

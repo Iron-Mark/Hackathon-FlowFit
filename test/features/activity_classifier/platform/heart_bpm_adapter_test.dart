@@ -19,7 +19,7 @@ void main() {
       final sub = adapter.bpmStream.listen(values.add);
 
       adapter.setManualBpm(75);
-      await Future.delayed(Duration(milliseconds: 10));
+      await Future.delayed(const Duration(milliseconds: 10));
 
       expect(adapter.currentBpm, equals(75));
       expect(values.last, equals(75));
@@ -27,21 +27,24 @@ void main() {
       await sub.cancel();
     });
 
-    test('connectExternalStream subscribes to external stream and publishes', () async {
-      final controller = StreamController<int>();
-      final values = <int?>[];
-      final sub = adapter.bpmStream.listen(values.add);
+    test(
+      'connectExternalStream subscribes to external stream and publishes',
+      () async {
+        final controller = StreamController<int>();
+        final values = <int?>[];
+        final sub = adapter.bpmStream.listen(values.add);
 
-      adapter.connectExternalStream(controller.stream);
-      controller.add(60);
-      controller.add(62);
-      await Future.delayed(Duration(milliseconds: 10));
+        adapter.connectExternalStream(controller.stream);
+        controller.add(60);
+        controller.add(62);
+        await Future.delayed(const Duration(milliseconds: 10));
 
-      expect(adapter.currentBpm, equals(62));
-      expect(values, containsAll([60, 62]));
+        expect(adapter.currentBpm, equals(62));
+        expect(values, containsAll([60, 62]));
 
-      await controller.close();
-      await sub.cancel();
-    });
+        await controller.close();
+        await sub.cancel();
+      },
+    );
   });
 }

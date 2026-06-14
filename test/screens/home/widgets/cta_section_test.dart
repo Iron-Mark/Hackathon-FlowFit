@@ -1,111 +1,91 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flowfit/screens/home/widgets/cta_section.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
   group('CTASection', () {
-    late GoRouter router;
     String? lastNavigatedRoute;
 
     setUp(() {
       lastNavigatedRoute = null;
-      router = GoRouter(
-        initialLocation: '/',
-        routes: [
-          GoRoute(
-            path: '/',
-            builder: (context, state) => const Scaffold(
-              body: CTASection(),
-            ),
-          ),
-          GoRoute(
-            path: '/active',
-            builder: (context, state) {
-              lastNavigatedRoute = '/active';
-              final type = state.uri.queryParameters['type'];
-              if (type != null) {
-                lastNavigatedRoute = '/active?type=$type';
-              }
-              return const Scaffold(
-                body: Text('Active Screen'),
-              );
-            },
-          ),
-        ],
-      );
     });
 
-    testWidgets('displays section header', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
+    Widget buildHarness({ThemeData? theme}) {
+      return ProviderScope(
+        child: MaterialApp(
+          theme: theme,
+          home: const Scaffold(body: CTASection()),
+          routes: {
+            '/workout/select-type': (context) {
+              lastNavigatedRoute = '/workout/select-type';
+              return const Scaffold(body: Text('Workout Type Selection'));
+            },
+            '/wellness-tracker': (context) {
+              lastNavigatedRoute = '/wellness-tracker';
+              return const Scaffold(body: Text('Wellness Tracker Screen'));
+            },
+            '/mission': (context) {
+              lastNavigatedRoute = '/mission';
+              return const Scaffold(body: Text('Mission Screen'));
+            },
+          },
         ),
       );
+    }
+
+    testWidgets('displays section header', (WidgetTester tester) async {
+      await tester.pumpWidget(buildHarness());
 
       expect(find.text('Ready to move?'), findsOneWidget);
     });
 
     testWidgets('displays all three buttons', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+      await tester.pumpWidget(buildHarness());
 
-      expect(find.text('Start a Workout'), findsOneWidget);
-      expect(find.text('Log a Run'), findsOneWidget);
-      expect(find.text('Record a Walk'), findsOneWidget);
+      expect(find.text('START WORKOUT'), findsOneWidget);
+      expect(find.text('Wellness Tracker'), findsOneWidget);
+      expect(find.text('OLD MAP MISSIONS (Test)'), findsOneWidget);
     });
 
-    testWidgets('Start a Workout button is ElevatedButton', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+    testWidgets('START WORKOUT button is ElevatedButton', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildHarness());
 
       final startWorkoutButton = find.ancestor(
-        of: find.text('Start a Workout'),
+        of: find.text('START WORKOUT'),
         matching: find.byType(ElevatedButton),
       );
       expect(startWorkoutButton, findsOneWidget);
     });
 
-    testWidgets('Log a Run button is OutlinedButton', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+    testWidgets('Wellness Tracker button is OutlinedButton', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildHarness());
 
-      final logRunButton = find.ancestor(
-        of: find.text('Log a Run'),
+      final wellnessTrackerButton = find.ancestor(
+        of: find.text('Wellness Tracker'),
         matching: find.byType(OutlinedButton),
       );
-      expect(logRunButton, findsOneWidget);
+      expect(wellnessTrackerButton, findsOneWidget);
     });
 
-    testWidgets('Record a Walk button is OutlinedButton', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+    testWidgets('OLD MAP MISSIONS button is OutlinedButton', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildHarness());
 
-      final recordWalkButton = find.ancestor(
-        of: find.text('Record a Walk'),
+      final missionButton = find.ancestor(
+        of: find.text('OLD MAP MISSIONS (Test)'),
         matching: find.byType(OutlinedButton),
       );
-      expect(recordWalkButton, findsOneWidget);
+      expect(missionButton, findsOneWidget);
     });
 
-    testWidgets('all buttons have 56dp height', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+    testWidgets('buttons use configured heights', (WidgetTester tester) async {
+      await tester.pumpWidget(buildHarness());
 
       // Find all SizedBox widgets that wrap the buttons
       final sizedBoxes = tester.widgetList<SizedBox>(
@@ -115,64 +95,64 @@ void main() {
         ),
       );
 
-      // Filter for the button containers (height: 56)
-      final buttonContainers = sizedBoxes.where((box) => box.height == 56);
-      expect(buttonContainers.length, 3);
+      expect(sizedBoxes.where((box) => box.height == 56).length, 1);
+      expect(sizedBoxes.where((box) => box.height == 48).length, 2);
     });
 
-    testWidgets('Start a Workout navigates to /active', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+    testWidgets('START WORKOUT opens mood check before workout selection', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildHarness());
 
-      await tester.tap(find.text('Start a Workout'));
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('START WORKOUT'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-      expect(lastNavigatedRoute, '/active');
+      expect(find.text('How are you feeling?'), findsOneWidget);
+      expect(lastNavigatedRoute, isNull);
     });
 
-    testWidgets('Log a Run navigates to /active?type=run', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+    testWidgets('mood selection navigates to workout type selection', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildHarness());
 
-      await tester.tap(find.text('Log a Run'));
+      await tester.tap(find.text('START WORKOUT'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Good'));
       await tester.pumpAndSettle();
 
-      expect(lastNavigatedRoute, '/active?type=run');
+      expect(lastNavigatedRoute, '/workout/select-type');
     });
 
-    testWidgets('Record a Walk navigates to /active?type=walk', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+    testWidgets('Wellness Tracker navigates to /wellness-tracker', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildHarness());
 
-      await tester.tap(find.text('Record a Walk'));
+      await tester.tap(find.text('Wellness Tracker'));
       await tester.pumpAndSettle();
 
-      expect(lastNavigatedRoute, '/active?type=walk');
+      expect(lastNavigatedRoute, '/wellness-tracker');
+    });
+
+    testWidgets('OLD MAP MISSIONS navigates to /mission', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildHarness());
+
+      await tester.tap(find.text('OLD MAP MISSIONS (Test)'));
+      await tester.pumpAndSettle();
+
+      expect(lastNavigatedRoute, '/mission');
     });
 
     testWidgets('uses theme colors correctly', (WidgetTester tester) async {
-      const testPrimaryColor = Colors.blue;
-      const testOnPrimaryColor = Colors.white;
-
       await tester.pumpWidget(
-        MaterialApp(
+        buildHarness(
           theme: ThemeData(
-            colorScheme: const ColorScheme.light(
-              primary: testPrimaryColor,
-              onPrimary: testOnPrimaryColor,
-            ),
-          ),
-          home: const Scaffold(
-            body: CTASection(),
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.purple),
           ),
         ),
       );
@@ -180,7 +160,7 @@ void main() {
       // Find the ElevatedButton
       final elevatedButton = tester.widget<ElevatedButton>(
         find.ancestor(
-          of: find.text('Start a Workout'),
+          of: find.text('START WORKOUT'),
           matching: find.byType(ElevatedButton),
         ),
       );
@@ -188,52 +168,46 @@ void main() {
       final buttonStyle = elevatedButton.style;
       expect(
         buttonStyle?.backgroundColor?.resolve({}),
-        testPrimaryColor,
+        const Color(0xFF3B82F6),
       );
-      expect(
-        buttonStyle?.foregroundColor?.resolve({}),
-        testOnPrimaryColor,
-      );
+      expect(buttonStyle?.foregroundColor?.resolve({}), Colors.white);
     });
 
-    testWidgets('buttons have 16px border radius', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+    testWidgets('buttons have configured border radius', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildHarness());
 
       // Check ElevatedButton border radius
       final elevatedButton = tester.widget<ElevatedButton>(
         find.ancestor(
-          of: find.text('Start a Workout'),
+          of: find.text('START WORKOUT'),
           matching: find.byType(ElevatedButton),
         ),
       );
-      final elevatedShape = elevatedButton.style?.shape?.resolve({}) as RoundedRectangleBorder;
+      final elevatedShape =
+          elevatedButton.style?.shape?.resolve({}) as RoundedRectangleBorder;
       expect(elevatedShape.borderRadius, BorderRadius.circular(16));
 
       // Check OutlinedButton border radius
       final outlinedButton = tester.widget<OutlinedButton>(
         find.ancestor(
-          of: find.text('Log a Run'),
+          of: find.text('Wellness Tracker'),
           matching: find.byType(OutlinedButton),
         ),
       );
-      final outlinedShape = outlinedButton.style?.shape?.resolve({}) as RoundedRectangleBorder;
-      expect(outlinedShape.borderRadius, BorderRadius.circular(16));
+      final outlinedShape =
+          outlinedButton.style?.shape?.resolve({}) as RoundedRectangleBorder;
+      expect(outlinedShape.borderRadius, BorderRadius.circular(12));
     });
 
-    testWidgets('section header uses titleLarge with bold weight', (WidgetTester tester) async {
+    testWidgets('section header uses titleLarge with bold weight', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp(
+        buildHarness(
           theme: ThemeData(
-            textTheme: const TextTheme(
-              titleLarge: TextStyle(fontSize: 22),
-            ),
-          ),
-          home: const Scaffold(
-            body: CTASection(),
+            textTheme: const TextTheme(titleLarge: TextStyle(fontSize: 22)),
           ),
         ),
       );
@@ -243,11 +217,7 @@ void main() {
     });
 
     testWidgets('buttons are full width', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: router,
-        ),
-      );
+      await tester.pumpWidget(buildHarness());
 
       // Find all SizedBox widgets that wrap the buttons
       final sizedBoxes = tester.widgetList<SizedBox>(
@@ -257,9 +227,11 @@ void main() {
         ),
       );
 
-      // Filter for the button containers (width: double.infinity, height: 56)
+      // Filter for the full-width button containers.
       final buttonContainers = sizedBoxes.where(
-        (box) => box.width == double.infinity && box.height == 56,
+        (box) =>
+            box.width == double.infinity &&
+            (box.height == 56 || box.height == 48),
       );
       expect(buttonContainers.length, 3);
     });

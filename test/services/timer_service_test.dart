@@ -184,6 +184,7 @@ void main() {
         timerService.start();
         await Future.delayed(const Duration(milliseconds: 1100));
         timerService.stop();
+        await Future.delayed(const Duration(milliseconds: 100));
 
         await subscription.cancel();
         expect(streamValues.last, equals(0));
@@ -277,16 +278,19 @@ void main() {
     });
 
     group('dispose', () {
-      test('stops timer when disposed', () async {
+      test('cancels timer ticks when disposed', () async {
         timerService.start();
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 1100));
+        final elapsedBeforeDispose = timerService.elapsedSeconds;
         timerService.dispose();
-        expect(timerService.isRunning, isFalse);
+        await Future.delayed(const Duration(milliseconds: 1100));
+        expect(timerService.elapsedSeconds, elapsedBeforeDispose);
       });
 
-      test('closes stream controller', () {
+      test('closes stream controller', () async {
+        final streamDone = expectLater(timerService.timerStream, emitsDone);
         timerService.dispose();
-        expect(() => timerService.timerStream.listen((_) {}), throwsStateError);
+        await streamDone;
       });
     });
 
@@ -468,16 +472,19 @@ void main() {
     });
 
     group('dispose', () {
-      test('stops countdown when disposed', () async {
+      test('cancels countdown ticks when disposed', () async {
         countdownService.start(60);
-        await Future.delayed(const Duration(milliseconds: 100));
+        await Future.delayed(const Duration(milliseconds: 1100));
+        final remainingBeforeDispose = countdownService.remainingSeconds;
         countdownService.dispose();
-        expect(countdownService.isRunning, isFalse);
+        await Future.delayed(const Duration(milliseconds: 1100));
+        expect(countdownService.remainingSeconds, remainingBeforeDispose);
       });
 
-      test('closes stream controller', () {
+      test('closes stream controller', () async {
+        final streamDone = expectLater(countdownService.timerStream, emitsDone);
         countdownService.dispose();
-        expect(() => countdownService.timerStream.listen((_) {}), throwsStateError);
+        await streamDone;
       });
     });
 

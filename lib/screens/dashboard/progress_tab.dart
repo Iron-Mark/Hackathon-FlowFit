@@ -14,9 +14,9 @@ class _ProgressTabState extends State<ProgressTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: Column(
         children: [
           const PageHeader(
@@ -31,7 +31,7 @@ class _ProgressTabState extends State<ProgressTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 24),
-                    
+
                     // This Week's Insight Card
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -70,9 +70,9 @@ class _ProgressTabState extends State<ProgressTab> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Weekly Activity Section
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -104,15 +104,19 @@ class _ProgressTabState extends State<ProgressTab> {
                           child: Row(
                             children: [
                               _buildToggleButton(context, 'Week', _isWeekView),
-                              _buildToggleButton(context, 'Month', !_isWeekView),
+                              _buildToggleButton(
+                                context,
+                                'Month',
+                                !_isWeekView,
+                              ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Activity Chart
                     Container(
                       height: 200,
@@ -122,7 +126,7 @@ class _ProgressTabState extends State<ProgressTab> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -166,9 +170,9 @@ class _ProgressTabState extends State<ProgressTab> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Sleep Quality Section
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -177,7 +181,7 @@ class _ProgressTabState extends State<ProgressTab> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -194,9 +198,8 @@ class _ProgressTabState extends State<ProgressTab> {
                                 children: [
                                   Text(
                                     'Sleep Quality',
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -208,9 +211,12 @@ class _ProgressTabState extends State<ProgressTab> {
                                 ],
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.1),
+                                  color: Colors.green.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -233,9 +239,17 @@ class _ProgressTabState extends State<ProgressTab> {
                           const SizedBox(height: 12),
                           Row(
                             children: [
-                              _buildSleepLegend(context, 'Awake', Colors.orange),
+                              _buildSleepLegend(
+                                context,
+                                'Awake',
+                                Colors.orange,
+                              ),
                               const SizedBox(width: 16),
-                              _buildSleepLegend(context, 'Light', Colors.yellow),
+                              _buildSleepLegend(
+                                context,
+                                'Light',
+                                Colors.yellow,
+                              ),
                               const SizedBox(width: 16),
                               _buildSleepLegend(context, 'Deep', Colors.blue),
                             ],
@@ -243,15 +257,18 @@ class _ProgressTabState extends State<ProgressTab> {
                           const SizedBox(height: 16),
                           LinearProgressIndicator(
                             minHeight: 8,
-                            backgroundColor: theme.colorScheme.surfaceVariant,
-                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                            backgroundColor:
+                                theme.colorScheme.surfaceContainerHighest,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.primary,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Your Trends Section
                     Text(
                       'Your Trends',
@@ -259,9 +276,9 @@ class _ProgressTabState extends State<ProgressTab> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Trends Cards
                     Row(
                       children: [
@@ -290,7 +307,7 @@ class _ProgressTabState extends State<ProgressTab> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -302,9 +319,13 @@ class _ProgressTabState extends State<ProgressTab> {
     );
   }
 
-  Widget _buildToggleButton(BuildContext context, String label, bool isSelected) {
+  Widget _buildToggleButton(
+    BuildContext context,
+    String label,
+    bool isSelected,
+  ) {
     final theme = Theme.of(context);
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -320,7 +341,9 @@ class _ProgressTabState extends State<ProgressTab> {
         child: Text(
           label,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+            color: isSelected
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurface,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
@@ -330,7 +353,7 @@ class _ProgressTabState extends State<ProgressTab> {
 
   Widget _buildBarChart(BuildContext context, String label, double value) {
     final theme = Theme.of(context);
-    
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -355,23 +378,17 @@ class _ProgressTabState extends State<ProgressTab> {
 
   Widget _buildSleepLegend(BuildContext context, String label, Color color) {
     final theme = Theme.of(context);
-    
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall,
-        ),
+        Text(label, style: theme.textTheme.bodySmall),
       ],
     );
   }
@@ -386,7 +403,7 @@ class _ProgressTabState extends State<ProgressTab> {
     bool isPositive,
   ) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -394,7 +411,7 @@ class _ProgressTabState extends State<ProgressTab> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

@@ -21,7 +21,16 @@ import 'widgets/edit_mission_dialog.dart';
 import 'widgets/map_tutorial_overlay.dart';
 
 class WellnessMapsPage extends StatefulWidget {
-  const WellnessMapsPage({super.key});
+  final maplat.LatLng? initialCenter;
+  final bool enableLocationServices;
+  final bool renderMapLayers;
+
+  const WellnessMapsPage({
+    super.key,
+    this.initialCenter,
+    this.enableLocationServices = true,
+    this.renderMapLayers = true,
+  });
 
   @override
   State<WellnessMapsPage> createState() => _WellnessMapsPageState();
@@ -69,13 +78,26 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
   @override
   void initState() {
     super.initState();
-    _initLocation();
+    final initialCenter = widget.initialCenter;
+    if (initialCenter != null) {
+      _initialCenter = initialCenter;
+      _lastCenter = initialCenter;
+    }
+    if (widget.enableLocationServices) {
+      _initLocation();
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _subscribeToService(startMonitoring: false);
+      });
+    }
   }
 
   Future<void> _initLocation() async {
     try {
       final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
       if (!mounted) return;
       setState(() {
@@ -84,45 +106,60 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
       // Move map if controller already exists (no-op if controller == null)
       _mapController?.move(_initialCenter!, 16.0);
 
-      GeofenceService service;
-      try {
-        service = context.read<GeofenceService>();
-      } catch (_) {
-        // If a provider is not present, fallback to a local in-memory service.
-        final fallbackRepo = InMemoryGeofenceRepository();
-        service = GeofenceService(repository: fallbackRepo);
-      }
-      await service.startMonitoring();
-      _eventsSub = service.events.listen((event) {
-        final repo = _getRepo();
-        final m = repo.getById(event.missionId);
-        if (m == null) return;
-        final message = _buildEventMessage(m, event);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      });
-      // Listen for focus requests (e.g., pushed by MoodTrackerService or notifications)
-      _focusRequestsSub = service.focusRequests.listen((id) async {
-        final repo = _getRepo();
-        if (id == 'add_sanctuary') {
-          // Prompt user to start place mode at current location
-          try {
-            final pos = await Geolocator.getCurrentPosition();
-            _startPlacingAtLatLng(maplat.LatLng(pos.latitude, pos.longitude));
-            return;
-          } catch (_) {
-            return;
-          }
-        }
-        final mission = repo.getById(id);
-        if (mission != null) {
-          // Start focus mode for this mission
-          _startFocusMission(mission);
-        }
-      });
+      await _subscribeToService(startMonitoring: true);
     } catch (e) {
-      // ignore
+      if (!mounted) return;
+      await _subscribeToService(startMonitoring: false);
     }
+  }
+
+  Future<void> _subscribeToService({required bool startMonitoring}) async {
+    if (_eventsSub != null || _focusRequestsSub != null) return;
+
+    GeofenceService service;
+    try {
+      service = context.read<GeofenceService>();
+    } catch (_) {
+      // If a provider is not present, fallback to a local in-memory service.
+      final fallbackRepo = InMemoryGeofenceRepository();
+      service = GeofenceService(repository: fallbackRepo);
+    }
+    if (startMonitoring) {
+      await service.startMonitoring();
+    }
+    _eventsSub = service.events.listen((event) {
+      final repo = _getRepo();
+      final m = repo.getById(event.missionId);
+      if (m == null) return;
+      final message = _buildEventMessage(m, event);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    });
+    // Listen for focus requests (e.g., pushed by MoodTrackerService or notifications)
+    _focusRequestsSub = service.focusRequests.listen((id) async {
+      final repo = _getRepo();
+      if (id == 'add_sanctuary') {
+        // Prompt user to start place mode at current location
+        if (!widget.enableLocationServices && _initialCenter != null) {
+          _startPlacingAtLatLng(_initialCenter!);
+          return;
+        }
+        try {
+          final pos = await Geolocator.getCurrentPosition();
+          _startPlacingAtLatLng(maplat.LatLng(pos.latitude, pos.longitude));
+          return;
+        } catch (_) {
+          return;
+        }
+      }
+      final mission = repo.getById(id);
+      if (mission != null) {
+        // Start focus mode for this mission
+        _startFocusMission(mission);
+      }
+    });
   }
 
   @override
@@ -154,7 +191,10 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
   }
 
   void _handleMissionTap(GeofenceMission m) {
-    _mapController?.move(maplat.LatLng(m.center.latitude, m.center.longitude), 16.0);
+    _mapController?.move(
+      maplat.LatLng(m.center.latitude, m.center.longitude),
+      16.0,
+    );
     _showMissionActions(m);
   }
 
@@ -190,7 +230,9 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
       radiusMeters: _placingRadius,
       type: _placingType,
       isActive: false,
-      targetDistanceMeters: _placingType == MissionType.target ? _placingTargetDistance : null,
+      targetDistanceMeters: _placingType == MissionType.target
+          ? _placingTargetDistance
+          : null,
     );
     final repo = _getRepo();
     await repo.add(mission);
@@ -199,7 +241,9 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
       _isPlacingMission = false;
       _placingLatLng = null;
     });
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mission added')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Mission added')));
   }
 
   // Focus a mission in the UI and start periodic updates for ETA/distance
@@ -215,9 +259,15 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
       _missionsVisible = false;
     });
     // center on mission
-    _mapController?.move(maplat.LatLng(mission.center.latitude, mission.center.longitude), 16.0);
+    _mapController?.move(
+      maplat.LatLng(mission.center.latitude, mission.center.longitude),
+      16.0,
+    );
     _updateFocusMetrics();
-    _focusTimer = Timer.periodic(const Duration(seconds: 5), (_) => _updateFocusMetrics());
+    _focusTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _updateFocusMetrics(),
+    );
   }
 
   void _stopFocusMission() {
@@ -232,10 +282,30 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
   Future<void> _updateFocusMetrics() async {
     final m = _focusedMission;
     if (m == null) return;
+    if (!widget.enableLocationServices) {
+      final center = _initialCenter;
+      final dist = center == null
+          ? 0.0
+          : const maplat.Distance().as(
+              maplat.LengthUnit.Meter,
+              center,
+              maplat.LatLng(m.center.latitude, m.center.longitude),
+            );
+      final etaSec = (dist / _focusSpeedMps).round();
+      setState(() {
+        _focusedDistanceMeters = dist;
+        _focusedEta = Duration(seconds: etaSec);
+      });
+      return;
+    }
     try {
       final pos = await Geolocator.getCurrentPosition();
       if (!mounted) return;
-      final dist = maplat.Distance().as(maplat.LengthUnit.Meter, maplat.LatLng(pos.latitude, pos.longitude), maplat.LatLng(m.center.latitude, m.center.longitude));
+      final dist = const maplat.Distance().as(
+        maplat.LengthUnit.Meter,
+        maplat.LatLng(pos.latitude, pos.longitude),
+        maplat.LatLng(m.center.latitude, m.center.longitude),
+      );
       final etaSec = (dist / _focusSpeedMps).round();
       setState(() {
         _focusedDistanceMeters = dist;
@@ -262,15 +332,17 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
     final markers = <fm.Marker>[];
     final circles = <fm.CircleMarker>[];
 
-    for (final m in repo.current) {
-      markers.add(buildMissionMarker(m, () => _handleMissionTap(m)));
-      circles.add(buildMissionCircle(m));
-    }
+    if (widget.renderMapLayers) {
+      for (final m in repo.current) {
+        markers.add(buildMissionMarker(m, () => _handleMissionTap(m)));
+        circles.add(buildMissionCircle(m));
+      }
 
-    // preview candidate marker + circle if placing a mission
-    if (_isPlacingMission && _placingLatLng != null) {
-      markers.add(buildPreviewMarker(_placingLatLng!));
-      circles.add(buildPreviewCircle(_placingLatLng!, _placingRadius));
+      // preview candidate marker + circle if placing a mission
+      if (_isPlacingMission && _placingLatLng != null) {
+        markers.add(buildPreviewMarker(_placingLatLng!));
+        circles.add(buildPreviewCircle(_placingLatLng!, _placingRadius));
+      }
     }
 
     return Scaffold(
@@ -281,6 +353,8 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
           Positioned.fill(
             child: _initialCenter == null
                 ? const Center(child: CircularProgressIndicator())
+                : !widget.renderMapLayers
+                ? ColoredBox(color: Theme.of(context).colorScheme.surface)
                 : fm.FlutterMap(
                     mapController: _mapController ??= fm.MapController(),
                     options: fm.MapOptions(
@@ -290,7 +364,12 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
                           ),
                       onTap: (tapPosition, latlng) {
                         if (_isPlacingMission) {
-                          setState(() => _placingLatLng = maplat.LatLng(latlng.latitude, latlng.longitude));
+                          setState(
+                            () => _placingLatLng = maplat.LatLng(
+                              latlng.latitude,
+                              latlng.longitude,
+                            ),
+                          );
                         }
                       },
                       onPositionChanged: (pos, _) {
@@ -299,7 +378,8 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
                     ),
                     children: [
                       fm.TileLayer(
-                        urlTemplate: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                        urlTemplate:
+                            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
                         subdomains: const ['a', 'b', 'c'],
                       ),
                       const CurrentLocationLayer(
@@ -316,13 +396,18 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
           // top overlay controls (back, import/export)
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface.withAlpha((0.8 * 255).toInt()),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surface.withAlpha((0.8 * 255).toInt()),
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: IconButton(
@@ -330,15 +415,17 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
                   ),
-                          Row(
-                            children: [
-                              TopActionButton(
-                                icon: _missionsVisible ? Icons.close : Icons.list,
-                                onTap: () async => setState(() => _missionsVisible = !_missionsVisible),
-                                label: _missionsVisible ? 'Hide' : 'Show',
-                              ),
-                            ],
-                          ),
+                  Row(
+                    children: [
+                      TopActionButton(
+                        icon: _missionsVisible ? Icons.close : Icons.list,
+                        onTap: () async => setState(
+                          () => _missionsVisible = !_missionsVisible,
+                        ),
+                        label: _missionsVisible ? 'Hide' : 'Show',
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -357,7 +444,8 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
             titleController: _placingTitleController,
             type: _placingType,
             onRadiusChanged: (v) => setState(() => _placingRadius = v),
-            onTypeChanged: (t) => setState(() => _placingType = t ?? MissionType.sanctuary),
+            onTypeChanged: (t) =>
+                setState(() => _placingType = t ?? MissionType.sanctuary),
             onCancel: _cancelPlaceMode,
             onConfirm: () async => await _confirmPlaceMode(),
           ),
@@ -376,7 +464,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
               // invoked focus requests (and works even when triggered from notifications).
               onFocusMission: (m) => service.requestFocus(m.id),
             ),
-          
+
           // Focus overlay when a mission is selected for navigation (positioned above bottom sheet)
           if (_focusedMission != null)
             FocusMissionOverlay(
@@ -386,10 +474,21 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
               isActive: _focusedMission!.isActive,
               speedMetersPerSecond: _focusSpeedMps,
               onUnfocus: _stopFocusMission,
-              onCenter: () => _mapController?.move(maplat.LatLng(_focusedMission!.center.latitude, _focusedMission!.center.longitude), 16.0),
-              onActivate: () async => await _getService().activateMission(_focusedMission!.id),
-              onDeactivate: () async => await _getService().deactivateMission(_focusedMission!.id),
-              onSpeedChanged: (v) => setState(() { _focusSpeedMps = v; _updateFocusMetrics(); }),
+              onCenter: () => _mapController?.move(
+                maplat.LatLng(
+                  _focusedMission!.center.latitude,
+                  _focusedMission!.center.longitude,
+                ),
+                16.0,
+              ),
+              onActivate: () async =>
+                  await _getService().activateMission(_focusedMission!.id),
+              onDeactivate: () async =>
+                  await _getService().deactivateMission(_focusedMission!.id),
+              onSpeedChanged: (v) => setState(() {
+                _focusSpeedMps = v;
+                _updateFocusMetrics();
+              }),
             ),
 
           // Tutorial overlay (shows on first visit)
@@ -415,51 +514,51 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-            ListTile(
-              title: Text(mission.title),
-              subtitle: Text(mission.description ?? ''),
-            ),
-            ListTile(
-              leading: const Icon(Icons.play_arrow),
-              title: const Text('Activate'),
-              onTap: () {
-                final service = _getService();
-                service.activateMission(mission.id);
-                if (mounted) Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.stop),
-              title: const Text('Deactivate'),
-              onTap: () {
-                final service = _getService();
-                service.deactivateMission(mission.id);
-                if (mounted) Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit'),
-              onTap: () async {
-                final edited = await showDialog<GeofenceMission>(
-                  context: ctx,
-                  builder: (_) => EditMissionDialog(mission: mission),
-                );
-                if (edited != null) {
-                  _getRepo().update(edited);
-                }
-                if (mounted) Navigator.of(context).pop();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.flag),
-              title: const Text('Focus & Navigate'),
-              onTap: () async {
-                Navigator.of(ctx).pop();
-                _startFocusMission(mission);
-              },
-            ),
-          ],
+                ListTile(
+                  title: Text(mission.title),
+                  subtitle: Text(mission.description ?? ''),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.play_arrow),
+                  title: const Text('Activate'),
+                  onTap: () {
+                    final service = _getService();
+                    service.activateMission(mission.id);
+                    if (mounted) Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.stop),
+                  title: const Text('Deactivate'),
+                  onTap: () {
+                    final service = _getService();
+                    service.deactivateMission(mission.id);
+                    if (mounted) Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.edit),
+                  title: const Text('Edit'),
+                  onTap: () async {
+                    final edited = await showDialog<GeofenceMission>(
+                      context: ctx,
+                      builder: (_) => EditMissionDialog(mission: mission),
+                    );
+                    if (edited != null) {
+                      _getRepo().update(edited);
+                    }
+                    if (mounted) Navigator.of(context).pop();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.flag),
+                  title: const Text('Focus & Navigate'),
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    _startFocusMission(mission);
+                  },
+                ),
+              ],
             ),
           ),
         );

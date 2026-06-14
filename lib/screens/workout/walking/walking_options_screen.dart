@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/walking_session.dart';
 import '../../../models/mission.dart';
-import '../../../models/mood_rating.dart';
 import '../../../providers/walking_session_provider.dart';
 import '../../../providers/workout_flow_provider.dart';
 import 'mission_creation_screen.dart';
@@ -14,7 +13,8 @@ class WalkingOptionsScreen extends ConsumerStatefulWidget {
   const WalkingOptionsScreen({super.key});
 
   @override
-  ConsumerState<WalkingOptionsScreen> createState() => _WalkingOptionsScreenState();
+  ConsumerState<WalkingOptionsScreen> createState() =>
+      _WalkingOptionsScreenState();
 }
 
 class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
@@ -26,10 +26,10 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: const Text('Choose Walking Mode'),
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -52,9 +52,7 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
   Widget _buildFreeWalkCard(ThemeData theme) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -84,15 +82,14 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Free Walk',
-                        style: theme.textTheme.titleLarge,
-                      ),
+                      Text('Free Walk', style: theme.textTheme.titleLarge),
                       const SizedBox(height: 4),
                       Text(
                         'Casual walk with GPS tracking',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -103,10 +100,7 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
             const SizedBox(height: 24),
 
             // Duration Slider
-            Text(
-              'Target Duration',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('Target Duration', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -131,7 +125,7 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -166,9 +160,7 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
   Widget _buildMapMissionCard(ThemeData theme) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -229,7 +221,9 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
                       Text(
                         'Walk to a specific location',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -240,12 +234,11 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
             const SizedBox(height: 24),
 
             // Mission Type Selector
-            Text(
-              'Mission Type',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('Mission Type', style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
-            ...MissionType.values.map((type) => _buildMissionTypeOption(theme, type)),
+            ...MissionType.values.map(
+              (type) => _buildMissionTypeOption(theme, type),
+            ),
             const SizedBox(height: 24),
 
             // Create Mission Button
@@ -279,12 +272,12 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isSelected
-                ? theme.colorScheme.primary.withOpacity(0.1)
+                ? theme.colorScheme.primary.withValues(alpha: 0.1)
                 : theme.colorScheme.surface,
             border: Border.all(
               color: isSelected
                   ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withOpacity(0.2),
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.2),
               width: isSelected ? 2 : 1,
             ),
             borderRadius: BorderRadius.circular(12),
@@ -292,10 +285,12 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
           child: Row(
             children: [
               Icon(
-                isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                isSelected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
                 color: isSelected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface.withOpacity(0.4),
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -314,7 +309,9 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
                     Text(
                       type.description,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
                       ),
                     ),
                   ],
@@ -330,19 +327,19 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
   Future<void> _startFreeWalk(BuildContext context) async {
     // Get pre-mood from workout flow provider
     final preMood = ref.read(workoutFlowProvider).preMood;
-    
+
     // Start free walk session
-    await ref.read(walkingSessionProvider.notifier).startSession(
-      mode: WalkingMode.free,
-      targetDuration: _targetDuration,
-      preMood: preMood,
-    );
+    await ref
+        .read(walkingSessionProvider.notifier)
+        .startSession(
+          mode: WalkingMode.free,
+          targetDuration: _targetDuration,
+          preMood: preMood,
+        );
 
     if (context.mounted) {
       Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => const ActiveWalkingScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const ActiveWalkingScreen()),
       );
     }
   }
@@ -350,7 +347,7 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
   void _createMission(BuildContext context) {
     // Get pre-mood from workout flow provider
     final preMood = ref.read(workoutFlowProvider).preMood;
-    
+
     // Navigate to mission creation screen
     Navigator.of(context).push(
       MaterialPageRoute(

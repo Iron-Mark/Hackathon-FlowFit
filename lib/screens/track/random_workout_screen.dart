@@ -69,11 +69,7 @@ class _RandomWorkoutScreenState extends State<RandomWorkoutScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.camera_alt,
-                    color: Colors.white54,
-                    size: 64,
-                  ),
+                  const Icon(Icons.camera_alt, color: Colors.white54, size: 64),
                   const SizedBox(height: 16),
                   const Text(
                     'Camera Preview',
@@ -90,7 +86,7 @@ class _RandomWorkoutScreenState extends State<RandomWorkoutScreen> {
                       'Squat detection model not loaded.\n(Waiting for model assets)',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         fontSize: 14,
                       ),
                     ),
@@ -129,7 +125,7 @@ class _RandomWorkoutScreenState extends State<RandomWorkoutScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -166,16 +162,13 @@ class _RandomWorkoutScreenState extends State<RandomWorkoutScreen> {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.8),
+                        Colors.black.withValues(alpha: 0.8),
                       ],
                     ),
                   ),
                   child: Row(
                     children: [
-                      SvgPicture.asset(
-                        'assets/flowy.svg',
-                        height: 80,
-                      ),
+                      SvgPicture.asset('assets/flowy.svg', height: 80),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(

@@ -141,8 +141,8 @@ class _BuddyIntroScreenState extends ConsumerState<BuddyIntroScreen> {
                     Semantics(
                       label: 'Bubbles the whale, gently bobbing',
                       image: true,
-                      child: BuddyIdleAnimation(
-                        child: const BuddyCharacterWidget(
+                      child: const BuddyIdleAnimation(
+                        child: BuddyCharacterWidget(
                           color: Color(0xFF4ECDC4), // Ocean Blue
                           size: 160,
                         ),

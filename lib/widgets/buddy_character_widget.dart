@@ -97,7 +97,7 @@ class _BuddyPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     // Eye size: 8x8 circles
-    final eyeRadius = 4.0;
+    const eyeRadius = 4.0;
 
     // Left eye position (slightly left of center, upper third)
     final leftEyeX = size.width * 0.35;
@@ -135,7 +135,7 @@ class _BuddyPainter extends CustomPainter {
     canvas.drawPath(beakPath, beakPaint);
 
     // Rosy cheeks: 12x12 circles
-    final cheekRadius = 6.0;
+    const cheekRadius = 6.0;
 
     // Left cheek position (below and to the left of left eye)
     final leftCheekX = size.width * 0.25;

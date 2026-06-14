@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/wellness_state.dart';
@@ -19,29 +20,30 @@ final phoneDataListenerServiceProvider = Provider<PhoneDataListener>((ref) {
 
 /// Provider for WellnessStateService
 final wellnessStateServiceProvider = Provider<WellnessStateService>((ref) {
-  final watchBridge = ref.watch(watchBridgeServiceProvider);
   final phoneDataListener = ref.watch(phoneDataListenerServiceProvider);
-  return WellnessStateService(watchBridge, phoneDataListener);
+  return WellnessStateService(phoneDataListener);
 });
 
 /// State notifier for wellness state management
 class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
   final WellnessStateService _service;
   final SharedPreferences _prefs;
-  
+
   StreamSubscription<WellnessStateData>? _stateSubscription;
   final List<WellnessStateData> _history = [];
   final List<StateTransition> _transitions = [];
-  
+
   static const String _historyKey = 'wellness_history';
   static const String _transitionsKey = 'wellness_transitions';
   static const int _maxHistoryHours = 24;
 
   WellnessStateNotifier(this._service, this._prefs)
-      : super(WellnessStateData(
+    : super(
+        WellnessStateData(
           state: WellnessState.unknown,
           timestamp: DateTime.now(),
-        )) {
+        ),
+      ) {
     _loadHistory();
     _subscribeToStateChanges();
   }
@@ -63,7 +65,7 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
           // Skip invalid entries
         }
       }
-      
+
       final transitionsJson = _prefs.getStringList(_transitionsKey) ?? [];
       _transitions.clear();
       for (final json in transitionsJson) {
@@ -86,10 +88,14 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
   /// Saves history to persistent storage
   Future<void> _saveHistory() async {
     try {
-      final historyJson = _history.map((data) => data.toJson().toString()).toList();
+      final historyJson = _history
+          .map((data) => data.toJson().toString())
+          .toList();
       await _prefs.setStringList(_historyKey, historyJson);
-      
-      final transitionsJson = _transitions.map((t) => t.toJson().toString()).toList();
+
+      final transitionsJson = _transitions
+          .map((t) => t.toJson().toString())
+          .toList();
       await _prefs.setStringList(_transitionsKey, transitionsJson);
     } catch (e) {
       // Ignore save errors
@@ -98,13 +104,17 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
 
   /// Subscribes to state changes from service
   void _subscribeToStateChanges() {
-    print('🎧 WellnessStateNotifier: Subscribing to state stream...');
+    debugPrint('🎧 WellnessStateNotifier: Subscribing to state stream...');
     _stateSubscription = _service.stateStream.listen((newState) {
-      print('📨 WellnessStateNotifier: Received new state: ${newState.state.displayName}, HR: ${newState.heartRate}, Motion: ${newState.motionMagnitude}');
-      
+      debugPrint(
+        '📨 WellnessStateNotifier: Received new state: ${newState.state.displayName}, HR: ${newState.heartRate}, Motion: ${newState.motionMagnitude}',
+      );
+
       // Track transition
       if (state.state != newState.state) {
-        print('🔄 WellnessStateNotifier: State transition: ${state.state.displayName} → ${newState.state.displayName}');
+        debugPrint(
+          '🔄 WellnessStateNotifier: State transition: ${state.state.displayName} → ${newState.state.displayName}',
+        );
         final transition = StateTransition(
           fromState: state.state,
           toState: newState.state,
@@ -113,15 +123,17 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
         );
         _transitions.add(transition);
       }
-      
+
       // Update current state
       state = newState;
-      print('✅ WellnessStateNotifier: State updated to: ${state.state.displayName}');
-      
+      debugPrint(
+        '✅ WellnessStateNotifier: State updated to: ${state.state.displayName}',
+      );
+
       // Add to history
       _history.add(newState);
       _pruneOldHistory();
-      
+
       // Save to storage
       _saveHistory();
     });
@@ -129,7 +141,9 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
 
   /// Removes history older than 24 hours
   void _pruneOldHistory() {
-    final cutoff = DateTime.now().subtract(Duration(hours: _maxHistoryHours));
+    final cutoff = DateTime.now().subtract(
+      const Duration(hours: _maxHistoryHours),
+    );
     _history.removeWhere((data) => data.timestamp.isBefore(cutoff));
     _transitions.removeWhere((t) => t.timestamp.isBefore(cutoff));
   }
@@ -155,23 +169,24 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
   Map<WellnessState, Duration> getTodayDurations() {
     final today = DateTime.now();
     final startOfDay = DateTime(today.year, today.month, today.day);
-    
+
     final durations = <WellnessState, Duration>{
       WellnessState.calm: Duration.zero,
       WellnessState.stress: Duration.zero,
       WellnessState.cardio: Duration.zero,
     };
-    
+
     for (int i = 0; i < _history.length - 1; i++) {
       final current = _history[i];
       final next = _history[i + 1];
-      
+
       if (current.timestamp.isAfter(startOfDay)) {
         final duration = next.timestamp.difference(current.timestamp);
-        durations[current.state] = (durations[current.state] ?? Duration.zero) + duration;
+        durations[current.state] =
+            (durations[current.state] ?? Duration.zero) + duration;
       }
     }
-    
+
     return durations;
   }
 
@@ -183,11 +198,12 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
 }
 
 /// Provider for wellness state notifier
-final wellnessStateProvider = StateNotifierProvider<WellnessStateNotifier, WellnessStateData>((ref) {
-  final service = ref.watch(wellnessStateServiceProvider);
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return WellnessStateNotifier(service, prefs);
-});
+final wellnessStateProvider =
+    StateNotifierProvider<WellnessStateNotifier, WellnessStateData>((ref) {
+      final service = ref.watch(wellnessStateServiceProvider);
+      final prefs = ref.watch(sharedPreferencesProvider);
+      return WellnessStateNotifier(service, prefs);
+    });
 
 /// Provider for wellness history
 final wellnessHistoryProvider = Provider<List<WellnessStateData>>((ref) {
