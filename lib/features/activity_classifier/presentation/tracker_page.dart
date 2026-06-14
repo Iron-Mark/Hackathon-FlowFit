@@ -3,27 +3,28 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flowfit/services/phone_data_listener.dart';
-import 'package:flowfit/models/sensor_batch.dart';
+import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:provider/provider.dart';
 
 import 'providers.dart';
 import '../platform/tflite_activity_classifier.dart';
 import '../platform/heart_bpm_adapter.dart';
 
-enum BpmSource { Simulation, Plugin, Watch }
-enum AccelSource { Phone, Simulation, Watch }
+enum BpmSource { simulation, plugin, watch }
+
+enum AccelSource { phone, simulation, watch }
 
 class TrackerPage extends StatefulWidget {
-  const TrackerPage({Key? key}) : super(key: key);
+  const TrackerPage({super.key});
 
   @override
-  _TrackerPageState createState() => _TrackerPageState();
+  State<TrackerPage> createState() => _TrackerPageState();
 }
 
 class _TrackerPageState extends State<TrackerPage> {
   // Buffers
   final List<List<double>> _dataBuffer = [];
-  static const int WINDOW_SIZE = 320; // 10 seconds @ ~32Hz
+  static const int _windowSize = 320; // 10 seconds @ ~32Hz
 
   // State
   double _simulatedHR = 80.0; // Slider to control Heart Rate manually
@@ -34,10 +35,9 @@ class _TrackerPageState extends State<TrackerPage> {
   StreamSubscription? _sensorBatchSub;
   Timer? _accelTimer;
   int _accelSimTick = 0;
-  bool _simulateAccel = false; // Use synthetic accelerometer data
   double _accelAmplitude = 1.0; // Synthetic amplitude
   double _accelFreqHz = 1.0; // Tones per second in simulation
-  AccelSource _accelSource = AccelSource.Phone;
+  AccelSource _accelSource = AccelSource.phone;
 
   // Local references to providers
   late ActivityClassifierViewModel _viewModel;
@@ -45,9 +45,14 @@ class _TrackerPageState extends State<TrackerPage> {
   bool _initialized = false;
   int? _currentBpmValue;
   bool _forceSimulate = true; // Default: simulate mock heartbeat first
-  BpmSource _bpmSource = BpmSource.Simulation;
+  BpmSource _bpmSource = BpmSource.simulation;
   bool _pluginAvailable = false;
   // plugin availability determined dynamically by adapter connection
+
+  // Always-on watch HR monitor (independent of selected source)
+  int? _watchLiveBpm;
+  bool _watchLiveConnected = false;
+  StreamSubscription<HeartRateData>? _watchLiveSub;
 
   @override
   void didChangeDependencies() {
@@ -55,8 +60,14 @@ class _TrackerPageState extends State<TrackerPage> {
 
     if (!_initialized) {
       // Resolve providers from the widget tree
-      _viewModel = Provider.of<ActivityClassifierViewModel>(context, listen: false);
-      _platformClassifier = Provider.of<TFLiteActivityClassifier>(context, listen: false);
+      _viewModel = Provider.of<ActivityClassifierViewModel>(
+        context,
+        listen: false,
+      );
+      _platformClassifier = Provider.of<TFLiteActivityClassifier>(
+        context,
+        listen: false,
+      );
 
       // Ensure model is loaded once at startup
       if (!_platformClassifier.isLoaded) {
@@ -69,6 +80,9 @@ class _TrackerPageState extends State<TrackerPage> {
       // connect adapter to the selected source (default Simulation)
       _connectToSelectedSource();
 
+      // Always subscribe to watch HR for the persistent banner
+      _subscribeWatchLive();
+
       _initialized = true;
     }
   }
@@ -78,58 +92,95 @@ class _TrackerPageState extends State<TrackerPage> {
     _stopSensorSubscription();
     _bpmSub?.cancel();
     _sensorBatchSub?.cancel();
+    _watchLiveSub?.cancel();
     super.dispose();
+  }
+
+  void _subscribeWatchLive() {
+    final phoneListener = Provider.of<PhoneDataListener>(
+      context,
+      listen: false,
+    );
+    phoneListener.startListening();
+    _watchLiveSub = phoneListener.heartRateStream.listen(
+      (HeartRateData data) {
+        if (mounted && data.bpm != null && data.bpm! > 0) {
+          setState(() {
+            _watchLiveBpm = data.bpm;
+            _watchLiveConnected = true;
+          });
+        }
+      },
+      onError: (_) {
+        if (mounted) setState(() => _watchLiveConnected = false);
+      },
+    );
   }
 
   void _startSensorSubscription() {
     _stopSensorSubscription();
 
-    if (_accelSource == AccelSource.Watch) {
+    if (_accelSource == AccelSource.watch) {
       // Use watch sensor batches (accelerometer + heart rate combined)
-      final phoneListener = Provider.of<PhoneDataListener>(context, listen: false);
+      final phoneListener = Provider.of<PhoneDataListener>(
+        context,
+        listen: false,
+      );
       phoneListener.startListening();
-      
-      _sensorBatchSub = phoneListener.sensorBatchStream.listen((sensorBatch) {
-        // Sensor batch contains samples as 4-feature vectors [accX, accY, accZ, bpm]
-        // Add all samples from the batch to our buffer
-        for (final sample in sensorBatch.samples) {
-          if (sample.length == 4) {
-            _dataBuffer.add(sample);
-            
-            // Keep buffer at exactly 320 items
-            if (_dataBuffer.length > WINDOW_SIZE) {
-              _dataBuffer.removeAt(0);
+
+      _sensorBatchSub = phoneListener.sensorBatchStream.listen(
+        (sensorBatch) {
+          // Sensor batch contains samples as 4-feature vectors [accX, accY, accZ, bpm]
+          // Add all samples from the batch to our buffer
+          for (final sample in sensorBatch.samples) {
+            if (sample.length == 4) {
+              _dataBuffer.add(sample);
+
+              // Keep buffer at exactly 320 items
+              if (_dataBuffer.length > _windowSize) {
+                _dataBuffer.removeAt(0);
+              }
             }
           }
-        }
-        
-        // Run inference when we have a full window
-        if (_dataBuffer.length == WINDOW_SIZE && !_viewModel.isLoading) {
-          _runInference();
-        }
-        
-        // Update UI with current BPM from watch (extract from first sample)
-        if (sensorBatch.samples.isNotEmpty && sensorBatch.samples[0][3] > 0) {
-          setState(() => _currentBpmValue = sensorBatch.samples[0][3].toInt());
-        }
-      }, onError: (error) {
-        print('Error receiving sensor batch from watch: $error');
-      });
-    } else if (_accelSource == AccelSource.Simulation) {
+
+          // Run inference when we have a full window
+          if (_dataBuffer.length == _windowSize && !_viewModel.isLoading) {
+            _runInference();
+          }
+
+          // Update UI with current BPM from watch (extract from first sample)
+          if (sensorBatch.samples.isNotEmpty && sensorBatch.samples[0][3] > 0) {
+            setState(
+              () => _currentBpmValue = sensorBatch.samples[0][3].toInt(),
+            );
+          }
+        },
+        onError: (error) {
+          debugPrint('Error receiving sensor batch from watch: $error');
+        },
+      );
+    } else if (_accelSource == AccelSource.simulation) {
       // Simulate at ~32Hz (31ms per sample)
       final sampleMs = (1000 / 32).round();
       _accelTimer = Timer.periodic(Duration(milliseconds: sampleMs), (_) {
         // Synthetic signal: sinusoidal components + noise
         final t = _accelSimTick / 32.0; // seconds
-        final x = _accelAmplitude * sin(2 * pi * _accelFreqHz * t) + (Random().nextDouble() - 0.5) * 0.05;
-        final y = _accelAmplitude * sin(2 * pi * _accelFreqHz * t + pi / 3) + (Random().nextDouble() - 0.5) * 0.05;
-        final z = _accelAmplitude * sin(2 * pi * _accelFreqHz * t + 2 * pi / 3) + 9.8 + (Random().nextDouble() - 0.5) * 0.05;
+        final x =
+            _accelAmplitude * sin(2 * pi * _accelFreqHz * t) +
+            (Random().nextDouble() - 0.5) * 0.05;
+        final y =
+            _accelAmplitude * sin(2 * pi * _accelFreqHz * t + pi / 3) +
+            (Random().nextDouble() - 0.5) * 0.05;
+        final z =
+            _accelAmplitude * sin(2 * pi * _accelFreqHz * t + 2 * pi / 3) +
+            9.8 +
+            (Random().nextDouble() - 0.5) * 0.05;
         _accelSimTick++;
         _addToBuffer(AccelerometerEvent(x, y, z));
       });
     } else {
       // Use phone accelerometer
-      _accelSub = accelerometerEvents.listen((event) {
+      _accelSub = accelerometerEventStream().listen((event) {
         _addToBuffer(event);
       });
     }
@@ -148,17 +199,21 @@ class _TrackerPageState extends State<TrackerPage> {
   void _addToBuffer(AccelerometerEvent event) {
     // 1. Add current reading + Simulated Heart Rate to buffer
     // Your model expects: [AccX, AccY, AccZ, BPM]
-    final activeBpm = _forceSimulate ? _simulatedHR.round() : (_currentBpmValue ?? _simulatedHR.round());
+    final activeBpm = _forceSimulate
+        ? _simulatedHR.round()
+        : (_currentBpmValue ?? _simulatedHR.round());
     _dataBuffer.add([event.x, event.y, event.z, activeBpm.toDouble()]);
 
     // 2. Keep buffer at exactly 320 items
-    if (_dataBuffer.length > WINDOW_SIZE) {
+    if (_dataBuffer.length > _windowSize) {
       _dataBuffer.removeAt(0); // Slide window
     }
 
     // 3. Run inference every ~32 samples (approx once per second)
     // We don't run on every frame to save battery
-    if (_dataBuffer.length == WINDOW_SIZE && !_viewModel.isLoading && _dataBuffer.length % 32 == 0) {
+    if (_dataBuffer.length == _windowSize &&
+        !_viewModel.isLoading &&
+        _dataBuffer.length % 32 == 0) {
       _runInference();
     }
   }
@@ -182,7 +237,7 @@ class _TrackerPageState extends State<TrackerPage> {
     _bpmSub = null;
 
     switch (_bpmSource) {
-      case BpmSource.Simulation:
+      case BpmSource.simulation:
         // Disconnect any external source and use manual slider bpm
         adapter.connectExternalStream(null);
         setState(() {
@@ -190,7 +245,7 @@ class _TrackerPageState extends State<TrackerPage> {
           _currentBpmValue = null;
         });
         break;
-      case BpmSource.Plugin:
+      case BpmSource.plugin:
         // Plugin connection is managed by app (main.dart) or other init code.
         // We assume main.dart or other code may have already connected the plugin stream.
         // If no plugin is connected, keep adapter disconnected and notify UI.
@@ -201,23 +256,28 @@ class _TrackerPageState extends State<TrackerPage> {
           _forceSimulate = false;
         });
         break;
-      case BpmSource.Watch:
+      case BpmSource.watch:
         // Use PhoneDataListener to get watch HR - START LISTENING FIRST!
-        final phoneListener = Provider.of<PhoneDataListener>(context, listen: false);
-        
+        final phoneListener = Provider.of<PhoneDataListener>(
+          context,
+          listen: false,
+        );
+
         // Start listening for watch data (with error handling)
         try {
           await phoneListener.startListening();
         } catch (e) {
-          print('Warning: Could not start phone data listener: $e');
+          debugPrint('Warning: Could not start phone data listener: $e');
           // Continue anyway - the event channels may still work
         }
-        
+
         // Connect the watch heart rate stream to the adapter
         adapter.connectExternalStream(
-          phoneListener.heartRateStream.map((hr) => hr.bpm ?? 0).where((bpm) => bpm > 0),
+          phoneListener.heartRateStream
+              .map((hr) => hr.bpm ?? 0)
+              .where((bpm) => bpm > 0),
         );
-        
+
         setState(() {
           _forceSimulate = false;
         });
@@ -274,7 +334,10 @@ class _TrackerPageState extends State<TrackerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
+            // Always-on watch heart rate banner
+            _buildWatchLiveBanner(),
+            const SizedBox(height: 16),
             // 1. The Result (Big Text)
             Text(
               currentActivity,
@@ -300,12 +363,12 @@ class _TrackerPageState extends State<TrackerPage> {
             const SizedBox(height: 24),
 
             // 3. Heart Rate Source Display
-            if (_bpmSource == BpmSource.Watch && _currentBpmValue != null) ...[
+            if (_bpmSource == BpmSource.watch && _currentBpmValue != null) ...[
               // Show live watch heart rate
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.green, width: 2),
                 ),
@@ -347,9 +410,9 @@ class _TrackerPageState extends State<TrackerPage> {
                       const Text('Use simulation'),
                       Switch(
                         value: _forceSimulate,
-                        onChanged: _bpmSource == BpmSource.Simulation 
-                          ? (v) => setState(() => _forceSimulate = v)
-                          : null, // Disable when not in simulation mode
+                        onChanged: _bpmSource == BpmSource.simulation
+                            ? (v) => setState(() => _forceSimulate = v)
+                            : null, // Disable when not in simulation mode
                       ),
                     ],
                   ),
@@ -359,18 +422,20 @@ class _TrackerPageState extends State<TrackerPage> {
                 min: 60,
                 max: 180,
                 value: _simulatedHR,
-                onChanged: _bpmSource == BpmSource.Simulation
-                  ? (val) => setState(() => _simulatedHR = val)
-                  : null, // Disable when not in simulation mode
+                onChanged: _bpmSource == BpmSource.simulation
+                    ? (val) => setState(() => _simulatedHR = val)
+                    : null, // Disable when not in simulation mode
                 activeColor: Colors.red,
               ),
               const SizedBox(height: 4),
               Text(
-                _bpmSource == BpmSource.Simulation
-                  ? 'Drag slider HIGH to simulate Panic/Running'
-                  : 'Switch to Simulation mode to use slider',
+                _bpmSource == BpmSource.simulation
+                    ? 'Drag slider HIGH to simulate Panic/Running'
+                    : 'Switch to Simulation mode to use slider',
                 style: TextStyle(
-                  color: _bpmSource == BpmSource.Simulation ? Colors.black : Colors.grey,
+                  color: _bpmSource == BpmSource.simulation
+                      ? Colors.black
+                      : Colors.grey,
                 ),
               ),
             ],
@@ -378,7 +443,7 @@ class _TrackerPageState extends State<TrackerPage> {
             const SizedBox(height: 24),
             const Divider(),
             const SizedBox(height: 16),
-            
+
             // Accelerometer Source Selection
             const Text(
               'Accelerometer Source',
@@ -390,41 +455,44 @@ class _TrackerPageState extends State<TrackerPage> {
               children: [
                 ChoiceChip(
                   label: const Text('Phone'),
-                  selected: _accelSource == AccelSource.Phone,
+                  selected: _accelSource == AccelSource.phone,
                   onSelected: (s) {
                     setState(() {
-                      _accelSource = AccelSource.Phone;
+                      _accelSource = AccelSource.phone;
                       _startSensorSubscription();
                     });
                   },
                 ),
                 ChoiceChip(
                   label: const Text('Simulation'),
-                  selected: _accelSource == AccelSource.Simulation,
+                  selected: _accelSource == AccelSource.simulation,
                   onSelected: (s) {
                     setState(() {
-                      _accelSource = AccelSource.Simulation;
+                      _accelSource = AccelSource.simulation;
                       _startSensorSubscription();
                     });
                   },
                 ),
                 ChoiceChip(
                   label: const Text('Watch'),
-                  selected: _accelSource == AccelSource.Watch,
+                  selected: _accelSource == AccelSource.watch,
                   onSelected: (s) {
                     setState(() {
-                      _accelSource = AccelSource.Watch;
+                      _accelSource = AccelSource.watch;
                       _startSensorSubscription();
                     });
                   },
                 ),
               ],
             ),
-            
+
             // Simulation controls (only show when simulation is selected)
-            if (_accelSource == AccelSource.Simulation) ...[
+            if (_accelSource == AccelSource.simulation) ...[
               const SizedBox(height: 16),
-              const Text('Simulation Controls', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Simulation Controls',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -461,7 +529,7 @@ class _TrackerPageState extends State<TrackerPage> {
                 ],
               ),
             ],
-            
+
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 16),
@@ -477,10 +545,10 @@ class _TrackerPageState extends State<TrackerPage> {
               children: [
                 ChoiceChip(
                   label: const Text('Simulation'),
-                  selected: _bpmSource == BpmSource.Simulation,
+                  selected: _bpmSource == BpmSource.simulation,
                   onSelected: (s) {
                     setState(() {
-                      _bpmSource = BpmSource.Simulation;
+                      _bpmSource = BpmSource.simulation;
                       _forceSimulate = true;
                       _connectToSelectedSource();
                     });
@@ -488,10 +556,10 @@ class _TrackerPageState extends State<TrackerPage> {
                 ),
                 ChoiceChip(
                   label: const Text('Plugin'),
-                  selected: _bpmSource == BpmSource.Plugin,
+                  selected: _bpmSource == BpmSource.plugin,
                   onSelected: (s) {
                     setState(() {
-                      _bpmSource = BpmSource.Plugin;
+                      _bpmSource = BpmSource.plugin;
                       _forceSimulate = false;
                       _connectToSelectedSource();
                     });
@@ -499,10 +567,10 @@ class _TrackerPageState extends State<TrackerPage> {
                 ),
                 ChoiceChip(
                   label: const Text('Watch HR'),
-                  selected: _bpmSource == BpmSource.Watch,
+                  selected: _bpmSource == BpmSource.watch,
                   onSelected: (s) {
                     setState(() {
-                      _bpmSource = BpmSource.Watch;
+                      _bpmSource = BpmSource.watch;
                       _forceSimulate = false;
                       _connectToSelectedSource();
                     });
@@ -517,7 +585,7 @@ class _TrackerPageState extends State<TrackerPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Colors.red),
                 ),
@@ -529,14 +597,14 @@ class _TrackerPageState extends State<TrackerPage> {
             ],
 
             const SizedBox(height: 16),
-            
+
             // Display connection status
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -546,17 +614,17 @@ class _TrackerPageState extends State<TrackerPage> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Accelerometer Status
                   Row(
                     children: [
                       Icon(
-                        _accelSource == AccelSource.Watch
+                        _accelSource == AccelSource.watch
                             ? Icons.watch
-                            : _accelSource == AccelSource.Phone
-                                ? Icons.phone_android
-                                : Icons.science,
-                        color: _accelSource == AccelSource.Watch
+                            : _accelSource == AccelSource.phone
+                            ? Icons.phone_android
+                            : Icons.science,
+                        color: _accelSource == AccelSource.watch
                             ? Colors.green
                             : Colors.blue,
                         size: 20,
@@ -564,46 +632,56 @@ class _TrackerPageState extends State<TrackerPage> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          _accelSource == AccelSource.Watch
+                          _accelSource == AccelSource.watch
                               ? 'Accelerometer: Watch'
-                              : _accelSource == AccelSource.Phone
-                                  ? 'Accelerometer: Phone'
-                                  : 'Accelerometer: Simulated',
+                              : _accelSource == AccelSource.phone
+                              ? 'Accelerometer: Phone'
+                              : 'Accelerometer: Simulated',
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Heart Rate Status
-                  if (_bpmSource == BpmSource.Plugin) ...[
+                  if (_bpmSource == BpmSource.plugin) ...[
                     Row(
                       children: [
                         Icon(
                           _pluginAvailable ? Icons.check_circle : Icons.error,
-                          color: _pluginAvailable ? Colors.green : Colors.orange,
+                          color: _pluginAvailable
+                              ? Colors.green
+                              : Colors.orange,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            _pluginAvailable ? 'Heart Rate: Plugin connected' : 'Heart Rate: Plugin not connected',
+                            _pluginAvailable
+                                ? 'Heart Rate: Plugin connected'
+                                : 'Heart Rate: Plugin not connected',
                             style: TextStyle(
-                              color: _pluginAvailable ? Colors.green : Colors.orange,
+                              color: _pluginAvailable
+                                  ? Colors.green
+                                  : Colors.orange,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ] else if (_bpmSource == BpmSource.Watch) ...[
+                  ] else if (_bpmSource == BpmSource.watch) ...[
                     Row(
                       children: [
                         Icon(
-                          _currentBpmValue != null ? Icons.check_circle : Icons.watch_off,
-                          color: _currentBpmValue != null ? Colors.green : Colors.orange,
+                          _currentBpmValue != null
+                              ? Icons.check_circle
+                              : Icons.watch_off,
+                          color: _currentBpmValue != null
+                              ? Colors.green
+                              : Colors.orange,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -613,21 +691,19 @@ class _TrackerPageState extends State<TrackerPage> {
                                 ? 'Heart Rate: Watch connected'
                                 : 'Heart Rate: Waiting for watch...',
                             style: TextStyle(
-                              color: _currentBpmValue != null ? Colors.green : Colors.orange,
+                              color: _currentBpmValue != null
+                                  ? Colors.green
+                                  : Colors.orange,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ] else if (_bpmSource == BpmSource.Simulation) ...[
+                  ] else if (_bpmSource == BpmSource.simulation) ...[
                     Row(
                       children: [
-                        const Icon(
-                          Icons.science,
-                          color: Colors.blue,
-                          size: 20,
-                        ),
+                        const Icon(Icons.science, color: Colors.blue, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -641,17 +717,17 @@ class _TrackerPageState extends State<TrackerPage> {
                       ],
                     ),
                   ],
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Buffer status
                   Row(
                     children: [
                       Icon(
-                        _dataBuffer.length == WINDOW_SIZE
+                        _dataBuffer.length == _windowSize
                             ? Icons.check_circle
                             : Icons.hourglass_empty,
-                        color: _dataBuffer.length == WINDOW_SIZE
+                        color: _dataBuffer.length == _windowSize
                             ? Colors.green
                             : Colors.orange,
                         size: 20,
@@ -659,20 +735,21 @@ class _TrackerPageState extends State<TrackerPage> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Buffer: ${_dataBuffer.length}/$WINDOW_SIZE samples',
+                          'Buffer: ${_dataBuffer.length}/$_windowSize samples',
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
                   ),
-                  
+
                   // Watch integration tip
-                  if (_accelSource == AccelSource.Watch || _bpmSource == BpmSource.Watch) ...[
+                  if (_accelSource == AccelSource.watch ||
+                      _bpmSource == BpmSource.watch) ...[
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
+                        color: Colors.blue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -681,10 +758,13 @@ class _TrackerPageState extends State<TrackerPage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              _accelSource == AccelSource.Watch
+                              _accelSource == AccelSource.watch
                                   ? 'Using complete sensor batch from watch (accel + HR)'
                                   : 'Using watch heart rate only',
-                              style: const TextStyle(fontSize: 12, color: Colors.blue),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue,
+                              ),
                             ),
                           ),
                         ],
@@ -694,11 +774,54 @@ class _TrackerPageState extends State<TrackerPage> {
                 ],
               ),
             ),
-            
+
             // Bottom padding for scrolling
             const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildWatchLiveBanner() {
+    final connected = _watchLiveConnected && _watchLiveBpm != null;
+    final color = connected ? Colors.red : Colors.grey;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.watch, color: color, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            'Galaxy Watch: ',
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            connected ? '$_watchLiveBpm BPM' : 'Not connected',
+            style: TextStyle(
+              color: color,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: connected ? Colors.green : Colors.grey,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
       ),
     );
   }

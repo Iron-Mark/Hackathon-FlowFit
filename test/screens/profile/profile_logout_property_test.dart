@@ -3,8 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flowfit/screens/profile/profile_screen.dart';
 import 'package:flowfit/presentation/providers/providers.dart';
-import 'package:flowfit/presentation/providers/profile_providers.dart'
-    hide profileRepositoryProvider;
 import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
 import 'package:flowfit/core/domain/repositories/profile_repository.dart';
 import 'package:flowfit/core/domain/entities/user_profile.dart' as core;

@@ -5,8 +5,6 @@ import '../../models/wellness_state.dart';
 import '../../providers/wellness_state_provider.dart';
 import '../../providers/step_counter_provider.dart';
 import '../../providers/running_session_provider.dart';
-import '../../services/wellness_state_service.dart';
-import '../../services/phone_data_listener.dart';
 import '../../widgets/wellness/wellness_state_card.dart';
 import '../../widgets/wellness/wellness_map_widget.dart';
 import '../../widgets/wellness/wellness_stats_card.dart';
@@ -20,7 +18,8 @@ class WellnessTrackerPage extends ConsumerStatefulWidget {
   const WellnessTrackerPage({super.key});
 
   @override
-  ConsumerState<WellnessTrackerPage> createState() => _WellnessTrackerPageState();
+  ConsumerState<WellnessTrackerPage> createState() =>
+      _WellnessTrackerPageState();
 }
 
 class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
@@ -38,40 +37,41 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
 
   Future<void> _checkOnboardingAndInitialize() async {
     // Check if onboarding has been completed
-    final hasCompleted = await WellnessOnboardingScreen.hasCompletedOnboarding();
-    
+    final hasCompleted =
+        await WellnessOnboardingScreen.hasCompletedOnboarding();
+
     if (!hasCompleted && mounted) {
       // Navigate to onboarding
       Navigator.of(context).pushReplacementNamed('/wellness-onboarding');
       return;
     }
-    
+
     _initializeMonitoring();
   }
 
   Future<void> _initializeMonitoring() async {
     try {
-      print('🚀 WellnessTrackerPage: Initializing monitoring...');
-      
+      debugPrint('WellnessTrackerPage: Initializing monitoring...');
+
       // Initialize the notifier first (this subscribes to the service)
-      final notifier = ref.read(wellnessStateProvider.notifier);
-      print('✅ WellnessTrackerPage: Notifier initialized');
-      
+      ref.read(wellnessStateProvider.notifier);
+      debugPrint('WellnessTrackerPage: Notifier initialized');
+
       // Start the wellness state service
       final service = ref.read(wellnessStateServiceProvider);
       await service.startMonitoring();
-      print('✅ WellnessTrackerPage: Wellness service started');
-      
+      debugPrint('WellnessTrackerPage: Wellness service started');
+
       // Start phone step counting
       final phoneStepCounter = ref.read(phoneStepCounterServiceProvider);
       await phoneStepCounter.startCounting();
-      print('✅ WellnessTrackerPage: Phone step counter started');
-      
+      debugPrint('WellnessTrackerPage: Phone step counter started');
+
       setState(() {
         _isInitializing = false;
       });
     } catch (e) {
-      print('❌ WellnessTrackerPage: Initialization failed: $e');
+      debugPrint('WellnessTrackerPage: Initialization failed: $e');
       setState(() {
         _isInitializing = false;
         _errorMessage = 'Failed to start monitoring: $e';
@@ -83,10 +83,10 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
   void dispose() {
     final service = ref.read(wellnessStateServiceProvider);
     service.stopMonitoring();
-    
+
     final phoneStepCounter = ref.read(phoneStepCounterServiceProvider);
     phoneStepCounter.stopCounting();
-    
+
     super.dispose();
   }
 
@@ -100,7 +100,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
           _showStressBanner = true;
           _lastStressAlert = now;
         });
-        
+
         // Auto-dismiss after 5 minutes
         Future.delayed(const Duration(minutes: 5), () {
           if (mounted) {
@@ -109,7 +109,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
         });
       }
     }
-    
+
     // Show cardio banner
     if (state == WellnessState.cardio) {
       setState(() => _showCardioBanner = true);
@@ -121,7 +121,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
   @override
   Widget build(BuildContext context) {
     final wellnessState = ref.watch(wellnessStateProvider);
-    
+
     // Listen for state changes
     ref.listen<WellnessStateData>(wellnessStateProvider, (previous, next) {
       if (previous?.state != next.state) {
@@ -164,10 +164,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
             SizedBox(height: 16),
             Text(
               'Connecting to sensors...',
-              style: TextStyle(
-                fontFamily: 'GeneralSans',
-                fontSize: 16,
-              ),
+              style: TextStyle(fontFamily: 'GeneralSans', fontSize: 16),
             ),
           ],
         ),
@@ -184,7 +181,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -213,7 +210,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
+
               // Troubleshooting tips
               Container(
                 padding: const EdgeInsets.all(16),
@@ -222,7 +219,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -240,13 +237,19 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildTroubleshootingItem('Check if your watch is connected'),
-                    _buildTroubleshootingItem('Ensure body sensors permission is granted'),
-                    _buildTroubleshootingItem('Try restarting the watch connection'),
+                    _buildTroubleshootingItem(
+                      'Check if your watch is connected',
+                    ),
+                    _buildTroubleshootingItem(
+                      'Ensure body sensors permission is granted',
+                    ),
+                    _buildTroubleshootingItem(
+                      'Try restarting the watch connection',
+                    ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -300,27 +303,27 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
                 padding: const EdgeInsets.all(16),
                 child: _buildLiveStateCard(wellnessState),
               ),
-              
+
               // Step Counter Card
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: _buildStepCounterCard(),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Map View
               SizedBox(
                 height: 300,
                 child: WellnessMapWidget(state: wellnessState.state),
               ),
-              
+
               // Stats Section
-              Padding(
-                padding: const EdgeInsets.all(16),
+              const Padding(
+                padding: EdgeInsets.all(16),
                 child: WellnessStatsCard(),
               ),
-              
+
               // Debug: Raw sensor data display
               if (kDebugMode)
                 Padding(
@@ -330,7 +333,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
             ],
           ),
         ),
-        
+
         // Stress Alert Banner
         if (_showStressBanner)
           StressAlertBanner(
@@ -346,7 +349,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
               _lastStressAlert = DateTime.now();
             },
           ),
-        
+
         // Cardio Detection Banner
         if (_showCardioBanner)
           CardioDetectionBanner(
@@ -366,10 +369,9 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
               setState(() => _showCardioBanner = false);
             },
           ),
-        
+
         // Debug Panel (only in debug mode)
-        if (kDebugMode)
-          const WellnessDebugPanel(),
+        if (kDebugMode) const WellnessDebugPanel(),
       ],
     );
   }
@@ -383,11 +385,13 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
         final liveState = WellnessStateData(
           state: wellnessState.state,
           timestamp: wellnessState.timestamp,
-          heartRate: hrSnapshot.hasData ? hrSnapshot.data!.bpm : wellnessState.heartRate,
+          heartRate: hrSnapshot.hasData
+              ? hrSnapshot.data!.bpm
+              : wellnessState.heartRate,
           motionMagnitude: wellnessState.motionMagnitude,
           confidence: wellnessState.confidence,
         );
-        
+
         return WellnessStateCard(state: liveState);
       },
     );
@@ -396,7 +400,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
   /// Builds step counter card
   Widget _buildStepCounterCard() {
     final stepCount = ref.watch(totalStepsProvider);
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -404,7 +408,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -415,7 +419,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withOpacity(0.1),
+              color: const Color(0xFF10B981).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -523,7 +527,9 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
           ),
           const SizedBox(height: 8),
           StreamBuilder(
-            stream: ref.read(phoneDataListenerServiceProvider).sensorBatchStream,
+            stream: ref
+                .read(phoneDataListenerServiceProvider)
+                .sensorBatchStream,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 final batch = snapshot.data!;

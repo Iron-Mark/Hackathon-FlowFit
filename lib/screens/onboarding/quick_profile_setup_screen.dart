@@ -32,14 +32,10 @@ class _QuickProfileSetupScreenState
 
   void _handleContinue() {
     // Save user info to state
+    final nickname = _nicknameController.text.trim();
     ref
         .read(buddyOnboardingProvider.notifier)
-        .setUserInfo(
-          nickname: _nicknameController.text.trim().isEmpty
-              ? null
-              : _nicknameController.text.trim(),
-          age: _selectedAge,
-        );
+        .setUserInfo(nickname.isEmpty ? null : nickname, _selectedAge);
 
     // Navigate to completion screen
     Navigator.pushNamed(context, '/buddy-completion');

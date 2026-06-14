@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../widgets/page_header.dart';
 import '../../widgets/flowy_companion.dart';
+import '../../services/phone_data_listener.dart';
+import '../../models/heart_rate_data.dart';
 
 // Home Screen - Redesigned for beginners with Flowy companion
 // Features: Pose-detection workouts, water/food reminders, beginner guidance
@@ -15,10 +17,42 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _currentFlowyMessage = '';
 
+  // Live watch data
+  int? _watchBpm;
+  bool _watchConnected = false;
+  DateTime? _lastWatchUpdate;
+  StreamSubscription? _watchHrSub;
+  final _phoneDataListener = PhoneDataListener();
+
   @override
   void initState() {
     super.initState();
     _updateFlowyMessage();
+    _subscribeToWatch();
+  }
+
+  @override
+  void dispose() {
+    _watchHrSub?.cancel();
+    super.dispose();
+  }
+
+  void _subscribeToWatch() {
+    _phoneDataListener.startListening();
+    _watchHrSub = _phoneDataListener.heartRateStream.listen(
+      (HeartRateData data) {
+        if (mounted) {
+          setState(() {
+            _watchBpm = data.bpm;
+            _watchConnected = true;
+            _lastWatchUpdate = DateTime.now();
+          });
+        }
+      },
+      onError: (_) {
+        if (mounted) setState(() => _watchConnected = false);
+      },
+    );
   }
 
   void _updateFlowyMessage() {
@@ -51,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -84,10 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 24),
 
                       // Flowy Companion - Main feature
-                      FlowyCompanion(
-                        message: _currentFlowyMessage,
-                        size: 140,
-                      ),
+                      FlowyCompanion(message: _currentFlowyMessage, size: 140),
                       const SizedBox(height: 16),
                     ],
                   ),
@@ -102,6 +133,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   // Today's Mission Card - Beginner friendly
                   _buildMissionCard(context),
+
+                  const SizedBox(height: 16),
+
+                  // Live Watch Heart Rate Card
+                  _buildWatchHeartRateCard(context),
 
                   const SizedBox(height: 20),
 
@@ -206,6 +242,91 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Live Galaxy Watch heart rate card
+  Widget _buildWatchHeartRateCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final connected = _watchConnected && _watchBpm != null;
+    final color = connected ? Colors.red : Colors.grey;
+
+    String subtitle;
+    if (connected && _lastWatchUpdate != null) {
+      final secs = DateTime.now().difference(_lastWatchUpdate!).inSeconds;
+      subtitle = secs < 5 ? 'Live from Galaxy Watch' : 'Updated ${secs}s ago';
+    } else {
+      subtitle = 'Waiting for Galaxy Watch...';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              connected ? SolarIconsBold.heartPulse : Icons.watch_outlined,
+              color: color,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Heart Rate',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  connected ? '$_watchBpm BPM' : '— BPM',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: connected ? Colors.green : Colors.grey.shade400,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Mission card for daily goals
   Widget _buildMissionCard(BuildContext context) {
     final theme = Theme.of(context);
@@ -215,10 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.blue.shade400,
-            Colors.blue.shade600,
-          ],
+          colors: [Colors.blue.shade400, Colors.blue.shade600],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -357,11 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          Icon(
-            SolarIconsBold.bell,
-            color: color,
-            size: 20,
-          ),
+          Icon(SolarIconsBold.bell, color: color, size: 20),
         ],
       ),
     );
@@ -386,10 +500,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              color.withValues(alpha: 0.8),
-              color,
-            ],
+            colors: [color.withValues(alpha: 0.8), color],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
@@ -432,11 +543,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 20),
           ],
         ),
       ),
@@ -461,10 +568,7 @@ class _HomeScreenState extends State<HomeScreen> {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-            width: 2,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -482,10 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 32),
-              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 32)),
             ),
             const SizedBox(height: 12),
             Text(
@@ -643,7 +744,9 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('💧 Log Water'),
-        content: const Text('Great job staying hydrated! Track your water intake.'),
+        content: const Text(
+          'Great job staying hydrated! Track your water intake.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

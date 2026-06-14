@@ -5,27 +5,31 @@ import 'package:flowfit/features/wellness/presentation/widgets/place_mode_overla
 import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
 
 void main() {
-  testWidgets('PlaceModeOverlay shows fields and buttons', (WidgetTester tester) async {
+  testWidgets('PlaceModeOverlay shows fields and buttons', (
+    WidgetTester tester,
+  ) async {
     final controller = TextEditingController();
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Stack(
-          children: [
-            PlaceModeOverlay(
-              visible: true,
-              latLng: maplat.LatLng(1.0, 1.0),
-              radius: 100,
-              titleController: controller,
-              type: MissionType.sanctuary,
-              onRadiusChanged: (_) {},
-              onTypeChanged: (_) {},
-              onCancel: () {},
-              onConfirm: () {},
-            )
-          ],
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              PlaceModeOverlay(
+                visible: true,
+                latLng: const maplat.LatLng(1.0, 1.0),
+                radius: 100,
+                titleController: controller,
+                type: MissionType.sanctuary,
+                onRadiusChanged: (_) {},
+                onTypeChanged: (_) {},
+                onCancel: () {},
+                onConfirm: () {},
+              ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
 
     expect(find.byType(TextField), findsNWidgets(1)); // Title field
     expect(find.text('Radius'), findsOneWidget);

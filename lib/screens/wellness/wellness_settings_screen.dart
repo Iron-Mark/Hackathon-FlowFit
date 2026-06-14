@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../services/wellness_monitoring_service.dart';
 import '../../providers/wellness_state_provider.dart';
 
 /// Settings screen for wellness tracker privacy and preferences
@@ -8,10 +7,12 @@ class WellnessSettingsScreen extends ConsumerStatefulWidget {
   const WellnessSettingsScreen({super.key});
 
   @override
-  ConsumerState<WellnessSettingsScreen> createState() => _WellnessSettingsScreenState();
+  ConsumerState<WellnessSettingsScreen> createState() =>
+      _WellnessSettingsScreenState();
 }
 
-class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen> {
+class _WellnessSettingsScreenState
+    extends ConsumerState<WellnessSettingsScreen> {
   bool _monitoringEnabled = false;
   bool _stressAlertsEnabled = true;
   bool _cardioAlertsEnabled = true;
@@ -36,8 +37,6 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD),
       appBar: AppBar(
@@ -56,7 +55,7 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 24),
-            
+
             // Monitoring Toggle
             _buildSection(
               title: 'Monitoring',
@@ -72,9 +71,9 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Notification Settings
             _buildSection(
               title: 'Notifications',
@@ -113,9 +112,9 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Privacy Section
             _buildSection(
               title: 'Privacy',
@@ -123,7 +122,8 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
                 _buildInfoTile(
                   icon: Icons.lock_outline,
                   title: 'Data Privacy',
-                  subtitle: 'All biometric data is processed on your device only',
+                  subtitle:
+                      'All biometric data is processed on your device only',
                   color: Colors.green,
                 ),
                 _buildActionTile(
@@ -144,9 +144,9 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Data Transparency
             _buildSection(
               title: 'Data Collection',
@@ -156,16 +156,22 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Colors.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                      border: Border.all(
+                        color: Colors.blue.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.info, color: Colors.blue, size: 20),
+                            const Icon(
+                              Icons.info,
+                              color: Colors.blue,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'What We Collect',
@@ -201,7 +207,7 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
           ],
         ),
@@ -236,7 +242,7 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -273,7 +279,7 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
       ),
       value: value,
       onChanged: onChanged,
-      activeColor: const Color(0xFF3B82F6),
+      activeThumbColor: const Color(0xFF3B82F6),
     );
   }
 
@@ -320,7 +326,7 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: color, size: 24),
@@ -355,7 +361,7 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: color, size: 24),
@@ -429,7 +435,7 @@ class _WellnessSettingsScreenState extends ConsumerState<WellnessSettingsScreen>
     if (confirmed == true && mounted) {
       // Clear wellness history
       await ref.read(wellnessStateProvider.notifier).clearHistory();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

@@ -49,10 +49,18 @@ class MissionBottomSheet extends StatelessWidget {
         final m = repo.current[index];
         return Card(
           elevation: 2.2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14.0),
+          ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-            title: Text(m.title, style: Theme.of(context).textTheme.titleMedium),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14.0,
+              vertical: 10.0,
+            ),
+            title: Text(
+              m.title,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -62,43 +70,56 @@ class MissionBottomSheet extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: LinearProgressIndicator(
-                      value: (m.targetDistanceMeters == null || m.targetDistanceMeters == 0)
+                      value:
+                          (m.targetDistanceMeters == null ||
+                              m.targetDistanceMeters == 0)
                           ? 0.0
-                          : (service.getProgress(m.id) /(m.targetDistanceMeters ?? 1.0)).clamp(0.0, 1.0),
+                          : (service.getProgress(m.id) /
+                                    (m.targetDistanceMeters ?? 1.0))
+                                .clamp(0.0, 1.0),
                     ),
                   ),
               ],
             ),
             trailing: SizedBox(
               width: 180,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Make focus a primary action with a big, clear affordance
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      onFocusMission(m);
-                    },
-                    icon: const Icon(Icons.flag),
-                    label: const Text('Focus'),
-                  ),
-                  const SizedBox(width: 8.0),
-                  Transform.scale(
-                    scale: 0.72,
-                    child: Switch(
-                      value: m.isActive,
-                      onChanged: (v) => v ? service.activateMission(m.id) : service.deactivateMission(m.id),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Make focus a primary action with a big, clear affordance
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        onFocusMission(m);
+                      },
+                      icon: const Icon(Icons.flag),
+                      label: const Text('Focus'),
                     ),
-                  ),
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    iconSize: 20,
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () async => await repo.delete(m.id),
-                  ),
-                ],
+                    const SizedBox(width: 8.0),
+                    Transform.scale(
+                      scale: 0.72,
+                      child: Switch(
+                        value: m.isActive,
+                        onChanged: (v) => v
+                            ? service.activateMission(m.id)
+                            : service.deactivateMission(m.id),
+                      ),
+                    ),
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                      iconSize: 20,
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () async => await repo.delete(m.id),
+                    ),
+                  ],
+                ),
               ),
             ),
             onTap: () => onFocusMission(m),
@@ -150,8 +171,14 @@ class MissionBottomSheet extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Missions', style: Theme.of(context).textTheme.titleLarge),
-                        Text('${repo.current.length} missions', style: Theme.of(context).textTheme.bodyMedium),
+                        Text(
+                          'Missions',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        Text(
+                          '${repo.current.length} missions',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                       ],
                     ),
                     Row(
@@ -177,9 +204,7 @@ class MissionBottomSheet extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(
-                child: _buildMissionList(context, controller),
-              ),
+              Expanded(child: _buildMissionList(context, controller)),
             ],
           ),
         );

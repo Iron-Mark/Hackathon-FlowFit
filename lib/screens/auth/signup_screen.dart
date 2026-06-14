@@ -168,7 +168,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Enter your full name',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -218,7 +220,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Enter your email',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -271,7 +275,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -294,7 +300,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         _obscurePassword
                             ? SolarIconsOutline.eyeClosed
                             : SolarIconsOutline.eye,
-                        color: AppTheme.text.withOpacity(0.6),
+                        color: AppTheme.text.withValues(alpha: 0.6),
                       ),
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
@@ -436,7 +442,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     text: 'By signing up, you agree to our ',
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.text.withOpacity(0.7),
+                      color: AppTheme.text.withValues(alpha: 0.7),
                     ),
                     children: const [
                       TextSpan(

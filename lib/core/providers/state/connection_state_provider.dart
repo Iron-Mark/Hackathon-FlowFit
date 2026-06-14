@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data_sources/watch_data_source_provider.dart';
-import '../../../models/connection_state.dart' as conn;
 
 /// Watch connection state provider
-/// 
+///
 /// Tracks whether the phone is connected to the watch.
 final watchConnectionStateProvider = StreamProvider<bool>((ref) {
   final watchBridge = ref.watch(watchDataSourceProvider);
@@ -13,27 +12,24 @@ final watchConnectionStateProvider = StreamProvider<bool>((ref) {
 });
 
 /// Connection status notifier
-/// 
+///
 /// Manages manual connection/disconnection to the watch.
-final connectionControlProvider = StateNotifierProvider<ConnectionControlNotifier, ConnectionState>((ref) {
-  final watchBridge = ref.watch(watchDataSourceProvider);
-  return ConnectionControlNotifier(watchBridge);
-});
+final connectionControlProvider =
+    StateNotifierProvider<ConnectionControlNotifier, ConnectionState>((ref) {
+      final watchBridge = ref.watch(watchDataSourceProvider);
+      return ConnectionControlNotifier(watchBridge);
+    });
 
 /// Connection state
-enum ConnectionState {
-  disconnected,
-  connecting,
-  connected,
-  error,
-}
+enum ConnectionState { disconnected, connecting, connected, error }
 
 /// Notifier for connection control
 class ConnectionControlNotifier extends StateNotifier<ConnectionState> {
   final dynamic watchBridge;
-  
-  ConnectionControlNotifier(this.watchBridge) : super(ConnectionState.disconnected);
-  
+
+  ConnectionControlNotifier(this.watchBridge)
+    : super(ConnectionState.disconnected);
+
   /// Connect to watch
   Future<void> connect() async {
     state = ConnectionState.connecting;
@@ -45,7 +41,7 @@ class ConnectionControlNotifier extends StateNotifier<ConnectionState> {
       rethrow;
     }
   }
-  
+
   /// Disconnect from watch
   Future<void> disconnect() async {
     try {

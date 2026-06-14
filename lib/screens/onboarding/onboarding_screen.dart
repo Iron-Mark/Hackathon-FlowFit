@@ -72,7 +72,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               width: 300,
               height: 300,
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withOpacity(0.05),
+                color: AppTheme.primaryBlue.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
             ),
@@ -84,7 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               width: 200,
               height: 200,
               decoration: BoxDecoration(
-                color: AppTheme.cyan.withOpacity(0.05),
+                color: AppTheme.cyan.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
             ),
@@ -129,7 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               width: 140,
                               height: 140,
                               decoration: BoxDecoration(
-                                color: page['color'].withOpacity(0.1),
+                                color: page['color'].withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -159,7 +159,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               page['description'],
                               style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(
-                                    color: AppTheme.text.withOpacity(0.7),
+                                    color: AppTheme.text.withValues(alpha: 0.7),
                                     height: 1.5,
                                   ),
                               textAlign: TextAlign.center,
@@ -208,7 +208,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        shadowColor: AppTheme.primaryBlue.withOpacity(0.3),
+                        shadowColor: AppTheme.primaryBlue.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                       child: Text(
                         _currentPage == _pages.length - 1

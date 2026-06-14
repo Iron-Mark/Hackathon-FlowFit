@@ -7,13 +7,13 @@ import '../providers/workout_flow_provider.dart';
 import '../models/mood_rating.dart';
 
 /// Quick mood check bottom sheet for pre-workout mood tracking
-/// 
+///
 /// Displays 5 emoji buttons for mood selection with auto-dismiss timer.
 /// Requirements: 2.1, 2.2, 2.3, 2.4, 2.5
 class QuickMoodCheckBottomSheet extends ConsumerStatefulWidget {
   final bool isPostWorkout;
   final VoidCallback? onMoodSelected;
-  
+
   const QuickMoodCheckBottomSheet({
     super.key,
     this.isPostWorkout = false,
@@ -21,10 +21,12 @@ class QuickMoodCheckBottomSheet extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<QuickMoodCheckBottomSheet> createState() => _QuickMoodCheckBottomSheetState();
+  ConsumerState<QuickMoodCheckBottomSheet> createState() =>
+      _QuickMoodCheckBottomSheetState();
 }
 
-class _QuickMoodCheckBottomSheetState extends ConsumerState<QuickMoodCheckBottomSheet> {
+class _QuickMoodCheckBottomSheetState
+    extends ConsumerState<QuickMoodCheckBottomSheet> {
   Timer? _autoSelectTimer;
   int _remainingSeconds = 10;
 
@@ -37,7 +39,7 @@ class _QuickMoodCheckBottomSheetState extends ConsumerState<QuickMoodCheckBottom
   void _startAutoSelectTimer() {
     final duration = widget.isPostWorkout ? 15 : 10;
     _remainingSeconds = duration;
-    
+
     _autoSelectTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _remainingSeconds--;
@@ -81,7 +83,7 @@ class _QuickMoodCheckBottomSheetState extends ConsumerState<QuickMoodCheckBottom
     // Dismiss bottom sheet
     if (mounted) {
       Navigator.of(context, rootNavigator: true).pop();
-      
+
       // Call the callback if provided
       widget.onMoodSelected?.call();
     }
@@ -111,7 +113,7 @@ class _QuickMoodCheckBottomSheetState extends ConsumerState<QuickMoodCheckBottom
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -119,7 +121,9 @@ class _QuickMoodCheckBottomSheetState extends ConsumerState<QuickMoodCheckBottom
 
           // Heading
           Text(
-            widget.isPostWorkout ? 'How do you feel now?' : 'How are you feeling?',
+            widget.isPostWorkout
+                ? 'How do you feel now?'
+                : 'How are you feeling?',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -139,11 +143,41 @@ class _QuickMoodCheckBottomSheetState extends ConsumerState<QuickMoodCheckBottom
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildMoodButton(context, 1, SolarIconsBold.sadCircle, 'Very Bad', Colors.red),
-              _buildMoodButton(context, 2, SolarIconsBold.confoundedCircle, 'Bad', Colors.orange),
-              _buildMoodButton(context, 3, SolarIconsBold.expressionlessCircle, 'Neutral', Colors.grey),
-              _buildMoodButton(context, 4, SolarIconsBold.smileCircle, 'Good', Colors.green),
-              _buildMoodButton(context, 5, SolarIconsBold.fire, 'Energized', const Color(0xFF3B82F6)),
+              _buildMoodButton(
+                context,
+                1,
+                SolarIconsBold.sadCircle,
+                'Very Bad',
+                Colors.red,
+              ),
+              _buildMoodButton(
+                context,
+                2,
+                SolarIconsBold.confoundedCircle,
+                'Bad',
+                Colors.orange,
+              ),
+              _buildMoodButton(
+                context,
+                3,
+                SolarIconsBold.expressionlessCircle,
+                'Neutral',
+                Colors.grey,
+              ),
+              _buildMoodButton(
+                context,
+                4,
+                SolarIconsBold.smileCircle,
+                'Good',
+                Colors.green,
+              ),
+              _buildMoodButton(
+                context,
+                5,
+                SolarIconsBold.fire,
+                'Energized',
+                const Color(0xFF3B82F6),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -152,7 +186,13 @@ class _QuickMoodCheckBottomSheetState extends ConsumerState<QuickMoodCheckBottom
     );
   }
 
-  Widget _buildMoodButton(BuildContext context, int value, IconData icon, String label, Color color) {
+  Widget _buildMoodButton(
+    BuildContext context,
+    int value,
+    IconData icon,
+    String label,
+    Color color,
+  ) {
     final theme = Theme.of(context);
 
     return _MoodButtonWithAnimation(
@@ -182,7 +222,8 @@ class _MoodButtonWithAnimation extends StatefulWidget {
   });
 
   @override
-  State<_MoodButtonWithAnimation> createState() => _MoodButtonWithAnimationState();
+  State<_MoodButtonWithAnimation> createState() =>
+      _MoodButtonWithAnimationState();
 }
 
 class _MoodButtonWithAnimationState extends State<_MoodButtonWithAnimation>
@@ -197,9 +238,10 @@ class _MoodButtonWithAnimationState extends State<_MoodButtonWithAnimation>
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -228,15 +270,11 @@ class _MoodButtonWithAnimationState extends State<_MoodButtonWithAnimation>
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: widget.color.withOpacity(0.15),
+                color: widget.color.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Icon(
-                  widget.icon,
-                  size: 32,
-                  color: widget.color,
-                ),
+                child: Icon(widget.icon, size: 32, color: widget.color),
               ),
             ),
           ),

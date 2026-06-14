@@ -76,8 +76,8 @@ class _BuddyHatchScreenState extends ConsumerState<BuddyHatchScreen>
                 liveRegion: true,
                 child: ScaleTransition(
                   scale: _scaleAnimation,
-                  child: BuddyCelebrationAnimation(
-                    child: const BuddyCharacterWidget(
+                  child: const BuddyCelebrationAnimation(
+                    child: BuddyCharacterWidget(
                       color: Color(0xFF4ECDC4), // Ocean Blue
                       size: 180,
                     ),

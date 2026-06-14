@@ -18,8 +18,6 @@ class CalorieCalculatorService {
     String? gender,
   }) {
     final userWeight = weight ?? defaultWeight;
-    final userAge = age ?? defaultAge;
-    final userGender = gender ?? defaultGender;
 
     switch (workoutType) {
       case WorkoutType.running:
@@ -29,28 +27,28 @@ class CalorieCalculatorService {
           weight: userWeight,
           avgHeartRate: avgHeartRate,
         );
-      
+
       case WorkoutType.walking:
         return _calculateWalkingCalories(
           durationMinutes: durationMinutes,
           distanceKm: distanceKm ?? 0,
           weight: userWeight,
         );
-      
+
       case WorkoutType.resistance:
         return _calculateResistanceCalories(
           durationMinutes: durationMinutes,
           weight: userWeight,
           avgHeartRate: avgHeartRate,
         );
-      
+
       case WorkoutType.cycling:
         return _calculateCyclingCalories(
           durationMinutes: durationMinutes,
           distanceKm: distanceKm ?? 0,
           weight: userWeight,
         );
-      
+
       case WorkoutType.yoga:
         return _calculateYogaCalories(
           durationMinutes: durationMinutes,
@@ -69,12 +67,12 @@ class CalorieCalculatorService {
     // MET (Metabolic Equivalent) for running varies by pace
     // Average running: 8-12 METs
     // Formula: Calories = MET × weight(kg) × duration(hours)
-    
+
     double met = 10.0; // Default MET for moderate running
-    
+
     if (distanceKm > 0 && durationMinutes > 0) {
       final paceMinPerKm = durationMinutes / distanceKm;
-      
+
       // Adjust MET based on pace
       if (paceMinPerKm < 5) {
         met = 12.0; // Fast pace
@@ -97,10 +95,10 @@ class CalorieCalculatorService {
   }) {
     // MET for walking: 3-5 depending on pace
     double met = 3.5; // Default MET for moderate walking
-    
+
     if (distanceKm > 0 && durationMinutes > 0) {
       final paceMinPerKm = durationMinutes / distanceKm;
-      
+
       if (paceMinPerKm < 12) {
         met = 5.0; // Brisk walking
       } else if (paceMinPerKm < 15) {
@@ -122,7 +120,7 @@ class CalorieCalculatorService {
   }) {
     // MET for resistance training: 5-8 depending on intensity
     double met = 6.0; // Default MET for moderate resistance training
-    
+
     // Adjust based on heart rate if available
     if (avgHeartRate != null) {
       if (avgHeartRate > 140) {
@@ -146,10 +144,10 @@ class CalorieCalculatorService {
   }) {
     // MET for cycling: 6-12 depending on speed
     double met = 8.0; // Default MET for moderate cycling
-    
+
     if (distanceKm > 0 && durationMinutes > 0) {
       final speedKmh = (distanceKm / durationMinutes) * 60;
-      
+
       if (speedKmh > 25) {
         met = 12.0; // Fast cycling
       } else if (speedKmh > 20) {
@@ -172,7 +170,7 @@ class CalorieCalculatorService {
   }) {
     // MET for yoga: 2.5-4 depending on intensity
     const double met = 3.0; // Moderate yoga
-    
+
     final hours = durationMinutes / 60.0;
     return (met * weight * hours).round();
   }
@@ -192,8 +190,8 @@ class CalorieCalculatorService {
     required double intensity, // 0.0 to 1.0
   }) {
     final maxHR = 220 - age;
-    final restingHR = 60; // Average resting heart rate
-    
+    const restingHR = 60; // Average resting heart rate
+
     // Karvonen formula: Target HR = ((max HR − resting HR) × intensity) + resting HR
     return ((maxHR - restingHR) * intensity + restingHR).round();
   }

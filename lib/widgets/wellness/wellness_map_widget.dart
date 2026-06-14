@@ -12,10 +12,7 @@ import '../../services/gps_tracking_service.dart';
 class WellnessMapWidget extends StatefulWidget {
   final WellnessState state;
 
-  const WellnessMapWidget({
-    super.key,
-    required this.state,
-  });
+  const WellnessMapWidget({super.key, required this.state});
 
   @override
   State<WellnessMapWidget> createState() => _WellnessMapWidgetState();
@@ -25,7 +22,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
   final MapController _mapController = MapController();
   final GPSTrackingService _gpsService = GPSTrackingService();
   LatLng? _userLocation;
-  List<LatLng> _userPath = []; // Track user's walking path
+  final List<LatLng> _userPath = []; // Track user's walking path
   List<WalkingRoute> _calmingRoutes = [];
   WalkingRoute? _selectedRoute;
   bool _isLoadingRoutes = false;
@@ -40,7 +37,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
     _getUserLocation();
     _startGPSTracking();
   }
-  
+
   @override
   void dispose() {
     _locationSubscription?.cancel();
@@ -52,9 +49,9 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
   @override
   void didUpdateWidget(WellnessMapWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Load calming routes when entering stress state
-    if (widget.state == WellnessState.stress && 
+    if (widget.state == WellnessState.stress &&
         oldWidget.state != WellnessState.stress) {
       _loadCalmingRoutes();
     }
@@ -62,22 +59,24 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
 
   Future<void> _getUserLocation() async {
     try {
-      print('📍 WellnessMap: Requesting location...');
-      
+      debugPrint('📍 WellnessMap: Requesting location...');
+
       // Check and request permissions
       final hasPermission = await _gpsService.hasLocationPermission();
       if (!hasPermission) {
-        print('⚠️ WellnessMap: No location permission, requesting...');
+        debugPrint('⚠️ WellnessMap: No location permission, requesting...');
         final granted = await _gpsService.requestLocationPermission();
         if (!granted) {
           throw Exception('Location permission denied');
         }
       }
-      
+
       // Get current location (this will wait for actual GPS fix)
       final location = await _gpsService.getCurrentLocation();
-      print('✅ WellnessMap: Got location: ${location.latitude}, ${location.longitude}');
-      
+      debugPrint(
+        '✅ WellnessMap: Got location: ${location.latitude}, ${location.longitude}',
+      );
+
       if (mounted) {
         setState(() {
           _userLocation = location;
@@ -85,17 +84,18 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
           _isLoadingLocation = false;
           _locationError = null; // Clear any previous errors
         });
-        
+
         // Center map on user location
         _mapController.move(_userLocation!, 15.0);
       }
     } catch (e) {
-      print('❌ WellnessMap: Location error: $e');
+      debugPrint('❌ WellnessMap: Location error: $e');
       // Keep loading state and show error - don't use fake location
       if (mounted) {
         setState(() {
           _isLoadingLocation = false;
-          _locationError = 'Unable to get your location. Please enable GPS and try again.';
+          _locationError =
+              'Unable to get your location. Please enable GPS and try again.';
         });
       }
     }
@@ -104,35 +104,37 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
   /// Starts continuous GPS tracking to update user location and path
   Future<void> _startGPSTracking() async {
     try {
-      print('🛰️ WellnessMap: Starting GPS tracking...');
+      debugPrint('🛰️ WellnessMap: Starting GPS tracking...');
       await _gpsService.startTracking();
-      
+
       // Listen to location updates
       _locationSubscription = _gpsService.locationStream.listen((location) {
         if (mounted) {
           setState(() {
             _userLocation = location;
-            
+
             // Add to path if tracking is enabled
             if (_isTrackingPath) {
               _userPath.add(location);
-              print('📍 WellnessMap: Path updated - ${_userPath.length} points');
+              debugPrint(
+                '📍 WellnessMap: Path updated - ${_userPath.length} points',
+              );
             }
           });
-          
+
           // Auto-center map on user location (smooth follow)
           _mapController.move(location, _mapController.camera.zoom);
         }
       });
-      
+
       // Enable path tracking by default
       setState(() {
         _isTrackingPath = true;
       });
-      
-      print('✅ WellnessMap: GPS tracking started');
+
+      debugPrint('✅ WellnessMap: GPS tracking started');
     } catch (e) {
-      print('❌ WellnessMap: Failed to start GPS tracking: $e');
+      debugPrint('❌ WellnessMap: Failed to start GPS tracking: $e');
     }
   }
 
@@ -148,28 +150,30 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
 
   Future<void> _loadCalmingRoutes() async {
     if (_userLocation == null || _isLoadingRoutes) return;
-    
+
     setState(() => _isLoadingRoutes = true);
-    
+
     try {
-      print('🗺️ WellnessMap: Loading calming routes for location: $_userLocation');
+      debugPrint(
+        '🗺️ WellnessMap: Loading calming routes for location: $_userLocation',
+      );
       final service = CalmingRouteService(OpenRouteService());
       final routes = await service.generateCalmingRoutes(_userLocation!);
-      print('✅ WellnessMap: Loaded ${routes.length} routes');
-      
+      debugPrint('✅ WellnessMap: Loaded ${routes.length} routes');
+
       if (mounted) {
         setState(() {
           _calmingRoutes = routes;
           _isLoadingRoutes = false;
         });
-        
+
         // Auto-pan to show routes
         if (routes.isNotEmpty) {
           _mapController.move(_userLocation!, 14.0);
         }
       }
     } catch (e) {
-      print('❌ WellnessMap: Failed to load routes: $e');
+      debugPrint('❌ WellnessMap: Failed to load routes: $e');
       if (mounted) {
         setState(() => _isLoadingRoutes = false);
       }
@@ -189,17 +193,14 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
               SizedBox(height: 16),
               Text(
                 'Getting your location...',
-                style: TextStyle(
-                  fontFamily: 'GeneralSans',
-                  fontSize: 14,
-                ),
+                style: TextStyle(fontFamily: 'GeneralSans', fontSize: 14),
               ),
             ],
           ),
         ),
       );
     }
-    
+
     if (_userLocation == null) {
       return Container(
         color: const Color(0xFFF1F6FD),
@@ -211,10 +212,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
               const SizedBox(height: 16),
               Text(
                 _locationError ?? 'Unable to get location',
-                style: const TextStyle(
-                  fontFamily: 'GeneralSans',
-                  fontSize: 14,
-                ),
+                style: const TextStyle(fontFamily: 'GeneralSans', fontSize: 14),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -255,7 +253,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
                 userAgentPackageName: 'com.flowfit.app',
                 tileProvider: NetworkTileProvider(),
               ),
-              
+
               // User's walking path (drawn first, underneath everything)
               if (_userPath.length > 1)
                 PolylineLayer(
@@ -269,11 +267,12 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
                     ),
                   ],
                 ),
-              
+
               // Calming route polylines (drawn before markers)
-              if (widget.state == WellnessState.stress && _calmingRoutes.isNotEmpty)
+              if (widget.state == WellnessState.stress &&
+                  _calmingRoutes.isNotEmpty)
                 ..._buildRoutePolylines(),
-              
+
               // User location marker (on top)
               MarkerLayer(
                 markers: [
@@ -288,7 +287,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
               ),
             ],
           ),
-          
+
           // Top controls
           Positioned(
             top: 16,
@@ -298,13 +297,13 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
               children: [
                 // Loading indicator
                 if (_isLoadingRoutes)
-                  Card(
+                  const Card(
                     elevation: 4,
                     child: Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: EdgeInsets.all(12),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           SizedBox(
                             width: 16,
                             height: 16,
@@ -322,7 +321,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
                       ),
                     ),
                   ),
-                
+
                 // Path tracking controls
                 if (_userPath.length > 1) ...[
                   const SizedBox(height: 8),
@@ -336,10 +335,10 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.route,
                                 size: 16,
-                                color: const Color(0xFF10B981),
+                                color: Color(0xFF10B981),
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -369,7 +368,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
               ],
             ),
           ),
-          
+
           // Clear path button
           if (_userPath.length > 1)
             Positioned(
@@ -382,7 +381,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
                 child: const Icon(Icons.clear, color: Colors.red),
               ),
             ),
-          
+
           // Route selection panel
           if (_calmingRoutes.isNotEmpty && widget.state == WellnessState.stress)
             _buildRouteSelectionPanel(),
@@ -401,7 +400,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
             strokeWidth: isSelected ? 6.0 : 4.0,
             color: isSelected
                 ? const Color(0xFF4A90E2)
-                : const Color(0xFF5DADE2).withOpacity(0.7),
+                : const Color(0xFF5DADE2).withValues(alpha: 0.7),
             borderStrokeWidth: isSelected ? 2.0 : 0,
             borderColor: Colors.white,
           ),
@@ -418,17 +417,13 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
         border: Border.all(color: Colors.white, width: 3),
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: Colors.blue.withValues(alpha: 0.3),
             blurRadius: 10,
             spreadRadius: 5,
           ),
         ],
       ),
-      child: const Icon(
-        Icons.person,
-        color: Colors.white,
-        size: 20,
-      ),
+      child: const Icon(Icons.person, color: Colors.white, size: 20),
     );
   }
 
@@ -444,7 +439,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -483,7 +478,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
 
   Widget _buildRouteCard(WalkingRoute route) {
     final isSelected = route == _selectedRoute;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -519,9 +514,14 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.white.withOpacity(0.2) : Colors.green.withOpacity(0.2),
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : Colors.green.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

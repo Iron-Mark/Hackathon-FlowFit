@@ -90,6 +90,11 @@ class MockProfileRepository implements ProfileRepository {
           : SyncStatus.synced,
     );
   }
+
+  @override
+  Future<bool> hasCompletedSurvey(String userId) async {
+    return _localProfile != null;
+  }
 }
 
 void main() {

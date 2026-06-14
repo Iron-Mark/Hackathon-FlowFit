@@ -5,7 +5,6 @@ import 'package:solar_icons/solar_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gotrue/gotrue.dart' as gotrue;
 import '../../theme/app_theme.dart';
-import '../../presentation/providers/providers.dart';
 import 'dart:async';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
@@ -197,7 +196,6 @@ class _EmailVerificationScreenState
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final email = args?['email'] as String? ?? 'your email';
-    final name = args?['name'] as String?;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F7FF),
@@ -223,7 +221,7 @@ class _EmailVerificationScreenState
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryBlue.withOpacity(0.1),
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -289,7 +287,7 @@ class _EmailVerificationScreenState
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -423,7 +421,7 @@ class _EmailVerificationScreenState
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: AppTheme.primaryBlue.withOpacity(0.1),
+            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Center(

@@ -16,7 +16,7 @@ FlowFit is a dual-platform fitness app that runs on:
 - **Android Phone** - Companion app for data visualization and management
 
 ### Key Features
-
+5r
 - ✅ **Real-time Heart Rate Monitoring** - Continuous HR tracking with Samsung Health Sensor SDK
 - ✅ **Inter-Beat Interval (IBI) Data** - Advanced HRV analysis
 - ✅ **Activity Tracking** - Workout logging and exercise monitoring

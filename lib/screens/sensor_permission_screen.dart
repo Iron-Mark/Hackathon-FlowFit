@@ -42,10 +42,7 @@ class _SensorPermissionScreenState extends State<SensorPermissionScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Body Sensor Permission',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 8),
@@ -53,10 +50,7 @@ class _SensorPermissionScreenState extends State<SensorPermissionScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'FlowFit needs access to your body sensors to track heart rate and other health metrics from your Galaxy Watch.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ),
             const SizedBox(height: 16),
@@ -69,10 +63,7 @@ class _SensorPermissionScreenState extends State<SensorPermissionScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'What we track:',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 12),
@@ -105,10 +96,7 @@ class _SensorPermissionScreenState extends State<SensorPermissionScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Your privacy matters',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 8),
@@ -116,10 +104,7 @@ class _SensorPermissionScreenState extends State<SensorPermissionScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Your health data is stored securely and never shared without your explicit consent. You can revoke permissions at any time in your device settings.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
             ),
             const SizedBox(height: 32),
@@ -143,7 +128,7 @@ class _SensorPermissionScreenState extends State<SensorPermissionScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -163,10 +148,7 @@ class _SensorPermissionScreenState extends State<SensorPermissionScreen> {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),

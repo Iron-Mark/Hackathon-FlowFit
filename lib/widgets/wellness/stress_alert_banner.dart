@@ -32,10 +32,7 @@ class _StressAlertBannerState extends State<StressAlertBanner>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, -1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     _controller.forward();
   }
 
@@ -57,7 +54,7 @@ class _StressAlertBannerState extends State<StressAlertBanner>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -71,14 +68,10 @@ class _StressAlertBannerState extends State<StressAlertBanner>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
-                    Icons.spa,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: const Icon(Icons.spa, color: Colors.white, size: 24),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -141,9 +134,7 @@ class _StressAlertBannerState extends State<StressAlertBanner>
                   ),
                   child: const Text(
                     'Not Now',
-                    style: TextStyle(
-                      fontFamily: 'GeneralSans',
-                    ),
+                    style: TextStyle(fontFamily: 'GeneralSans'),
                   ),
                 ),
                 IconButton(

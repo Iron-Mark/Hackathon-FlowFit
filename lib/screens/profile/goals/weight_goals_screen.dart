@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../../theme/app_theme.dart';
 
 class WeightGoalsScreen extends StatefulWidget {
   const WeightGoalsScreen({super.key});
@@ -197,22 +196,27 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
                   color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  children: _weeklyGoalOptions.map((option) {
-                    final isSelected = _selectedWeeklyGoal == option;
-                    return RadioListTile<String>(
-                      value: option,
-                      groupValue: _selectedWeeklyGoal,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedWeeklyGoal = value!;
-                        });
-                      },
-                      title: Text(option),
-                      activeColor: theme.colorScheme.primary,
-                      selected: isSelected,
-                    );
-                  }).toList(),
+                child: RadioGroup<String>(
+                  groupValue: _selectedWeeklyGoal,
+                  onChanged: (value) {
+                    if (value == null) {
+                      return;
+                    }
+                    setState(() {
+                      _selectedWeeklyGoal = value;
+                    });
+                  },
+                  child: Column(
+                    children: _weeklyGoalOptions.map((option) {
+                      final isSelected = _selectedWeeklyGoal == option;
+                      return RadioListTile<String>(
+                        value: option,
+                        title: Text(option),
+                        activeColor: theme.colorScheme.primary,
+                        selected: isSelected,
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
 

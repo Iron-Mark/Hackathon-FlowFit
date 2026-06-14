@@ -13,11 +13,7 @@ void main() {
       testStartTime = DateTime(2024, 1, 1, 10, 0, 0);
       testEndTime = DateTime(2024, 1, 1, 10, 30, 0);
       testHeartRateData = [
-        HeartRatePoint(
-          timestamp: testStartTime,
-          bpm: 120,
-          ibiValues: [500],
-        ),
+        HeartRatePoint(timestamp: testStartTime, bpm: 120, ibiValues: [500]),
         HeartRatePoint(
           timestamp: testStartTime.add(const Duration(minutes: 15)),
           bpm: 150,
@@ -126,7 +122,7 @@ void main() {
       });
 
       test('creates copy with updated duration', () {
-        final newDuration = const Duration(minutes: 45);
+        const newDuration = Duration(minutes: 45);
         final copy = original.copyWith(duration: newDuration);
 
         expect(copy.duration, equals(newDuration));
@@ -134,11 +130,7 @@ void main() {
 
       test('creates copy with updated heart rate data', () {
         final newHeartRateData = [
-          HeartRatePoint(
-            timestamp: testStartTime,
-            bpm: 130,
-            ibiValues: [460],
-          ),
+          HeartRatePoint(timestamp: testStartTime, bpm: 130, ibiValues: [460]),
         ];
         final copy = original.copyWith(heartRateData: newHeartRateData);
 
@@ -305,7 +297,7 @@ void main() {
       });
 
       test('handles workout with very long duration', () {
-        final longDuration = const Duration(hours: 24);
+        const longDuration = Duration(hours: 24);
         final workout = Workout(
           id: 'workout_1',
           userId: 'user_1',

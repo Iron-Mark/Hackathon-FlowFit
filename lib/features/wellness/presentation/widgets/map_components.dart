@@ -18,11 +18,7 @@ fm.Marker buildMissionMarker(GeofenceMission m, VoidCallback onTap) {
           shape: BoxShape.circle,
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4.0)],
         ),
-        child: const Icon(
-          Icons.location_on,
-          color: Colors.white,
-          size: 20,
-        ),
+        child: const Icon(Icons.location_on, color: Colors.white, size: 20),
       ),
     ),
   );
@@ -31,7 +27,9 @@ fm.Marker buildMissionMarker(GeofenceMission m, VoidCallback onTap) {
 fm.CircleMarker buildMissionCircle(GeofenceMission m) {
   return fm.CircleMarker(
     point: maplat.LatLng(m.center.latitude, m.center.longitude),
-    color: (m.isActive ? Colors.greenAccent.withAlpha((0.2 * 255).toInt()) : Colors.redAccent.withAlpha((0.1 * 255).toInt())),
+    color: (m.isActive
+        ? Colors.greenAccent.withAlpha((0.2 * 255).toInt())
+        : Colors.redAccent.withAlpha((0.1 * 255).toInt())),
     borderStrokeWidth: 1.0,
     borderColor: m.isActive ? Colors.green : Colors.red,
     radius: m.radiusMeters.toDouble(),
@@ -47,7 +45,7 @@ fm.Marker buildPreviewMarker(maplat.LatLng latLng) {
     child: Container(
       width: 36,
       height: 36,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: Colors.blueAccent,
         shape: BoxShape.circle,
       ),

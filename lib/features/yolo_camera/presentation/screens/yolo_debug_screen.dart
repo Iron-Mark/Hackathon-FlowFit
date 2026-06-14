@@ -57,10 +57,12 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
   Widget build(BuildContext context) {
     debugPrint('🔨 YoloDebugScreen: build called');
 
-    return WillPopScope(
-      onWillPop: () async {
-        debugPrint('⬅️ YoloDebugScreen: Back button pressed');
-        return true;
+    return PopScope<Object?>(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          debugPrint('⬅️ YoloDebugScreen: Back button pressed');
+        }
       },
       child: Scaffold(
         appBar: AppBar(
@@ -266,7 +268,7 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
         color: Colors.black87,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -346,25 +348,25 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('YOLO Debug Info'),
-        content: Column(
+        content: const Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Detection Modes:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            const Text('• Object: YOLOv11s model'),
-            const Text('• Pose: YOLOv11n-pose model'),
-            const SizedBox(height: 16),
-            const Text(
+            Text('• Object: YOLOv11s model'),
+            Text('• Pose: YOLOv11n-pose model'),
+            SizedBox(height: 16),
+            Text(
               'Camera Modes:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            const Text('• Real-time: Live camera stream'),
-            const Text('• Picture: Select from gallery'),
-            const SizedBox(height: 16),
-            const Text(
+            Text('• Real-time: Live camera stream'),
+            Text('• Picture: Select from gallery'),
+            SizedBox(height: 16),
+            Text(
               'Note: This screen is only visible in debug mode.',
               style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
             ),

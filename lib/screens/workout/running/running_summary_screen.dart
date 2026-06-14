@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../../widgets/mood_transformation_card.dart';
 import '../../../providers/running_session_provider.dart';
 
@@ -11,13 +10,11 @@ import '../../../providers/running_session_provider.dart';
 class RunningSummaryScreen extends ConsumerStatefulWidget {
   final String? sessionId;
 
-  const RunningSummaryScreen({
-    super.key,
-    this.sessionId,
-  });
+  const RunningSummaryScreen({super.key, this.sessionId});
 
   @override
-  ConsumerState<RunningSummaryScreen> createState() => _RunningSummaryScreenState();
+  ConsumerState<RunningSummaryScreen> createState() =>
+      _RunningSummaryScreenState();
 }
 
 class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
@@ -56,16 +53,10 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
       if (point.longitude > maxLng) maxLng = point.longitude;
     }
 
-    final bounds = LatLngBounds(
-      LatLng(minLat, minLng),
-      LatLng(maxLat, maxLng),
-    );
+    final bounds = LatLngBounds(LatLng(minLat, minLng), LatLng(maxLat, maxLng));
 
     _mapController.fitCamera(
-      CameraFit.bounds(
-        bounds: bounds,
-        padding: const EdgeInsets.all(50),
-      ),
+      CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(50)),
     );
   }
 
@@ -95,7 +86,7 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
       if (session != null) {
         // TODO: Re-enable when backend is ready
         // await ref.read(workoutSessionServiceProvider).saveSession(session);
-        
+
         // For now, just show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -107,10 +98,9 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
           );
 
           // Navigate back to dashboard (Track Tab)
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/dashboard',
-            (route) => false,
-          );
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/dashboard', (route) => false);
         }
       }
     } catch (e) {
@@ -145,9 +135,7 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
     if (session == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Workout Complete')),
-        body: const Center(
-          child: Text('No session data available'),
-        ),
+        body: const Center(child: Text('No session data available')),
       );
     }
 
@@ -209,7 +197,8 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
             ],
 
             // Heart Rate Zones
-            if (session.heartRateZones != null && session.heartRateZones!.isNotEmpty) ...[
+            if (session.heartRateZones != null &&
+                session.heartRateZones!.isNotEmpty) ...[
               _buildHeartRateZones(theme, session),
               const SizedBox(height: 24),
             ],
@@ -236,11 +225,7 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            size: 32,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(icon, size: 32, color: theme.colorScheme.primary),
           const SizedBox(height: 12),
           Text(
             label,
@@ -292,7 +277,7 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
                 child: _buildMetricItem(
                   theme,
                   'Avg HR',
-                  session.avgHeartRate != null 
+                  session.avgHeartRate != null
                       ? '${session.avgHeartRate} bpm'
                       : '--',
                   Icons.favorite,
@@ -302,7 +287,7 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
                 child: _buildMetricItem(
                   theme,
                   'Calories',
-                  session.caloriesBurned != null 
+                  session.caloriesBurned != null
                       ? '${session.caloriesBurned} cal'
                       : '--',
                   Icons.local_fire_department,
@@ -323,17 +308,11 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
   ) {
     return Column(
       children: [
-        Icon(
-          icon,
-          size: 24,
-          color: theme.colorScheme.primary,
-        ),
+        Icon(icon, size: 24, color: theme.colorScheme.primary),
         const SizedBox(height: 8),
         Text(
           label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
@@ -379,8 +358,8 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
             child: FlutterMap(
               mapController: _mapController,
               options: MapOptions(
-                initialCenter: session.routePoints.isNotEmpty 
-                    ? session.routePoints.first 
+                initialCenter: session.routePoints.isNotEmpty
+                    ? session.routePoints.first
                     : const LatLng(0, 0),
                 initialZoom: 15,
                 interactionOptions: const InteractionOptions(
@@ -452,7 +431,10 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
 
   Widget _buildHeartRateZones(ThemeData theme, dynamic session) {
     final zones = session.heartRateZones!;
-    final totalSeconds = zones.values.fold<int>(0, (int sum, int val) => sum + val);
+    final totalSeconds = zones.values.fold<int>(
+      0,
+      (int sum, int val) => sum + val,
+    );
 
     if (totalSeconds == 0) return const SizedBox.shrink();
 
@@ -475,7 +457,7 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
           ...zones.entries.map((entry) {
             final percentage = (entry.value / totalSeconds * 100).round();
             final minutes = entry.value ~/ 60;
-            
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Column(
@@ -576,10 +558,7 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
                   )
                 : const Text(
                     'Save to History',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
           ),
         ),

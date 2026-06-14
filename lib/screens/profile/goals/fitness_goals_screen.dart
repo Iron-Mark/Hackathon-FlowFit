@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../../theme/app_theme.dart';
 
 class FitnessGoalsScreen extends StatefulWidget {
   const FitnessGoalsScreen({super.key});
@@ -132,7 +131,7 @@ class _FitnessGoalsScreenState extends State<FitnessGoalsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: DropdownButtonFormField<String>(
-                  value: _activityLevel,
+                  initialValue: _activityLevel,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),

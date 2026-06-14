@@ -7,7 +7,7 @@ import '../widgets/mood_transformation_card.dart';
 import '../models/mood_rating.dart';
 
 /// Demo screen to test mood tracking UI components
-/// 
+///
 /// This screen is for development/testing purposes only.
 class MoodTrackingDemoScreen extends ConsumerWidget {
   const MoodTrackingDemoScreen({super.key});
@@ -19,12 +19,10 @@ class MoodTrackingDemoScreen extends ConsumerWidget {
     // Sample mood data for testing
     final preMood = MoodRating.fromValue(3); // Neutral
     final postMood = MoodRating.fromValue(5); // Energized
-    final moodChange = 2;
+    const moodChange = 2;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mood Tracking Components Demo'),
-      ),
+      appBar: AppBar(title: const Text('Mood Tracking Components Demo')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -61,9 +59,8 @@ class MoodTrackingDemoScreen extends ConsumerWidget {
                   context: context,
                   isScrollControlled: true,
                   backgroundColor: Colors.transparent,
-                  builder: (context) => const QuickMoodCheckBottomSheet(
-                    isPostWorkout: true,
-                  ),
+                  builder: (context) =>
+                      const QuickMoodCheckBottomSheet(isPostWorkout: true),
                 );
               },
               child: const Text('Show Post-Workout Mood Check (Bottom Sheet)'),
@@ -71,10 +68,7 @@ class MoodTrackingDemoScreen extends ConsumerWidget {
             const SizedBox(height: 32),
 
             // Section: Mood Change Badge
-            Text(
-              'Mood Change Badge',
-              style: theme.textTheme.titleLarge,
-            ),
+            Text('Mood Change Badge', style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(
               'Compact badge for activity cards',
@@ -89,30 +83,21 @@ class MoodTrackingDemoScreen extends ConsumerWidget {
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: theme.colorScheme.outline.withOpacity(0.2),
+                  color: theme.colorScheme.outline.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Morning Run',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  MoodChangeBadge(
-                    preMood: preMood,
-                    postMood: postMood,
-                  ),
+                  Text('Morning Run', style: theme.textTheme.titleMedium),
+                  MoodChangeBadge(preMood: preMood, postMood: postMood),
                 ],
               ),
             ),
             const SizedBox(height: 32),
 
             // Section: Mood Transformation Card
-            Text(
-              'Mood Transformation Card',
-              style: theme.textTheme.titleLarge,
-            ),
+            Text('Mood Transformation Card', style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(
               'Full-width card for workout summaries',
@@ -129,10 +114,7 @@ class MoodTrackingDemoScreen extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // Different mood changes
-            Text(
-              'No Change Example',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('No Change Example', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             MoodTransformationCard(
               preMood: MoodRating.fromValue(4),
@@ -141,10 +123,7 @@ class MoodTrackingDemoScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
 
-            Text(
-              'Negative Change Example',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('Negative Change Example', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             MoodTransformationCard(
               preMood: MoodRating.fromValue(4),
@@ -184,7 +163,9 @@ class MoodTrackingDemoScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(

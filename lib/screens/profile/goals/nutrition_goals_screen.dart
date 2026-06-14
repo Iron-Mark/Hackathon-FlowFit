@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../../theme/app_theme.dart';
 
 class NutritionGoalsScreen extends StatefulWidget {
   const NutritionGoalsScreen({super.key});
@@ -169,7 +168,7 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                           _useCustomMacros = value;
                         });
                       },
-                      activeColor: theme.colorScheme.primary,
+                      activeThumbColor: theme.colorScheme.primary,
                     ),
                   ],
                 ),
@@ -198,7 +197,7 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: Icon(
+                    prefixIcon: const Icon(
                       SolarIconsOutline.hamburgerMenu,
                       color: Colors.red,
                     ),
@@ -233,7 +232,7 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: Icon(
+                    prefixIcon: const Icon(
                       SolarIconsOutline.hamburgerMenu,
                       color: Colors.orange,
                     ),

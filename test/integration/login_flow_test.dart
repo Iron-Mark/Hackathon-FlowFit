@@ -1,299 +1,294 @@
+import 'package:flowfit/domain/entities/user.dart' as domain_user;
+import 'package:flowfit/domain/entities/user_profile.dart' as domain_profile;
+import 'package:flowfit/domain/exceptions/auth_exceptions.dart';
+import 'package:flowfit/domain/repositories/i_auth_repository.dart';
+import 'package:flowfit/domain/repositories/i_profile_repository.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/screens/auth/login_screen.dart';
+import 'package:flowfit/screens/onboarding/age_gate_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flowfit/main.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flowfit/secrets.dart';
+import 'package:flutter_test/flutter_test.dart';
 
-/// Integration tests for login flows.
-/// 
-/// These tests verify:
-/// - Login → Dashboard flow for users with complete profiles
-/// - Login → Survey flow for users with incomplete profiles
-/// - Session persistence across app restarts
-/// - Invalid credentials handling
-/// 
-/// Requirements: 2.1, 5.2, 5.3, 5.4
 void main() {
-  setUpAll(() async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    
-    await Supabase.initialize(
-      url: SupabaseConfig.url,
-      anonKey: SupabaseConfig.anonKey,
-    );
-  });
+  TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Login Flow Integration Tests', () {
     testWidgets(
       'INTEGRATION: Login with complete profile navigates to dashboard',
-      (WidgetTester tester) async {
-        // Note: This test requires a pre-existing user with completed profile
-        // You'll need to create this user manually or in a setup script
-        const testEmail = 'complete_user@flowfit.test';
-        const testPassword = 'TestPassword123!';
-
-        await tester.pumpWidget(const ProviderScope(child: FlowFitPhoneApp()));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
-
-        // Should be on welcome screen
-        // Navigate to login
-        final loginLink = find.text('Log In');
-        expect(loginLink, findsWidgets);
-        await tester.tap(loginLink.first);
-        await tester.pumpAndSettle();
-
-        // Should be on login screen
-        expect(find.text('Welcome Back!'), findsOneWidget);
-
-        // Fill in login form
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Enter your email'),
-          testEmail,
+      (tester) async {
+        await _pumpLoginHarness(
+          tester,
+          profileRepository: _FakeProfileRepository(
+            completedUsers: {'test-user'},
+          ),
         );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Enter your password'),
-          testPassword,
+
+        await _enterLoginForm(
+          tester,
+          email: 'complete_user@flowfit.test',
+          password: 'TestPassword123!',
         );
-        await tester.pumpAndSettle();
+        await _tapAndSettle(tester, find.text('Log In').last);
 
-        // Tap login button
-        final loginButton = find.text('Log In');
-        await tester.tap(loginButton.last); // Last one is the button, not the link
-        await tester.pumpAndSettle(const Duration(seconds: 3));
-
-        // Should navigate to dashboard
-        expect(find.byType(Scaffold), findsWidgets);
-        
-        // Cleanup
-        try {
-          await Supabase.instance.client.auth.signOut();
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      },
-      skip: true, // Skip by default as it requires manual user setup
-    );
-
-    testWidgets(
-      'INTEGRATION: Login with incomplete profile navigates to survey',
-      (WidgetTester tester) async {
-        // Note: This test requires a pre-existing user WITHOUT completed profile
-        const testEmail = 'incomplete_user@flowfit.test';
-        const testPassword = 'TestPassword123!';
-
-        await tester.pumpWidget(const ProviderScope(child: FlowFitPhoneApp()));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
-
-        // Navigate to login
-        final loginLink = find.text('Log In');
-        await tester.tap(loginLink.first);
-        await tester.pumpAndSettle();
-
-        // Fill in login form
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Enter your email'),
-          testEmail,
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Enter your password'),
-          testPassword,
-        );
-        await tester.pumpAndSettle();
-
-        // Tap login button
-        final loginButton = find.text('Log In');
-        await tester.tap(loginButton.last);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
-
-        // Should navigate to survey intro
-        expect(find.text('Quick Setup'), findsOneWidget);
-        expect(find.text('(2 Minutes)'), findsOneWidget);
-        
-        // Cleanup
-        try {
-          await Supabase.instance.client.auth.signOut();
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      },
-      skip: true, // Skip by default as it requires manual user setup
-    );
-
-    testWidgets(
-      'INTEGRATION: Login with invalid credentials shows error',
-      (WidgetTester tester) async {
-        const testEmail = 'nonexistent@flowfit.test';
-        const testPassword = 'WrongPassword123!';
-
-        await tester.pumpWidget(const ProviderScope(child: FlowFitPhoneApp()));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
-
-        // Navigate to login
-        final loginLink = find.text('Log In');
-        if (loginLink.evaluate().isNotEmpty) {
-          await tester.tap(loginLink.first);
-          await tester.pumpAndSettle();
-        }
-
-        // Fill in login form with invalid credentials
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Enter your email'),
-          testEmail,
-        );
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Enter your password'),
-          testPassword,
-        );
-        await tester.pumpAndSettle();
-
-        // Tap login button
-        final loginButton = find.text('Log In');
-        await tester.tap(loginButton.last);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
-
-        // Should show error message
-        expect(find.byType(SnackBar), findsOneWidget);
-        // Error message might vary, but should indicate invalid credentials
-        expect(
-          find.textContaining('Invalid'),
-          findsOneWidget,
-        );
+        expect(find.text('Dashboard'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'INTEGRATION: Session persistence - app restart with valid session',
-      (WidgetTester tester) async {
-        // This test simulates app restart with an existing session
-        // Note: Requires a valid session to be present
-        
-        // First, create a session by logging in
-        const testEmail = 'session_test@flowfit.test';
-        const testPassword = 'TestPassword123!';
+      'INTEGRATION: Login with incomplete profile navigates to age gate',
+      (tester) async {
+        await _pumpLoginHarness(tester);
 
-        // Initial app launch and login
-        await tester.pumpWidget(const ProviderScope(child: FlowFitPhoneApp()));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+        await _enterLoginForm(
+          tester,
+          email: 'incomplete_user@flowfit.test',
+          password: 'TestPassword123!',
+        );
+        await _tapAndSettle(tester, find.text('Log In').last);
 
-        // Navigate to login
-        final loginLink = find.text('Log In');
-        if (loginLink.evaluate().isNotEmpty) {
-          await tester.tap(loginLink.first);
-          await tester.pumpAndSettle();
-
-          // Fill in login form
-          await tester.enterText(
-            find.widgetWithText(TextFormField, 'Enter your email'),
-            testEmail,
-          );
-          await tester.enterText(
-            find.widgetWithText(TextFormField, 'Enter your password'),
-            testPassword,
-          );
-          await tester.pumpAndSettle();
-
-          // Tap login button
-          final loginButton = find.text('Log In');
-          await tester.tap(loginButton.last);
-          await tester.pumpAndSettle(const Duration(seconds: 3));
-        }
-
-        // Now simulate app restart by creating a new app instance
-        await tester.pumpWidget(const ProviderScope(child: FlowFitPhoneApp()));
-        await tester.pumpAndSettle(const Duration(seconds: 3));
-
-        // Should automatically navigate to dashboard or survey
-        // (depending on profile completion status)
-        // The key is that we should NOT be on the welcome screen
-        expect(find.text('Find Your Flow'), findsNothing);
-        
-        // Cleanup
-        try {
-          await Supabase.instance.client.auth.signOut();
-        } catch (e) {
-          // Ignore cleanup errors
-        }
+        expect(find.text('Welcome to FlowFit!'), findsOneWidget);
+        expect(find.text("I'm 13 or older"), findsOneWidget);
       },
-      skip: true, // Skip by default as it requires manual user setup
     );
+
+    testWidgets('INTEGRATION: Login with invalid credentials shows error', (
+      tester,
+    ) async {
+      await _pumpLoginHarness(
+        tester,
+        authRepository: _FakeAuthRepository(
+          invalidCredentialEmails: {'nonexistent@flowfit.test'},
+        ),
+      );
+
+      await _enterLoginForm(
+        tester,
+        email: 'nonexistent@flowfit.test',
+        password: 'WrongPassword123!',
+      );
+      await _tapAndSettle(tester, find.text('Log In').last);
+
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.text('Invalid email or password'), findsOneWidget);
+    });
+
+    testWidgets('INTEGRATION: Session persistence redirects existing user', (
+      tester,
+    ) async {
+      await _pumpLoginHarness(
+        tester,
+        authRepository: _FakeAuthRepository(
+          initialUser: _testUser(email: 'session_test@flowfit.test'),
+        ),
+        profileRepository: _FakeProfileRepository(
+          completedUsers: {'test-user'},
+        ),
+      );
+
+      expect(find.text('Dashboard'), findsOneWidget);
+      expect(find.text('Welcome Back!'), findsNothing);
+    });
   });
 
   group('Social Sign-In Shortcuts Integration Tests', () {
-    testWidgets(
-      'INTEGRATION: Google Sign-In button navigates to dashboard',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const ProviderScope(child: FlowFitPhoneApp()));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+    testWidgets('INTEGRATION: Google Sign-In button navigates to dashboard', (
+      tester,
+    ) async {
+      await _pumpLoginHarness(tester);
 
-        // Navigate to login screen
-        final loginLink = find.text('Log In');
-        if (loginLink.evaluate().isNotEmpty) {
-          await tester.tap(loginLink.first);
-          await tester.pumpAndSettle();
-        }
+      await _tapAndSettle(tester, find.text('Sign in with Google'));
 
-        // Find and tap Google Sign-In button
-        final googleButton = find.text('Sign in with Google');
-        expect(googleButton, findsOneWidget);
-        await tester.tap(googleButton);
-        await tester.pumpAndSettle();
+      expect(find.text('Dashboard'), findsOneWidget);
+    });
 
-        // Should navigate directly to dashboard
-        // Verify we're no longer on login screen
-        expect(find.text('Welcome Back!'), findsNothing);
-        expect(find.byType(Scaffold), findsWidgets);
-      },
-    );
+    testWidgets('INTEGRATION: Apple Sign-In button navigates to dashboard', (
+      tester,
+    ) async {
+      await _pumpLoginHarness(tester);
 
-    testWidgets(
-      'INTEGRATION: Apple Sign-In button navigates to dashboard',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const ProviderScope(child: FlowFitPhoneApp()));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
+      await _tapAndSettle(tester, find.text('Sign in with Apple'));
 
-        // Navigate to login screen
-        final loginLink = find.text('Log In');
-        if (loginLink.evaluate().isNotEmpty) {
-          await tester.tap(loginLink.first);
-          await tester.pumpAndSettle();
-        }
+      expect(find.text('Dashboard'), findsOneWidget);
+    });
 
-        // Find and tap Apple Sign-In button
-        final appleButton = find.text('Sign in with Apple');
-        expect(appleButton, findsOneWidget);
-        await tester.tap(appleButton);
-        await tester.pumpAndSettle();
+    testWidgets('INTEGRATION: Social sign-in does not create auth session', (
+      tester,
+    ) async {
+      final authRepository = _FakeAuthRepository();
+      await _pumpLoginHarness(tester, authRepository: authRepository);
 
-        // Should navigate directly to dashboard
-        // Verify we're no longer on login screen
-        expect(find.text('Welcome Back!'), findsNothing);
-        expect(find.byType(Scaffold), findsWidgets);
-      },
-    );
+      await _tapAndSettle(tester, find.text('Sign in with Google'));
 
-    testWidgets(
-      'INTEGRATION: Social sign-in does not create auth session',
-      (WidgetTester tester) async {
-        await tester.pumpWidget(const ProviderScope(child: FlowFitPhoneApp()));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
-
-        // Navigate to login screen
-        final loginLink = find.text('Log In');
-        if (loginLink.evaluate().isNotEmpty) {
-          await tester.tap(loginLink.first);
-          await tester.pumpAndSettle();
-        }
-
-        // Tap Google Sign-In button
-        final googleButton = find.text('Sign in with Google');
-        await tester.tap(googleButton);
-        await tester.pumpAndSettle();
-
-        // Verify no auth session was created
-        final session = Supabase.instance.client.auth.currentSession;
-        expect(session, isNull);
-      },
-    );
+      expect(find.text('Dashboard'), findsOneWidget);
+      expect(authRepository.currentUser, isNull);
+    });
   });
+}
+
+Future<void> _pumpLoginHarness(
+  WidgetTester tester, {
+  _FakeAuthRepository? authRepository,
+  _FakeProfileRepository? profileRepository,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(
+          authRepository ?? _FakeAuthRepository(),
+        ),
+        profileRepositoryProvider.overrideWithValue(
+          profileRepository ?? _FakeProfileRepository(),
+        ),
+      ],
+      child: MaterialApp(
+        home: const LoginScreen(),
+        routes: {
+          '/age-gate': (context) => const AgeGateScreen(),
+          '/dashboard': (context) => const _RouteMarker('Dashboard'),
+          '/signup': (context) => const _RouteMarker('Sign Up'),
+        },
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+Future<void> _enterLoginForm(
+  WidgetTester tester, {
+  required String email,
+  required String password,
+}) async {
+  await _enterTextAndSettle(
+    tester,
+    find.widgetWithText(TextFormField, 'Enter your email'),
+    email,
+  );
+  await _enterTextAndSettle(
+    tester,
+    find.widgetWithText(TextFormField, 'Enter your password'),
+    password,
+  );
+}
+
+Future<void> _enterTextAndSettle(
+  WidgetTester tester,
+  Finder finder,
+  String text,
+) async {
+  final target = finder.first;
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.enterText(target, text);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _tapAndSettle(WidgetTester tester, Finder finder) async {
+  final target = finder.first;
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
+  await tester.pumpAndSettle();
+}
+
+domain_user.User _testUser({required String email}) {
+  return domain_user.User(
+    id: 'test-user',
+    email: email,
+    fullName: 'Test User',
+    createdAt: DateTime(2025),
+    emailConfirmedAt: DateTime(2025),
+  );
+}
+
+class _RouteMarker extends StatelessWidget {
+  const _RouteMarker(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Text(label)));
+  }
+}
+
+class _FakeAuthRepository implements IAuthRepository {
+  _FakeAuthRepository({this.initialUser, Set<String>? invalidCredentialEmails})
+    : invalidCredentialEmails = invalidCredentialEmails ?? {},
+      currentUser = initialUser;
+
+  final domain_user.User? initialUser;
+  final Set<String> invalidCredentialEmails;
+  domain_user.User? currentUser;
+
+  @override
+  Future<domain_user.User> signUp({
+    required String email,
+    required String password,
+    required String fullName,
+    required Map<String, dynamic> metadata,
+  }) async {
+    currentUser = _testUser(email: email).copyWith(fullName: fullName);
+    return currentUser!;
+  }
+
+  @override
+  Future<domain_user.User> signIn({
+    required String email,
+    required String password,
+  }) async {
+    if (invalidCredentialEmails.contains(email)) {
+      throw InvalidCredentialsException();
+    }
+
+    currentUser = _testUser(email: email);
+    return currentUser!;
+  }
+
+  @override
+  Future<void> signOut() async {
+    currentUser = null;
+  }
+
+  @override
+  Future<domain_user.User?> getCurrentUser() async => currentUser;
+
+  @override
+  Stream<domain_user.User?> authStateChanges() => Stream.value(currentUser);
+}
+
+class _FakeProfileRepository implements IProfileRepository {
+  _FakeProfileRepository({Set<String>? completedUsers})
+    : completedUsers = completedUsers ?? {};
+
+  final Set<String> completedUsers;
+  final Map<String, domain_profile.UserProfile> _profiles = {};
+
+  @override
+  Future<domain_profile.UserProfile> createProfile(
+    domain_profile.UserProfile profile,
+  ) async {
+    _profiles[profile.userId] = profile;
+    completedUsers.add(profile.userId);
+    return profile;
+  }
+
+  @override
+  Future<domain_profile.UserProfile?> getProfile(String userId) async {
+    return _profiles[userId];
+  }
+
+  @override
+  Future<bool> hasCompletedSurvey(String userId) async {
+    return completedUsers.contains(userId) || _profiles.containsKey(userId);
+  }
+
+  @override
+  Future<domain_profile.UserProfile> updateProfile(
+    domain_profile.UserProfile profile,
+  ) async {
+    _profiles[profile.userId] = profile;
+    completedUsers.add(profile.userId);
+    return profile;
+  }
 }

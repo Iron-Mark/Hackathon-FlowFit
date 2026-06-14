@@ -26,14 +26,14 @@ void main() {
       test('calculates more calories for faster pace', () {
         final slowPace = service.calculateCalories(
           workoutType: WorkoutType.running,
-          durationMinutes: 36,
-          distanceKm: 5.0,
+          durationMinutes: 30,
+          distanceKm: 4.0,
           weight: 70.0,
         );
         final fastPace = service.calculateCalories(
           workoutType: WorkoutType.running,
-          durationMinutes: 24,
-          distanceKm: 5.0,
+          durationMinutes: 30,
+          distanceKm: 7.0,
           weight: 70.0,
         );
 
@@ -124,14 +124,14 @@ void main() {
       test('calculates more calories for brisk walking', () {
         final slowWalk = service.calculateCalories(
           workoutType: WorkoutType.walking,
-          durationMinutes: 45,
-          distanceKm: 2.0,
+          durationMinutes: 30,
+          distanceKm: 1.5,
           weight: 70.0,
         );
         final briskWalk = service.calculateCalories(
           workoutType: WorkoutType.walking,
-          durationMinutes: 20,
-          distanceKm: 2.0,
+          durationMinutes: 30,
+          distanceKm: 3.0,
           weight: 70.0,
         );
 
@@ -141,14 +141,14 @@ void main() {
       test('handles different pace categories', () {
         final slow = service.calculateCalories(
           workoutType: WorkoutType.walking,
-          durationMinutes: 50,
-          distanceKm: 3.0,
+          durationMinutes: 30,
+          distanceKm: 1.5,
           weight: 70.0,
         );
         final moderate = service.calculateCalories(
           workoutType: WorkoutType.walking,
-          durationMinutes: 40,
-          distanceKm: 3.0,
+          durationMinutes: 30,
+          distanceKm: 2.2,
           weight: 70.0,
         );
         final brisk = service.calculateCalories(
@@ -232,8 +232,8 @@ void main() {
         );
         final fast = service.calculateCalories(
           workoutType: WorkoutType.cycling,
-          durationMinutes: 30,
-          distanceKm: 15.0,
+          durationMinutes: 60,
+          distanceKm: 30.0,
           weight: 70.0,
         );
 
@@ -401,10 +401,7 @@ void main() {
           age: 25,
           intensity: 0.7,
         );
-        final older = service.calculateTargetHeartRate(
-          age: 50,
-          intensity: 0.7,
-        );
+        final older = service.calculateTargetHeartRate(age: 50, intensity: 0.7);
 
         expect(younger, greaterThan(older));
       });
@@ -424,17 +421,17 @@ void main() {
           intensity: 1.0,
         );
 
-        final maxHR = 220 - 30;
+        const maxHR = 220 - 30;
         expect(targetHR, lessThanOrEqualTo(maxHR));
         expect(targetHR, greaterThan(180));
       });
 
       test('uses Karvonen formula correctly', () {
         // Karvonen: Target HR = ((max HR − resting HR) × intensity) + resting HR
-        final age = 40;
-        final intensity = 0.6;
-        final maxHR = 220 - age; // 180
-        final restingHR = 60;
+        const age = 40;
+        const intensity = 0.6;
+        const maxHR = 220 - age; // 180
+        const restingHR = 60;
         final expected = ((maxHR - restingHR) * intensity + restingHR).round();
 
         final targetHR = service.calculateTargetHeartRate(

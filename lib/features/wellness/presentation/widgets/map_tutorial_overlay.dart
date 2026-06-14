@@ -5,15 +5,12 @@ import 'package:flutter/material.dart';
 class MapTutorialOverlay extends StatelessWidget {
   final VoidCallback onDismiss;
 
-  const MapTutorialOverlay({
-    super.key,
-    required this.onDismiss,
-  });
+  const MapTutorialOverlay({super.key, required this.onDismiss});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       color: Colors.black.withAlpha((0.85 * 255).toInt()),
       child: SafeArea(
@@ -23,84 +20,84 @@ class MapTutorialOverlay extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-              // Title
-              Text(
-                '🗺️ Welcome to Map Missions!',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                // Title
+                Text(
+                  '🗺️ Welcome to Map Missions!',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Tutorial Steps
-              _buildTutorialStep(
-                context,
-                '1️⃣',
-                'Create a Mission',
-                'Long-press anywhere on the map to create a new mission',
-              ),
-              
-              const SizedBox(height: 24),
-              
-              _buildTutorialStep(
-                context,
-                '2️⃣',
-                'Choose Mission Type',
-                '🎯 Target: Walk a distance\n🧘 Sanctuary: Visit a place\n🛡️ Safety Net: Stay in zone',
-              ),
-              
-              const SizedBox(height: 24),
-              
-              _buildTutorialStep(
-                context,
-                '3️⃣',
-                'Activate & Track',
-                'Tap a mission to activate it and start tracking your progress',
-              ),
-              
-              const SizedBox(height: 48),
-              
-              // Get Started Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
+
+                const SizedBox(height: 32),
+
+                // Tutorial Steps
+                _buildTutorialStep(
+                  context,
+                  '1️⃣',
+                  'Create a Mission',
+                  'Long-press anywhere on the map to create a new mission',
+                ),
+
+                const SizedBox(height: 24),
+
+                _buildTutorialStep(
+                  context,
+                  '2️⃣',
+                  'Choose Mission Type',
+                  '🎯 Target: Walk a distance\n🧘 Sanctuary: Visit a place\n🛡️ Safety Net: Stay in zone',
+                ),
+
+                const SizedBox(height: 24),
+
+                _buildTutorialStep(
+                  context,
+                  '3️⃣',
+                  'Activate & Track',
+                  'Tap a mission to activate it and start tracking your progress',
+                ),
+
+                const SizedBox(height: 48),
+
+                // Get Started Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: onDismiss,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text(
+                      'Get Started',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Skip Button
+                TextButton(
                   onPressed: onDismiss,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Get Started',
+                  child: Text(
+                    'Skip Tutorial',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 14,
                     ),
                   ),
                 ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Skip Button
-              TextButton(
-                onPressed: onDismiss,
-                child: Text(
-                  'Skip Tutorial',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
       ),
@@ -116,20 +113,17 @@ class MapTutorialOverlay extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 32),
-          ),
+          Text(emoji, style: const TextStyle(fontSize: 32)),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -147,7 +141,7 @@ class MapTutorialOverlay extends StatelessWidget {
                 Text(
                   description,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                     height: 1.5,
                   ),

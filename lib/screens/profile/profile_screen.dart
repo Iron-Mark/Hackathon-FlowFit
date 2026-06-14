@@ -273,7 +273,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ref.invalidate(pendingSyncCountProvider);
 
       // Show success snackbar
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile refreshed successfully'),
@@ -283,7 +283,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
     } catch (e) {
       // Show error snackbar with details
-      if (mounted) {
+      if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to refresh profile: $e'),
@@ -753,20 +753,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
 
     // If user confirmed, proceed with logout
-    if (confirmed == true && mounted) {
+    if (confirmed == true && context.mounted) {
       try {
         // Sign out from authentication service
         await ref.read(authNotifierProvider.notifier).signOut();
 
         // Navigate to welcome screen and clear navigation history
-        if (mounted) {
+        if (context.mounted) {
           Navigator.of(
             context,
           ).pushNamedAndRemoveUntil('/welcome', (route) => false);
         }
       } catch (e) {
         // Show error snackbar on failure
-        if (mounted) {
+        if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Logout failed: $e'),

@@ -39,10 +39,10 @@ class _DetectionPainter extends CustomPainter {
       ..strokeWidth = 2.0;
 
     final Paint textBgPaint = Paint()
-      ..color = Colors.black.withOpacity(0.7)
+      ..color = Colors.black.withValues(alpha: 0.7)
       ..style = PaintingStyle.fill;
 
-    final textStyle = const TextStyle(color: Colors.white, fontSize: 12.0);
+    const textStyle = TextStyle(color: Colors.white, fontSize: 12.0);
 
     for (var result in results) {
       // Bounding Box

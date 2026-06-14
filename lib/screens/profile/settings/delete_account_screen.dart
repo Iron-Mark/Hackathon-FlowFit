@@ -123,7 +123,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -152,10 +152,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: Colors.red.withOpacity(0.3),
+                      color: Colors.red.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -224,7 +224,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
-                    hintStyle: TextStyle(color: AppTheme.text.withOpacity(0.5)),
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
@@ -240,7 +242,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                         _obscurePassword
                             ? SolarIconsOutline.eyeClosed
                             : SolarIconsOutline.eye,
-                        color: AppTheme.text.withOpacity(0.5),
+                        color: AppTheme.text.withValues(alpha: 0.5),
                       ),
                       onPressed: () {
                         setState(() {
@@ -333,7 +335,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    side: BorderSide(color: AppTheme.text.withOpacity(0.3)),
+                    side: BorderSide(
+                      color: AppTheme.text.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: const Text(
                     'Cancel',
@@ -355,9 +359,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(color: AppTheme.text.withOpacity(0.8)),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppTheme.text.withValues(alpha: 0.8),
+        ),
       ),
     );
   }

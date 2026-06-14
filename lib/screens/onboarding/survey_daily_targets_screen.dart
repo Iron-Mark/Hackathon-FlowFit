@@ -170,6 +170,10 @@ class _SurveyDailyTargetsScreenState
   Future<void> _handleComplete() async {
     if (_isSubmitting) return;
 
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final userId = args?['userId'] as String?;
+
     setState(() {
       _isSubmitting = true;
     });
@@ -190,11 +194,6 @@ class _SurveyDailyTargetsScreenState
         'dailyWaterTarget',
         _targetWaterLiters,
       );
-
-      // Get user ID from arguments
-      final args =
-          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      final userId = args?['userId'] as String?;
 
       if (userId == null) {
         throw Exception('User ID not found');

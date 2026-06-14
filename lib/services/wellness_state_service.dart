@@ -1,18 +1,17 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import '../models/wellness_state.dart';
 import '../models/heart_rate_data.dart';
 import '../models/sensor_batch.dart';
-import 'watch_bridge.dart';
 import 'phone_data_listener.dart';
 
 /// Service for detecting wellness state from biometric data
-/// 
+///
 /// Analyzes heart rate and accelerometer data to determine if user is
 /// in CALM, STRESS, or CARDIO state with hysteresis filtering.
 class WellnessStateService {
-  final WatchBridgeService _watchBridge;
   final PhoneDataListener _phoneDataListener;
 
   // State detection thresholds
@@ -47,7 +46,7 @@ class WellnessStateService {
 
   bool _isMonitoring = false;
 
-  WellnessStateService(this._watchBridge, this._phoneDataListener);
+  WellnessStateService(this._phoneDataListener);
 
   /// Stream of wellness state changes
   Stream<WellnessStateData> get stateStream => _stateController.stream;
@@ -62,7 +61,7 @@ class WellnessStateService {
   Future<void> startMonitoring() async {
     if (_isMonitoring) return;
 
-    print('🏥 WellnessStateService: Starting monitoring...');
+    debugPrint('🏥 WellnessStateService: Starting monitoring...');
     _isMonitoring = true;
     _currentState = WellnessState.unknown;
     _stateStartTime = DateTime.now();
@@ -71,25 +70,31 @@ class WellnessStateService {
     _hrSubscription = _phoneDataListener.heartRateStream.listen(
       (hrData) {
         if (hrData.bpm != null) {
-          print('💓 WellnessStateService: Received HR: ${hrData.bpm} BPM, adding to buffer (current size: ${_heartRateBuffer.length})');
+          debugPrint(
+            '💓 WellnessStateService: Received HR: ${hrData.bpm} BPM, adding to buffer (current size: ${_heartRateBuffer.length})',
+          );
           _addHeartRateData(hrData.bpm!);
         } else {
-          print('⚠️ WellnessStateService: Received HR with null BPM, status: ${hrData.status}');
+          debugPrint(
+            '⚠️ WellnessStateService: Received HR with null BPM, status: ${hrData.status}',
+          );
         }
       },
       onError: (error) {
-        print('❌ WellnessStateService: HR stream error: $error');
+        debugPrint('❌ WellnessStateService: HR stream error: $error');
       },
     );
 
     // Subscribe to sensor batch stream from PhoneDataListener
     _sensorSubscription = _phoneDataListener.sensorBatchStream.listen(
       (batch) {
-        print('📊 WellnessStateService: Received sensor batch with ${batch.sampleCount} samples, adding to buffer (current size: ${_motionBuffer.length})');
+        debugPrint(
+          '📊 WellnessStateService: Received sensor batch with ${batch.sampleCount} samples, adding to buffer (current size: ${_motionBuffer.length})',
+        );
         _addSensorBatch(batch);
       },
       onError: (error) {
-        print('❌ WellnessStateService: Sensor batch stream error: $error');
+        debugPrint('❌ WellnessStateService: Sensor batch stream error: $error');
       },
     );
 
@@ -97,8 +102,8 @@ class WellnessStateService {
     _detectionTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       _detectState();
     });
-    
-    print('✅ WellnessStateService: Monitoring started successfully');
+
+    debugPrint('✅ WellnessStateService: Monitoring started successfully');
   }
 
   /// Stops wellness monitoring
@@ -152,24 +157,32 @@ class WellnessStateService {
   /// Detects current wellness state
   void _detectState() {
     if (_heartRateBuffer.isEmpty || _motionBuffer.isEmpty) {
-      print('! WellnessStateService: Buffers empty - HR: ${_heartRateBuffer.length}, Motion: ${_motionBuffer.length}');
+      debugPrint(
+        '! WellnessStateService: Buffers empty - HR: ${_heartRateBuffer.length}, Motion: ${_motionBuffer.length}',
+      );
       return;
     }
 
     // Calculate average heart rate
-    final avgHeartRate = _heartRateBuffer.reduce((a, b) => a + b) / _heartRateBuffer.length;
+    final avgHeartRate =
+        _heartRateBuffer.reduce((a, b) => a + b) / _heartRateBuffer.length;
 
     // Calculate average motion magnitude
-    final avgMotion = _motionBuffer.reduce((a, b) => a + b) / _motionBuffer.length;
+    final avgMotion =
+        _motionBuffer.reduce((a, b) => a + b) / _motionBuffer.length;
 
-    print('📈 WellnessStateService: Detection - HR: ${avgHeartRate.toStringAsFixed(1)} BPM, Motion: ${avgMotion.toStringAsFixed(2)} m/s², Current State: $_currentState');
+    debugPrint(
+      '📈 WellnessStateService: Detection - HR: ${avgHeartRate.toStringAsFixed(1)} BPM, Motion: ${avgMotion.toStringAsFixed(2)} m/s², Current State: $_currentState',
+    );
 
     // Determine new state based on rules
     final newState = _determineState(avgHeartRate.round(), avgMotion);
 
     // Apply hysteresis filter
     if (_shouldTransitionTo(newState)) {
-      print('🔄 WellnessStateService: State transition: $_currentState → $newState');
+      debugPrint(
+        '🔄 WellnessStateService: State transition: $_currentState → $newState',
+      );
       _transitionToState(newState, avgHeartRate.round(), avgMotion);
     }
   }
@@ -177,7 +190,8 @@ class WellnessStateService {
   /// Determines state based on heart rate and motion
   WellnessState _determineState(int heartRate, double motion) {
     // Priority 1: CARDIO (high HR + high motion)
-    if (heartRate > _stressHeartRateThreshold && motion > _highMotionThreshold) {
+    if (heartRate > _stressHeartRateThreshold &&
+        motion > _highMotionThreshold) {
       return WellnessState.cardio;
     }
 
@@ -246,7 +260,11 @@ class WellnessStateService {
   }
 
   /// Transitions to new state
-  void _transitionToState(WellnessState newState, int heartRate, double motion) {
+  void _transitionToState(
+    WellnessState newState,
+    int heartRate,
+    double motion,
+  ) {
     _currentState = newState;
     _stateStartTime = DateTime.now();
 
@@ -268,7 +286,8 @@ class WellnessStateService {
       case WellnessState.stress:
         // High confidence if HR is well above threshold and motion is well below
         final hrConfidence = (heartRate - _stressHeartRateThreshold) / 20.0;
-        final motionConfidence = (_lowMotionThreshold - motion) / _lowMotionThreshold;
+        final motionConfidence =
+            (_lowMotionThreshold - motion) / _lowMotionThreshold;
         return ((hrConfidence + motionConfidence) / 2).clamp(0.0, 1.0);
 
       case WellnessState.cardio:

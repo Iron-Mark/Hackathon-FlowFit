@@ -10,7 +10,7 @@ class WellnessStatsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final durations = ref.watch(todayDurationsProvider);
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -18,7 +18,7 @@ class WellnessStatsCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -36,12 +36,12 @@ class WellnessStatsCard extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Timeline visualization
           _buildTimeline(durations),
-          
+
           const SizedBox(height: 20),
-          
+
           // Duration stats
           _buildDurationStat(
             icon: Icons.spa,
@@ -63,9 +63,9 @@ class WellnessStatsCard extends ConsumerWidget {
             duration: durations[WellnessState.stress] ?? Duration.zero,
             color: Colors.red,
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Insights
           _buildInsights(durations),
         ],
@@ -78,7 +78,7 @@ class WellnessStatsCard extends ConsumerWidget {
       Duration.zero,
       (sum, duration) => sum + duration,
     );
-    
+
     if (total.inSeconds == 0) {
       return Container(
         height: 40,
@@ -98,7 +98,7 @@ class WellnessStatsCard extends ConsumerWidget {
         ),
       );
     }
-    
+
     return Container(
       height: 40,
       decoration: BoxDecoration(
@@ -138,16 +138,14 @@ class WellnessStatsCard extends ConsumerWidget {
   }) {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
-    final durationText = hours > 0
-        ? '${hours}h ${minutes}m'
-        : '${minutes}m';
-    
+    final durationText = hours > 0 ? '${hours}h ${minutes}m' : '${minutes}m';
+
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 20, color: color),
@@ -156,10 +154,7 @@ class WellnessStatsCard extends ConsumerWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
-              fontFamily: 'GeneralSans',
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontFamily: 'GeneralSans', fontSize: 14),
           ),
         ),
         Text(
@@ -178,13 +173,14 @@ class WellnessStatsCard extends ConsumerWidget {
   Widget _buildInsights(Map<WellnessState, Duration> durations) {
     final calmDuration = durations[WellnessState.calm] ?? Duration.zero;
     final stressDuration = durations[WellnessState.stress] ?? Duration.zero;
-    
+
     String insight;
     IconData icon;
     Color color;
-    
+
     if (calmDuration.inHours >= 6) {
-      insight = 'Great job! You\'ve been calm for ${calmDuration.inHours} hours today';
+      insight =
+          'Great job! You\'ve been calm for ${calmDuration.inHours} hours today';
       icon = Icons.celebration;
       color = Colors.green;
     } else if (stressDuration.inMinutes > 30) {
@@ -196,11 +192,11 @@ class WellnessStatsCard extends ConsumerWidget {
       icon = Icons.info_outline;
       color = Colors.blue;
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

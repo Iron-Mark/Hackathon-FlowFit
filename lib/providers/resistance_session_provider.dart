@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../models/resistance_session.dart';
 import '../models/exercise_progress.dart';
 import '../models/mood_rating.dart';
+import '../models/workout_session.dart';
 import '../services/timer_service.dart';
 import '../services/heart_rate_service.dart';
 import '../services/calorie_calculator_service.dart';
@@ -11,7 +12,9 @@ import '../services/workout_session_service.dart';
 import 'running_session_provider.dart';
 
 /// Provider for countdown timer service (rest periods)
-final countdownTimerServiceProvider = Provider((ref) => CountdownTimerService());
+final countdownTimerServiceProvider = Provider(
+  (ref) => CountdownTimerService(),
+);
 
 /// Provider for managing resistance training sessions
 class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
@@ -35,12 +38,12 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
     required HeartRateService hrService,
     required CalorieCalculatorService calorieService,
     required WorkoutSessionService sessionService,
-  })  : _timerService = timerService,
-        _countdownService = countdownService,
-        _hrService = hrService,
-        _calorieService = calorieService,
-        _sessionService = sessionService,
-        super(null);
+  }) : _timerService = timerService,
+       _countdownService = countdownService,
+       _hrService = hrService,
+       _calorieService = calorieService,
+       _sessionService = sessionService,
+       super(null);
 
   /// Starts a new resistance training session
   Future<void> startSession({
@@ -152,7 +155,7 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
       if (remaining <= 0) {
         _isResting = false;
         _countdownSubscription?.cancel();
-        
+
         // TODO: Play audio cue if enabled
         if (state!.audioCuesEnabled) {
           // Play sound
@@ -265,12 +268,13 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
 }
 
 /// Provider for resistance session state
-final resistanceSessionProvider = StateNotifierProvider<ResistanceSessionNotifier, ResistanceSession?>(
-  (ref) => ResistanceSessionNotifier(
-    timerService: ref.watch(timerServiceProvider),
-    countdownService: ref.watch(countdownTimerServiceProvider),
-    hrService: ref.watch(heartRateServiceProvider),
-    calorieService: ref.watch(calorieCalculatorServiceProvider),
-    sessionService: ref.watch(workoutSessionServiceProvider),
-  ),
-);
+final resistanceSessionProvider =
+    StateNotifierProvider<ResistanceSessionNotifier, ResistanceSession?>(
+      (ref) => ResistanceSessionNotifier(
+        timerService: ref.watch(timerServiceProvider),
+        countdownService: ref.watch(countdownTimerServiceProvider),
+        hrService: ref.watch(heartRateServiceProvider),
+        calorieService: ref.watch(calorieCalculatorServiceProvider),
+        sessionService: ref.watch(workoutSessionServiceProvider),
+      ),
+    );

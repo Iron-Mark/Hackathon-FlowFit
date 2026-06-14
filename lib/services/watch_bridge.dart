@@ -12,12 +12,15 @@ import '../models/connection_state.dart' as conn;
 /// Service for managing communication with Samsung Health Sensor API
 /// via native Android code through Method Channel
 class WatchBridgeService {
-  static const MethodChannel _methodChannel =
-      MethodChannel('com.flowfit.watch/data');
-  static const MethodChannel _syncChannel =
-      MethodChannel('com.flowfit.watch/sync');
-  static const EventChannel _heartRateEventChannel =
-      EventChannel('com.flowfit.watch/heartrate');
+  static const MethodChannel _methodChannel = MethodChannel(
+    'com.flowfit.watch/data',
+  );
+  static const MethodChannel _syncChannel = MethodChannel(
+    'com.flowfit.watch/sync',
+  );
+  static const EventChannel _heartRateEventChannel = EventChannel(
+    'com.flowfit.watch/heartrate',
+  );
 
   // Logger instance for debugging
   final Logger _logger = Logger(
@@ -27,7 +30,7 @@ class WatchBridgeService {
       lineLength: 120,
       colors: true,
       printEmojis: true,
-      printTime: true,
+      dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
   );
 
@@ -38,12 +41,12 @@ class WatchBridgeService {
 
   Stream<HeartRateData>? _heartRateStream;
   StreamSubscription<HeartRateData>? _heartRateSubscription;
-  
+
   // Permission state stream
   final StreamController<PermissionStatus> _permissionStateController =
       StreamController<PermissionStatus>.broadcast();
   Timer? _permissionCheckTimer;
-  
+
   // Connection state stream
   final StreamController<conn.ConnectionState> _connectionStateController =
       StreamController<conn.ConnectionState>.broadcast();
@@ -54,15 +57,15 @@ class WatchBridgeService {
   /// Returns true if permission is granted, false otherwise
   Future<bool> requestPermission() async {
     _logger.i('Requesting body sensor permission via native');
-    
+
     try {
       final result = await _methodChannel
           .invokeMethod<bool>('requestPermission')
           .timeout(_operationTimeout);
-      
+
       final granted = result ?? false;
       _logger.d('Native permission request result: $granted');
-      
+
       // Emit permission state change
       await _updatePermissionState();
       return granted;
@@ -77,7 +80,11 @@ class WatchBridgeService {
       _logger.e('Platform exception during permission request', error: e);
       throw _mapPlatformException(e, 'Failed to request permission');
     } catch (e, stackTrace) {
-      _logger.e('Failed to request body sensor permission', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to request body sensor permission',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.permissionDenied,
         message: 'Failed to request body sensor permission',
@@ -91,12 +98,12 @@ class WatchBridgeService {
   /// Returns 'granted', 'denied', or 'notDetermined'
   Future<String> checkPermission() async {
     _logger.d('Checking body sensor permission status via native');
-    
+
     try {
       final status = await _methodChannel
           .invokeMethod<String>('checkPermission')
           .timeout(_operationTimeout);
-      
+
       final result = status ?? 'notDetermined';
       _logger.d('Native permission status: $result');
       return result;
@@ -111,7 +118,11 @@ class WatchBridgeService {
       _logger.e('Platform exception during permission check', error: e);
       throw _mapPlatformException(e, 'Failed to check permission');
     } catch (e, stackTrace) {
-      _logger.e('Failed to check body sensor permission', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to check body sensor permission',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Failed to check body sensor permission',
@@ -124,13 +135,14 @@ class WatchBridgeService {
   /// Returns true if permission is granted, false otherwise
   Future<bool> requestBodySensorPermission() async {
     _logger.i('Requesting body sensor permission');
-    
+
     try {
-      final status = await ph.Permission.sensors.request()
-          .timeout(_operationTimeout);
-      
+      final status = await ph.Permission.sensors.request().timeout(
+        _operationTimeout,
+      );
+
       _logger.d('Permission request result: ${status.isGranted}');
-      
+
       // Emit permission state change
       await _updatePermissionState();
       return status.isGranted;
@@ -142,7 +154,11 @@ class WatchBridgeService {
         details: e.toString(),
       );
     } catch (e, stackTrace) {
-      _logger.e('Failed to request body sensor permission', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to request body sensor permission',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.permissionDenied,
         message: 'Failed to request body sensor permission',
@@ -155,11 +171,12 @@ class WatchBridgeService {
   /// Returns the current permission state without requesting
   Future<PermissionStatus> checkBodySensorPermission() async {
     _logger.d('Checking body sensor permission status');
-    
+
     try {
-      final status = await ph.Permission.sensors.status
-          .timeout(_operationTimeout);
-      
+      final status = await ph.Permission.sensors.status.timeout(
+        _operationTimeout,
+      );
+
       PermissionStatus result;
       if (status.isGranted) {
         result = PermissionStatus.granted;
@@ -168,7 +185,7 @@ class WatchBridgeService {
       } else {
         result = PermissionStatus.notDetermined;
       }
-      
+
       _logger.d('Permission status: $result');
       return result;
     } on TimeoutException catch (e) {
@@ -179,7 +196,11 @@ class WatchBridgeService {
         details: e.toString(),
       );
     } catch (e, stackTrace) {
-      _logger.e('Failed to check body sensor permission', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to check body sensor permission',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Failed to check body sensor permission',
@@ -193,14 +214,14 @@ class WatchBridgeService {
   /// Implements retry logic with exponential backoff
   Future<bool> connectToWatch() async {
     _logger.i('Attempting to connect to watch');
-    
+
     return await _retryWithExponentialBackoff<bool>(
       operation: () async {
         try {
           final result = await _methodChannel
               .invokeMethod<bool>('connectWatch')
               .timeout(_operationTimeout);
-          
+
           final connected = result ?? false;
           _logger.i('Watch connection result: $connected');
           return connected;
@@ -223,12 +244,12 @@ class WatchBridgeService {
   /// Disconnect from Samsung Health services
   Future<void> disconnectFromWatch() async {
     _logger.i('Disconnecting from watch');
-    
+
     try {
       await _methodChannel
           .invokeMethod<void>('disconnectWatch')
           .timeout(_operationTimeout);
-      
+
       _logger.i('Successfully disconnected from watch');
     } on TimeoutException catch (e) {
       _logger.e('Disconnect timed out', error: e);
@@ -241,7 +262,11 @@ class WatchBridgeService {
       _logger.e('Platform exception during disconnect', error: e);
       throw _mapPlatformException(e, 'Failed to disconnect from watch');
     } catch (e, stackTrace) {
-      _logger.e('Failed to disconnect from watch', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to disconnect from watch',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Failed to disconnect from watch',
@@ -254,12 +279,12 @@ class WatchBridgeService {
   /// Returns true if connected, false otherwise
   Future<bool> isWatchConnected() async {
     _logger.d('Checking watch connection status');
-    
+
     try {
       final result = await _methodChannel
           .invokeMethod<bool>('isWatchConnected')
           .timeout(_operationTimeout);
-      
+
       final connected = result ?? false;
       _logger.d('Watch connected: $connected');
       return connected;
@@ -274,7 +299,11 @@ class WatchBridgeService {
       _logger.e('Platform exception checking connection status', error: e);
       throw _mapPlatformException(e, 'Failed to check watch connection status');
     } catch (e, stackTrace) {
-      _logger.e('Failed to check watch connection status', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to check watch connection status',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Failed to check watch connection status',
@@ -287,12 +316,12 @@ class WatchBridgeService {
   /// Returns true if tracking started successfully, false otherwise
   Future<bool> startHeartRateTracking() async {
     _logger.i('Starting heart rate tracking');
-    
+
     try {
       final result = await _methodChannel
           .invokeMethod<bool>('startHeartRate')
           .timeout(_operationTimeout);
-      
+
       final started = result ?? false;
       _logger.i('Heart rate tracking started: $started');
       return started;
@@ -307,7 +336,11 @@ class WatchBridgeService {
       _logger.e('Platform exception starting heart rate tracking', error: e);
       throw _mapPlatformException(e, 'Failed to start heart rate tracking');
     } catch (e, stackTrace) {
-      _logger.e('Failed to start heart rate tracking', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to start heart rate tracking',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.sensorUnavailable,
         message: 'Failed to start heart rate tracking',
@@ -319,12 +352,12 @@ class WatchBridgeService {
   /// Stop heart rate tracking
   Future<void> stopHeartRateTracking() async {
     _logger.i('Stopping heart rate tracking');
-    
+
     try {
       await _methodChannel
           .invokeMethod<void>('stopHeartRate')
           .timeout(_operationTimeout);
-      
+
       _logger.i('Heart rate tracking stopped successfully');
     } on TimeoutException catch (e) {
       _logger.e('Stop heart rate tracking timed out', error: e);
@@ -337,7 +370,11 @@ class WatchBridgeService {
       _logger.e('Platform exception stopping heart rate tracking', error: e);
       throw _mapPlatformException(e, 'Failed to stop heart rate tracking');
     } catch (e, stackTrace) {
-      _logger.e('Failed to stop heart rate tracking', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to stop heart rate tracking',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Failed to stop heart rate tracking',
@@ -350,12 +387,12 @@ class WatchBridgeService {
   /// Returns HeartRateData if available, null otherwise
   Future<HeartRateData?> getCurrentHeartRate() async {
     _logger.d('Getting current heart rate');
-    
+
     try {
       final result = await _methodChannel
           .invokeMethod<Map<dynamic, dynamic>>('getCurrentHeartRate')
           .timeout(_operationTimeout);
-      
+
       if (result == null) {
         _logger.d('No heart rate data available');
         return null;
@@ -377,7 +414,11 @@ class WatchBridgeService {
       _logger.e('Platform exception getting current heart rate', error: e);
       throw _mapPlatformException(e, 'Failed to get current heart rate');
     } catch (e, stackTrace) {
-      _logger.e('Failed to get current heart rate', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to get current heart rate',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Failed to get current heart rate',
@@ -392,34 +433,43 @@ class WatchBridgeService {
     _heartRateStream ??= _heartRateEventChannel
         .receiveBroadcastStream()
         .map((dynamic event) {
-      try {
-        final jsonMap = Map<String, dynamic>.from(event as Map);
-        final heartRateData = HeartRateData.fromJson(jsonMap);
-        _logger.d('Heart rate stream data: ${heartRateData.bpm} bpm');
-        
-        // Automatically sync to phone when heart rate data is received
-        _autoSyncToPhone(heartRateData);
-        
-        return heartRateData;
-      } catch (e, stackTrace) {
-        _logger.e('Failed to parse heart rate data', error: e, stackTrace: stackTrace);
-        throw SensorError(
-          code: SensorErrorCode.unknown,
-          message: 'Failed to parse heart rate data',
-          details: e.toString(),
-        );
-      }
-    }).handleError((error, stackTrace) {
-      _logger.e('Error in heart rate stream', error: error, stackTrace: stackTrace);
-      if (error is PlatformException) {
-        throw _mapPlatformException(error, 'Heart rate stream error');
-      }
-      throw SensorError(
-        code: SensorErrorCode.unknown,
-        message: 'Heart rate stream error',
-        details: error.toString(),
-      );
-    });
+          try {
+            final jsonMap = Map<String, dynamic>.from(event as Map);
+            final heartRateData = HeartRateData.fromJson(jsonMap);
+            _logger.d('Heart rate stream data: ${heartRateData.bpm} bpm');
+
+            // Automatically sync to phone when heart rate data is received
+            _autoSyncToPhone(heartRateData);
+
+            return heartRateData;
+          } catch (e, stackTrace) {
+            _logger.e(
+              'Failed to parse heart rate data',
+              error: e,
+              stackTrace: stackTrace,
+            );
+            throw SensorError(
+              code: SensorErrorCode.unknown,
+              message: 'Failed to parse heart rate data',
+              details: e.toString(),
+            );
+          }
+        })
+        .handleError((error, stackTrace) {
+          _logger.e(
+            'Error in heart rate stream',
+            error: error,
+            stackTrace: stackTrace,
+          );
+          if (error is PlatformException) {
+            throw _mapPlatformException(error, 'Heart rate stream error');
+          }
+          throw SensorError(
+            code: SensorErrorCode.unknown,
+            message: 'Heart rate stream error',
+            details: error.toString(),
+          );
+        });
 
     return _heartRateStream!;
   }
@@ -431,13 +481,15 @@ class WatchBridgeService {
 
   /// Start monitoring permission state changes
   /// Checks permission status periodically and emits changes
-  void startPermissionMonitoring({Duration interval = const Duration(seconds: 2)}) {
+  void startPermissionMonitoring({
+    Duration interval = const Duration(seconds: 2),
+  }) {
     // Stop any existing timer
     _permissionCheckTimer?.cancel();
-    
+
     // Emit initial state
     _updatePermissionState();
-    
+
     // Set up periodic checks
     _permissionCheckTimer = Timer.periodic(interval, (_) {
       _updatePermissionState();
@@ -459,7 +511,11 @@ class WatchBridgeService {
       }
     } catch (e, stackTrace) {
       // Silently handle errors in background monitoring
-      _logger.w('Error checking permission state', error: e, stackTrace: stackTrace);
+      _logger.w(
+        'Error checking permission state',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -467,11 +523,10 @@ class WatchBridgeService {
   /// Returns true if settings were opened successfully
   Future<bool> openAppSettings() async {
     _logger.i('Opening app settings');
-    
+
     try {
-      final result = await ph.openAppSettings()
-          .timeout(_operationTimeout);
-      
+      final result = await ph.openAppSettings().timeout(_operationTimeout);
+
       _logger.i('App settings opened: $result');
       return result;
     } on TimeoutException catch (e) {
@@ -482,7 +537,11 @@ class WatchBridgeService {
         details: e.toString(),
       );
     } catch (e, stackTrace) {
-      _logger.e('Failed to open app settings', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to open app settings',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Failed to open app settings',
@@ -507,10 +566,10 @@ class WatchBridgeService {
         return await operation();
       } catch (e) {
         attempt++;
-        
+
         // Check if we should retry
         final shouldRetry = attempt < maxRetries && _isRetryableError(e);
-        
+
         if (!shouldRetry) {
           _logger.e('$operationName failed after $attempt attempts', error: e);
           rethrow;
@@ -524,7 +583,7 @@ class WatchBridgeService {
 
         // Wait before retrying
         await Future.delayed(delay);
-        
+
         // Exponential backoff: double the delay for next attempt
         delay = Duration(milliseconds: delay.inMilliseconds * 2);
       }
@@ -539,14 +598,14 @@ class WatchBridgeService {
           error.code == SensorErrorCode.timeout ||
           error.code == SensorErrorCode.serviceUnavailable;
     }
-    
+
     if (error is PlatformException) {
       // Retry on specific platform error codes
       return error.code == 'CONNECTION_FAILED' ||
           error.code == 'TIMEOUT' ||
           error.code == 'SERVICE_UNAVAILABLE';
     }
-    
+
     // Don't retry on other errors
     return false;
   }
@@ -554,7 +613,7 @@ class WatchBridgeService {
   /// Map PlatformException to SensorError with appropriate error code
   SensorError _mapPlatformException(PlatformException e, String message) {
     SensorErrorCode code;
-    
+
     switch (e.code) {
       case 'PERMISSION_DENIED':
         code = SensorErrorCode.permissionDenied;
@@ -590,20 +649,18 @@ class WatchBridgeService {
   /// Implements retry logic for failed transmissions
   Future<bool> sendHeartRateToPhone(HeartRateData data) async {
     _logger.i('Sending heart rate data to phone: ${data.bpm} bpm');
-    
+
     return await _retryWithExponentialBackoff<bool>(
       operation: () async {
         try {
           // Convert HeartRateData to JSON string
           final jsonData = data.toJson();
           final jsonString = jsonEncode(jsonData);
-          
+
           final result = await _syncChannel
-              .invokeMethod<bool>('sendHeartRateToPhone', {
-                'data': jsonString,
-              })
+              .invokeMethod<bool>('sendHeartRateToPhone', {'data': jsonString})
               .timeout(_operationTimeout);
-          
+
           final success = result ?? false;
           _logger.i('Heart rate data sent to phone: $success');
           return success;
@@ -616,7 +673,10 @@ class WatchBridgeService {
           );
         } on PlatformException catch (e) {
           _logger.e('Platform exception sending to phone', error: e);
-          throw _mapPlatformException(e, 'Failed to send heart rate data to phone');
+          throw _mapPlatformException(
+            e,
+            'Failed to send heart rate data to phone',
+          );
         }
       },
       operationName: 'sendHeartRateToPhone',
@@ -627,12 +687,12 @@ class WatchBridgeService {
   /// Returns true if phone is connected, false otherwise
   Future<bool> checkPhoneConnection() async {
     _logger.d('Checking phone connection');
-    
+
     try {
       final result = await _syncChannel
           .invokeMethod<bool>('checkPhoneConnection')
           .timeout(_operationTimeout);
-      
+
       final connected = result ?? false;
       _logger.d('Phone connected: $connected');
       return connected;
@@ -643,7 +703,11 @@ class WatchBridgeService {
       _logger.e('Platform exception checking phone connection', error: e);
       return false;
     } catch (e, stackTrace) {
-      _logger.e('Failed to check phone connection', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to check phone connection',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -652,12 +716,12 @@ class WatchBridgeService {
   /// Returns the number of connected nodes
   Future<int> getConnectedNodesCount() async {
     _logger.d('Getting connected nodes count');
-    
+
     try {
       final result = await _syncChannel
           .invokeMethod<int>('getConnectedNodesCount')
           .timeout(_operationTimeout);
-      
+
       final count = result ?? 0;
       _logger.d('Connected nodes count: $count');
       return count;
@@ -668,7 +732,11 @@ class WatchBridgeService {
       _logger.e('Platform exception getting connected nodes count', error: e);
       return 0;
     } catch (e, stackTrace) {
-      _logger.e('Failed to get connected nodes count', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to get connected nodes count',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return 0;
     }
   }
@@ -680,15 +748,15 @@ class WatchBridgeService {
     try {
       // Check if phone is connected before attempting to send
       final isConnected = await checkPhoneConnection();
-      
+
       if (!isConnected) {
         _logger.w('Phone not connected, skipping auto-sync');
         return;
       }
-      
+
       // Send data to phone with retry logic
       final success = await sendHeartRateToPhone(data);
-      
+
       if (success) {
         _logger.i('Auto-sync to phone successful');
       } else {
@@ -696,7 +764,11 @@ class WatchBridgeService {
       }
     } catch (e, stackTrace) {
       // Don't throw errors from auto-sync to avoid disrupting the main data stream
-      _logger.e('Error during auto-sync to phone', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Error during auto-sync to phone',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -705,12 +777,12 @@ class WatchBridgeService {
   /// Returns true if batch was sent successfully, false otherwise
   Future<bool> sendBatchToPhone() async {
     _logger.i('Sending batch data to phone');
-    
+
     try {
       final result = await _syncChannel
           .invokeMethod<bool>('sendBatchToPhone')
           .timeout(_operationTimeout);
-      
+
       final success = result ?? false;
       if (success) {
         _logger.i('Batch data sent successfully');
@@ -729,7 +801,11 @@ class WatchBridgeService {
       _logger.e('Platform exception sending batch to phone', error: e);
       throw _mapPlatformException(e, 'Failed to send batch to phone');
     } catch (e, stackTrace) {
-      _logger.e('Failed to send batch to phone', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to send batch to phone',
+        error: e,
+        stackTrace: stackTrace,
+      );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Failed to send batch to phone',
@@ -745,13 +821,15 @@ class WatchBridgeService {
 
   /// Start monitoring connection state changes
   /// Checks connection status periodically and emits changes
-  void startConnectionMonitoring({Duration interval = const Duration(seconds: 5)}) {
+  void startConnectionMonitoring({
+    Duration interval = const Duration(seconds: 5),
+  }) {
     // Stop any existing timer
     _connectionCheckTimer?.cancel();
-    
+
     // Emit initial state
     _updateConnectionState();
-    
+
     // Set up periodic checks
     _connectionCheckTimer = Timer.periodic(interval, (_) {
       _updateConnectionState();
@@ -769,20 +847,24 @@ class WatchBridgeService {
     try {
       final isConnected = await checkPhoneConnection();
       final nodeCount = await getConnectedNodesCount();
-      
+
       final state = conn.ConnectionState(
         isConnected: isConnected,
         nodeCount: nodeCount,
         lastSyncTime: isConnected ? DateTime.now() : null,
       );
-      
+
       if (!_connectionStateController.isClosed) {
         _connectionStateController.add(state);
       }
     } catch (e, stackTrace) {
       // Silently handle errors in background monitoring
-      _logger.w('Error checking connection state', error: e, stackTrace: stackTrace);
-      
+      _logger.w(
+        'Error checking connection state',
+        error: e,
+        stackTrace: stackTrace,
+      );
+
       if (!_connectionStateController.isClosed) {
         _connectionStateController.add(
           conn.ConnectionState.disconnected(errorMessage: e.toString()),
@@ -796,12 +878,12 @@ class WatchBridgeService {
   /// Returns a map containing current sensor values and status
   Future<Map<String, dynamic>> getTestModeData() async {
     _logger.d('Getting test mode data');
-    
+
     try {
       final result = await _methodChannel
           .invokeMethod<Map<dynamic, dynamic>>('getTestModeData')
           .timeout(_operationTimeout);
-      
+
       if (result == null) {
         _logger.d('No test mode data available');
         return {};
@@ -818,7 +900,11 @@ class WatchBridgeService {
       _logger.e('Platform exception getting test mode data', error: e);
       return {};
     } catch (e, stackTrace) {
-      _logger.e('Failed to get test mode data', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to get test mode data',
+        error: e,
+        stackTrace: stackTrace,
+      );
       return {};
     }
   }

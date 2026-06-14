@@ -15,10 +15,7 @@ import '../../../models/running_session.dart';
 class ShareAchievementScreen extends StatefulWidget {
   final RunningSession session;
 
-  const ShareAchievementScreen({
-    super.key,
-    required this.session,
-  });
+  const ShareAchievementScreen({super.key, required this.session});
 
   @override
   State<ShareAchievementScreen> createState() => _ShareAchievementScreenState();
@@ -63,7 +60,8 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
 
     try {
       // Capture the widget as an image
-      final boundary = _shareKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      final boundary =
+          _shareKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       final pngBytes = byteData!.buffer.asUint8List();
@@ -76,15 +74,15 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
       // Share the image
       await Share.shareXFiles(
         [XFile(file.path)],
-        text: '🏃 Just completed a ${_formatDistance(widget.session.currentDistance)} km run with FlowFit! #FlowFit #Running',
+        text:
+            '🏃 Just completed a ${_formatDistance(widget.session.currentDistance)} km run with FlowFit! #FlowFit #Running',
       );
 
       if (mounted) {
         // Navigate back to dashboard after sharing
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/dashboard',
-          (route) => false,
-        );
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/dashboard', (route) => false);
       }
     } catch (e) {
       if (mounted) {
@@ -105,8 +103,6 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -163,18 +159,13 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
     return Container(
       width: 1080,
       height: 1920,
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: Stack(
         fit: StackFit.expand,
         children: [
           // Background image or gradient
           if (_backgroundImage != null)
-            Image.file(
-              _backgroundImage!,
-              fit: BoxFit.cover,
-            )
+            Image.file(_backgroundImage!, fit: BoxFit.cover)
           else
             Container(
               decoration: const BoxDecoration(
@@ -197,8 +188,8 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.3),
-                  Colors.black.withOpacity(0.6),
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.black.withValues(alpha: 0.6),
                 ],
               ),
             ),
@@ -206,7 +197,10 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
 
           // Content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 60.0, vertical: 80.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 60.0,
+              vertical: 80.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -239,11 +233,20 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildStatRow('Distance', '${_formatDistance(widget.session.currentDistance)} km'),
+                    _buildStatRow(
+                      'Distance',
+                      '${_formatDistance(widget.session.currentDistance)} km',
+                    ),
                     const SizedBox(height: 32),
-                    _buildStatRow('Pace', '${_formatPace(widget.session.avgPace)} /km'),
+                    _buildStatRow(
+                      'Pace',
+                      '${_formatPace(widget.session.avgPace)} /km',
+                    ),
                     const SizedBox(height: 32),
-                    _buildStatRow('Time', _formatTime(widget.session.durationSeconds)),
+                    _buildStatRow(
+                      'Time',
+                      _formatTime(widget.session.durationSeconds),
+                    ),
                   ],
                 ),
 
@@ -266,9 +269,12 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
@@ -283,7 +289,7 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
                     Text(
                       _formatDate(DateTime.now()),
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 20,
                         fontWeight: FontWeight.w500,
                       ),
@@ -299,7 +305,20 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
@@ -310,7 +329,7 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
             fontSize: 24,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
@@ -348,7 +367,9 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
               onPressed: _pickImage,
               icon: const Icon(SolarIconsBold.gallery),
               label: Text(
-                _backgroundImage != null ? 'Change Background' : 'Add Background Image',
+                _backgroundImage != null
+                    ? 'Change Background'
+                    : 'Add Background Image',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -375,10 +396,7 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
               icon: const Icon(SolarIconsBold.share),
               label: const Text(
                 'Share Achievement',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3B82F6),
@@ -428,7 +446,7 @@ class RoutePolylinePainter extends CustomPainter {
     // Add padding
     final latRange = maxLat - minLat;
     final lngRange = maxLng - minLng;
-    final padding = 0.1; // 10% padding
+    const padding = 0.1; // 10% padding
 
     minLat -= latRange * padding;
     maxLat += latRange * padding;
@@ -438,13 +456,15 @@ class RoutePolylinePainter extends CustomPainter {
     // Convert GPS coordinates to canvas coordinates
     List<Offset> canvasPoints = routePoints.map((point) {
       final x = ((point.longitude - minLng) / (maxLng - minLng)) * size.width;
-      final y = size.height - ((point.latitude - minLat) / (maxLat - minLat)) * size.height;
+      final y =
+          size.height -
+          ((point.latitude - minLat) / (maxLat - minLat)) * size.height;
       return Offset(x, y);
     }).toList();
 
     // Draw white border (thicker) for better visibility
     final borderPaint = Paint()
-      ..color = Colors.white.withOpacity(0.9)
+      ..color = Colors.white.withValues(alpha: 0.9)
       ..strokeWidth = polylineWidth + 6
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -477,7 +497,7 @@ class RoutePolylinePainter extends CustomPainter {
       ..color = const Color(0xFF10B981)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(canvasPoints.first, 12, startMarkerPaint);
-    
+
     // Draw start marker border
     final startBorderPaint = Paint()
       ..color = Colors.white
@@ -490,7 +510,7 @@ class RoutePolylinePainter extends CustomPainter {
       ..color = const Color(0xFFEF4444)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(canvasPoints.last, 12, endMarkerPaint);
-    
+
     // Draw end marker border
     final endBorderPaint = Paint()
       ..color = Colors.white

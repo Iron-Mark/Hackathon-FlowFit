@@ -21,12 +21,12 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            recentActivitiesProvider.overrideWith((ref) async => testActivities),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: RecentActivitySection(),
+            recentActivitiesProvider.overrideWith(
+              (ref) async => testActivities,
             ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(body: RecentActivitySection()),
           ),
         ),
       );
@@ -36,7 +36,9 @@ void main() {
       expect(find.text('Your Recent Activity'), findsOneWidget);
     });
 
-    testWidgets('displays activities when data is loaded', (WidgetTester tester) async {
+    testWidgets('displays activities when data is loaded', (
+      WidgetTester tester,
+    ) async {
       final now = DateTime.now();
       final testActivities = [
         RecentActivity(
@@ -58,12 +60,12 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            recentActivitiesProvider.overrideWith((ref) async => testActivities),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: RecentActivitySection(),
+            recentActivitiesProvider.overrideWith(
+              (ref) async => testActivities,
             ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(body: RecentActivitySection()),
           ),
         ),
       );
@@ -75,16 +77,14 @@ void main() {
       expect(find.text('3.2 miles • 30 min'), findsOneWidget);
     });
 
-    testWidgets('displays empty state when no activities', (WidgetTester tester) async {
+    testWidgets('displays empty state when no activities', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            recentActivitiesProvider.overrideWith((ref) async => []),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: RecentActivitySection(),
-            ),
+          overrides: [recentActivitiesProvider.overrideWith((ref) async => [])],
+          child: const MaterialApp(
+            home: Scaffold(body: RecentActivitySection()),
           ),
         ),
       );
@@ -94,10 +94,12 @@ void main() {
       expect(find.text('No activity yet today'), findsOneWidget);
     });
 
-    testWidgets('displays loading skeleton while loading', (WidgetTester tester) async {
+    testWidgets('displays loading skeleton while loading', (
+      WidgetTester tester,
+    ) async {
       // Use a provider that takes time to complete
       bool completed = false;
-      
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -107,10 +109,8 @@ void main() {
               return [];
             }),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: RecentActivitySection(),
-            ),
+          child: const MaterialApp(
+            home: Scaffold(body: RecentActivitySection()),
           ),
         ),
       );
@@ -118,7 +118,7 @@ void main() {
       // Should show loading skeleton immediately (before data loads)
       expect(completed, false);
       expect(find.byType(Container), findsWidgets);
-      
+
       // Wait for completion
       await tester.pumpAndSettle();
       expect(completed, true);
@@ -132,10 +132,8 @@ void main() {
               throw Exception('Failed to load');
             }),
           ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: RecentActivitySection(),
-            ),
+          child: const MaterialApp(
+            home: Scaffold(body: RecentActivitySection()),
           ),
         ),
       );
@@ -158,9 +156,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ActivityCard(activity: activity),
-          ),
+          home: Scaffold(body: ActivityCard(activity: activity)),
         ),
       );
 
@@ -169,7 +165,9 @@ void main() {
       expect(find.text('Today'), findsOneWidget);
     });
 
-    testWidgets('uses correct icon and color for run type', (WidgetTester tester) async {
+    testWidgets('uses correct icon and color for run type', (
+      WidgetTester tester,
+    ) async {
       final activity = RecentActivity(
         id: '1',
         name: 'Morning Run',
@@ -180,25 +178,27 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ActivityCard(activity: activity),
-          ),
+          home: Scaffold(body: ActivityCard(activity: activity)),
         ),
       );
 
       // Find the icon container
       final iconContainer = tester.widget<Container>(
-        find.descendant(
-          of: find.byType(ActivityCard),
-          matching: find.byType(Container),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(ActivityCard),
+              matching: find.byType(Container),
+            )
+            .first,
       );
 
       // Verify it has decoration with color
       expect(iconContainer.decoration, isA<BoxDecoration>());
     });
 
-    testWidgets('uses correct icon and color for walk type', (WidgetTester tester) async {
+    testWidgets('uses correct icon and color for walk type', (
+      WidgetTester tester,
+    ) async {
       final activity = RecentActivity(
         id: '1',
         name: 'Evening Walk',
@@ -209,16 +209,16 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ActivityCard(activity: activity),
-          ),
+          home: Scaffold(body: ActivityCard(activity: activity)),
         ),
       );
 
       expect(find.text('Evening Walk'), findsOneWidget);
     });
 
-    testWidgets('uses correct icon and color for workout type', (WidgetTester tester) async {
+    testWidgets('uses correct icon and color for workout type', (
+      WidgetTester tester,
+    ) async {
       final activity = RecentActivity(
         id: '1',
         name: 'Gym Workout',
@@ -229,16 +229,16 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ActivityCard(activity: activity),
-          ),
+          home: Scaffold(body: ActivityCard(activity: activity)),
         ),
       );
 
       expect(find.text('Gym Workout'), findsOneWidget);
     });
 
-    testWidgets('uses correct icon and color for cycle type', (WidgetTester tester) async {
+    testWidgets('uses correct icon and color for cycle type', (
+      WidgetTester tester,
+    ) async {
       final activity = RecentActivity(
         id: '1',
         name: 'Bike Ride',
@@ -249,9 +249,7 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ActivityCard(activity: activity),
-          ),
+          home: Scaffold(body: ActivityCard(activity: activity)),
         ),
       );
 

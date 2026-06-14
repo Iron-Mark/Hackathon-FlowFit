@@ -103,9 +103,8 @@ void main() {
                     ..state = domain.AuthState.authenticated(mockUser);
                 }),
                 profileNotifierProvider('test-user-123').overrideWith((ref) {
-                  final mockRepo = MockCoreProfileRepository();
-                  return ProfileNotifier(mockRepo, 'test-user-123')
-                    ..state = AsyncValue.data(mockProfile);
+                  final mockRepo = MockCoreProfileRepository(mockProfile);
+                  return ProfileNotifier(mockRepo, 'test-user-123');
                 }),
                 syncStatusProvider('test-user-123').overrideWith((ref) {
                   return Stream.value(SyncStatus.synced);
@@ -213,9 +212,8 @@ void main() {
                   ..state = domain.AuthState.authenticated(mockUser);
               }),
               profileNotifierProvider('test-user-123').overrideWith((ref) {
-                final mockRepo = MockCoreProfileRepository();
-                return ProfileNotifier(mockRepo, 'test-user-123')
-                  ..state = AsyncValue.data(mockProfile);
+                final mockRepo = MockCoreProfileRepository(mockProfile);
+                return ProfileNotifier(mockRepo, 'test-user-123');
               }),
               syncStatusProvider('test-user-123').overrideWith((ref) {
                 return Stream.value(SyncStatus.synced);
@@ -350,8 +348,12 @@ class MockProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
 
 /// Mock Core ProfileRepository for testing
 class MockCoreProfileRepository implements ProfileRepository {
+  MockCoreProfileRepository(this.profile);
+
+  final UserProfile profile;
+
   @override
-  Future<UserProfile?> getLocalProfile(String userId) async => null;
+  Future<UserProfile?> getLocalProfile(String userId) async => profile;
 
   @override
   Future<void> saveLocalProfile(UserProfile profile) async {}
@@ -360,7 +362,7 @@ class MockCoreProfileRepository implements ProfileRepository {
   Future<void> deleteLocalProfile(String userId) async {}
 
   @override
-  Future<UserProfile?> getBackendProfile(String userId) async => null;
+  Future<UserProfile?> getBackendProfile(String userId) async => profile;
 
   @override
   Future<void> saveBackendProfile(UserProfile profile) async {}

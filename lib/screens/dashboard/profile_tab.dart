@@ -10,9 +10,9 @@ class ProfileTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     ref.watch(authNotifierProvider);
-    
+
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: Column(
         children: [
           _buildPageHeader(context),
@@ -62,9 +62,9 @@ class ProfileTab extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // General Settings Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -76,12 +76,24 @@ class ProfileTab extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildSettingItem(context, 'Privacy Policy', SolarIconsOutline.shieldCheck),
-                  _buildSettingItem(context, 'Notification Reminder', SolarIconsOutline.bell),
-                  _buildSettingItem(context, 'App Integration', SolarIconsOutline.widget),
-                  
+                  _buildSettingItem(
+                    context,
+                    'Privacy Policy',
+                    SolarIconsOutline.shieldCheck,
+                  ),
+                  _buildSettingItem(
+                    context,
+                    'Notification Reminder',
+                    SolarIconsOutline.bell,
+                  ),
+                  _buildSettingItem(
+                    context,
+                    'App Integration',
+                    SolarIconsOutline.widget,
+                  ),
+
                   const SizedBox(height: 24),
-                  
+
                   // My Account Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -94,16 +106,28 @@ class ProfileTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   _buildInfoItem(context, 'Username', '@mark_garcia'),
-                  _buildSettingItem(context, 'Profile Photo', SolarIconsOutline.camera),
+                  _buildSettingItem(
+                    context,
+                    'Profile Photo',
+                    SolarIconsOutline.camera,
+                  ),
                   _buildInfoItem(context, 'Sex', 'Male'),
                   _buildInfoItem(context, 'Date of Birth', '05/12/1990'),
                   _buildInfoItem(context, 'Location', 'New York, NY'),
                   _buildInfoItem(context, 'Email', 'mark.garcia@email.com'),
-                  _buildSettingItem(context, 'Change Password', SolarIconsOutline.lock),
-                  _buildSettingItem(context, 'Delete Account', SolarIconsOutline.trashBinMinimalistic),
                   _buildSettingItem(
-                    context, 
-                    'Logout', 
+                    context,
+                    'Change Password',
+                    SolarIconsOutline.lock,
+                  ),
+                  _buildSettingItem(
+                    context,
+                    'Delete Account',
+                    SolarIconsOutline.trashBinMinimalistic,
+                  ),
+                  _buildSettingItem(
+                    context,
+                    'Logout',
                     SolarIconsOutline.logout,
                     onTap: () async {
                       // Show confirmation dialog
@@ -111,7 +135,9 @@ class ProfileTab extends ConsumerWidget {
                         context: context,
                         builder: (context) => AlertDialog(
                           title: const Text('Logout'),
-                          content: const Text('Are you sure you want to logout?'),
+                          content: const Text(
+                            'Are you sure you want to logout?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
@@ -128,7 +154,7 @@ class ProfileTab extends ConsumerWidget {
                       if (shouldLogout == true && context.mounted) {
                         // Sign out using auth notifier
                         await ref.read(authNotifierProvider.notifier).signOut();
-                        
+
                         // Navigate to welcome screen and clear stack
                         if (context.mounted) {
                           Navigator.of(context).pushNamedAndRemoveUntil(
@@ -139,9 +165,9 @@ class ProfileTab extends ConsumerWidget {
                       }
                     },
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // My Goals Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -168,9 +194,9 @@ class ProfileTab extends ConsumerWidget {
                     'Nutrition Goals',
                     'Default Macros Goal: 2000 calories, Daily Macros Goal (Custom): 2200 calories',
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Progress Timeline Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -199,9 +225,9 @@ class ProfileTab extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Weight Progress Card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -212,7 +238,7 @@ class ProfileTab extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -234,22 +260,53 @@ class ProfileTab extends ConsumerWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Current', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                                  Text('145 lbs', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Current',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Text(
+                                    '145 lbs',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Goal', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                                  Text('135 lbs', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Goal',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Text(
+                                    '135 lbs',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Progress', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                                  Text('-2 lbs', style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.green)),
+                                  Text(
+                                    'Progress',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Text(
+                                    '-2 lbs',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -259,7 +316,7 @@ class ProfileTab extends ConsumerWidget {
                           Container(
                             height: 100,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant,
+                              color: theme.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Center(
@@ -275,7 +332,12 @@ class ProfileTab extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Last updated: Nov 25', style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                              Text(
+                                'Last updated: Nov 25',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
                               TextButton(
                                 onPressed: () {},
                                 child: const Text('Update'),
@@ -286,7 +348,7 @@ class ProfileTab extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -299,7 +361,7 @@ class ProfileTab extends ConsumerWidget {
 
   Widget _buildPageHeader(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -307,7 +369,7 @@ class ProfileTab extends ConsumerWidget {
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -343,22 +405,27 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSettingItem(BuildContext context, String title, IconData icon, {VoidCallback? onTap}) {
+  Widget _buildSettingItem(
+    BuildContext context,
+    String title,
+    IconData icon, {
+    VoidCallback? onTap,
+  }) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 1),
       color: theme.colorScheme.surface,
       child: ListTile(
         leading: Icon(
           icon,
-          color: title == 'Logout' ? Colors.red : theme.colorScheme.onSurfaceVariant,
+          color: title == 'Logout'
+              ? Colors.red
+              : theme.colorScheme.onSurfaceVariant,
         ),
         title: Text(
           title,
-          style: TextStyle(
-            color: title == 'Logout' ? Colors.red : null,
-          ),
+          style: TextStyle(color: title == 'Logout' ? Colors.red : null),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
@@ -372,7 +439,7 @@ class ProfileTab extends ConsumerWidget {
 
   Widget _buildInfoItem(BuildContext context, String label, String value) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 1),
       color: theme.colorScheme.surface,
@@ -380,10 +447,7 @@ class ProfileTab extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: theme.textTheme.bodyMedium,
-          ),
+          Text(label, style: theme.textTheme.bodyMedium),
           Text(
             value,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -395,9 +459,13 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildGoalItem(BuildContext context, String title, String description) {
+  Widget _buildGoalItem(
+    BuildContext context,
+    String title,
+    String description,
+  ) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 1),
       color: theme.colorScheme.surface,
@@ -419,19 +487,27 @@ class ProfileTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildTimelineButton(BuildContext context, String label, bool isSelected) {
+  Widget _buildTimelineButton(
+    BuildContext context,
+    String label,
+    bool isSelected,
+  ) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
+        color: isSelected
+            ? theme.colorScheme.primary
+            : theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+          color: isSelected
+              ? theme.colorScheme.onPrimary
+              : theme.colorScheme.onSurface,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         ),
       ),

@@ -8,17 +8,27 @@ import 'package:logger/logger.dart';
 
 /// Service for receiving heart rate data from Galaxy Watch
 /// Uses Wearable Data Layer API to listen for messages from watch
-/// 
+///
 /// This service listens to the EventChannel "com.flowfit.phone/heartrate"
 /// which receives data from PhoneDataListenerService on the native Android side.
 /// The data is transmitted from the watch via Wearable Data Layer API.
+///
+/// Singleton: all parts of the app share one instance so only one subscriber
+/// holds the native EventChannel event sink at a time.
 class PhoneDataListener {
-  static const MethodChannel _methodChannel =
-      MethodChannel('com.flowfit.phone/data');
-  static const EventChannel _heartRateEventChannel =
-      EventChannel('com.flowfit.phone/heartrate');
-  static const EventChannel _sensorBatchEventChannel =
-      EventChannel('com.flowfit.phone/sensor_data');
+  static final PhoneDataListener _instance = PhoneDataListener._internal();
+  factory PhoneDataListener() => _instance;
+  PhoneDataListener._internal();
+
+  static const MethodChannel _methodChannel = MethodChannel(
+    'com.flowfit.phone/data',
+  );
+  static const EventChannel _heartRateEventChannel = EventChannel(
+    'com.flowfit.phone/heartrate',
+  );
+  static const EventChannel _sensorBatchEventChannel = EventChannel(
+    'com.flowfit.phone/sensor_data',
+  );
 
   final Logger _logger = Logger(
     printer: PrettyPrinter(
@@ -27,7 +37,7 @@ class PhoneDataListener {
       lineLength: 120,
       colors: true,
       printEmojis: true,
-      printTime: true,
+      dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
   );
 
@@ -37,196 +47,204 @@ class PhoneDataListener {
   StreamController<SensorBatch>? _sensorBatchController;
 
   /// Get stream of heart rate data from watch
-  /// 
+  ///
   /// This stream receives heart rate data sent from the Galaxy Watch
   /// via the Wearable Data Layer API. The data is decoded from JSON
   /// and validated before being emitted.
-  /// 
+  ///
   /// Requirements: 8.2, 9.4
   Stream<HeartRateData> get heartRateStream {
     _heartRateStream ??= _heartRateEventChannel
         .receiveBroadcastStream()
         .map((dynamic event) {
-      try {
-        // Validate that event is a Map
-        if (event == null) {
-          _logger.e('Received null event from heart rate stream');
+          try {
+            // Validate that event is a Map
+            if (event == null) {
+              _logger.e('Received null event from heart rate stream');
+              throw SensorError(
+                code: SensorErrorCode.unknown,
+                message: 'Received null data from watch',
+                details: 'Event channel emitted null value',
+              );
+            }
+
+            if (event is! Map) {
+              _logger.e('Received non-Map event: ${event.runtimeType}');
+              throw SensorError(
+                code: SensorErrorCode.unknown,
+                message: 'Invalid data format from watch',
+                details: 'Expected Map but got ${event.runtimeType}',
+              );
+            }
+
+            // Convert to Map<String, dynamic>
+            final jsonMap = Map<String, dynamic>.from(event);
+
+            // Validate required fields (Requirements 9.4)
+            _validateRequiredFields(jsonMap);
+
+            // Parse heart rate data
+            final heartRateData = HeartRateData.fromJson(jsonMap);
+
+            _logger.d(
+              'Received heart rate from watch: ${heartRateData.bpm} bpm, '
+              'status: ${heartRateData.status.name}, '
+              'ibiCount: ${heartRateData.ibiValues.length}',
+            );
+
+            return heartRateData;
+          } on SensorError {
+            // Re-throw SensorError as-is
+            rethrow;
+          } catch (e, stackTrace) {
+            _logger.e(
+              'Failed to parse heart rate data from watch',
+              error: e,
+              stackTrace: stackTrace,
+            );
+            throw SensorError(
+              code: SensorErrorCode.unknown,
+              message: 'Failed to decode heart rate data from watch',
+              details: 'JSON parsing error: ${e.toString()}',
+            );
+          }
+        })
+        .handleError((error, stackTrace) {
+          _logger.e(
+            'Error in heart rate stream from watch',
+            error: error,
+            stackTrace: stackTrace,
+          );
+
+          // Convert platform exceptions to SensorError
+          if (error is PlatformException) {
+            throw SensorError(
+              code: SensorErrorCode.unknown,
+              message: 'Platform error in heart rate stream',
+              details: '${error.code}: ${error.message}',
+            );
+          }
+
+          // Re-throw if already a SensorError
+          if (error is SensorError) {
+            throw error;
+          }
+
+          // Wrap other errors
           throw SensorError(
             code: SensorErrorCode.unknown,
-            message: 'Received null data from watch',
-            details: 'Event channel emitted null value',
+            message: 'Unexpected error in heart rate stream',
+            details: error.toString(),
           );
-        }
-
-        if (event is! Map) {
-          _logger.e('Received non-Map event: ${event.runtimeType}');
-          throw SensorError(
-            code: SensorErrorCode.unknown,
-            message: 'Invalid data format from watch',
-            details: 'Expected Map but got ${event.runtimeType}',
-          );
-        }
-
-        // Convert to Map<String, dynamic>
-        final jsonMap = Map<String, dynamic>.from(event);
-        
-        // Validate required fields (Requirements 9.4)
-        _validateRequiredFields(jsonMap);
-        
-        // Parse heart rate data
-        final heartRateData = HeartRateData.fromJson(jsonMap);
-        
-        _logger.d(
-          'Received heart rate from watch: ${heartRateData.bpm} bpm, '
-          'status: ${heartRateData.status.name}, '
-          'ibiCount: ${heartRateData.ibiValues.length}'
-        );
-        
-        return heartRateData;
-      } on SensorError catch (e) {
-        // Re-throw SensorError as-is
-        throw e;
-      } catch (e, stackTrace) {
-        _logger.e('Failed to parse heart rate data from watch', 
-          error: e, stackTrace: stackTrace);
-        throw SensorError(
-          code: SensorErrorCode.unknown,
-          message: 'Failed to decode heart rate data from watch',
-          details: 'JSON parsing error: ${e.toString()}',
-        );
-      }
-    }).handleError((error, stackTrace) {
-      _logger.e('Error in heart rate stream from watch', 
-        error: error, stackTrace: stackTrace);
-      
-      // Convert platform exceptions to SensorError
-      if (error is PlatformException) {
-        throw SensorError(
-          code: SensorErrorCode.unknown,
-          message: 'Platform error in heart rate stream',
-          details: '${error.code}: ${error.message}',
-        );
-      }
-      
-      // Re-throw if already a SensorError
-      if (error is SensorError) {
-        throw error;
-      }
-      
-      // Wrap other errors
-      throw SensorError(
-        code: SensorErrorCode.unknown,
-        message: 'Unexpected error in heart rate stream',
-        details: error.toString(),
-      );
-    });
+        });
 
     return _heartRateStream!;
   }
 
   /// Get stream of sensor batches from watch
-  /// 
+  ///
   /// This stream receives combined sensor data (accelerometer + heart rate)
   /// sent from the Galaxy Watch via the Wearable Data Layer API.
   /// Each batch contains 32 samples with 4-feature vectors [accX, accY, accZ, bpm].
-  /// 
+  ///
   /// Requirements: 2.4, 2.5
   Stream<SensorBatch> get sensorBatchStream {
     _sensorBatchStream ??= _sensorBatchEventChannel
         .receiveBroadcastStream()
         .map((dynamic event) {
-      try {
-        // Validate that event is a Map
-        if (event == null) {
+          try {
+            // Validate that event is a Map
+            if (event == null) {
+              // Log parsing error (Requirements 8.3)
+              _logger.e('❌ Received null event from sensor batch stream');
+              throw SensorError(
+                code: SensorErrorCode.unknown,
+                message: 'Received null data from watch',
+                details: 'Event channel emitted null value',
+              );
+            }
+
+            if (event is! Map) {
+              // Log parsing error with raw data (Requirements 8.3)
+              _logger.e(
+                '❌ Received non-Map event: ${event.runtimeType}, '
+                'raw_data: $event',
+              );
+              throw SensorError(
+                code: SensorErrorCode.unknown,
+                message: 'Invalid data format from watch',
+                details: 'Expected Map but got ${event.runtimeType}',
+              );
+            }
+
+            // Convert to Map<String, dynamic>
+            final jsonMap = Map<String, dynamic>.from(event);
+
+            // Parse and validate sensor batch (Requirements 2.4)
+            final sensorBatch = _handleSensorBatch(jsonMap);
+
+            // Feature vectors are already constructed in SensorBatch.fromJson (Requirements 2.5)
+            _logger.d(
+              '✅ Successfully processed sensor batch: '
+              'feature_vectors=${sensorBatch.sampleCount}',
+            );
+
+            return sensorBatch;
+          } on SensorError {
+            // Re-throw SensorError as-is (already logged)
+            rethrow;
+          } catch (e, stackTrace) {
+            // Log parsing error with raw data (Requirements 8.3)
+            _logger.e(
+              '❌ Failed to parse sensor batch from watch: '
+              'error=${e.runtimeType}: $e, '
+              'raw_event: $event',
+              error: e,
+              stackTrace: stackTrace,
+            );
+            throw SensorError(
+              code: SensorErrorCode.unknown,
+              message: 'Failed to decode sensor batch from watch',
+              details: 'JSON parsing error: ${e.toString()}',
+            );
+          }
+        })
+        .handleError((error, stackTrace) {
           // Log parsing error (Requirements 8.3)
-          _logger.e('❌ Received null event from sensor batch stream');
-          throw SensorError(
-            code: SensorErrorCode.unknown,
-            message: 'Received null data from watch',
-            details: 'Event channel emitted null value',
-          );
-        }
-
-        if (event is! Map) {
-          // Log parsing error with raw data (Requirements 8.3)
           _logger.e(
-            '❌ Received non-Map event: ${event.runtimeType}, '
-            'raw_data: $event'
+            '❌ Error in sensor batch stream from watch: '
+            'error=${error.runtimeType}: $error',
+            error: error,
+            stackTrace: stackTrace,
           );
+
+          // Convert platform exceptions to SensorError
+          if (error is PlatformException) {
+            throw SensorError(
+              code: SensorErrorCode.unknown,
+              message: 'Platform error in sensor batch stream',
+              details: '${error.code}: ${error.message}',
+            );
+          }
+
+          // Re-throw if already a SensorError
+          if (error is SensorError) {
+            throw error;
+          }
+
+          // Wrap other errors
           throw SensorError(
             code: SensorErrorCode.unknown,
-            message: 'Invalid data format from watch',
-            details: 'Expected Map but got ${event.runtimeType}',
+            message: 'Unexpected error in sensor batch stream',
+            details: error.toString(),
           );
-        }
-
-        // Convert to Map<String, dynamic>
-        final jsonMap = Map<String, dynamic>.from(event);
-        
-        // Parse and validate sensor batch (Requirements 2.4)
-        final sensorBatch = _handleSensorBatch(jsonMap);
-        
-        // Feature vectors are already constructed in SensorBatch.fromJson (Requirements 2.5)
-        _logger.d(
-          '✅ Successfully processed sensor batch: '
-          'feature_vectors=${sensorBatch.sampleCount}'
-        );
-        
-        return sensorBatch;
-      } on SensorError catch (e) {
-        // Re-throw SensorError as-is (already logged)
-        throw e;
-      } catch (e, stackTrace) {
-        // Log parsing error with raw data (Requirements 8.3)
-        _logger.e(
-          '❌ Failed to parse sensor batch from watch: '
-          'error=${e.runtimeType}: $e, '
-          'raw_event: $event',
-          error: e, 
-          stackTrace: stackTrace
-        );
-        throw SensorError(
-          code: SensorErrorCode.unknown,
-          message: 'Failed to decode sensor batch from watch',
-          details: 'JSON parsing error: ${e.toString()}',
-        );
-      }
-    }).handleError((error, stackTrace) {
-      // Log parsing error (Requirements 8.3)
-      _logger.e(
-        '❌ Error in sensor batch stream from watch: '
-        'error=${error.runtimeType}: $error',
-        error: error, 
-        stackTrace: stackTrace
-      );
-      
-      // Convert platform exceptions to SensorError
-      if (error is PlatformException) {
-        throw SensorError(
-          code: SensorErrorCode.unknown,
-          message: 'Platform error in sensor batch stream',
-          details: '${error.code}: ${error.message}',
-        );
-      }
-      
-      // Re-throw if already a SensorError
-      if (error is SensorError) {
-        throw error;
-      }
-      
-      // Wrap other errors
-      throw SensorError(
-        code: SensorErrorCode.unknown,
-        message: 'Unexpected error in sensor batch stream',
-        details: error.toString(),
-      );
-    });
+        });
 
     return _sensorBatchStream!;
   }
 
   /// Validate that all required fields are present in the JSON data
-  /// 
+  ///
   /// According to Requirements 9.4, the JSON must contain:
   /// - bpm (can be null)
   /// - ibiValues (array)
@@ -246,7 +264,7 @@ class PhoneDataListener {
       final message = 'Missing required fields: ${missingFields.join(", ")}';
       _logger.e('JSON validation failed: $message');
       _logger.d('Received JSON: $json');
-      
+
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Malformed JSON from watch',
@@ -280,7 +298,9 @@ class PhoneDataListener {
       );
     }
 
-    if (json.containsKey('ibiValues') && json['ibiValues'] != null && json['ibiValues'] is! List) {
+    if (json.containsKey('ibiValues') &&
+        json['ibiValues'] != null &&
+        json['ibiValues'] is! List) {
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Invalid ibiValues field type',
@@ -307,7 +327,7 @@ class PhoneDataListener {
       _logger.e(
         '❌ Failed to start listening: '
         'code=${e.code}, message=${e.message}',
-        error: e
+        error: e,
       );
       return false;
     }
@@ -325,7 +345,7 @@ class PhoneDataListener {
       _logger.e(
         '❌ Failed to stop listening: '
         'code=${e.code}, message=${e.message}',
-        error: e
+        error: e,
       );
     }
   }
@@ -333,7 +353,9 @@ class PhoneDataListener {
   /// Check if watch is connected
   Future<bool> isWatchConnected() async {
     try {
-      final result = await _methodChannel.invokeMethod<bool>('isWatchConnected');
+      final result = await _methodChannel.invokeMethod<bool>(
+        'isWatchConnected',
+      );
       return result ?? false;
     } on PlatformException catch (e) {
       _logger.e('Failed to check watch connection', error: e);
@@ -342,7 +364,7 @@ class PhoneDataListener {
   }
 
   /// Validate that all required fields are present in sensor batch JSON
-  /// 
+  ///
   /// According to Requirements 2.4, the JSON must contain:
   /// - type (string)
   /// - timestamp (integer)
@@ -351,7 +373,13 @@ class PhoneDataListener {
   /// - count (integer)
   /// - accelerometer (array)
   void _validateSensorBatchFields(Map<String, dynamic> json) {
-    final requiredFields = ['type', 'timestamp', 'bpm', 'count', 'accelerometer'];
+    final requiredFields = [
+      'type',
+      'timestamp',
+      'bpm',
+      'count',
+      'accelerometer',
+    ];
     final missingFields = <String>[];
 
     for (final field in requiredFields) {
@@ -359,7 +387,7 @@ class PhoneDataListener {
         missingFields.add(field);
       }
     }
-    
+
     // Check for sample_rate (snake_case) or sampleRate (camelCase)
     if (!json.containsKey('sample_rate') && !json.containsKey('sampleRate')) {
       missingFields.add('sample_rate/sampleRate');
@@ -368,11 +396,9 @@ class PhoneDataListener {
     if (missingFields.isNotEmpty) {
       final message = 'Missing required fields: ${missingFields.join(", ")}';
       // Log parsing error with raw data (Requirements 8.3)
-      _logger.e(
-        '❌ Sensor batch JSON validation FAILED: $message'
-      );
+      _logger.e('❌ Sensor batch JSON validation FAILED: $message');
       _logger.d('Raw JSON: $json');
-      
+
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Malformed sensor batch JSON from watch',
@@ -384,7 +410,7 @@ class PhoneDataListener {
     if (json['type'] is! String) {
       // Log parsing error (Requirements 8.3)
       _logger.e(
-        '❌ Invalid type field: expected String but got ${json['type'].runtimeType}'
+        '❌ Invalid type field: expected String but got ${json['type'].runtimeType}',
       );
       throw SensorError(
         code: SensorErrorCode.unknown,
@@ -396,7 +422,7 @@ class PhoneDataListener {
     if (json['timestamp'] is! int) {
       // Log parsing error (Requirements 8.3)
       _logger.e(
-        '❌ Invalid timestamp field: expected int but got ${json['timestamp'].runtimeType}'
+        '❌ Invalid timestamp field: expected int but got ${json['timestamp'].runtimeType}',
       );
       throw SensorError(
         code: SensorErrorCode.unknown,
@@ -408,7 +434,7 @@ class PhoneDataListener {
     if (json['bpm'] is! int) {
       // Log parsing error (Requirements 8.3)
       _logger.e(
-        '❌ Invalid bpm field: expected int but got ${json['bpm'].runtimeType}'
+        '❌ Invalid bpm field: expected int but got ${json['bpm'].runtimeType}',
       );
       throw SensorError(
         code: SensorErrorCode.unknown,
@@ -422,7 +448,7 @@ class PhoneDataListener {
     if (sampleRate is! int) {
       // Log parsing error (Requirements 8.3)
       _logger.e(
-        '❌ Invalid sample_rate/sampleRate field: expected int but got ${sampleRate.runtimeType}'
+        '❌ Invalid sample_rate/sampleRate field: expected int but got ${sampleRate.runtimeType}',
       );
       throw SensorError(
         code: SensorErrorCode.unknown,
@@ -434,7 +460,7 @@ class PhoneDataListener {
     if (json['count'] is! int) {
       // Log parsing error (Requirements 8.3)
       _logger.e(
-        '❌ Invalid count field: expected int but got ${json['count'].runtimeType}'
+        '❌ Invalid count field: expected int but got ${json['count'].runtimeType}',
       );
       throw SensorError(
         code: SensorErrorCode.unknown,
@@ -446,7 +472,7 @@ class PhoneDataListener {
     if (json['accelerometer'] is! List) {
       // Log parsing error (Requirements 8.3)
       _logger.e(
-        '❌ Invalid accelerometer field: expected List but got ${json['accelerometer'].runtimeType}'
+        '❌ Invalid accelerometer field: expected List but got ${json['accelerometer'].runtimeType}',
       );
       throw SensorError(
         code: SensorErrorCode.unknown,
@@ -461,34 +487,34 @@ class PhoneDataListener {
     if (accelData.length != count) {
       // Log parsing error (Requirements 8.3)
       _logger.e(
-        '❌ Count mismatch: count=$count but accelerometer array has ${accelData.length} elements'
+        '❌ Count mismatch: count=$count but accelerometer array has ${accelData.length} elements',
       );
       throw SensorError(
         code: SensorErrorCode.unknown,
         message: 'Count mismatch in sensor batch',
-        details: 'count field is $count but accelerometer array has ${accelData.length} elements',
+        details:
+            'count field is $count but accelerometer array has ${accelData.length} elements',
       );
     }
   }
 
   /// Handle incoming sensor batch from watch
-  /// 
+  ///
   /// Parses JSON, validates required fields, and extracts sensor data.
   /// Requirements: 2.4
   SensorBatch _handleSensorBatch(Map<String, dynamic> json) {
     final receiveTime = DateTime.now().millisecondsSinceEpoch;
-    
+
     try {
       // Validate all required fields are present
       _validateSensorBatchFields(json);
-      
+
       // Extract fields (handle both snake_case and camelCase)
       final bpm = json['bpm'] as int;
       final timestamp = json['timestamp'] as int;
       final count = json['count'] as int;
       final sampleRate = (json['sample_rate'] ?? json['sampleRate']) as int;
-      final accelData = json['accelerometer'] as List;
-      
+
       // Log received sensor batch with sample count and heart rate (Requirements 8.3)
       _logger.i(
         '📥 Sensor batch RECEIVED at $receiveTime: '
@@ -496,19 +522,19 @@ class PhoneDataListener {
         'bpm=$bpm, '
         'sample_rate=${sampleRate}Hz, '
         'watch_timestamp=$timestamp, '
-        'latency=${receiveTime - timestamp}ms'
+        'latency=${receiveTime - timestamp}ms',
       );
-      
+
       // Parse into SensorBatch model
       final sensorBatch = SensorBatch.fromJson(json);
-      
+
       // Log feature vector construction details
       _logger.d(
         '🔧 Feature vectors constructed: '
         'count=${sensorBatch.sampleCount}, '
-        'features_per_sample=4 [accX, accY, accZ, bpm]'
+        'features_per_sample=4 [accX, accY, accZ, bpm]',
       );
-      
+
       return sensorBatch;
     } catch (e, stackTrace) {
       // Log parsing errors with raw data (Requirements 8.3)
@@ -516,7 +542,7 @@ class PhoneDataListener {
         '❌ PARSING ERROR in sensor batch at $receiveTime: '
         'error=${e.runtimeType}: $e',
         error: e,
-        stackTrace: stackTrace
+        stackTrace: stackTrace,
       );
       _logger.d('Raw JSON data: $json');
       rethrow;

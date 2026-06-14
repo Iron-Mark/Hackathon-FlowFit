@@ -5,17 +5,14 @@ class RelaxScreen extends StatefulWidget {
   final WearShape shape;
   final WearMode mode;
 
-  const RelaxScreen({
-    super.key,
-    required this.shape,
-    required this.mode,
-  });
+  const RelaxScreen({super.key, required this.shape, required this.mode});
 
   @override
   State<RelaxScreen> createState() => _RelaxScreenState();
 }
 
-class _RelaxScreenState extends State<RelaxScreen> with SingleTickerProviderStateMixin {
+class _RelaxScreenState extends State<RelaxScreen>
+    with SingleTickerProviderStateMixin {
   bool _isPlaying = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -27,7 +24,7 @@ class _RelaxScreenState extends State<RelaxScreen> with SingleTickerProviderStat
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
@@ -59,9 +56,13 @@ class _RelaxScreenState extends State<RelaxScreen> with SingleTickerProviderStat
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.deepPurple.withOpacity(_fadeAnimation.value * 0.6),
+                        Colors.deepPurple.withValues(
+                          alpha: _fadeAnimation.value * 0.6,
+                        ),
                         Colors.black,
-                        Colors.indigo.withOpacity(_fadeAnimation.value * 0.4),
+                        Colors.indigo.withValues(
+                          alpha: _fadeAnimation.value * 0.4,
+                        ),
                       ],
                     ),
                   ),
@@ -70,7 +71,7 @@ class _RelaxScreenState extends State<RelaxScreen> with SingleTickerProviderStat
             )
           else
             Container(color: Colors.black),
-          
+
           // Content
           Center(
             child: Container(
@@ -80,9 +81,9 @@ class _RelaxScreenState extends State<RelaxScreen> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   if (!isAmbient) ...[
-                    Text(
+                    const Text(
                       'Relax',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -94,10 +95,7 @@ class _RelaxScreenState extends State<RelaxScreen> with SingleTickerProviderStat
                     const SizedBox(height: 24),
                     Text(
                       _isPlaying ? 'Ocean Waves' : 'Tap to play',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[400],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[400]),
                       textAlign: TextAlign.center,
                     ),
                   ] else ...[
@@ -107,12 +105,9 @@ class _RelaxScreenState extends State<RelaxScreen> with SingleTickerProviderStat
                       color: Colors.white,
                     ),
                     const SizedBox(height: 12),
-                    Text(
+                    const Text(
                       'Relax',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        color: Colors.white,
-                      ),
+                      style: TextStyle(fontSize: 18, color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -137,10 +132,7 @@ class _RelaxScreenState extends State<RelaxScreen> with SingleTickerProviderStat
           shape: const CircleBorder(),
           padding: const EdgeInsets.all(20),
         ),
-        child: Icon(
-          _isPlaying ? Icons.pause : Icons.play_arrow,
-          size: 40,
-        ),
+        child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, size: 40),
       ),
     );
   }

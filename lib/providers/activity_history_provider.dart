@@ -1,19 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/recent_activity.dart';
 import '../models/workout_session.dart';
-import '../services/workout_session_service.dart';
 import 'running_session_provider.dart';
 
 /// Provider for fetching recent workout activities with mood data
-final activityHistoryProvider = FutureProvider<List<RecentActivity>>((ref) async {
+final activityHistoryProvider = FutureProvider<List<RecentActivity>>((
+  ref,
+) async {
   final sessionService = ref.watch(workoutSessionServiceProvider);
-  
+
   try {
     // Fetch recent sessions from database
     final sessions = await sessionService.listRecentSessions(limit: 20);
-    
+
     // Convert to RecentActivity format
-    return sessions.map((session) => _convertToRecentActivity(session)).toList();
+    return sessions
+        .map((session) => _convertToRecentActivity(session))
+        .toList();
   } catch (e) {
     // Return empty list on error
     return [];
@@ -25,12 +28,12 @@ RecentActivity _convertToRecentActivity(WorkoutSession session) {
   // Format details based on workout type
   String details = '';
   String type = '';
-  
+
   switch (session.type) {
     case WorkoutType.running:
       type = 'run';
       final distance = (session as dynamic).currentDistance ?? 0.0;
-      final duration = session.durationSeconds != null 
+      final duration = session.durationSeconds != null
           ? '${(session.durationSeconds! / 60).round()} min'
           : '';
       details = '${distance.toStringAsFixed(1)} km • $duration';
@@ -38,11 +41,11 @@ RecentActivity _convertToRecentActivity(WorkoutSession session) {
         details += ' • ${session.caloriesBurned} cal';
       }
       break;
-      
+
     case WorkoutType.walking:
       type = 'walk';
       final distance = (session as dynamic).currentDistance ?? 0.0;
-      final duration = session.durationSeconds != null 
+      final duration = session.durationSeconds != null
           ? '${(session.durationSeconds! / 60).round()} min'
           : '';
       details = '${distance.toStringAsFixed(1)} km • $duration';
@@ -50,10 +53,10 @@ RecentActivity _convertToRecentActivity(WorkoutSession session) {
         details += ' • ${session.caloriesBurned} cal';
       }
       break;
-      
+
     case WorkoutType.resistance:
       type = 'workout';
-      final duration = session.durationSeconds != null 
+      final duration = session.durationSeconds != null
           ? '${(session.durationSeconds! / 60).round()} min'
           : '';
       final split = (session as dynamic).split.displayName;
@@ -62,18 +65,18 @@ RecentActivity _convertToRecentActivity(WorkoutSession session) {
         details += ' • ${session.caloriesBurned} cal';
       }
       break;
-      
+
     case WorkoutType.cycling:
       type = 'cycle';
-      final duration = session.durationSeconds != null 
+      final duration = session.durationSeconds != null
           ? '${(session.durationSeconds! / 60).round()} min'
           : '';
       details = duration;
       break;
-      
+
     case WorkoutType.yoga:
       type = 'workout';
-      final duration = session.durationSeconds != null 
+      final duration = session.durationSeconds != null
           ? '${(session.durationSeconds! / 60).round()} min'
           : '';
       details = '$duration • Yoga';
@@ -90,7 +93,7 @@ RecentActivity _convertToRecentActivity(WorkoutSession session) {
   } else {
     timeOfDay = 'Evening';
   }
-  
+
   final name = '$timeOfDay ${session.type.displayName}';
 
   return RecentActivity(

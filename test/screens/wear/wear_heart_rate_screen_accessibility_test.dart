@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flowfit/screens/wear/wear_heart_rate_screen.dart';
 import 'package:wear_plus/wear_plus.dart';
@@ -6,19 +7,50 @@ import 'package:wear_plus/wear_plus.dart';
 /// Tests for WCAG 2.1 Level AA accessibility compliance
 /// Requirement 3.3: Touch targets must be at least 48x48dp
 void main() {
+  const watchDataChannel = MethodChannel('com.flowfit.watch/data');
+
   group('WearHeartRateScreen Accessibility Tests', () {
-    testWidgets('Start/Stop button meets minimum touch target size (48x48dp)',
-        (WidgetTester tester) async {
-      // Arrange
+    setUp(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchDataChannel, (call) async {
+            switch (call.method) {
+              case 'checkPermission':
+                return 'granted';
+              case 'requestPermission':
+              case 'connectWatch':
+              case 'isWatchConnected':
+                return true;
+              case 'disconnectWatch':
+                return null;
+              default:
+                return null;
+            }
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchDataChannel, null);
+    });
+
+    Future<void> pumpWearHeartRateScreen(WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: WearHeartRateScreen(
             shape: WearShape.round,
             mode: WearMode.active,
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    testWidgets('Start/Stop button meets minimum touch target size (48x48dp)', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      await pumpWearHeartRateScreen(tester);
 
       // Act - Find the Start button
       final startButtonFinder = find.widgetWithText(ElevatedButton, 'Start');
@@ -42,32 +74,26 @@ void main() {
       );
     });
 
-    testWidgets('Send button meets minimum touch target size (48x48dp)',
-        (WidgetTester tester) async {
+    testWidgets('Send button meets minimum touch target size (48x48dp)', (
+      WidgetTester tester,
+    ) async {
       // This test would require mocking the heart rate data
       // For now, we verify the button exists when heart rate is available
       // The actual size verification would be similar to the Start button test
-      
+
       // Note: Full integration test would require:
       // 1. Mock WatchBridgeService to provide heart rate data
       // 2. Trigger monitoring to show the Send button
       // 3. Verify Send button size >= 48x48dp
-      
+
       // Skipping for now as it requires extensive mocking
     });
 
-    testWidgets('All interactive elements have sufficient padding',
-        (WidgetTester tester) async {
+    testWidgets('All interactive elements have sufficient padding', (
+      WidgetTester tester,
+    ) async {
       // Arrange
-      await tester.pumpWidget(
-        MaterialApp(
-          home: WearHeartRateScreen(
-            shape: WearShape.round,
-            mode: WearMode.active,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpWearHeartRateScreen(tester);
 
       // Act - Find all ElevatedButton widgets
       final buttonFinders = find.byType(ElevatedButton);
@@ -89,18 +115,11 @@ void main() {
       }
     });
 
-    testWidgets('Font sizes meet minimum accessibility requirements',
-        (WidgetTester tester) async {
+    testWidgets('Font sizes meet minimum accessibility requirements', (
+      WidgetTester tester,
+    ) async {
       // Arrange
-      await tester.pumpWidget(
-        MaterialApp(
-          home: WearHeartRateScreen(
-            shape: WearShape.round,
-            mode: WearMode.active,
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+      await pumpWearHeartRateScreen(tester);
 
       // Act - Find text widgets
       final textWidgets = find.byType(Text);
@@ -122,22 +141,24 @@ void main() {
       }
     });
 
-    testWidgets('Error display shows icon and descriptive text with proper styling',
-        (WidgetTester tester) async {
-      // Note: This test verifies the error display widget structure
-      // In a real scenario, we would need to mock an error condition
-      // to trigger the error display. For now, we verify the widget
-      // is properly structured when it would be shown.
-      
-      // The error display widget (_buildErrorDisplay) is verified to:
-      // 1. Use errorRed color (#F44336) with sufficient contrast
-      // 2. Display error icon (Icons.error_outline)
-      // 3. Display descriptive error message
-      // 4. Use minimum 14sp font size
-      // 5. Meet WCAG 2.1 Level AA requirements
-      
-      // This is validated through code review and manual testing
-      // as triggering actual error states requires extensive mocking
-    });
+    testWidgets(
+      'Error display shows icon and descriptive text with proper styling',
+      (WidgetTester tester) async {
+        // Note: This test verifies the error display widget structure
+        // In a real scenario, we would need to mock an error condition
+        // to trigger the error display. For now, we verify the widget
+        // is properly structured when it would be shown.
+
+        // The error display widget (_buildErrorDisplay) is verified to:
+        // 1. Use errorRed color (#F44336) with sufficient contrast
+        // 2. Display error icon (Icons.error_outline)
+        // 3. Display descriptive error message
+        // 4. Use minimum 14sp font size
+        // 5. Meet WCAG 2.1 Level AA requirements
+
+        // This is validated through code review and manual testing
+        // as triggering actual error states requires extensive mocking
+      },
+    );
   });
 }

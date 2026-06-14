@@ -212,7 +212,7 @@ class _HealthScreenState extends State<HealthScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: Column(
         children: [
           // Custom Header
@@ -255,7 +255,7 @@ class _HealthScreenState extends State<HealthScreen> {
                     'Daily Log',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onBackground,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -361,8 +361,9 @@ class _HealthScreenState extends State<HealthScreen> {
                             child: LinearProgressIndicator(
                               value: 0.625, // 1250/2000
                               minHeight: 8,
-                              backgroundColor: theme.colorScheme.surfaceVariant,
-                              valueColor: AlwaysStoppedAnimation<Color>(
+                              backgroundColor:
+                                  theme.colorScheme.surfaceContainerHighest,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
                                 Colors.cyan,
                               ),
                             ),
@@ -481,7 +482,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                       strokeWidth: 14,
                                       backgroundColor: theme
                                           .colorScheme
-                                          .surfaceVariant
+                                          .surfaceContainerHighest
                                           .withValues(alpha: 0.3),
                                       valueColor:
                                           const AlwaysStoppedAnimation<Color>(
@@ -572,7 +573,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                       ),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Icon(
+                                    child: const Icon(
                                       SolarIconsBold.moon,
                                       size: 24,
                                       color: Colors.purple,
@@ -633,7 +634,9 @@ class _HealthScreenState extends State<HealthScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.surfaceVariant
+                                    color: theme
+                                        .colorScheme
+                                        .surfaceContainerHighest
                                         .withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
@@ -665,7 +668,9 @@ class _HealthScreenState extends State<HealthScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(20),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.surfaceVariant
+                                    color: theme
+                                        .colorScheme
+                                        .surfaceContainerHighest
                                         .withValues(alpha: 0.3),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
@@ -723,7 +728,7 @@ class _HealthScreenState extends State<HealthScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? theme.colorScheme.surfaceVariant
+              ? theme.colorScheme.surfaceContainerHighest
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
@@ -746,7 +751,7 @@ class _HealthScreenState extends State<HealthScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceVariant,
+            color: theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
           ),
         ),

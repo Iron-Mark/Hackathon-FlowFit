@@ -91,6 +91,22 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
     _saveStateLocally();
   }
 
+  /// Set optional user nickname and age from the older onboarding API.
+  void setUserInfo(String? nickname, int? age) {
+    state = BuddyOnboardingState(
+      currentStep: state.currentStep,
+      userName: state.userName,
+      selectedColor: state.selectedColor,
+      buddyName: state.buddyName,
+      userNickname: nickname,
+      userAge: age,
+      selectedGoals: state.selectedGoals,
+      notificationsGranted: state.notificationsGranted,
+      isComplete: state.isComplete,
+    );
+    _saveStateLocally();
+  }
+
   /// Toggle wellness goal selection
   void toggleGoal(String goalId) {
     final currentGoals = List<String>.from(state.selectedGoals);

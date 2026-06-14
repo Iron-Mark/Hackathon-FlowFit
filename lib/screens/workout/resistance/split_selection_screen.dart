@@ -9,7 +9,8 @@ class SplitSelectionScreen extends ConsumerStatefulWidget {
   const SplitSelectionScreen({super.key});
 
   @override
-  ConsumerState<SplitSelectionScreen> createState() => _SplitSelectionScreenState();
+  ConsumerState<SplitSelectionScreen> createState() =>
+      _SplitSelectionScreenState();
 }
 
 class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
@@ -19,21 +20,81 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
   bool _hrMonitorEnabled = false;
 
   final List<ExerciseProgress> _upperBodyExercises = [
-    ExerciseProgress(exerciseName: 'Bench Press', emoji: '💪', totalSets: 3, targetReps: 12),
-    ExerciseProgress(exerciseName: 'Incline Press', emoji: '🏋️', totalSets: 3, targetReps: 10),
-    ExerciseProgress(exerciseName: 'Shoulder Press', emoji: '💪', totalSets: 3, targetReps: 12),
-    ExerciseProgress(exerciseName: 'Lateral Raises', emoji: '🔥', totalSets: 3, targetReps: 15),
-    ExerciseProgress(exerciseName: 'Bent Over Rows', emoji: '🏋️', totalSets: 3, targetReps: 12),
-    ExerciseProgress(exerciseName: 'Bicep Curls', emoji: '💪', totalSets: 3, targetReps: 12),
+    ExerciseProgress(
+      exerciseName: 'Bench Press',
+      emoji: '💪',
+      totalSets: 3,
+      targetReps: 12,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Incline Press',
+      emoji: '🏋️',
+      totalSets: 3,
+      targetReps: 10,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Shoulder Press',
+      emoji: '💪',
+      totalSets: 3,
+      targetReps: 12,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Lateral Raises',
+      emoji: '🔥',
+      totalSets: 3,
+      targetReps: 15,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Bent Over Rows',
+      emoji: '🏋️',
+      totalSets: 3,
+      targetReps: 12,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Bicep Curls',
+      emoji: '💪',
+      totalSets: 3,
+      targetReps: 12,
+    ),
   ];
 
   final List<ExerciseProgress> _lowerBodyExercises = [
-    ExerciseProgress(exerciseName: 'Squats', emoji: '🦵', totalSets: 4, targetReps: 12),
-    ExerciseProgress(exerciseName: 'Leg Press', emoji: '🏋️', totalSets: 3, targetReps: 15),
-    ExerciseProgress(exerciseName: 'Lunges', emoji: '🦵', totalSets: 3, targetReps: 12),
-    ExerciseProgress(exerciseName: 'Leg Curls', emoji: '🔥', totalSets: 3, targetReps: 12),
-    ExerciseProgress(exerciseName: 'Calf Raises', emoji: '🦵', totalSets: 4, targetReps: 15),
-    ExerciseProgress(exerciseName: 'Deadlifts', emoji: '🏋️', totalSets: 3, targetReps: 10),
+    ExerciseProgress(
+      exerciseName: 'Squats',
+      emoji: '🦵',
+      totalSets: 4,
+      targetReps: 12,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Leg Press',
+      emoji: '🏋️',
+      totalSets: 3,
+      targetReps: 15,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Lunges',
+      emoji: '🦵',
+      totalSets: 3,
+      targetReps: 12,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Leg Curls',
+      emoji: '🔥',
+      totalSets: 3,
+      targetReps: 12,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Calf Raises',
+      emoji: '🦵',
+      totalSets: 4,
+      targetReps: 15,
+    ),
+    ExerciseProgress(
+      exerciseName: 'Deadlifts',
+      emoji: '🏋️',
+      totalSets: 3,
+      targetReps: 10,
+    ),
   ];
 
   @override
@@ -41,9 +102,9 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -212,7 +273,9 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pushNamed('/workout/resistance/active');
+                    Navigator.of(
+                      context,
+                    ).pushNamed('/workout/resistance/active');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
@@ -223,10 +286,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
                   ),
                   child: const Text(
                     'Start Workout',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -265,12 +325,10 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
-          border: isSelected
-              ? Border.all(color: Colors.white, width: 3)
-              : null,
+          border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
           boxShadow: [
             BoxShadow(
-              color: color1.withOpacity(0.3),
+              color: color1.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -300,27 +358,35 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
             Text(
               focus,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
               ),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16, color: Colors.white.withOpacity(0.9)),
+                Icon(
+                  Icons.access_time,
+                  size: 16,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
                 const SizedBox(width: 4),
                 Text(
                   duration,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
                 const SizedBox(width: 16),
-                Icon(Icons.local_fire_department, size: 16, color: Colors.white.withOpacity(0.9)),
+                Icon(
+                  Icons.local_fire_department,
+                  size: 16,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
                 const SizedBox(width: 4),
                 Text(
                   calories,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],
@@ -337,29 +403,34 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              ...exercises.map((exercise) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Text(exercise.emoji, style: const TextStyle(fontSize: 20)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            exercise.exerciseName,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.9),
-                            ),
+              ...exercises.map(
+                (exercise) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        exercise.emoji,
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          exercise.exerciseName,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
-                        Text(
-                          '${exercise.totalSets} × ${exercise.targetReps}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withOpacity(0.7),
-                          ),
+                      ),
+                      Text(
+                        '${exercise.totalSets} × ${exercise.targetReps}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
-                      ],
-                    ),
-                  )),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ],
         ),
@@ -381,7 +452,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.colorScheme.primary
-                : theme.colorScheme.surfaceVariant,
+                : theme.colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(

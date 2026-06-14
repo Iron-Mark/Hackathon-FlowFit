@@ -48,8 +48,8 @@ class BuddyWelcomeScreen extends StatelessWidget {
                 label:
                     'Animated Buddy character in ocean blue color, gently bobbing',
                 image: true,
-                child: BuddyIdleAnimation(
-                  child: const BuddyCharacterWidget(
+                child: const BuddyIdleAnimation(
+                  child: BuddyCharacterWidget(
                     color: Color(0xFF4ECDC4), // Ocean Blue
                     size: 200,
                   ),

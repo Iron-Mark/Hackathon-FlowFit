@@ -176,8 +176,8 @@ class _BuddyColorSelectionScreenState
       child: LayoutBuilder(
         builder: (context, constraints) {
           final centerX = constraints.maxWidth / 2;
-          final centerY = 140.0; // Half of height
-          final radius = 100.0; // Radius of the circular arrangement
+          const centerY = 140.0; // Half of height
+          const radius = 100.0; // Radius of the circular arrangement
 
           return Stack(
             children: colorOptions.entries.map((entry) {
