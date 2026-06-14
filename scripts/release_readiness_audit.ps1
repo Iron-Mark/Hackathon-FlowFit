@@ -768,9 +768,9 @@ function Test-WebAndStoreConfig {
 
     $webBaseUrl = [Environment]::GetEnvironmentVariable('FLOWFIT_PUBLIC_WEB_BASE_URL')
     if (Test-PlaceholderValue $webBaseUrl -or $webBaseUrl -notmatch '^https://[^/]+') {
-        Add-Warn 'Public web deployment URL' 'FLOWFIT_PUBLIC_WEB_BASE_URL is missing, placeholder/test-shaped, reserved, or not set to a deployed https origin for store submission.'
+        Add-Warn 'Public web deployment URL' 'FLOWFIT_PUBLIC_WEB_BASE_URL is missing, placeholder/test-shaped, reserved, or not set to a deployed HTTPS URL for store submission.'
     } else {
-        Add-Pass 'Public web deployment URL' 'FLOWFIT_PUBLIC_WEB_BASE_URL is configured for deployed compliance URLs.'
+        Add-Pass 'Public web deployment URL' 'FLOWFIT_PUBLIC_WEB_BASE_URL is configured for deployed compliance URLs, including path-based static hosts when needed.'
     }
 
     $filesWithDefaultSupport = @()

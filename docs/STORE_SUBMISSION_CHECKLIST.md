@@ -109,6 +109,14 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Deploy `build/web` to chosen host, or upload
       `build/release/flowfit-web-release.zip` to a static host that unpacks ZIP
       deploy artifacts.
+- [ ] For GitHub Pages, configure repository variables `FLOWFIT_PUBLIC_WEB_BASE_URL`,
+      `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and optional
+      `FLOWFIT_SUPPORT_EMAIL`, then run `.github/workflows/flutter-web-pages.yml`.
+      Use `https://iron-mark.github.io/Hackathon-FlowFit` as the default project
+      site unless a custom domain is configured.
+- [ ] If the web host serves from a subpath, confirm the wrapper-derived
+      Flutter base href matches the path, or set `FLOWFIT_WEB_BASE_HREF` before
+      building.
 - [ ] Confirm `build/store-release-artifacts.json` includes
       `flutter-web-build` and `flutter-web-release-zip` with SHA-256 evidence.
 - [ ] Confirm `build/store-release-artifacts.json` records

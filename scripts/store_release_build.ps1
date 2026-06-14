@@ -15,6 +15,7 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 $artifactManifest = New-Object System.Collections.Generic.List[object]
 $strictAuditRanThisInvocation = $false
 $supabaseClientConfig = $null
+$resolvedWebReleaseConfig = $null
 
 function Invoke-OptionalCommand {
     param(
@@ -195,6 +196,11 @@ function Get-ReleaseInputEvidence {
         androidAuthScheme = [Environment]::GetEnvironmentVariable('ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME')
         iosBundleIdentifier = $iosBundleId
         webBuildBackend = if ($WebWasm) { 'wasm' } else { 'javascript' }
+        webBaseHref = if ($null -ne $script:resolvedWebReleaseConfig) {
+            $script:resolvedWebReleaseConfig.WebBaseHref
+        } else {
+            [Environment]::GetEnvironmentVariable('FLOWFIT_WEB_BASE_HREF')
+        }
     }
 }
 
@@ -356,6 +362,68 @@ function Assert-ProductionValue {
         $Value -match 'YOUR_|REPLACE_WITH|<your-|your[-_]|com\.example\.|com\.yourcompany\.|(^|[./-])smoke($|[./-])|(^|[./:-])(example|invalid|test|localhost)(\.|/|:|$)|127\.0\.0\.1|\$\([^)]+\)'
     ) {
         throw "$Name is still placeholder/test/reserved-shaped: $Value"
+    }
+}
+
+function Resolve-WebBaseHref {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Value
+    )
+
+    $baseHref = $Value.Trim()
+    if ($baseHref -notmatch '^/.*/$') {
+        throw 'FLOWFIT_WEB_BASE_HREF must start and end with "/", for example /Hackathon-FlowFit/.'
+    }
+    if ($baseHref.Contains('//')) {
+        throw 'FLOWFIT_WEB_BASE_HREF must not contain duplicate slashes.'
+    }
+
+    return $baseHref
+}
+
+function Resolve-WebReleaseConfig {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PublicWebBaseUrl
+    )
+
+    Assert-ProductionValue 'FLOWFIT_PUBLIC_WEB_BASE_URL' $PublicWebBaseUrl
+
+    $uri = $null
+    if (-not [System.Uri]::TryCreate($PublicWebBaseUrl.Trim().TrimEnd('/'), [System.UriKind]::Absolute, [ref]$uri)) {
+        throw 'FLOWFIT_PUBLIC_WEB_BASE_URL must be an absolute HTTPS URL, for example https://iron-mark.github.io/Hackathon-FlowFit.'
+    }
+    if ($uri.Scheme -ne 'https') {
+        throw 'FLOWFIT_PUBLIC_WEB_BASE_URL must use HTTPS.'
+    }
+    if (-not [string]::IsNullOrWhiteSpace($uri.Query) -or -not [string]::IsNullOrWhiteSpace($uri.Fragment)) {
+        throw 'FLOWFIT_PUBLIC_WEB_BASE_URL must not include query strings or fragments.'
+    }
+
+    $basePath = $uri.AbsolutePath
+    if ([string]::IsNullOrWhiteSpace($basePath)) {
+        $basePath = '/'
+    }
+    if (-not $basePath.EndsWith('/')) {
+        $basePath = "$basePath/"
+    }
+
+    $baseHrefOverride = [Environment]::GetEnvironmentVariable('FLOWFIT_WEB_BASE_HREF')
+    $webBaseHref = if ([string]::IsNullOrWhiteSpace($baseHrefOverride)) {
+        Resolve-WebBaseHref -Value $basePath
+    } else {
+        Resolve-WebBaseHref -Value $baseHrefOverride
+    }
+
+    $normalizedUrl = $uri.GetLeftPart([System.UriPartial]::Authority).TrimEnd('/')
+    if ($basePath -ne '/') {
+        $normalizedUrl += $basePath.TrimEnd('/')
+    }
+
+    return [pscustomobject]@{
+        PublicWebBaseUrl = $normalizedUrl
+        WebBaseHref = $webBaseHref
     }
 }
 
@@ -723,11 +791,9 @@ function Invoke-WebReleaseBuild {
     $publicWebBaseUrl = Get-RequiredEnv 'FLOWFIT_PUBLIC_WEB_BASE_URL' 'public privacy/account-deletion URLs'
 
     Assert-Email 'FLOWFIT_SUPPORT_EMAIL' $supportEmail
-    Assert-ProductionValue 'FLOWFIT_PUBLIC_WEB_BASE_URL' $publicWebBaseUrl
-    if ($publicWebBaseUrl -notmatch '^https://[^/]+/?$') {
-        throw 'FLOWFIT_PUBLIC_WEB_BASE_URL must be an HTTPS origin, for example https://flowfit.your-owned-domain.com'
-    }
-    $publicWebBaseUrl = $publicWebBaseUrl.TrimEnd('/')
+    $script:resolvedWebReleaseConfig = Resolve-WebReleaseConfig -PublicWebBaseUrl $publicWebBaseUrl
+    $publicWebBaseUrl = $script:resolvedWebReleaseConfig.PublicWebBaseUrl
+    $webBaseHref = $script:resolvedWebReleaseConfig.WebBaseHref
 
     $webBuildBackend = if ($WebWasm) { 'Wasm' } else { 'JavaScript' }
     $webBuildCommand = @(
@@ -741,6 +807,7 @@ function Invoke-WebReleaseBuild {
     }
     $webBuildCommand += @(
         '--no-pub',
+        "--base-href=$webBaseHref",
         "--dart-define=FLOWFIT_SUPPORT_EMAIL=$supportEmail",
         "--dart-define=SUPABASE_URL=$($script:supabaseClientConfig.Url)",
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"

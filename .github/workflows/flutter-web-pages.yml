@@ -1,0 +1,109 @@
+name: Flutter Web Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/flutter-web-pages.yml"
+      - "lib/**"
+      - "pubspec.lock"
+      - "pubspec.yaml"
+      - "scripts/store_release_build.ps1"
+      - "scripts/verify_web_deployment.ps1"
+      - "web/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pages: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and Deploy Flutter Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      FLOWFIT_PUBLIC_WEB_BASE_URL: ${{ vars.FLOWFIT_PUBLIC_WEB_BASE_URL || 'https://iron-mark.github.io/Hackathon-FlowFit/' }}
+      FLOWFIT_SUPPORT_EMAIL: ${{ vars.FLOWFIT_SUPPORT_EMAIL || 'support@flowfit.com' }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.41.9"
+          cache: true
+
+      - name: Validate web deploy inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${FLOWFIT_PUBLIC_WEB_BASE_URL}" ]]; then
+            echo "FLOWFIT_PUBLIC_WEB_BASE_URL repo variable is required." >&2
+            exit 1
+          fi
+          if [[ "${FLOWFIT_PUBLIC_WEB_BASE_URL}" != https://* ]]; then
+            echo "FLOWFIT_PUBLIC_WEB_BASE_URL must be an HTTPS URL." >&2
+            exit 1
+          fi
+          if [[ -z "${SUPABASE_URL}" ]]; then
+            echo "SUPABASE_URL repo variable is required." >&2
+            exit 1
+          fi
+          if [[ -z "${SUPABASE_PUBLISHABLE_KEY}" ]]; then
+            echo "SUPABASE_PUBLISHABLE_KEY repo variable is required." >&2
+            exit 1
+          fi
+          if [[ "${SUPABASE_PUBLISHABLE_KEY}" != sb_publishable_* ]]; then
+            echo "SUPABASE_PUBLISHABLE_KEY must be a Supabase publishable key, not a service-role or secret key." >&2
+            exit 1
+          fi
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Build production web artifact
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Verify deployed GitHub Pages site
+        shell: pwsh
+        run: >
+          pwsh -NoProfile -File scripts/verify_web_deployment.ps1
+          -BaseUrl '${{ steps.deployment.outputs.page_url }}'
+          -SupportEmail "$env:FLOWFIT_SUPPORT_EMAIL"
+          -OutFile build/web-pages-deployment-verification.json
+
+      - name: Upload GitHub Pages verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowfit-github-pages-verification
+          path: build/web-pages-deployment-verification.json
+          if-no-files-found: error

@@ -13,6 +13,7 @@ void main() {
   late String webDeploymentVerifier;
   late String storeSubmissionChecklist;
   late String ciWorkflow;
+  late String pagesWorkflow;
   late String copilotInstructions;
   late String androidMainManifest;
   late String androidDebugManifest;
@@ -41,6 +42,10 @@ void main() {
       'docs/STORE_SUBMISSION_CHECKLIST.md',
     ).readAsStringSync();
     ciWorkflow = File('.github/workflows/flutter-ci.yml').readAsStringSync();
+    final pagesWorkflowFile = File('.github/workflows/flutter-web-pages.yml');
+    pagesWorkflow = pagesWorkflowFile.existsSync()
+        ? pagesWorkflowFile.readAsStringSync()
+        : '';
     copilotInstructions = File(
       '.github/copilot-instructions.md',
     ).readAsStringSync();
@@ -243,6 +248,14 @@ void main() {
     );
   });
 
+  test('store web release supports path-based static hosts', () {
+    expect(storeReleaseBuild, contains('Resolve-WebReleaseConfig'));
+    expect(storeReleaseBuild, contains('FLOWFIT_WEB_BASE_HREF'));
+    expect(storeReleaseBuild, contains('--base-href'));
+    expect(storeReleaseBuild, contains('webBaseHref'));
+    expect(storeReleaseBuild, contains('https://iron-mark.github.io/Hackathon-FlowFit'));
+  });
+
   test('web deployment verifier checks deployed compliance pages', () {
     expect(webDeploymentVerifier, contains('[string]\$BaseUrl'));
     expect(webDeploymentVerifier, contains('[switch]\$AllowInsecureLocalhost'));
@@ -289,6 +302,22 @@ void main() {
         'rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java',
       ),
     );
+  });
+
+  test('GitHub Pages workflow publishes production web artifacts', () {
+    expect(pagesWorkflow, contains('name: Flutter Web Pages'));
+    expect(pagesWorkflow, contains('actions/configure-pages@v5'));
+    expect(pagesWorkflow, contains('actions/upload-pages-artifact@v3'));
+    expect(pagesWorkflow, contains('actions/deploy-pages@v4'));
+    expect(pagesWorkflow, contains('actions/upload-artifact@v4'));
+    expect(pagesWorkflow, contains('scripts/store_release_build.ps1'));
+    expect(pagesWorkflow, contains('-Target Web'));
+    expect(pagesWorkflow, contains('-SkipFlutterPubGet'));
+    expect(pagesWorkflow, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
+    expect(pagesWorkflow, contains('SUPABASE_URL'));
+    expect(pagesWorkflow, contains('SUPABASE_PUBLISHABLE_KEY'));
+    expect(pagesWorkflow, contains('flowfit-github-pages-verification'));
+    expect(pagesWorkflow, contains('/Hackathon-FlowFit/'));
   });
 
   test('agent guidance matches maintained fork backend and native package', () {

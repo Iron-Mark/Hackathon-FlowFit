@@ -162,6 +162,9 @@ analyzer, Flutter tests, and Android release lint before producing artifacts.
 ```powershell
 $env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://flowfit.your-owned-domain.com'
+# Optional when the deployed Flutter web app is served from a subpath.
+# The wrapper derives this from FLOWFIT_PUBLIC_WEB_BASE_URL when omitted.
+# $env:FLOWFIT_WEB_BASE_HREF = '/Hackathon-FlowFit/'
 $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
 $env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
@@ -224,10 +227,15 @@ target produces the signed IPA under `build/ios/ipa/` when Apple signing is
 configured. The web target builds `build/web`, replaces `support@flowfit.com`
 in the built public compliance pages with `FLOWFIT_SUPPORT_EMAIL`, creates
 `build/release/flowfit-web-release.zip` for static-host uploads, and writes
-`build/store-release-artifacts.json`. The web target uses the JavaScript
-backend by default; pass `-WebWasm` when the deployed web release should be
-Flutter WebAssembly. The artifact manifest records the selected backend in
-`releaseInputs.webBuildBackend`.
+`build/store-release-artifacts.json`. If `FLOWFIT_PUBLIC_WEB_BASE_URL` includes
+a path, such as `https://iron-mark.github.io/Hackathon-FlowFit`, the wrapper
+passes the matching Flutter `--base-href` so project-site hosts load assets
+from the correct subpath. Override that derived value only when needed with
+`FLOWFIT_WEB_BASE_HREF`. The web target uses the JavaScript backend by default;
+pass `-WebWasm` when the deployed web release should be Flutter WebAssembly.
+The artifact manifest records the selected backend in
+`releaseInputs.webBuildBackend` and the resolved base href in
+`releaseInputs.webBaseHref`.
 Use `-AllowDirty` only for an explicitly documented emergency rebuild from
 uncommitted source. Use `-SkipValidation` only when the same commit already has
 fresh analyzer, test, and release-lint evidence.
@@ -269,6 +277,25 @@ wording, and writes JSON evidence when `-OutFile` is provided.
 
 For local smoke testing only, run a local static server for `build/web` and add
 `-AllowInsecureLocalhost`.
+
+### GitHub Pages deployment workflow
+
+`.github/workflows/flutter-web-pages.yml` builds the production Flutter web
+artifact with `scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet`,
+uploads `build/web` to GitHub Pages, deploys it, and verifies the deployed
+site with `scripts/verify_web_deployment.ps1`. It uploads the JSON verification
+evidence as `flowfit-github-pages-verification`.
+
+Configure repository variables before dispatching it:
+
+- `FLOWFIT_PUBLIC_WEB_BASE_URL`, for example
+  `https://iron-mark.github.io/Hackathon-FlowFit`.
+- `SUPABASE_URL`.
+- `SUPABASE_PUBLISHABLE_KEY`.
+- Optional `FLOWFIT_SUPPORT_EMAIL`.
+
+If the repository has no Pages site yet, enable Settings > Pages > GitHub
+Actions as the source before expecting the workflow to publish.
 
 ---
 

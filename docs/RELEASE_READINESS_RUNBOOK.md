@@ -219,6 +219,18 @@ Build:
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web
 ```
 
+Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the final deployed URL before building.
+Root-domain hosts can use an origin such as `https://flowfit.example.com`.
+Project-site hosts can include the path, for example
+`https://iron-mark.github.io/Hackathon-FlowFit`. The wrapper derives Flutter's
+`--base-href` from that path, so GitHub Pages project sites load assets from
+`/Hackathon-FlowFit/` instead of `/`. Override the derived value only when the
+host needs it:
+
+```powershell
+$env:FLOWFIT_WEB_BASE_HREF = '/Hackathon-FlowFit/'
+```
+
 Serve the output from `build/web` on the chosen host. The current build targets
 Flutter web JavaScript. Wasm compile-smoke is available through the optional
 preflight flag below, but JS remains the default release target until the
@@ -267,6 +279,28 @@ The verifier checks the app shell, `manifest.json`, `privacy.html`, and
 `account-deletion.html`, enforces HTTPS for real deployments, validates the
 configured support inbox text, rejects internal maintainer/store-review terms,
 and writes JSON evidence for store handoff.
+
+### GitHub Pages Deployment
+
+`.github/workflows/flutter-web-pages.yml` provides a concrete Flutter web
+deployment path for this fork. It builds with `scripts/store_release_build.ps1
+-Target Web -SkipFlutterPubGet`, uploads `build/web` to GitHub Pages, deploys
+it, then runs `scripts/verify_web_deployment.ps1` against the deployed Pages
+URL and uploads `flowfit-github-pages-verification` evidence.
+
+Configure these repository variables before running it:
+
+- `FLOWFIT_PUBLIC_WEB_BASE_URL`, defaulting in the workflow to
+  `https://iron-mark.github.io/Hackathon-FlowFit` when the variable is absent.
+- `SUPABASE_URL` for the release Supabase project.
+- `SUPABASE_PUBLISHABLE_KEY` for the release Supabase project.
+- Optional `FLOWFIT_SUPPORT_EMAIL` when the production inbox is not
+  `support@flowfit.com`.
+
+If the GitHub Pages API still returns 404 for this repository, open repository
+Settings > Pages and set the Pages build/deploy source to GitHub Actions. The
+workflow is safe to keep in the repo before that switch; it will publish only
+after the workflow is run on `main` or manually dispatched with valid variables.
 
 ## Supabase Setup
 
@@ -434,6 +468,11 @@ are present.
 CI intentionally runs the audit in advisory mode. Strict mode requires external
 maintainer-controlled inputs: real Supabase project credentials, MCP OAuth,
 upload signing, deployed web URL, and support inbox verification.
+
+`.github/workflows/flutter-web-pages.yml` is separate from CI because it is a
+deployment workflow. It requires GitHub Pages write permissions plus production
+Supabase repository variables, and it verifies the deployed public web URL after
+publish.
 
 Machine-level checks:
 
