@@ -171,6 +171,30 @@ void main() {
     expect(releaseEnvExample, isNot(contains('dnasghxxqwibwqnljvxr')));
   });
 
+  test('legacy Kiro specs do not pin retired Supabase credentials', () {
+    final kiroSpecs = Directory('.kiro')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.md'))
+        .toList();
+
+    for (final file in kiroSpecs) {
+      final content = file.readAsStringSync();
+      expect(
+        content,
+        isNot(contains('dnasghxxqwibwqnljvxr')),
+        reason: '${file.path} must not pin the retired Supabase project ref.',
+      );
+      expect(
+        content,
+        isNot(
+          matches(RegExp(r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+')),
+        ),
+        reason: '${file.path} must not contain committed Supabase JWTs.',
+      );
+    }
+  });
+
   test('store release wrapper runs validation before producing artifacts', () {
     expect(storeReleaseBuild, contains('[switch]\$SkipValidation'));
     expect(storeReleaseBuild, contains('Invoke-ReleaseValidation'));
@@ -253,7 +277,10 @@ void main() {
     expect(storeReleaseBuild, contains('FLOWFIT_WEB_BASE_HREF'));
     expect(storeReleaseBuild, contains('--base-href'));
     expect(storeReleaseBuild, contains('webBaseHref'));
-    expect(storeReleaseBuild, contains('https://iron-mark.github.io/Hackathon-FlowFit'));
+    expect(
+      storeReleaseBuild,
+      contains('https://iron-mark.github.io/Hackathon-FlowFit'),
+    );
   });
 
   test('web deployment verifier checks deployed compliance pages', () {

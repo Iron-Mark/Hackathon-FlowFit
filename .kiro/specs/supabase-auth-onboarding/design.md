@@ -15,8 +15,8 @@ This design document outlines the implementation of a complete authentication an
 
 ### Supabase Configuration
 
-- **Project URL**: `https://dnasghxxqwibwqnljvxr.supabase.co`
-- **Anon Public Key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRuYXNnaHh4cXdpYndxbmxqdnhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNTExMTIsImV4cCI6MjA3OTYyNzExMn0.O9-vvvetPbL33UOQID6PjUl9wGr2U98qCM_23OW-cuQ`
+- **Project URL**: `https://YOUR_PROJECT_REF.supabase.co`
+- **Publishable Key**: `sb_publishable_YOUR_KEY`
 
 ## Architecture
 
@@ -649,8 +649,11 @@ Store Supabase credentials in `lib/secrets.dart`:
 
 ```dart
 class SupabaseConfig {
-  static const String url = 'https://dnasghxxqwibwqnljvxr.supabase.co';
-  static const String anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+  static const String url = 'https://YOUR_PROJECT_REF.supabase.co';
+  static const String publishableKey = 'sb_publishable_YOUR_KEY';
+
+  @Deprecated('Use publishableKey instead.')
+  static const String anonKey = publishableKey;
 }
 ```
 
