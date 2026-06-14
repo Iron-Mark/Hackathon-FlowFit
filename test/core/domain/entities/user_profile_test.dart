@@ -241,6 +241,18 @@ void main() {
         expect(json['profile_image_url'], '/path/to/image.jpg');
         expect(json.containsKey('created_at'), false); // Not included
       });
+
+      test('defaults required Supabase notification flag when unset', () {
+        final profile = UserProfile(
+          userId: 'user-123',
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        final json = profile.toSupabaseJson();
+
+        expect(json['notifications_enabled'], isFalse);
+      });
     });
 
     group('fromSurveyData', () {
@@ -272,6 +284,7 @@ void main() {
         expect(profile.activityLevel, 'moderately_active');
         expect(profile.goals, ['maintain_weight', 'improve_cardio']);
         expect(profile.isSynced, false);
+        expect(profile.toSupabaseJson()['survey_completed'], isTrue);
       });
 
       test('handles partial survey data', () {
@@ -357,15 +370,26 @@ void main() {
         expect(profile.validate(), isNull);
       });
 
-      test('returns error for age below 13', () {
+      test('returns null for lower-bound age', () {
         final profile = UserProfile(
           userId: 'user-123',
-          age: 12,
+          age: 7,
           createdAt: now,
           updatedAt: now,
         );
 
-        expect(profile.validate(), contains('Age must be between 13 and 120'));
+        expect(profile.validate(), isNull);
+      });
+
+      test('returns error for age below 7', () {
+        final profile = UserProfile(
+          userId: 'user-123',
+          age: 6,
+          createdAt: now,
+          updatedAt: now,
+        );
+
+        expect(profile.validate(), contains('Age must be between 7 and 120'));
       });
 
       test('returns error for age above 120', () {
@@ -376,7 +400,7 @@ void main() {
           updatedAt: now,
         );
 
-        expect(profile.validate(), contains('Age must be between 13 and 120'));
+        expect(profile.validate(), contains('Age must be between 7 and 120'));
       });
 
       test('returns error for invalid gender', () {

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../services/local_account_data_cleanup.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/deep_link_handler.dart';
 
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});
@@ -12,13 +16,14 @@ class DeleteAccountScreen extends StatefulWidget {
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _confirmationController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
   bool _isLoading = false;
   bool _confirmDelete = false;
 
   @override
   void dispose() {
+    _confirmationController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -42,7 +47,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         builder: (context) => AlertDialog(
           title: const Text('Delete Account?'),
           content: const Text(
-            'This action cannot be undone. All your data will be permanently deleted.',
+            'FlowFit will delete app-owned server records, clear local account data on this device, and request deletion of your sign-in account. This cannot be undone.',
           ),
           actions: [
             TextButton(
@@ -61,27 +66,117 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       if (confirmed == true && mounted) {
         setState(() => _isLoading = true);
 
-        // Simulate API call
-        await Future.delayed(const Duration(milliseconds: 800));
+        try {
+          final client = Supabase.instance.client;
+          final user = client.auth.currentUser;
+          if (user == null) {
+            throw const AuthException(
+              'You must be signed in to delete your account.',
+            );
+          }
 
-        if (mounted) {
-          setState(() => _isLoading = false);
+          DeepLinkHandler.beginInternalAuthFlow();
+          try {
+            await _reauthenticateForDeletion(client, user);
+            await client.rpc('request_account_deletion');
+            await _clearLocalAccountData(user.id);
+            await client.auth.signOut();
+          } finally {
+            DeepLinkHandler.endInternalAuthFlow();
+          }
 
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account deleted successfully'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          if (mounted) {
+            setState(() => _isLoading = false);
 
-          // Navigate to welcome screen
-          Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil('/welcome', (route) => false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Account deletion request submitted'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/welcome', (route) => false);
+          }
+        } catch (error) {
+          if (mounted) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(_deletionErrorMessage(error)),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
         }
       }
+    }
+  }
+
+  Future<void> _reauthenticateForDeletion(
+    SupabaseClient client,
+    User user,
+  ) async {
+    final email = user.email;
+    if (email == null || email.trim().isEmpty) {
+      throw const AuthException(
+        'Email/password reauthentication is required before account deletion.',
+      );
+    }
+
+    final response = await client.auth.signInWithPassword(
+      email: email,
+      password: _passwordController.text,
+    );
+
+    if (response.user?.id != user.id) {
+      throw const AuthException(
+        'Reauthentication did not match the current account.',
+      );
+    }
+  }
+
+  String _deletionErrorMessage(Object error) {
+    if (error is AuthException) {
+      return 'Please confirm your account password and try again.';
+    }
+
+    if (error is PostgrestException) {
+      return 'Could not submit the deletion request. Please try again.';
+    }
+
+    return 'Could not submit the deletion request. Check your connection and try again.';
+  }
+
+  Future<void> _clearLocalAccountData(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = <String>{
+      'user_profile_$userId',
+      'sync_queue_$userId',
+      'profile_image_$userId',
+      'survey_data',
+      'sync_queue',
+      'buddy_onboarding_state',
+      'buddy_onboarding_timestamp',
+      'pending_buddy_profile',
+      'wellness_history',
+      'wellness_transitions',
+      'wellness_onboarding_complete',
+      'wellness_monitoring_enabled',
+      'wellness_last_monitoring_state',
+    };
+
+    for (final key in keys) {
+      await prefs.remove(key);
+    }
+
+    try {
+      await clearLocalDatabaseAccountData();
+    } catch (_) {
+      // Local database cleanup is best effort across mobile/web platforms.
     }
   }
 
@@ -182,20 +277,29 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Deleting your account will:',
+                        'Submitting this request will:',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppTheme.text,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      _buildWarningItem('• Permanently delete all your data'),
-                      _buildWarningItem('• Remove your workout history'),
-                      _buildWarningItem('• Delete your health records'),
-                      _buildWarningItem('• Cancel any active subscriptions'),
+                      _buildWarningItem(
+                        '• Delete app-owned profile, workout, Buddy, and heart-rate records from FlowFit servers',
+                      ),
+                      _buildWarningItem(
+                        '• Clear local FlowFit account data on this device',
+                      ),
+                      _buildWarningItem(
+                        '• Request deletion of your sign-in account',
+                      ),
+                      _buildWarningItem('• Sign you out on this device'),
+                      _buildWarningItem(
+                        '• Retain only records required for security, fraud prevention, or legal obligations',
+                      ),
                       const SizedBox(height: 12),
                       Text(
-                        'This action cannot be undone.',
+                        'If you no longer have the app, use the public account deletion page linked from the app store listing.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.red,
@@ -207,9 +311,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
                 const SizedBox(height: 32),
 
-                // Password Label
                 Text(
-                  'Confirm Your Password',
+                  'Type DELETE to confirm',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppTheme.text,
@@ -217,13 +320,51 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Password Field
                 TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
+                  controller: _confirmationController,
                   style: const TextStyle(color: AppTheme.text),
                   decoration: InputDecoration(
-                    hintText: 'Enter your password',
+                    hintText: 'DELETE',
+                    hintStyle: TextStyle(
+                      color: AppTheme.text.withValues(alpha: 0.5),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    prefixIcon: const Icon(
+                      SolarIconsOutline.trashBinMinimalistic,
+                      color: Colors.red,
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value?.trim() != 'DELETE') {
+                      return 'Type DELETE to confirm account deletion';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                Text(
+                  'Confirm your password',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.text,
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  autofillHints: const [AutofillHints.password],
+                  style: const TextStyle(color: AppTheme.text),
+                  decoration: InputDecoration(
+                    hintText: 'Account password',
                     hintStyle: TextStyle(
                       color: AppTheme.text.withValues(alpha: 0.5),
                     ),
@@ -237,23 +378,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       SolarIconsOutline.lock,
                       color: Colors.red,
                     ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? SolarIconsOutline.eyeClosed
-                            : SolarIconsOutline.eye,
-                        color: AppTheme.text.withValues(alpha: 0.5),
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return 'Enter your account password';
                     }
                     return null;
                   },

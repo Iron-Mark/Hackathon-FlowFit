@@ -1,0 +1,142 @@
+# FlowFit Store Submission Checklist
+
+Last updated: 2026-06-15
+
+This checklist tracks store-facing readiness for Google Play, App Store, and
+Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
+`docs/STORE_METADATA_DRAFT.md`.
+
+## Shared Before Any Store Submission
+
+- [ ] Production Supabase project exists and canonical migration is applied.
+- [ ] `.mcp.json` has `REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF` replaced with
+      the production/development project ref used for this release; Codex has
+      been restarted/reloaded, Supabase MCP OAuth is complete, and
+      `pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict`
+      no longer reports the MCP project-scope blocker.
+- [ ] Supabase advisors have no unresolved high-risk security/performance
+      findings.
+- [ ] Production Supabase client values are supplied through `SUPABASE_URL` and
+      `SUPABASE_PUBLISHABLE_KEY`, either from the process environment, ignored
+      `.env.release`, or ignored local fallback `lib/secrets.dart`.
+- [ ] Flutter release commands pass the production auth scheme with
+      `--dart-define=FLOWFIT_AUTH_SCHEME=...`.
+- [ ] Flutter release commands pass
+      `--dart-define=FLOWFIT_SUPPORT_EMAIL=...` if the final inbox differs
+      from the default.
+- [ ] Strict audit rejects local smoke/example values; do not use
+      `com.flowfit.smoke`, `com.example.*`, `com.yourcompany.*`, `.example`,
+      `.invalid`, `.test`, localhost, or IP-loopback web hosts for production
+      artifacts.
+- [ ] Public privacy-policy URL is live, accessible without login, not a PDF,
+      and matches `docs/PRIVACY_DATA_MAP.md`. After deploying Flutter web, use
+      `https://<your-web-host>/privacy.html`.
+- [ ] Public account-deletion URL is live and lets users initiate deletion
+      without reinstalling the app. After deploying Flutter web, use
+      `https://<your-web-host>/account-deletion.html`.
+- [ ] In-app Privacy Policy, Terms, and Delete Account screens have final
+      maintainer/legal-reviewed copy.
+- [ ] `support@flowfit.com` has been replaced or verified as the production
+      support/privacy inbox in public pages and in-app copy.
+- [ ] Debug-only routes/screens are hidden or removed from production builds.
+- [ ] Legacy debug aliases such as `/trackertest` are not reachable from
+      production UI; use production route names such as `/activity-classifier`.
+- [ ] Real device smoke covers signup, login, profile onboarding, Buddy
+      onboarding, workout creation, account deletion request, and signout.
+
+## Google Play
+
+- [ ] Accept Android SDK licenses locally: `flutter doctor --android-licenses`.
+- [ ] Create maintainer-owned package ID and set it in
+      `android/gradle.properties`.
+- [ ] Confirm signed release builds fail if `FLOWFIT_ANDROID_APPLICATION_ID`,
+      `FLOWFIT_AUTH_SCHEME`, or matching Dart defines are still placeholders,
+      examples, or smoke values.
+- [ ] Generate upload keystore and configure `android/key.properties`.
+- [ ] Add production auth schemes to Supabase redirect URLs.
+- [ ] Build upload artifact:
+      `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android`.
+- [ ] Complete App content:
+  - [ ] Privacy Policy URL.
+  - [ ] Data safety form from `docs/PRIVACY_DATA_MAP.md`.
+  - [ ] Account deletion URL.
+  - [ ] Health/location/background permission disclosures.
+  - [ ] Content rating questionnaire.
+  - [ ] Target audience and ads declaration.
+- [ ] Upload screenshots, feature graphic, app icon, short description, and
+      full description.
+- [ ] Review and finalize listing copy from `docs/STORE_METADATA_DRAFT.md`.
+- [ ] Validate that the uploaded AAB is signed with the upload key, not the
+      debug release-smoke key.
+
+## App Store / TestFlight
+
+- [ ] Run on macOS with Xcode and CocoaPods available.
+- [ ] Set `FLOWFIT_IOS_BUNDLE_IDENTIFIER` in `ios/Flutter/FlowFit.xcconfig`.
+- [ ] Set `FLOWFIT_SUPPORT_EMAIL` and optional
+      `FLOWFIT_IOS_EXPORT_OPTIONS_PLIST` on the macOS build host.
+- [ ] Add production auth schemes to Supabase redirect URLs.
+- [ ] Assign Apple Developer team and signing profiles in Xcode.
+- [ ] Build signed archive/IPA:
+      `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS`.
+- [ ] Confirm `build/store-release-artifacts.json` includes
+      `ios-app-store-ipa`.
+- [ ] Archive `build/store-release-artifacts.json` with each store/web handoff;
+      confirm artifact SHA-256, byte size, git commit, strict-audit summary,
+      and non-secret release inputs match the uploaded package.
+- [ ] Confirm the production wrapper ran from a clean git tree without
+      `-AllowDirty`, or document the emergency override in the release notes.
+- [ ] Confirm analyzer, Flutter tests, and Android release lint ran through the
+      production wrapper without `-SkipValidation`, or attach separate fresh
+      evidence for the same commit.
+- [ ] Complete App Store Connect app privacy answers from
+      `docs/PRIVACY_DATA_MAP.md`.
+- [ ] Add privacy policy URL.
+- [ ] Confirm in-app account deletion request flow is discoverable and works.
+- [ ] Review health, location, motion, camera, photo, and account-data
+      permission purposes.
+- [ ] Upload screenshots, app preview assets if any, app icon, subtitle,
+      promotional text, description, keywords, support URL, and marketing URL.
+- [ ] Review and finalize App Review notes from
+      `docs/STORE_METADATA_DRAFT.md`.
+
+## Flutter Web
+
+- [ ] Build JS release:
+      `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web`.
+- [ ] If Wasm is part of the web release plan, build with:
+      `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm`.
+- [ ] Deploy `build/web` to chosen host, or upload
+      `build/release/flowfit-web-release.zip` to a static host that unpacks ZIP
+      deploy artifacts.
+- [ ] Confirm `build/store-release-artifacts.json` includes
+      `flutter-web-build` and `flutter-web-release-zip` with SHA-256 evidence.
+- [ ] Confirm `build/store-release-artifacts.json` records
+      `releaseInputs.webBuildBackend` as `javascript` or `wasm`, matching the
+      deployed web artifact.
+- [ ] Confirm `/privacy.html` and `/account-deletion.html` load on the deployed
+      origin.
+- [ ] Run `scripts/verify_web_deployment.ps1` against the deployed HTTPS
+      origin and archive `build/web-deployment-verification.json`.
+- [ ] Configure production Supabase redirect URLs for the web origin.
+- [ ] Smoke signup/login/onboarding/workout flow on deployed URL.
+- [ ] Decide whether JS or Wasm is the release target. Current repo is JS-ready
+      by default, and Wasm compile-smoke passes locally after the dependency
+      updates.
+
+## Current Local Gate
+
+```powershell
+pwsh -NoProfile -File scripts/release_readiness_audit.ps1
+pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict
+pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeWasmSmoke
+pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm
+```
+
+The release-smoke App Bundle generated by this command is not a store upload
+artifact.
+
+The strict audit is expected to fail until production Supabase credentials,
+MCP project scope, Android upload signing, production package/bundle IDs, the
+public web deployment URL, and support inbox verification are complete.

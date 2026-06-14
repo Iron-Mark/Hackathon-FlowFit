@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/resistance_session.dart';
 import '../../../models/exercise_progress.dart';
+import '../../../providers/resistance_session_provider.dart';
+import '../../../providers/workout_flow_provider.dart';
 
 /// Split selection screen for resistance training
 /// Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6
@@ -18,6 +20,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
   int _restTimerSeconds = 90;
   bool _audioCuesEnabled = true;
   bool _hrMonitorEnabled = false;
+  bool _isStarting = false;
 
   final List<ExerciseProgress> _upperBodyExercises = [
     ExerciseProgress(
@@ -272,11 +275,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(
-                      context,
-                    ).pushNamed('/workout/resistance/active');
-                  },
+                  onPressed: _isStarting ? null : () => _startWorkout(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -284,10 +283,19 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
-                    'Start Workout',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
+                  child: _isStarting
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        )
+                      : const Text(
+                          'Start Workout',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -469,5 +477,46 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _startWorkout(BuildContext context) async {
+    final selectedSplit = _selectedSplit;
+    if (selectedSplit == null || _isStarting) return;
+
+    final exercises = List<ExerciseProgress>.from(
+      selectedSplit == BodySplit.upper
+          ? _upperBodyExercises
+          : _lowerBodyExercises,
+    );
+    final preMood = ref.read(workoutFlowProvider).preMood;
+
+    setState(() => _isStarting = true);
+    try {
+      await ref
+          .read(resistanceSessionProvider.notifier)
+          .startSession(
+            split: selectedSplit,
+            exercises: exercises,
+            restTimerSeconds: _restTimerSeconds,
+            audioCuesEnabled: _audioCuesEnabled,
+            hrMonitorEnabled: _hrMonitorEnabled,
+            preMood: preMood,
+          );
+    } catch (_) {
+      if (!context.mounted) return;
+      setState(() => _isStarting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not start resistance workout. Sign in and check your connection, then try again.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamed('/workout/resistance/active');
   }
 }

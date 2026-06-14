@@ -1,4 +1,4 @@
-package com.example.flowfit
+package com.oldstlabs.flowfit
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -13,7 +13,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugins.GeneratedPluginRegistrant
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.EventChannel
@@ -183,13 +182,6 @@ class MainActivity: FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        // Ensure plugins are registered explicitly here to avoid runtime registration errors
-        // (Sometimes plugins fail to register when AAR metadata causes issues at build time.)
-        try {
-            GeneratedPluginRegistrant.registerWith(flutterEngine)
-        } catch (e: Exception) {
-            Log.w(TAG, "GeneratedPluginRegistrant.registerWith failed, continuing: ${'$'}e")
-        }
                 // Geofence method and event channels for native background integration
                 MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.flowfit.geofence/native").setMethodCallHandler { call, result ->
                     when (call.method) {

@@ -40,7 +40,7 @@ class _BuddyProfileSetupScreenState
   }
 
   void _onSkip() {
-    Navigator.of(context).pushNamed('/buddy_completion');
+    Navigator.of(context).pushNamed('/buddy-completion');
   }
 
   void _onContinue() {
@@ -48,7 +48,7 @@ class _BuddyProfileSetupScreenState
     if (nickname.isNotEmpty) {
       ref.read(buddyOnboardingProvider.notifier).setUserNickname(nickname);
     }
-    Navigator.of(context).pushNamed('/buddy_completion');
+    Navigator.of(context).pushNamed('/buddy-completion');
   }
 
   @override

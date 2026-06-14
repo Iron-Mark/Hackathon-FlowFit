@@ -47,12 +47,14 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
         // Navigate to active running screen
         Navigator.of(context).pushReplacementNamed('/workout/running/active');
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => _isStarting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to start running: $e'),
+          const SnackBar(
+            content: Text(
+              'Could not start running. Sign in and check your connection, then try again.',
+            ),
             backgroundColor: Colors.red,
           ),
         );

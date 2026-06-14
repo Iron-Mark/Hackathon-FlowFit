@@ -187,7 +187,7 @@ class RunningSession extends WorkoutSession {
       userId: json['user_id'] as String,
       startTime: DateTime.parse(json['start_time'] as String),
       goalType: GoalType.values.byName(json['goal_type'] as String),
-      targetDistance: json['target_distance'] as double?,
+      targetDistance: (json['target_distance'] as num?)?.toDouble(),
       targetDuration: json['target_duration'] as int?,
       currentDistance: (json['current_distance'] as num?)?.toDouble() ?? 0.0,
       avgPace: (json['avg_pace'] as num?)?.toDouble(),

@@ -21,12 +21,12 @@ Updated the email verification flow to automatically redirect users to the surve
 
 ### 4. iOS Configuration (`ios/Runner/Info.plist`)
 - Added `CFBundleURLTypes` configuration for deep linking support
-- Configured URL schemes: `com.example.flowfit` and `com.example.flowfit.dev`
+- Configured URL schemes: `com.oldstlabs.flowfit` and `com.oldstlabs.flowfit.dev`
 - This allows iOS to properly handle email verification links
 
 ### 5. Android Configuration (Already Configured)
 - Android manifest already has proper deep link intent filters configured
-- Supports both production (`com.example.flowfit://auth-callback`) and development (`com.example.flowfit.dev://auth-callback`) schemes
+- Supports both production (`com.oldstlabs.flowfit://auth-callback`) and development (`com.oldstlabs.flowfit.dev://auth-callback`) schemes
 
 ## User Flow
 
@@ -44,7 +44,7 @@ Updated the email verification flow to automatically redirect users to the surve
 
 ### Deep Link Flow:
 1. User clicks verification link in email
-2. Link opens app with scheme: `com.example.flowfit://auth-callback?token=...`
+2. Link opens app with scheme: `com.oldstlabs.flowfit://auth-callback?token=...`
 3. Supabase SDK automatically processes the token
 4. `DeepLinkHandler` listens to auth state changes
 5. When `emailConfirmedAt` is detected, automatically navigates to `/survey_intro`

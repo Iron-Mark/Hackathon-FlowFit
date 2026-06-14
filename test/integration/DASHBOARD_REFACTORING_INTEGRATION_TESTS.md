@@ -72,8 +72,8 @@ setUpAll(() async {
 
   // Initialize Supabase for testing
   await Supabase.initialize(
-    url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
+    url: SupabaseRuntimeConfig.url,
+    anonKey: SupabaseRuntimeConfig.publishableKey,
   );
 });
 ```

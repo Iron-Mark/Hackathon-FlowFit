@@ -22,6 +22,7 @@ class UserProfile {
   final String? profileImagePath;
   final String? nickname;
   final bool isKidsMode;
+  final bool surveyCompleted;
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isSynced;
@@ -46,6 +47,7 @@ class UserProfile {
     this.profileImagePath,
     this.nickname,
     this.isKidsMode = true,
+    this.surveyCompleted = false,
     required this.createdAt,
     required this.updatedAt,
     this.isSynced = false,
@@ -97,6 +99,10 @@ class UserProfile {
       nickname: json['nickname'] as String?,
       isKidsMode:
           json['isKidsMode'] as bool? ?? json['is_kids_mode'] as bool? ?? false,
+      surveyCompleted:
+          json['surveyCompleted'] as bool? ??
+          json['survey_completed'] as bool? ??
+          false,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : (json['created_at'] != null
@@ -134,6 +140,7 @@ class UserProfile {
       'profileImagePath': profileImagePath,
       'nickname': nickname,
       'isKidsMode': isKidsMode,
+      'surveyCompleted': surveyCompleted,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'isSynced': isSynced,
@@ -154,7 +161,7 @@ class UserProfile {
       'activity_level': activityLevel,
       'goals': goals,
       'wellness_goals': wellnessGoals,
-      'notifications_enabled': notificationsEnabled,
+      'notifications_enabled': notificationsEnabled ?? false,
       'daily_calorie_target': dailyCalorieTarget,
       'daily_steps_target': dailyStepsTarget,
       'daily_active_minutes_target': dailyActiveMinutesTarget,
@@ -162,6 +169,7 @@ class UserProfile {
       'profile_image_url': profileImagePath,
       'nickname': nickname,
       'is_kids_mode': isKidsMode,
+      'survey_completed': surveyCompleted,
       'updated_at': updatedAt.toIso8601String(),
     };
   }
@@ -189,6 +197,7 @@ class UserProfile {
       dailyStepsTarget: surveyData['dailyStepsTarget'] as int?,
       dailyActiveMinutesTarget: surveyData['dailyActiveMinutesTarget'] as int?,
       dailyWaterTarget: (surveyData['dailyWaterTarget'] as num?)?.toDouble(),
+      surveyCompleted: true,
       createdAt: now,
       updatedAt: now,
       isSynced: false,
@@ -227,6 +236,7 @@ class UserProfile {
     String? profileImagePath,
     String? nickname,
     bool? isKidsMode,
+    bool? surveyCompleted,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isSynced,
@@ -252,6 +262,7 @@ class UserProfile {
       profileImagePath: profileImagePath ?? this.profileImagePath,
       nickname: nickname ?? this.nickname,
       isKidsMode: isKidsMode ?? this.isKidsMode,
+      surveyCompleted: surveyCompleted ?? this.surveyCompleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
@@ -260,8 +271,8 @@ class UserProfile {
 
   /// Validate profile data
   String? validate() {
-    if (age != null && (age! < 13 || age! > 120)) {
-      return 'Age must be between 13 and 120';
+    if (age != null && (age! < 7 || age! > 120)) {
+      return 'Age must be between 7 and 120';
     }
     if (gender != null && !['male', 'female', 'other'].contains(gender)) {
       return 'Invalid gender value';
@@ -306,7 +317,7 @@ class UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile(userId: $userId, fullName: $fullName, age: $age, isSynced: $isSynced)';
+    return 'UserProfile(userId: $userId, fullName: $fullName, age: $age, surveyCompleted: $surveyCompleted, isSynced: $isSynced)';
   }
 
   @override
@@ -319,11 +330,21 @@ class UserProfile {
         other.gender == gender &&
         other.height == height &&
         other.weight == weight &&
+        other.surveyCompleted == surveyCompleted &&
         other.isSynced == isSynced;
   }
 
   @override
   int get hashCode {
-    return Object.hash(userId, fullName, age, gender, height, weight, isSynced);
+    return Object.hash(
+      userId,
+      fullName,
+      age,
+      gender,
+      height,
+      weight,
+      surveyCompleted,
+      isSynced,
+    );
   }
 }

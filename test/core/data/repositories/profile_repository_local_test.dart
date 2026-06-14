@@ -109,7 +109,7 @@ void main() {
       test('throws ValidationException for invalid profile', () async {
         final profile = UserProfile(
           userId: 'user-123',
-          age: 10, // Invalid age
+          age: 6, // Invalid age
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );

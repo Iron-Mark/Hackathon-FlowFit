@@ -6,15 +6,16 @@ This file gives concise, actionable guidance to AI coding agents working on Flow
 - FlowFit is a Flutter app with two entry points:
   - `lib/main_wear.dart` — Galaxy Watch (Wear OS) UI and sensors
   - `lib/main.dart` — Android Phone companion UI
+- The maintained-fork production Android package/auth scheme is `com.oldstlabs.flowfit`.
 - Native Android code handles Samsung Health SDK, then sends data to Flutter via MethodChannel/EventChannel:
   - Flutter -> Android MethodChannel (watch): `com.flowfit.watch/data`
   - Android -> Flutter EventChannel (watch heart rate): `com.flowfit.watch/heartrate`
   - Phone listener channels: `com.flowfit.phone/data` and `com.flowfit.phone/heartrate` (Flutter # side)
-- Native manager implementation is in `android/app/src/main/kotlin/com/example/flowfit/HealthTrackingManager.kt` and the Flutter bridge is `lib/services/watch_bridge.dart`.
+- Native manager implementation is in `android/app/src/main/kotlin/com/oldstlabs/flowfit/HealthTrackingManager.kt` and the Flutter bridge is `lib/services/watch_bridge.dart`.
 - Data flows:
   - Sensor reading (native Samsung Health) -> HealthTrackingManager -> EventChannel -> Flutter `WatchBridgeService` -> UI / Supabase
   - Watch messages can transfer via Wearable Data Layer to the Phone app which uses `PhoneDataListener` to receive data
-- Supabase backend sync used for persistent storage (`lib/services/supabase_service.dart`) — ensure `lib/secrets.dart` (from `lib/secrets.dart.example`) is added locally (not committed) to configure Supabase keys.
+- Supabase backend sync uses the canonical recovery schema and the `SupabaseService` class in `lib/services/supabase_service.dart`. Prefer `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` via Dart defines or ignored `.env.release`; `lib/secrets.dart` remains an ignored local fallback using the same publishable key shape.
 
 ## Feature-first Clean Architecture (strongly recommended)
 - This repo's features are best implemented and extended using a feature-first, clean architecture approach: group code by feature rather than by layer. This keeps changes localized, makes code review easier, and helps map features across platform, domain, and data layers.
@@ -42,7 +43,7 @@ This file gives concise, actionable guidance to AI coding agents working on Flow
 ## Key files to review before making changes
 - Flutter entry points: `lib/main.dart`, `lib/main_wear.dart`
 - Flutter bridging and services: `lib/services/watch_bridge.dart`, `lib/services/phone_data_listener.dart`, `lib/services/supabase_service.dart`
-- Android native integration: `android/app/src/main/kotlin/com/example/flowfit/MainActivity.kt`, `HealthTrackingManager.kt`
+- Android native integration: `android/app/src/main/kotlin/com/oldstlabs/flowfit/MainActivity.kt`, `HealthTrackingManager.kt`
 - Models: `lib/models/heart_rate_data.dart`, `lib/models/sensor_status.dart`, `lib/models/sensor_error.dart`
 - UI grouped by platform: `lib/screens/wear/` (watch) and `lib/screens/` (phone)
 - Tests: `test/services/watch_bridge_test.dart` (use as canonical example for mocking Method/Event channels)
@@ -86,16 +87,16 @@ This file gives concise, actionable guidance to AI coding agents working on Flow
 - When changing permissions flow, ensure `MainActivity.kt` `requestPermission` and `onRequestPermissionsResult` behavior is honored and tests updated.
 
 ## Supabase & secrets
-- `lib/secrets.dart` is ignored by git (.gitignore). Copy `lib/secrets.dart.example` to `lib/secrets.dart` and populate the Supabase URL and anon key before running sync features.
-- New database tables or schema changes should be reflected in the Supabase migrations (not in repo here) and mentioned in `docs/`.
-
-### Notes about `supabase_service.dart`
-- `lib/services/supabase_service.dart` is currently a placeholder; when implementing it, follow existing patterns for async calls, error mapping, and tests using mocks.
+- Never commit Supabase service-role keys, secret keys, database passwords, or `lib/secrets.dart`.
+- Preferred local/release inputs are `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, passed through Dart defines by `scripts/store_release_build.ps1`.
+- For local fallback only, copy `lib/secrets.dart.example` to ignored `lib/secrets.dart` and populate the Project URL plus publishable key from the Supabase dashboard.
+- Schema changes belong in `supabase/migrations/20260614062844_recreate_flowfit_backend.sql` or a new Supabase CLI-created migration, with docs/runbooks updated in the same change.
+- `SupabaseService` in `lib/services/supabase_service.dart` is implemented for the current `heart_rate` table; keep table names aligned with the canonical migration and add tests when changing sync behavior.
 
 ## Common pitfalls for autopilot changes
 - Watch vs Phone entrypoints: Always use `-t lib/main_wear.dart` for watch; otherwise you may run phone UI incorrectly on watch devices.
 - ADB device ids change; prefer `adb devices` to verify and update `scripts/run_*.bat` if needed.
-- Do not commit secrets to repository. Follow `.gitignore` for `lib/secrets.dart`.
+- Do not commit secrets to repository. Follow `.gitignore` for `lib/secrets.dart`, `.env.release`, Android upload keys, and Apple signing files.
 - Event streaming expects non-null field `timestamp` and `status` formats; malformed JSON from native will break `HeartRateData.fromJson` — follow the model format exactly.
 
 - Native changes often require updates to tests with mocked MethodChannel handlers. If you add a new method channel method, add a corresponding mock handler in `test/services/*`.
@@ -117,7 +118,7 @@ Follow feature-first steps below as an alternative to the 'generic' flow above:
 
 ## Helpful examples
 - See `test/services/watch_bridge_test.dart` — canonical tests for method channel behavior and event streams.
-- See `android/app/src/main/kotlin/com/example/flowfit/MainActivity.kt` — method names and EventChannel usage directly correspond to Flutter service methods.
+- See `android/app/src/main/kotlin/com/oldstlabs/flowfit/MainActivity.kt` — method names and EventChannel usage directly correspond to Flutter service methods.
 
 ---
 If anything in these instructions is unclear, incomplete, or you want more examples (e.g., expand test examples or add CI steps), please ask and I will refine the file.

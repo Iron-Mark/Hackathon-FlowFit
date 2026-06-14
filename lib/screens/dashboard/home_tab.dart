@@ -286,7 +286,10 @@ class HomeTab extends ConsumerWidget {
                       children: [
                         GestureDetector(
                           onTap: () async {
-                            Navigator.pushNamed(context, "/trackertest");
+                            Navigator.pushNamed(
+                              context,
+                              '/activity-classifier',
+                            );
                           },
                           child: _buildQuickTrackCard(
                             context,

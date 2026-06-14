@@ -9,7 +9,7 @@ Based on your screenshot, you need to set the **Site URL** in Supabase Dashboard
 1. Go to **Authentication** → **URL Configuration**
 2. Set **Site URL** to your app's URL:
    - **Development**: `http://localhost:3000` (or your dev port)
-   - **Production**: `https://flowfit.app` (your actual domain)
+   - **Production**: the HTTPS origin configured as `FLOWFIT_PUBLIC_WEB_BASE_URL`
 
 ### Step 2: Add Redirect URLs
 
@@ -19,20 +19,22 @@ Add these redirect URLs to the **Redirect URLs** section:
 ```
 http://localhost:3000
 http://localhost:3000/auth/callback
-flowfit://auth/callback
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 ```
 
 **For Production:**
 ```
-https://flowfit.app
-https://flowfit.app/auth/callback
-flowfit://auth/callback
+https://flowfit.your-owned-domain.com
+https://flowfit.your-owned-domain.com/auth/callback
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 ```
 
 **For Mobile Deep Linking:**
 ```
-flowfit://email-verification
-flowfit://auth/callback
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 ```
 
 ### Step 3: Configure Email Templates

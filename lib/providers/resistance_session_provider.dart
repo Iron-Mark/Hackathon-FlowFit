@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/resistance_session.dart';
@@ -23,6 +24,7 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
   final HeartRateService _hrService;
   final CalorieCalculatorService _calorieService;
   final WorkoutSessionService _sessionService;
+  final String? Function() _readCurrentUserId;
 
   StreamSubscription<int>? _timerSubscription;
   StreamSubscription<int>? _countdownSubscription;
@@ -38,11 +40,13 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
     required HeartRateService hrService,
     required CalorieCalculatorService calorieService,
     required WorkoutSessionService sessionService,
+    required String? Function() readCurrentUserId,
   }) : _timerService = timerService,
        _countdownService = countdownService,
        _hrService = hrService,
        _calorieService = calorieService,
        _sessionService = sessionService,
+       _readCurrentUserId = readCurrentUserId,
        super(null);
 
   /// Starts a new resistance training session
@@ -54,9 +58,10 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
     bool hrMonitorEnabled = false,
     MoodRating? preMood,
   }) async {
+    final userId = requireWorkoutSessionUserId(_readCurrentUserId);
     final session = ResistanceSession(
       id: const Uuid().v4(),
-      userId: 'current-user-id', // TODO: Get from auth
+      userId: userId,
       startTime: DateTime.now(),
       split: split,
       exercises: exercises,
@@ -65,6 +70,8 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
       hrMonitorEnabled: hrMonitorEnabled,
       preMood: preMood,
     );
+
+    await _sessionService.createSession(session);
 
     state = session;
     _currentExerciseIndex = 0;
@@ -92,9 +99,6 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
       const Duration(seconds: 1),
       (_) => _updateMetrics(),
     );
-
-    // Save initial session to database
-    await _sessionService.createSession(session);
   }
 
   /// Gets current exercise
@@ -156,9 +160,8 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
         _isResting = false;
         _countdownSubscription?.cancel();
 
-        // TODO: Play audio cue if enabled
         if (state!.audioCuesEnabled) {
-          // Play sound
+          unawaited(SystemSound.play(SystemSoundType.alert));
         }
       }
     });
@@ -254,6 +257,13 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
     await _sessionService.saveSession(state!);
   }
 
+  /// Retries saving the current session after a previous sync failure.
+  Future<void> retrySaveSession() async {
+    if (state == null) return;
+
+    await _sessionService.saveSession(state!);
+  }
+
   @override
   void dispose() {
     _timerSubscription?.cancel();
@@ -276,5 +286,6 @@ final resistanceSessionProvider =
         hrService: ref.watch(heartRateServiceProvider),
         calorieService: ref.watch(calorieCalculatorServiceProvider),
         sessionService: ref.watch(workoutSessionServiceProvider),
+        readCurrentUserId: () => ref.read(workoutSessionUserIdProvider),
       ),
     );

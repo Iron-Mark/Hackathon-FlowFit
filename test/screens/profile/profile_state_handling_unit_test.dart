@@ -129,7 +129,7 @@ void main() {
           child: MaterialApp(
             home: const ProfileScreen(),
             routes: {
-              '/survey-intro': (context) => const Scaffold(
+              '/survey_intro': (context) => const Scaffold(
                 body: Center(child: Text('Survey Intro Screen')),
               ),
             },
@@ -156,9 +156,9 @@ void main() {
       );
     });
 
-    /// Test: Empty state button navigates to survey-intro
+    /// Test: Empty state button navigates to survey_intro
     /// Requirements: 10.5
-    testWidgets('empty state button navigates to survey-intro', (
+    testWidgets('empty state button navigates to survey_intro', (
       WidgetTester tester,
     ) async {
       // Arrange: Build ProfileScreen with empty state
@@ -182,7 +182,7 @@ void main() {
           child: MaterialApp(
             home: const ProfileScreen(),
             routes: {
-              '/survey-intro': (context) => const Scaffold(
+              '/survey_intro': (context) => const Scaffold(
                 body: Center(child: Text('Survey Intro Screen')),
               ),
             },
@@ -200,7 +200,7 @@ void main() {
       await tester.tap(onboardingButton);
       await tester.pumpAndSettle();
 
-      // Assert: Should navigate to survey-intro screen
+      // Assert: Should navigate to survey_intro screen
       expect(find.text('Survey Intro Screen'), findsOneWidget);
     });
 

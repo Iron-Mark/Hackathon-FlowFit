@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -61,37 +62,49 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSection(
               context,
               'Our Commitment',
-              'FlowFit is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and share your personal information.',
+              'FlowFit is built for fitness, wellness, and companion tracking. This Privacy Policy explains the data the app may collect or process when you choose to use those features.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               context,
-              'Your Agreement',
-              'By using FlowFit, you agree to the terms of this policy. We collect information you provide, such as your name, email, and fitness data.',
+              'Data You Provide',
+              'You may provide account information, profile details, age, body measurements, goals, units, Buddy companion settings, workout entries, mood or wellness notes, and other information you enter in the app.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               context,
-              'How We Use Your Information',
-              'We use this information to personalize your experience, improve our services, and communicate with you. We may share your information with service providers who assist us in operating FlowFit.',
+              'Sensor and Device Data',
+              'With your permission, FlowFit may use heart-rate, motion, activity, location, camera, photo library, and notification permissions. These are used for workout tracking, wellness missions, geofences, activity classification, optional camera/image features, and local reminders.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               context,
-              'Data Security',
-              'We take reasonable measures to protect your information, but no method of transmission over the internet is completely secure.',
+              'How We Use Data',
+              'We use data to authenticate your account, sync your profile, personalize goals, show workout history, power Buddy progression, classify activity, support wellness features, and keep the app reliable.',
+            ),
+            const SizedBox(height: 20),
+            _buildSection(
+              context,
+              'Service Providers',
+              'FlowFit uses Supabase for authentication and database sync. Device APIs and SDKs such as Samsung Health Sensor API, geolocation, camera, image picker, local notifications, and on-device ML packages may process data needed for the features you choose to use.',
+            ),
+            const SizedBox(height: 20),
+            _buildSection(
+              context,
+              'Security and Retention',
+              'Data sent to Supabase is transmitted over HTTPS and protected by database access controls. Local data may remain on your device until you remove it, clear app storage, or uninstall the app. The in-app deletion flow also attempts to clear local FlowFit account data on the current device.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               context,
               'Your Rights',
-              'You have the right to access, correct, or delete your personal information.',
+              'You can review or update profile data in the app. You can initiate account deletion from Profile > Settings > Delete Account. FlowFit deletes app-owned records, attempts to clear local account data on the current device, and requests deletion of the sign-in account, except where records must be retained for security, fraud prevention, or legal obligations.',
             ),
             const SizedBox(height: 20),
             _buildSection(
               context,
               'Policy Updates',
-              'We may update this Privacy Policy from time to time. Please review it periodically.',
+              'We may update this Privacy Policy when features, service providers, or legal requirements change. Review this screen and the public store privacy policy for the latest version.',
             ),
             const SizedBox(height: 24),
             Container(
@@ -132,13 +145,21 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'support@flowfit.com',
+                    FlowFitRuntimeConfig.supportEmail,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
+              ),
+            ),
+            Center(
+              child: Text(
+                'Last updated: June 14, 2026',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             const SizedBox(height: 24),

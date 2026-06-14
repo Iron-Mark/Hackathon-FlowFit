@@ -252,7 +252,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
       await _supabase
           .from('user_profiles')
-          .upsert(profile.toSupabaseJson())
+          .upsert(profile.toSupabaseJson(), onConflict: 'user_id')
           .timeout(
             const Duration(seconds: 10),
             onTimeout: () {

@@ -76,7 +76,7 @@ These have **major version changes** that may break your code:
 # MAJOR CHANGES - Test carefully!
 fl_chart: 0.65.0 → 1.1.1  # Complete API rewrite
 go_router: 13.2.5 → 17.0.0  # Breaking navigation changes
-sensors_plus: 4.0.2 → 7.0.0  # API changes
+sensors_plus: 5.0.1 → 7.0.0  # API/toolchain changes
 geolocator: 10.1.1 → 14.0.2  # Breaking changes
 permission_handler: 11.4.0 → 12.0.1  # API changes
 flutter_lints: 3.0.2 → 6.0.0  # Stricter rules
@@ -213,7 +213,8 @@ flutter pub upgrade --major-versions
 **Do this LATER (when you have time):**
 1. ⏳ Upgrade `fl_chart` to 1.x (if you need new chart features)
 2. ⏳ Upgrade `go_router` to 17.x (read migration guide first)
-3. ⏳ Upgrade `sensors_plus` to 7.x (test sensor functionality)
+3. ⏳ Upgrade `sensors_plus` to 7.x later if needed (test sensor functionality
+   and Android toolchain requirements)
 
 **Don't do this:**
 - ❌ Don't run `flutter pub upgrade --major-versions` without testing

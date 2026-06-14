@@ -11,8 +11,8 @@ Deep linking allows email verification links to open directly in your mobile app
 ### Choose Your Deep Link URI
 
 For FlowFit, we'll use:
-- **Production**: `com.example.flowfit://auth-callback`
-- **Development**: `com.example.flowfit.dev://auth-callback`
+- **Production**: `com.oldstlabs.flowfit://auth-callback`
+- **Development**: `com.oldstlabs.flowfit.dev://auth-callback`
 
 ## 2. Android Configuration
 
@@ -41,16 +41,16 @@ Add an intent filter to your MainActivity to handle deep links:
         
         <!-- Production deep link -->
         <data
-            android:scheme="com.example.flowfit"
+            android:scheme="com.oldstlabs.flowfit"
             android:host="auth-callback" />
             
-        <!-- Development deep link (optional) -->
-        <data
-            android:scheme="com.example.flowfit.dev"
-            android:host="auth-callback" />
     </intent-filter>
 </activity>
 ```
+
+Use `android/app/src/debug/AndroidManifest.xml` for the development
+`com.oldstlabs.flowfit.dev://auth-callback` scheme. Do not package the
+development scheme in store release artifacts.
 
 ## 3. iOS Configuration (Future)
 
@@ -64,7 +64,7 @@ When you're ready to support iOS, add to `ios/Runner/Info.plist`:
         <string>Editor</string>
         <key>CFBundleURLSchemes</key>
         <array>
-            <string>com.example.flowfit</string>
+            <string>com.oldstlabs.flowfit</string>
         </array>
     </dict>
 </array>
@@ -74,16 +74,16 @@ When you're ready to support iOS, add to `ios/Runner/Info.plist`:
 
 ### Set Redirect URLs
 
-1. Go to: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/url-configuration
+1. Go to: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/url-configuration
 2. Add these URLs to **Redirect URLs**:
-   - `com.example.flowfit://auth-callback`
-   - `com.example.flowfit.dev://auth-callback` (for testing)
+   - `com.oldstlabs.flowfit://auth-callback`
+   - `com.oldstlabs.flowfit.dev://auth-callback` (for testing)
    - `http://localhost:3000/**` (for web testing)
 
 ### Update Site URL
 
 Set **Site URL** to your production deep link:
-- `com.example.flowfit://auth-callback`
+- `com.oldstlabs.flowfit://auth-callback`
 
 ## 5. Update Email Templates
 
@@ -118,8 +118,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   await Supabase.initialize(
-    url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
+    url: SupabaseRuntimeConfig.url,
+    anonKey: SupabaseRuntimeConfig.publishableKey,
     authOptions: const FlutterAuthClientOptions(
       authFlowType: AuthFlowType.pkce,
     ),
@@ -152,7 +152,7 @@ Future<void> signUp(String email, String password) async {
   final response = await Supabase.instance.client.auth.signUp(
     email: email,
     password: password,
-    emailRedirectTo: 'com.example.flowfit://auth-callback',
+    emailRedirectTo: 'com.oldstlabs.flowfit://auth-callback',
   );
   
   if (response.user != null) {
@@ -215,7 +215,7 @@ class DeepLinkHandler {
 You can simulate a deep link without email:
 
 ```bash
-adb shell am start -W -a android.intent.action.VIEW -d "com.example.flowfit://auth-callback?token=test&type=signup" com.example.flowfit
+adb shell am start -W -a android.intent.action.VIEW -d "com.oldstlabs.flowfit://auth-callback?token=test&type=signup" com.oldstlabs.flowfit
 ```
 
 ### Test URL Pattern Matching
@@ -250,7 +250,7 @@ https://www.digitalocean.com/community/tools/glob
 
 Before going to production:
 
-- [ ] Update package name from `com.example.flowfit` to your production package
+- [ ] Confirm `com.oldstlabs.flowfit` is owned by the selected store accounts
 - [ ] Update deep link scheme to match production package
 - [ ] Set production Site URL in Supabase Dashboard
 - [ ] Remove development deep link schemes

@@ -172,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Colors.blue,
                     () {
                       // Navigate to workout with pose detection
-                      Navigator.pushNamed(context, '/trackertest');
+                      Navigator.pushNamed(context, '/activity-classifier');
                     },
                   ),
 

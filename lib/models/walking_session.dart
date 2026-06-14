@@ -19,31 +19,31 @@ enum WalkingMode {
 }
 
 /// Walking workout session with optional mission tracking
-/// 
+///
 /// Extends WorkoutSession with walking-specific fields including
 /// steps, distance, route tracking, and optional mission data.
 class WalkingSession extends WorkoutSession {
   /// Walking mode (free or mission-based)
   final WalkingMode mode;
-  
+
   /// Target duration in minutes (for free walk)
   final int? targetDuration;
-  
+
   /// Current distance covered in kilometers
   final double currentDistance;
-  
+
   /// Step count
   final int steps;
-  
+
   /// GPS route points
   final List<LatLng> routePoints;
-  
+
   /// Encoded route polyline for storage
   final String? routePolyline;
-  
+
   /// Active mission (if mission mode)
   final Mission? mission;
-  
+
   /// Whether mission was completed
   final bool missionCompleted;
 
@@ -169,12 +169,14 @@ class WalkingSession extends WorkoutSession {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       startTime: DateTime.parse(json['start_time'] as String),
-      mode: WalkingMode.values.byName(json['mode'] as String),
+      mode: json['mode'] != null
+          ? WalkingMode.values.byName(json['mode'] as String)
+          : WalkingMode.free,
       targetDuration: json['target_duration'] as int?,
       currentDistance: (json['current_distance'] as num?)?.toDouble() ?? 0.0,
       steps: json['steps'] as int? ?? 0,
       routePolyline: json['route_polyline'] as String?,
-      mission: json['mission'] != null 
+      mission: json['mission'] != null
           ? Mission.fromJson(json['mission'] as Map<String, dynamic>)
           : null,
       missionCompleted: json['mission_completed'] as bool? ?? false,

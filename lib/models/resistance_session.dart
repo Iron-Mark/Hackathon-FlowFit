@@ -27,28 +27,28 @@ enum BodySplit {
 }
 
 /// Resistance training workout session
-/// 
+///
 /// Extends WorkoutSession with resistance-specific fields including
 /// exercise tracking, rest timers, and volume calculations.
 class ResistanceSession extends WorkoutSession {
   /// Body split (upper or lower)
   final BodySplit split;
-  
+
   /// List of exercises with progress tracking
   final List<ExerciseProgress> exercises;
-  
+
   /// Rest timer duration in seconds (60, 90, or 120)
   final int restTimerSeconds;
-  
+
   /// Whether audio cues are enabled
   final bool audioCuesEnabled;
-  
+
   /// Whether heart rate monitor is enabled
   final bool hrMonitorEnabled;
-  
+
   /// Total volume in kilograms (sum of sets × reps × weight)
   final double? totalVolumeKg;
-  
+
   /// Time under tension in seconds
   final int? timeUnderTension;
 
@@ -74,7 +74,9 @@ class ResistanceSession extends WorkoutSession {
     super.caloriesBurned,
     super.status,
   }) : assert(
-         restTimerSeconds == 60 || restTimerSeconds == 90 || restTimerSeconds == 120,
+         restTimerSeconds == 60 ||
+             restTimerSeconds == 90 ||
+             restTimerSeconds == 120,
          'Rest timer must be 60, 90, or 120 seconds',
        ),
        super(type: WorkoutType.resistance);
@@ -86,7 +88,7 @@ class ResistanceSession extends WorkoutSession {
   int get totalExercises => exercises.length;
 
   /// Progress percentage (0.0 to 1.0)
-  double get progressPercentage => 
+  double get progressPercentage =>
       totalExercises > 0 ? completedExercises / totalExercises : 0.0;
 
   /// Creates a copy with updated fields
@@ -178,7 +180,7 @@ class ResistanceSession extends WorkoutSession {
       restTimerSeconds: json['rest_timer_seconds'] as int? ?? 90,
       audioCuesEnabled: json['audio_cues_enabled'] as bool? ?? true,
       hrMonitorEnabled: json['hr_monitor_enabled'] as bool? ?? false,
-      totalVolumeKg: json['total_volume_kg'] as double?,
+      totalVolumeKg: (json['total_volume_kg'] as num?)?.toDouble(),
       timeUnderTension: json['time_under_tension'] as int?,
       endTime: json['end_time'] != null
           ? DateTime.parse(json['end_time'] as String)

@@ -198,7 +198,20 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
 
               // End the session properly
               final notifier = ref.read(runningSessionProvider.notifier);
-              await notifier.endSession();
+              try {
+                await notifier.endSession();
+              } catch (_) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Workout ended, but sync failed. You can retry from summary.',
+                    ),
+                    backgroundColor: Colors.orange,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
 
               // Navigate to summary
               if (!mounted) return;
@@ -346,7 +359,7 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
           // Debug button - Navigate to AI Tracker
           IconButton(
             onPressed: () {
-              Navigator.of(context).pushNamed('/trackertest');
+              Navigator.of(context).pushNamed('/activity-classifier');
             },
             icon: const Icon(SolarIconsBold.cpu, color: Colors.white),
             style: IconButton.styleFrom(

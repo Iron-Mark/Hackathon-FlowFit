@@ -328,14 +328,28 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
     // Get pre-mood from workout flow provider
     final preMood = ref.read(workoutFlowProvider).preMood;
 
-    // Start free walk session
-    await ref
-        .read(walkingSessionProvider.notifier)
-        .startSession(
-          mode: WalkingMode.free,
-          targetDuration: _targetDuration,
-          preMood: preMood,
+    try {
+      // Start free walk session
+      await ref
+          .read(walkingSessionProvider.notifier)
+          .startSession(
+            mode: WalkingMode.free,
+            targetDuration: _targetDuration,
+            preMood: preMood,
+          );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not start walking. Sign in and check your connection, then try again.',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
+      }
+      return;
+    }
 
     if (context.mounted) {
       Navigator.of(context).push(

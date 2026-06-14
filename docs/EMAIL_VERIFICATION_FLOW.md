@@ -148,14 +148,14 @@ Confirm Your FlowFit Signup ⚡
 
 **Site URL:**
 - Development: `http://localhost:3000`
-- Production: `https://flowfit.app`
+- Production: the HTTPS origin configured as `FLOWFIT_PUBLIC_WEB_BASE_URL`
 
 **Redirect URLs:**
 ```
 http://localhost:3000
 http://localhost:3000/auth/callback
-flowfit://auth/callback
-flowfit://email-verification
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 ```
 
 ### Email Template Location
@@ -207,10 +207,10 @@ supabase/email_templates/
 - [ ] Set up email analytics
 
 ### Environment Variables
-```dart
-// In production, ensure these are set:
-SUPABASE_URL=your_production_url
-SUPABASE_ANON_KEY=your_production_key
+```bash
+SUPABASE_URL=https://PROJECT_REF.supabase.co
+SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
+FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit
 ```
 
 ## 📊 Monitoring
@@ -251,9 +251,13 @@ SUPABASE_ANON_KEY=your_production_key
     <action android:name="android.intent.action.VIEW" />
     <category android:name="android.intent.category.DEFAULT" />
     <category android:name="android.intent.category.BROWSABLE" />
-    <data android:scheme="flowfit" android:host="auth" />
+    <data android:scheme="${flowfitAuthScheme}" android:host="auth-callback" />
 </intent-filter>
 ```
+
+Debug builds may add `${flowfitDevAuthScheme}` from
+`android/app/src/debug/AndroidManifest.xml`; store builds should register only
+`${flowfitAuthScheme}`.
 
 ### iOS Configuration
 ```xml
@@ -262,7 +266,7 @@ SUPABASE_ANON_KEY=your_production_key
     <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-            <string>flowfit</string>
+            <string>$(FLOWFIT_IOS_BUNDLE_IDENTIFIER)</string>
         </array>
     </dict>
 </array>
@@ -326,4 +330,4 @@ SUPABASE_ANON_KEY=your_production_key
 For issues or questions:
 - Check troubleshooting section
 - Review setup guides
-- Contact: support@flowfit.app
+- Contact: support@flowfit.com

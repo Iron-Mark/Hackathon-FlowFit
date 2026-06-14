@@ -45,26 +45,25 @@ class UserProfileModel {
 
   /// Creates a UserProfileModel from JSON data received from Supabase.
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
+    final nickname = json['nickname'] as String?;
     return UserProfileModel(
       userId: json['user_id'] as String,
-      fullName: json['full_name'] as String,
-      age: json['age'] as int,
-      gender: json['gender'] as String,
-      weight: (json['weight'] as num).toDouble(),
-      height: (json['height'] as num).toDouble(),
-      activityLevel: json['activity_level'] as String,
-      goals: (json['goals'] as List<dynamic>).cast<String>(),
-      dailyCalorieTarget: json['daily_calorie_target'] as int,
-      surveyCompleted: json['survey_completed'] as bool,
-      createdAt: json['created_at'] as String,
-      updatedAt: json['updated_at'] as String,
+      fullName: (json['full_name'] as String?) ?? nickname ?? '',
+      age: _readInt(json['age']) ?? 0,
+      gender: (json['gender'] as String?) ?? '',
+      weight: _readDouble(json['weight']) ?? 0,
+      height: _readDouble(json['height']) ?? 0,
+      activityLevel: (json['activity_level'] as String?) ?? '',
+      goals: _readStringList(json['goals']),
+      dailyCalorieTarget: _readInt(json['daily_calorie_target']) ?? 0,
+      surveyCompleted: (json['survey_completed'] as bool?) ?? false,
+      createdAt: (json['created_at'] as String?) ?? '',
+      updatedAt: (json['updated_at'] as String?) ?? '',
       heightUnit: json['height_unit'] as String?,
       weightUnit: json['weight_unit'] as String?,
-      dailyStepsTarget: json['daily_steps_target'] as int?,
-      dailyActiveMinutesTarget: json['daily_active_minutes_target'] as int?,
-      dailyWaterTarget: json['daily_water_target'] != null
-          ? (json['daily_water_target'] as num).toDouble()
-          : null,
+      dailyStepsTarget: _readInt(json['daily_steps_target']),
+      dailyActiveMinutesTarget: _readInt(json['daily_active_minutes_target']),
+      dailyWaterTarget: _readDouble(json['daily_water_target']),
       profileImageUrl: json['profile_image_url'] as String?,
     );
   }
@@ -140,4 +139,22 @@ class UserProfileModel {
       profileImageUrl: profile.profileImageUrl,
     );
   }
+}
+
+int? _readInt(Object? value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return null;
+}
+
+double? _readDouble(Object? value) {
+  if (value is num) return value.toDouble();
+  return null;
+}
+
+List<String> _readStringList(Object? value) {
+  if (value is List) {
+    return value.whereType<String>().toList();
+  }
+  return const [];
 }

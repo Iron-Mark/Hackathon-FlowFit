@@ -9,7 +9,7 @@ In Supabase Dashboard → **Authentication** → **URL Configuration**:
 ```
 http://localhost:3000
 ```
-(Change to your production URL when deploying)
+(Change to the HTTPS origin configured as `FLOWFIT_PUBLIC_WEB_BASE_URL` when deploying.)
 
 ### 2. Redirect URLs
 Add these URLs in the **Redirect URLs** section:
@@ -17,8 +17,8 @@ Add these URLs in the **Redirect URLs** section:
 ```
 http://localhost:3000
 http://localhost:3000/auth/callback
-flowfit://auth/callback
-flowfit://email-verification
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 ```
 
 ### 3. Email Template
@@ -53,14 +53,15 @@ The app will:
 
 Update Site URL to your production domain:
 ```
-https://flowfit.app
+https://flowfit.your-owned-domain.com
 ```
 
 And add production redirect URLs:
 ```
-https://flowfit.app
-https://flowfit.app/auth/callback
-flowfit://auth/callback
+https://flowfit.your-owned-domain.com
+https://flowfit.your-owned-domain.com/auth/callback
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 ```
 
 ## 📱 Mobile Deep Links

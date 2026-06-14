@@ -183,18 +183,20 @@ int calculateCalories({
 
 ## Backend Integration
 
-**Currently Disabled:**
+**Enabled for signed-in users:**
 ```dart
-// TODO: Re-enable when backend is ready
-// await _sessionService.createSession(session);
-// await _sessionService.saveSession(state!);
+await _sessionService.createSession(session);
+await _sessionService.saveSession(state!);
 ```
 
-**Ready to Enable:**
+**Persistence requirements:**
 - All data is real and accurate
 - Models include all fields
-- JSON serialization ready
-- Just uncomment the lines when Supabase is configured
+- JSON serialization is wired to `workout_sessions`
+- Workout session providers resolve the current Supabase auth user and fail
+  before persistence if no user is signed in
+- Running, walking, and resistance sessions save under the authenticated
+  `user_id`, matching the canonical RLS policies
 
 ## Testing
 

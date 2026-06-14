@@ -16,7 +16,7 @@ class WorkoutSessionService {
         .insert(data)
         .select('id')
         .single();
-    
+
     return response['id'] as String;
   }
 
@@ -36,18 +36,13 @@ class WorkoutSessionService {
   /// Updates an existing workout session
   Future<void> updateSession(WorkoutSession session) async {
     final data = session.toJson();
-    await _client
-        .from('workout_sessions')
-        .update(data)
-        .eq('id', session.id);
+    await _client.from('workout_sessions').update(data).eq('id', session.id);
   }
 
   /// Saves a workout session (creates if new, updates if exists)
   Future<void> saveSession(WorkoutSession session) async {
     final data = session.toJson();
-    await _client
-        .from('workout_sessions')
-        .upsert(data);
+    await _client.from('workout_sessions').upsert(data);
   }
 
   /// Lists recent workout sessions for the current user
@@ -55,10 +50,15 @@ class WorkoutSessionService {
     int limit = 20,
     WorkoutType? type,
   }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      return [];
+    }
+
     var query = _client
         .from('workout_sessions')
         .select()
-        .eq('user_id', _client.auth.currentUser!.id);
+        .eq('user_id', user.id);
 
     if (type != null) {
       query = query.eq('workout_type', type.name);
@@ -75,10 +75,7 @@ class WorkoutSessionService {
 
   /// Deletes a workout session
   Future<void> deleteSession(String sessionId) async {
-    await _client
-        .from('workout_sessions')
-        .delete()
-        .eq('id', sessionId);
+    await _client.from('workout_sessions').delete().eq('id', sessionId);
   }
 
   /// Gets workout sessions for a specific date range
@@ -86,10 +83,15 @@ class WorkoutSessionService {
     required DateTime startDate,
     required DateTime endDate,
   }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      return [];
+    }
+
     final response = await _client
         .from('workout_sessions')
         .select()
-        .eq('user_id', _client.auth.currentUser!.id)
+        .eq('user_id', user.id)
         .gte('start_time', startDate.toIso8601String())
         .lte('start_time', endDate.toIso8601String())
         .order('start_time', ascending: false);
@@ -102,7 +104,7 @@ class WorkoutSessionService {
   /// Parses JSON into the appropriate WorkoutSession subclass
   WorkoutSession _parseWorkoutSession(Map<String, dynamic> json) {
     final workoutType = json['workout_type'] as String;
-    
+
     switch (workoutType) {
       case 'running':
         return RunningSession.fromJson(json);

@@ -20,6 +20,7 @@ class WalkingSessionNotifier extends StateNotifier<WalkingSession?> {
   final HeartRateService _hrService;
   final CalorieCalculatorService _calorieService;
   final WorkoutSessionService _sessionService;
+  final String? Function() _readCurrentUserId;
 
   StreamSubscription<LatLng>? _gpsSubscription;
   StreamSubscription<int>? _timerSubscription;
@@ -32,12 +33,14 @@ class WalkingSessionNotifier extends StateNotifier<WalkingSession?> {
     required HeartRateService hrService,
     required CalorieCalculatorService calorieService,
     required WorkoutSessionService sessionService,
-  })  : _gpsService = gpsService,
-        _timerService = timerService,
-        _hrService = hrService,
-        _calorieService = calorieService,
-        _sessionService = sessionService,
-        super(null);
+    required String? Function() readCurrentUserId,
+  }) : _gpsService = gpsService,
+       _timerService = timerService,
+       _hrService = hrService,
+       _calorieService = calorieService,
+       _sessionService = sessionService,
+       _readCurrentUserId = readCurrentUserId,
+       super(null);
 
   /// Starts a new walking session
   Future<void> startSession({
@@ -46,15 +49,18 @@ class WalkingSessionNotifier extends StateNotifier<WalkingSession?> {
     Mission? mission,
     MoodRating? preMood,
   }) async {
+    final userId = requireWorkoutSessionUserId(_readCurrentUserId);
     final session = WalkingSession(
       id: const Uuid().v4(),
-      userId: 'current-user-id', // TODO: Get from auth
+      userId: userId,
       startTime: DateTime.now(),
       mode: mode,
       targetDuration: targetDuration,
       mission: mission,
       preMood: preMood,
     );
+
+    await _sessionService.createSession(session);
 
     state = session;
 
@@ -86,9 +92,6 @@ class WalkingSessionNotifier extends StateNotifier<WalkingSession?> {
       const Duration(seconds: 1),
       (_) => _updateMetrics(),
     );
-
-    // Save initial session to database
-    await _sessionService.createSession(session);
   }
 
   /// Updates location and route
@@ -226,12 +229,14 @@ class WalkingSessionNotifier extends StateNotifier<WalkingSession?> {
 }
 
 /// Provider for walking session state
-final walkingSessionProvider = StateNotifierProvider<WalkingSessionNotifier, WalkingSession?>(
-  (ref) => WalkingSessionNotifier(
-    gpsService: ref.watch(gpsTrackingServiceProvider),
-    timerService: ref.watch(timerServiceProvider),
-    hrService: ref.watch(heartRateServiceProvider),
-    calorieService: ref.watch(calorieCalculatorServiceProvider),
-    sessionService: ref.watch(workoutSessionServiceProvider),
-  ),
-);
+final walkingSessionProvider =
+    StateNotifierProvider<WalkingSessionNotifier, WalkingSession?>(
+      (ref) => WalkingSessionNotifier(
+        gpsService: ref.watch(gpsTrackingServiceProvider),
+        timerService: ref.watch(timerServiceProvider),
+        hrService: ref.watch(heartRateServiceProvider),
+        calorieService: ref.watch(calorieCalculatorServiceProvider),
+        sessionService: ref.watch(workoutSessionServiceProvider),
+        readCurrentUserId: () => ref.read(workoutSessionUserIdProvider),
+      ),
+    );

@@ -1,307 +1,88 @@
-# Supabase Database Setup Guide
+# FlowFit Supabase Database Setup
 
-## Error You're Seeing
+Use this guide when the app reports missing Supabase tables, schema-cache
+errors, or onboarding/profile writes failing against a new project.
 
-```
-PostgrestException(message: Could not find the table 'public.user_profiles' in the schema cache, code: PGRST205)
-```
+## Canonical Migration
 
-This means the `user_profiles` table doesn't exist in your Supabase database yet.
+The active migration is:
 
-## Quick Fix (5 minutes)
-
-### Step 1: Open Supabase Dashboard
-
-1. Go to https://supabase.com/dashboard
-2. Select your project: `dnasghxxqwibwqnljvxr`
-3. Click on **SQL Editor** in the left sidebar
-
-### Step 2: Run Migration Scripts
-
-Copy and paste each SQL script below into the SQL Editor and click **RUN**.
-
-#### Script 1: Create user_profiles Table
-
-```sql
--- Create user_profiles table with all required columns and constraints
-CREATE TABLE user_profiles (
-  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name TEXT NOT NULL,
-  age INTEGER NOT NULL CHECK (age >= 13 AND age <= 120),
-  gender TEXT NOT NULL CHECK (gender IN ('male', 'female', 'other', 'prefer_not_to_say')),
-  weight DECIMAL(5,2) NOT NULL CHECK (weight > 0 AND weight < 500),
-  height DECIMAL(5,2) NOT NULL CHECK (height > 0 AND height < 300),
-  activity_level TEXT NOT NULL CHECK (activity_level IN ('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active')),
-  goals TEXT[] NOT NULL,
-  daily_calorie_target INTEGER NOT NULL CHECK (daily_calorie_target > 0),
-  survey_completed BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
--- Create index on user_id for faster lookups
-CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
-
--- Add comment to table
-COMMENT ON TABLE user_profiles IS 'Stores user profile data collected during onboarding survey';
+```text
+supabase/migrations/20260614062844_recreate_flowfit_backend.sql
 ```
 
-**Expected Result**: ✅ Success. No rows returned.
+Older SQL files are archived in `supabase/legacy_migrations/` for reference
+only. Do not apply `combined_migration.sql` or the old numbered migration files
+to a new FlowFit project.
 
----
+The canonical migration creates or repairs:
 
-#### Script 2: Configure Row Level Security (RLS)
+- `public.user_profiles`
+- `public.buddy_profiles`
+- `public.workout_sessions`
+- `public.heart_rate`
+- `public.account_deletion_requests`
+- `public.flowfit_recovery_quarantine`
+- RLS policies and authenticated Data API grants
+- `updated_at` trigger support
+- `request_account_deletion()`
 
-```sql
--- Enable Row Level Security on user_profiles table
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+The quarantine table is service-role-only. It preserves invalid legacy rows
+before cleanup deletes if the recovery migration is applied to a partially
+populated development project.
 
--- Policy: Users can view their own profile
-CREATE POLICY "Users can view own profile"
-  ON user_profiles
-  FOR SELECT
-  USING (auth.uid() = user_id);
+## Recommended Setup
 
--- Policy: Users can insert their own profile
-CREATE POLICY "Users can insert own profile"
-  ON user_profiles
-  FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+Follow the full recovery guide:
 
--- Policy: Users can update their own profile
-CREATE POLICY "Users can update own profile"
-  ON user_profiles
-  FOR UPDATE
-  USING (auth.uid() = user_id);
+```text
+docs/SUPABASE_RECOVERY_RUNBOOK.md
 ```
 
-**Expected Result**: ✅ Success. No rows returned.
+Fast path after creating and linking the new Supabase project:
 
----
-
-#### Script 3: Add Updated At Trigger
-
-```sql
--- Create function to automatically update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$ LANGUAGE plpgsql;
-
--- Create trigger on user_profiles table
-CREATE TRIGGER update_user_profiles_updated_at
-  BEFORE UPDATE ON user_profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+```powershell
+npx --yes supabase login
+npx --yes supabase link --project-ref <new-flowfit-dev-ref>
+npx --yes supabase db push --linked --dry-run
+npx --yes supabase db push --linked
 ```
 
-**Expected Result**: ✅ Success. No rows returned.
+You can also apply the canonical SQL through Supabase MCP or the dashboard SQL
+editor after replacing `.mcp.json` with the real project ref and reloading
+Codex.
 
----
+## Verify
 
-### Step 3: Verify Table Creation
+Use the verification SQL in `docs/SUPABASE_RECOVERY_RUNBOOK.md` to confirm
+columns, policies, grants, and constraints.
 
-Run this query to verify the table exists:
+Then run the local app gate:
 
-```sql
-SELECT * FROM user_profiles LIMIT 1;
+```powershell
+pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke
 ```
-
-**Expected Result**: ✅ Success. 0 rows returned (table is empty but exists).
-
----
-
-### Step 4: Test Your App
-
-1. Close your app completely
-2. Reopen the app
-3. Try signing up with a new account
-4. Complete the survey
-5. The error should be gone! ✅
-
----
-
-## Verify Setup
-
-After running the scripts, verify everything is set up correctly:
-
-### Check Table Structure
-
-```sql
-SELECT 
-  column_name, 
-  data_type, 
-  is_nullable,
-  column_default
-FROM information_schema.columns
-WHERE table_name = 'user_profiles'
-ORDER BY ordinal_position;
-```
-
-**Expected Output**: Should show 12 columns (user_id, full_name, age, gender, weight, height, activity_level, goals, daily_calorie_target, survey_completed, created_at, updated_at)
-
-### Check RLS Policies
-
-```sql
-SELECT 
-  schemaname,
-  tablename,
-  policyname,
-  permissive,
-  roles,
-  cmd
-FROM pg_policies
-WHERE tablename = 'user_profiles';
-```
-
-**Expected Output**: Should show 3 policies (view, insert, update)
-
-### Check Trigger
-
-```sql
-SELECT 
-  trigger_name,
-  event_manipulation,
-  event_object_table,
-  action_statement
-FROM information_schema.triggers
-WHERE event_object_table = 'user_profiles';
-```
-
-**Expected Output**: Should show 1 trigger (update_user_profiles_updated_at)
-
----
-
-## Alternative: Run Combined Migration
-
-If you prefer, you can run all three scripts at once:
-
-```sql
--- ============================================
--- COMBINED MIGRATION SCRIPT
--- ============================================
-
--- 1. Create user_profiles table
-CREATE TABLE user_profiles (
-  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name TEXT NOT NULL,
-  age INTEGER NOT NULL CHECK (age >= 13 AND age <= 120),
-  gender TEXT NOT NULL CHECK (gender IN ('male', 'female', 'other', 'prefer_not_to_say')),
-  weight DECIMAL(5,2) NOT NULL CHECK (weight > 0 AND weight < 500),
-  height DECIMAL(5,2) NOT NULL CHECK (height > 0 AND height < 300),
-  activity_level TEXT NOT NULL CHECK (activity_level IN ('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active')),
-  goals TEXT[] NOT NULL,
-  daily_calorie_target INTEGER NOT NULL CHECK (daily_calorie_target > 0),
-  survey_completed BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_user_profiles_user_id ON user_profiles(user_id);
-
--- 2. Enable RLS and create policies
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own profile"
-  ON user_profiles FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own profile"
-  ON user_profiles FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own profile"
-  ON user_profiles FOR UPDATE
-  USING (auth.uid() = user_id);
-
--- 3. Create trigger function and trigger
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$ LANGUAGE plpgsql;
-
-CREATE TRIGGER update_user_profiles_updated_at
-  BEFORE UPDATE ON user_profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-```
-
----
 
 ## Troubleshooting
 
-### Error: "relation 'user_profiles' already exists"
+If the app reports:
 
-The table already exists. Skip to Step 3 to verify.
+```text
+PostgrestException(message: Could not find the table 'public.user_profiles' in the schema cache, code: PGRST205)
+```
 
-### Error: "permission denied for schema public"
+check these in order:
 
-You need to be the project owner or have proper permissions. Contact your Supabase project admin.
+1. The running app/build received `SUPABASE_URL` and
+   `SUPABASE_PUBLISHABLE_KEY` for the intended new Supabase project. Release
+   scripts can read these from the process environment or ignored
+   `.env.release`.
+2. If no env/Dart defines are supplied, the optional ignored fallback
+   `lib/secrets.dart` points at that same project and uses a publishable client
+   key, not a secret or service-role key.
+3. The canonical migration was applied to that same project.
+4. Supabase dashboard Settings -> API schema cache has been reloaded.
+5. RLS policies and authenticated grants exist for the public tables.
 
-### Error: "policy already exists"
-
-The policies are already created. This is fine, continue to the next step.
-
-### Table exists but still getting PGRST205 error
-
-1. Go to **Settings** → **API** in Supabase dashboard
-2. Click **Reload schema cache** button
-3. Wait 10 seconds
-4. Try your app again
-
----
-
-## What These Scripts Do
-
-### Script 1: Create Table
-- Creates `user_profiles` table with proper columns
-- Adds constraints for data validation (age 13-120, weight 0-500, etc.)
-- Creates index for fast lookups
-- Links to `auth.users` table with foreign key
-
-### Script 2: Row Level Security
-- Enables RLS to protect user data
-- Creates policies so users can only access their own data
-- Prevents users from seeing other users' profiles
-
-### Script 3: Auto-Update Timestamp
-- Creates trigger to automatically update `updated_at` field
-- Runs every time a profile is updated
-- Keeps track of when data was last modified
-
----
-
-## Next Steps
-
-After setting up the database:
-
-1. ✅ Test signup flow
-2. ✅ Test survey completion
-3. ✅ Verify data saves to Supabase
-4. ✅ Test login flow
-5. ✅ Test session persistence
-
-Refer to `test/integration/MANUAL_TESTING_GUIDE.md` for detailed testing instructions.
-
----
-
-## Need Help?
-
-- **Supabase Docs**: https://supabase.com/docs/guides/database
-- **SQL Editor**: https://supabase.com/dashboard/project/_/sql
-- **Table Editor**: https://supabase.com/dashboard/project/_/editor
-
----
-
-## Summary
-
-**Problem**: `user_profiles` table doesn't exist  
-**Solution**: Run the SQL scripts above in Supabase SQL Editor  
-**Time**: 5 minutes  
-**Result**: App will work correctly ✅
+If using CLI local workflows, `supabase/config.toml` is initialized for FlowFit.
+Local migration commands require the local Supabase stack to be running.

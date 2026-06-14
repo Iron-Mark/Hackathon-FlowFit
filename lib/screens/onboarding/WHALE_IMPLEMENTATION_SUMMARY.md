@@ -153,7 +153,7 @@ All screens have been implemented according to the whale companion theme specifi
 ```
 1. OnboardingScreen (3 slides)
 2. SurveyIntroScreen
-3. SurveyBasicInfoScreen (name, age 13-120, gender) ❌
+3. SurveyBasicInfoScreen (name, age 7-120, gender) ❌
 4. SurveyBodyMeasurementsScreen (height, weight) ❌
 5. SurveyActivityGoalsScreen ❌
 6. SurveyDailyTargetsScreen (calories, macros) ❌

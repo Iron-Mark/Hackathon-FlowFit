@@ -7,6 +7,8 @@ echo "🔍 FlowFit Phone Receiver Test"
 echo "================================"
 echo ""
 
+APP_PACKAGE="${FLOWFIT_ANDROID_APPLICATION_ID:-com.oldstlabs.flowfit}"
+
 # Colors
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -28,7 +30,7 @@ echo ""
 
 # Check if app is installed
 echo "📦 Step 2: Checking if FlowFit is installed on phone..."
-APP_INSTALLED=$(adb -s $PHONE_DEVICE shell pm list packages | grep "com.example.flowfit")
+APP_INSTALLED=$(adb -s $PHONE_DEVICE shell pm list packages | grep "$APP_PACKAGE")
 
 if [ -z "$APP_INSTALLED" ]; then
     echo -e "${RED}❌ FlowFit not installed on phone!${NC}"
@@ -41,7 +43,7 @@ echo ""
 
 # Check if service is registered
 echo "🔧 Step 3: Checking if PhoneDataListenerService is registered..."
-SERVICE_REGISTERED=$(adb -s $PHONE_DEVICE shell dumpsys package com.example.flowfit | grep "PhoneDataListenerService")
+SERVICE_REGISTERED=$(adb -s $PHONE_DEVICE shell dumpsys package "$APP_PACKAGE" | grep "PhoneDataListenerService")
 
 if [ -z "$SERVICE_REGISTERED" ]; then
     echo -e "${RED}❌ PhoneDataListenerService not registered!${NC}"
@@ -66,7 +68,7 @@ echo ""
 
 # Launch app
 echo "🚀 Step 5: Launching FlowFit on phone..."
-adb -s $PHONE_DEVICE shell am start -n com.example.flowfit/.MainActivity
+adb -s $PHONE_DEVICE shell am start -n "$APP_PACKAGE/.MainActivity"
 sleep 2
 echo -e "${GREEN}✅ App launched${NC}"
 echo ""

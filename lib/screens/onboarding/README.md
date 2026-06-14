@@ -7,7 +7,7 @@ The adult survey flow (Steps 0-4) has been replaced with the **Whale-Themed Budd
 ### Old Survey Steps (REMOVED - Adult-focused, not kid-friendly)
 
 ❌ **Survey Intro** - Welcome screen with features
-❌ **Basic Info** - Age (13-120), Gender (not inclusive)
+❌ **Basic Info** - Age (7-120), Gender (not inclusive)
 ❌ **Body Measurements** - Height, Weight (triggers body image issues)
 ❌ **Activity Goals** - Too complex for kids
 ❌ **Daily Targets** - Calorie/macro tracking (harmful for children)

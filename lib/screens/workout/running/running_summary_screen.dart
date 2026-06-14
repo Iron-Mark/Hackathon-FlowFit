@@ -84,14 +84,12 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
     try {
       final session = ref.read(runningSessionProvider);
       if (session != null) {
-        // TODO: Re-enable when backend is ready
-        // await ref.read(workoutSessionServiceProvider).saveSession(session);
+        await ref.read(workoutSessionServiceProvider).saveSession(session);
 
-        // For now, just show success message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('✅ Workout saved! (Backend disabled for now)'),
+              content: Text('Workout saved successfully!'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),

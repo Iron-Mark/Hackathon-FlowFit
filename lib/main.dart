@@ -6,13 +6,14 @@ import 'package:flowfit/features/activity_classifier/presentation/tracker_page.d
 import 'package:flowfit/features/wellness/presentation/maps_page_wrapper.dart';
 import 'package:flowfit/services/phone_data_listener.dart';
 import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/config/supabase_runtime_config.dart';
 import 'providers/wellness_state_provider.dart';
-import 'secrets.dart';
 import 'theme/app_theme.dart';
 import 'utils/deep_link_handler.dart';
 import 'screens/loading_screen.dart';
@@ -80,9 +81,12 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Supabase with configuration from secrets and deep link support
+  SupabaseRuntimeConfig.validate();
   await Supabase.initialize(
-    url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
+    url: SupabaseRuntimeConfig.url,
+    // supabase_flutter 2.10.x still names this parameter anonKey.
+    // The value should be the dashboard Publishable key.
+    anonKey: SupabaseRuntimeConfig.publishableKey,
     authOptions: const FlutterAuthClientOptions(
       authFlowType: AuthFlowType.pkce, // Use PKCE flow for mobile security
     ),
@@ -180,11 +184,10 @@ class FlowFitPhoneApp extends StatelessWidget {
               const SurveyDailyTargetsScreen(), // Step 4
           '/onboarding1': (context) => const OnboardingScreen(),
           '/dashboard': (context) => const DashboardScreen(),
-          '/trackertest': (context) => const TrackerPage(),
+          '/activity-classifier': (context) => const TrackerPage(),
           '/mission': (context) => const MapsPageWrapper(),
           '/home': (context) => const PhoneHomePage(),
           '/phone_heart_rate': (context) => const PhoneHeartRateScreen(),
-          '/font-demo': (context) => const FontDemoScreen(),
           '/privacy-policy': (context) => const PrivacyPolicyScreen(),
           '/settings': (context) => const SettingsScreen(),
           '/notification-settings': (context) =>
@@ -224,7 +227,6 @@ class FlowFitPhoneApp extends StatelessWidget {
               const ActiveResistanceScreen(),
           '/workout/resistance/summary': (context) =>
               const ResistanceSummaryScreen(),
-          '/yolo-debug': (context) => const YoloDebugScreen(),
           '/wellness-tracker': (context) => const WellnessTrackerPage(),
           '/wellness-onboarding': (context) => const WellnessOnboardingScreen(),
           '/wellness-settings': (context) => const WellnessSettingsScreen(),
@@ -243,6 +245,11 @@ class FlowFitPhoneApp extends StatelessWidget {
           '/buddy-completion': (context) => const BuddyCompletionScreen(),
           // Buddy customization
           '/buddy-customization': (context) => const BuddyCustomizationScreen(),
+          if (kDebugMode) ...{
+            '/font-demo': (context) => const FontDemoScreen(),
+            '/trackertest': (context) => const TrackerPage(),
+            '/yolo-debug': (context) => const YoloDebugScreen(),
+          },
         },
       ),
     );

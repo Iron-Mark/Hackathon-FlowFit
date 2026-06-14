@@ -246,7 +246,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/survey-intro');
+                Navigator.pushNamed(context, '/survey_intro');
               },
               child: const Text('Complete Onboarding'),
             ),

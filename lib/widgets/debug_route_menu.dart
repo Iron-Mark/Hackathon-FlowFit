@@ -14,7 +14,8 @@ class DebugRouteMenu extends StatelessWidget {
     {'route': '/font-demo', 'label': 'Font Demo'},
     {'route': '/', 'label': 'Loading'},
     {'route': '/dashboard', 'label': 'Dashboard'},
-    {'route': '/trackertest', 'label': 'Tracker Test'},
+    {'route': '/activity-classifier', 'label': 'Activity AI'},
+    {'route': '/trackertest', 'label': 'Tracker Test (debug alias)'},
   ];
 
   @override

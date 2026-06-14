@@ -1,11 +1,14 @@
 # AGENTS.md
 
-## Cursor Cloud specific instructions
+## Maintained Fork Workflow
 
 ### Environment
 
-- **Flutter SDK 3.44.0** (Dart 3.12.0) is installed at `/home/ubuntu/flutter`. PATH is configured in `~/.bashrc`.
-- The project requires Dart SDK `^3.10.0` — do not downgrade to an older Flutter version.
+- Use **Flutter SDK 3.41.9 stable** for CI/release verification; current local
+  evidence uses Dart 3.11.5. The `pubspec.yaml` constraint `sdk: "^3.10.0"` is
+  the Dart SDK constraint, not a Flutter version.
+- Do not downgrade below the repo's CI toolchain without updating
+  `.github/workflows/flutter-ci.yml`, release docs, and verification evidence.
 
 ### Key commands
 
@@ -21,20 +24,41 @@ See `README.md` and `.github/copilot-instructions.md` for full developer workflo
 
 ### Secrets
 
-- `lib/secrets.dart` is gitignored and must exist for compilation. It exports `SupabaseConfig.url` and `SupabaseConfig.anonKey`. A placeholder is created during setup; replace with real values to test Supabase-dependent flows.
+- Preferred release/local configuration is `--dart-define=SUPABASE_URL=...`
+  and `--dart-define=SUPABASE_PUBLISHABLE_KEY=...`, or equivalent
+  `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` environment values consumed by
+  the release scripts.
+- `lib/secrets.dart` is gitignored and is only an optional local fallback. When
+  used, copy `lib/secrets.dart.example`; it exports `SupabaseConfig.url`,
+  `SupabaseConfig.publishableKey`, and the deprecated
+  `SupabaseConfig.anonKey` compatibility alias.
+- Never put service-role, secret, or server-only Supabase keys in Flutter code
+  or committed files.
 
-### Known pre-existing issues
+### Current status
 
-- `solar_icons` 0.0.5 extends `IconData` (a `final` class in newer Dart SDKs) — causes compilation failures in tests that import `main.dart`.
-- `lib/screens/track/track_screen.dart` has syntax errors (unmatched brackets, undefined getters) that also cause compile failures.
-- Several `const` constructor usages in `main.dart` are invalid with the current Dart SDK.
-- These issues together cause ~42 test failures out of ~505 total tests. The remaining ~463 tests pass.
+- The maintained fork has Flutter web, Android phone, and Wear OS build paths.
+- Old notes about `solar_icons`, `track_screen.dart`, invalid `const`
+  constructors, and roughly 42 failing tests are obsolete for this branch. Run
+  fresh `flutter analyze` and `flutter test` before reporting pass/fail status.
+- Store release remains blocked until external inputs exist: real Supabase
+  project/MCP OAuth, production Supabase client values, Android upload signing,
+  deployed HTTPS web origin, verified support inbox, and macOS/Xcode signing
+  for iOS.
 
 ### Running the app
 
-This is a **Flutter mobile app** targeting Android / Wear OS physical devices. There is no web or desktop entrypoint that can be run headlessly in the cloud VM. The meaningful development loop in this environment is:
+This is a **Flutter app** targeting Android phone, Wear OS, and Flutter web.
+The meaningful development loop is:
 
 1. `flutter pub get` — install dependencies
 2. `flutter analyze` — static analysis
 3. `flutter test` — run unit/widget tests
-4. `dart format .` — check formatting
+4. `flutter build web --release --no-pub` — verify the default JavaScript web
+   release path when Supabase Dart defines are supplied
+   - Use `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm`
+     when the web handoff should produce a Flutter WebAssembly artifact.
+5. `flutter build apk --debug --no-pub` — verify the Android phone path
+6. `flutter build apk --debug -t lib/main_wear.dart --no-pub` — verify the
+   Wear OS path
+7. `dart format .` — check formatting

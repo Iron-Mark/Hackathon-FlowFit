@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Flowfit</string>
+	<string>FlowFit</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>flowfit</string>
+	<string>FlowFit</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -47,8 +47,22 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We use your location for wellness geofences and missions.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>We use background location to keep wellness geofences and mission progress working when FlowFit is not open.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We track your location in the background for safety and mission progress.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>We use motion data to classify activity and improve workout tracking.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We use the camera for food and workout-related capture features you choose to open.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We let you choose photos for share cards and profile-related images.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We save generated workout share cards only when you choose to export them.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 	<!-- Deep Link Configuration for Supabase Auth -->
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -56,11 +70,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.example.flowfit</string>
+			<string>$(FLOWFIT_IOS_BUNDLE_IDENTIFIER)</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.example.flowfit</string>
-				<string>com.example.flowfit.dev</string>
+				<string>$(FLOWFIT_IOS_BUNDLE_IDENTIFIER)</string>
 			</array>
 		</dict>
 	</array>

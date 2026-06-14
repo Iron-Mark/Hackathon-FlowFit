@@ -4,19 +4,19 @@ Quick reference for configuring your Supabase project for mobile deep linking.
 
 ## 1. URL Configuration
 
-**Dashboard URL**: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/url-configuration
+**Dashboard URL**: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/url-configuration
 
 ### Site URL
 Set this to your primary deep link:
 ```
-com.example.flowfit://auth-callback
+com.oldstlabs.flowfit://auth-callback
 ```
 
 ### Redirect URLs
 Add these URLs (one per line):
 ```
-com.example.flowfit://auth-callback
-com.example.flowfit.dev://auth-callback
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 http://localhost:3000/**
 ```
 
@@ -24,7 +24,7 @@ http://localhost:3000/**
 
 ## 2. Email Templates
 
-**Dashboard URL**: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/templates
+**Dashboard URL**: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/templates
 
 ### Confirm Signup Template
 
@@ -81,7 +81,7 @@ The FlowFit Team
 
 ## 3. Auth Settings
 
-**Dashboard URL**: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/providers
+**Dashboard URL**: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/providers
 
 ### Email Auth Settings
 
@@ -98,15 +98,12 @@ PKCE is automatically enabled when you use `AuthFlowType.pkce` in your Flutter c
 
 ### For Development
 
-While testing, you can temporarily:
+While testing, keep email confirmation enabled and use the maintained-fork
+redirect URLs so deep-link verification is exercised.
 
-1. **Disable Email Confirmation** (Auth Settings)
-   - This allows immediate login without email verification
-   - Remember to re-enable for production!
-
-2. **Add Test Redirect URLs**
+1. **Add Test Redirect URLs**
    ```
-   com.example.flowfit.dev://auth-callback
+   com.oldstlabs.flowfit.dev://auth-callback
    http://localhost:3000/**
    ```
 
@@ -126,7 +123,7 @@ While testing, you can temporarily:
 
 ### View Auth Logs
 
-**Dashboard URL**: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/logs/explorer
+**Dashboard URL**: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/logs/explorer
 
 Filter for auth events:
 ```sql
@@ -165,7 +162,7 @@ Before going live:
 
 ## 7. Rate Limiting
 
-**Dashboard URL**: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/rate-limits
+**Dashboard URL**: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/rate-limits
 
 Recommended settings:
 - **Email sends per hour**: 4 (prevents spam)
@@ -176,7 +173,7 @@ Recommended settings:
 
 For production, consider using a custom SMTP provider for better deliverability:
 
-**Dashboard URL**: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/settings/auth
+**Dashboard URL**: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/settings/auth
 
 Recommended providers:
 - SendGrid
@@ -186,8 +183,8 @@ Recommended providers:
 
 ## Quick Links
 
-- [Auth URL Config](https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/url-configuration)
-- [Email Templates](https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/templates)
-- [Auth Settings](https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/providers)
-- [Auth Logs](https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/logs/explorer)
-- [Rate Limits](https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/rate-limits)
+- [Auth URL Config](https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/url-configuration)
+- [Email Templates](https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/templates)
+- [Auth Settings](https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/providers)
+- [Auth Logs](https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/logs/explorer)
+- [Rate Limits](https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/rate-limits)

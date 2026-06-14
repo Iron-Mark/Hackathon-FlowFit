@@ -266,13 +266,15 @@ try {
 3. Disconnects from Samsung Health services
 4. Cleans up event sinks and listeners
 
-## Foreground Service
+## Tracking Lifecycle
 
-When heart rate tracking is active:
-1. `SensorTrackingService` starts as foreground service
-2. Persistent notification shows "Tracking heart rate"
-3. Ensures tracking continues even when app is backgrounded
-4. Service stops when tracking is stopped
+The current native implementation does not declare a dedicated foreground service for heart-rate tracking. When tracking is active:
+1. `MainActivity` owns the `HealthTrackingManager` lifecycle
+2. `HealthTrackingManager` connects to Samsung Health Tracking Service
+3. `WatchSensorService` collects accelerometer batches as an in-process helper
+4. `PhoneDataListenerService` receives wearable data-layer messages on the phone side
+
+If FlowFit later needs long-running background health tracking, add a real Android `Service` implementation before reintroducing a foreground-service manifest entry.
 
 ## Performance Considerations
 

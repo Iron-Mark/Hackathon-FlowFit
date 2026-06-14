@@ -11,6 +11,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+supabase/.temp/
 
 # IntelliJ related
 *.iml
@@ -51,7 +52,21 @@ flutter_*.log
 
 # Secrets (if not already ignored)
 lib/secrets.dart
+.env.release
+.env.release.local
 android/app/src/main/res/values/secrets.xml
+android/key.properties
+android/*.jks
+android/*.keystore
+
+# Apple signing / App Store Connect secrets
+*.p12
+*.mobileprovision
+*.provisionprofile
+AuthKey_*.p8
+ios/ExportOptions.plist
+ios/export_options*.plist
+export_options*.plist
 linux/flutter/generated_plugin_registrant.cc
 linux/flutter/generated_plugin_registrant.h
 linux/flutter/generated_plugins.cmake
@@ -73,7 +88,6 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 windows/flutter/generated_plugin_registrant.cc
 windows/flutter/generated_plugin_registrant.h
 windows/flutter/generated_plugins.cmake
-android/gradle.properties
 windows/flutter/generated_plugins.cmake
 windows/flutter/generated_plugin_registrant.cc
 windows/flutter/generated_plugins.cmake
@@ -81,4 +95,3 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 linux/flutter/generated_plugin_registrant.cc
 linux/flutter/generated_plugins.cmake
 .vscode/settings.json
-android/gradle.properties

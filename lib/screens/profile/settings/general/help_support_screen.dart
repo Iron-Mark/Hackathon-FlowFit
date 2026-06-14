@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 class HelpSupportScreen extends StatelessWidget {
@@ -100,7 +101,9 @@ class HelpSupportScreen extends StatelessWidget {
                     () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Opening email: support@flowfit.com'),
+                          content: Text(
+                            'Opening email: ${FlowFitRuntimeConfig.supportEmail}',
+                          ),
                           duration: Duration(seconds: 2),
                         ),
                       );
@@ -219,7 +222,7 @@ class HelpSupportScreen extends StatelessWidget {
                     context,
                     SolarIconsOutline.letter,
                     'Email',
-                    'support@flowfit.com',
+                    FlowFitRuntimeConfig.supportEmail,
                   ),
                   const SizedBox(height: 16),
                   _buildContactRow(

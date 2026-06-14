@@ -4,17 +4,17 @@
 
 ### 1. Configure Supabase (2 minutes)
 
-**URL**: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/url-configuration
+**URL**: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/url-configuration
 
 **Site URL**:
 ```
-com.example.flowfit://auth-callback
+com.oldstlabs.flowfit://auth-callback
 ```
 
 **Redirect URLs** (add all three):
 ```
-com.example.flowfit://auth-callback
-com.example.flowfit.dev://auth-callback
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 http://localhost:3000/**
 ```
 
@@ -25,7 +25,7 @@ http://localhost:3000/**
 flutter run -d <device-id>
 
 # Test deep link
-adb shell am start -W -a android.intent.action.VIEW -d "com.example.flowfit://auth-callback" com.example.flowfit
+adb shell am start -W -a android.intent.action.VIEW -d "com.oldstlabs.flowfit://auth-callback" com.oldstlabs.flowfit
 ```
 
 ### 3. Test Email Flow (3 minutes)
@@ -42,7 +42,7 @@ adb shell am start -W -a android.intent.action.VIEW -d "com.example.flowfit://au
 adb logcat | grep -i "deep link\|auth"
 
 # Check if app opens
-adb shell am start -W -a android.intent.action.VIEW -d "com.example.flowfit://auth-callback" com.example.flowfit
+adb shell am start -W -a android.intent.action.VIEW -d "com.oldstlabs.flowfit://auth-callback" com.oldstlabs.flowfit
 ```
 
 ## 📚 Full Documentation

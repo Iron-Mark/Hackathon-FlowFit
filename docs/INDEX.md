@@ -47,6 +47,35 @@ Documentation specifically for presenting the project to judges or stakeholders:
 
 Technical implementation details and verification:
 
+### Backend Recovery
+- **SUPABASE_RECOVERY_RUNBOOK.md**
+  - New Supabase development project setup
+  - Project-scoped MCP configuration
+  - Canonical migration and verification commands
+  - Local Flutter credential recovery
+
+### Release Readiness
+- **RELEASE_READINESS_RUNBOOK.md**
+  - Play Store signing and package configuration
+  - App Store/macOS signing requirements
+  - Flutter web build and hosting notes
+  - Local verification command list
+
+- **STORE_SUBMISSION_CHECKLIST.md**
+  - Play Store, App Store, and Flutter web submission checklist
+  - Privacy/account deletion URL requirements
+  - Store asset and review readiness tracking
+
+- **STORE_METADATA_DRAFT.md**
+  - Draft Play/App Store listing copy
+  - Screenshot shot list and review notes
+  - Release evidence checklist
+
+- **PRIVACY_DATA_MAP.md**
+  - Data inventory for Play Data safety and App Store privacy labels
+  - Third-party SDK data considerations
+  - Account deletion, retention, and disclosure notes
+
 ### AI Classification
 - **AI_DETECTION_COMPLETE_IMPLEMENTATION.md**
   - Complete AI detection implementation guide
@@ -176,6 +205,12 @@ Build and deployment scripts:
 - **test-phone.bat** - Test phone app
 - **test-watch.bat** - Test watch app
 - **test_phone_receiver.sh** - Test phone data receiver (Linux/Mac)
+- **release_preflight.ps1** - Local analyzer, test, web, optional Wasm,
+  Android, Wear, and release-smoke gate
+- **release_readiness_audit.ps1** - Non-secret Supabase, signing, web, and
+  store readiness audit
+- **store_release_build.ps1** - Production Android, iOS, and web artifact
+  wrapper
 
 ---
 
@@ -201,12 +236,12 @@ Build and deployment scripts:
 
 ## 📊 Documentation Statistics
 
-- **Total Documents:** 33 files
+- **Total Documents:** 134 files
 - **Presentation Docs:** 3 files
-- **Implementation Docs:** 8 files
-- **Feature Docs:** 19 files
-- **Root Docs:** 3 files
-- **Scripts:** 8 files
+- **Implementation Docs:** 9 files
+- **Feature Docs:** 21 files
+- **Root Docs:** 11 files
+- **Scripts:** 11 files
 
 ---
 
@@ -259,5 +294,5 @@ flowfit/
 
 ---
 
-**Last Updated:** November 29, 2025
+**Last Updated:** June 14, 2026
 **Maintained By:** Development Team

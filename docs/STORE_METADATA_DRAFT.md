@@ -1,0 +1,128 @@
+# FlowFit Store Metadata Draft
+
+Last updated: 2026-06-14
+
+This is a draft handoff pack for Google Play, App Store, and Flutter web
+release work. Replace placeholders only after the production Supabase project,
+package/bundle IDs, support inbox, and deployed web URLs are final.
+
+## Release Identity
+
+| Field | Draft value | Status |
+| --- | --- | --- |
+| App name | FlowFit | Ready for review |
+| Short tagline | Fitness tracking with a wellness companion | Draft |
+| Android package ID | `com.oldstlabs.flowfit` | Confirm ownership before release |
+| iOS bundle ID | `com.oldstlabs.flowfit` | Confirm Apple Developer ownership before release |
+| Production auth scheme | `com.oldstlabs.flowfit` | Add to Supabase redirect URLs |
+| Dev auth scheme | `com.oldstlabs.flowfit.dev` | Add to Supabase redirect URLs |
+| Support email | `support@flowfit.com` | Verify or pass `FLOWFIT_SUPPORT_EMAIL` |
+| Privacy policy URL | `https://<your-web-host>/privacy.html` | Replace after web deploy |
+| Account deletion URL | `https://<your-web-host>/account-deletion.html` | Replace after web deploy |
+
+## Short Description
+
+FlowFit helps you track workouts, wellness goals, and heart-rate trends with a
+friendly companion experience across phone and Wear OS.
+
+## Full Description
+
+FlowFit combines workout tracking, wellness goals, and companion-style progress
+into one fitness app. Create a profile, set daily goals, complete onboarding,
+customize your Buddy companion, and track sessions such as walking, running,
+and activity-focused routines.
+
+For supported Wear OS and Samsung Health Sensor API devices, FlowFit can show
+heart-rate information and watch-to-phone sensor updates after you grant the
+required permissions. Location, notification, camera, and photo features are
+used only for the features you choose to enable.
+
+FlowFit includes account controls, an in-app privacy policy, and an account
+deletion request flow. Public privacy and account-deletion pages are included
+with the Flutter web build for store review and user access.
+
+## App Review Notes
+
+- Test account: provide after the production Supabase project exists.
+- Supabase auth: Email provider must be enabled. For store review, email
+  confirmation should be configured according to the reviewer test account
+  instructions.
+- Account deletion: open Profile > Settings > Delete Account and confirm the
+  request. The app clears app-owned public records through
+  `request_account_deletion()` and records a pending admin queue row for
+  Supabase Auth user deletion.
+- Health data: heart-rate features require supported hardware and permissions.
+- Location data: location/geofence features require user permission and should
+  be disclosed in store privacy forms if enabled in the release build.
+- Debug routes: release builds hide the current debug/demo routes.
+
+## Screenshot Shot List
+
+Use current production assets and real device frames. Avoid showing placeholder
+credentials, debug labels, staging project refs, or private user data.
+
+### Phone
+
+1. Auth or welcome screen with FlowFit branding.
+2. Profile onboarding with fitness goals.
+3. Buddy onboarding/customization.
+4. Dashboard or progress overview.
+5. Workout tracking/session screen.
+6. Privacy or account deletion flow if the store requires account-control proof.
+
+### Wear OS
+
+1. Watch home/tracking screen.
+2. Heart-rate or sensor status screen on supported device.
+3. Workout session view.
+
+### Flutter Web
+
+1. Deployed public privacy page.
+2. Deployed public account-deletion page.
+3. Optional web app shell if web is submitted as a user-facing target.
+
+## Review Evidence Checklist
+
+- [ ] `pwsh -NoProfile -File scripts\release_readiness_audit.ps1 -Strict`
+      passes with production values.
+- [ ] `pwsh -NoProfile -File scripts\release_preflight.ps1 -IncludeReleaseSmoke`
+      passes locally.
+- [ ] If using Flutter WebAssembly, `pwsh -NoProfile -File scripts\release_preflight.ps1 -IncludeWasmSmoke`
+      passes locally.
+- [ ] If deploying Flutter WebAssembly, `pwsh -NoProfile -File scripts\store_release_build.ps1 -Target Web -WebWasm`
+      records `releaseInputs.webBuildBackend = wasm` in the artifact manifest.
+- [ ] On macOS, `pwsh -NoProfile -File scripts\store_release_build.ps1 -Target All -RunStrictAudit -SupportEmailVerified`
+      produces `build/store-release-artifacts.json` with Android, iOS, and web
+      artifacts.
+- [ ] Web handoff includes `build/release/flowfit-web-release.zip` plus the
+      `flutter-web-release-zip` manifest entry.
+- [ ] `build/store-release-readiness-audit.json` is archived with the store
+      handoff evidence after strict audit passes.
+- [ ] `build/store-release-artifacts.json` is archived with artifact paths,
+      SHA-256 hashes, byte sizes, git/toolchain metadata, and release inputs.
+- [ ] On Windows, Android and web targets pass separately; iOS IPA generation is
+      deferred to the macOS/Xcode build host.
+- [ ] GitHub CI passes on the release branch.
+- [ ] Supabase advisors have no unresolved high-risk findings.
+- [ ] Supabase redirect URLs include Android, iOS, and web production origins.
+- [ ] Public `privacy.html` loads from the deployed HTTPS origin.
+- [ ] Public `account-deletion.html` loads from the deployed HTTPS origin.
+- [ ] `build/web-deployment-verification.json` shows the deployed web origin,
+      public compliance pages, support inbox, and manifest all pass.
+- [ ] Android AAB is signed with the upload key, not debug signing.
+- [ ] iOS archive/IPA is signed with the Apple Developer team and provisioning
+      profile, and the manifest includes `ios-app-store-ipa`.
+- [ ] Real device smoke covers signup, login, onboarding, Buddy setup, workout
+      creation, and account deletion request.
+
+## Release Notes Draft
+
+Initial FlowFit release:
+
+- Fitness profile and goal onboarding.
+- Buddy companion setup and customization.
+- Workout and wellness tracking surfaces.
+- Wear OS watch-to-phone sensor integration.
+- Public privacy and account deletion pages.
+- In-app account deletion request flow.

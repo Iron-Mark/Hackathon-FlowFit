@@ -47,7 +47,7 @@
 │  │  ┌──────────────┐  ┌──────────────┐                    │   │
 │  │  │ Live Heart   │  │ Activity AI  │                    │   │
 │  │  │ Rate ❤️      │  │ 🤖 TFLite    │                    │   │
-│  │  │ Monitor from │  │ Test model   │                    │   │
+│  │  │ Monitor from │  │ Model        │                    │   │
 │  │  │ watch        │  │ classifier   │                    │   │
 │  │  └──────┬───────┘  └──────┬───────┘                    │   │
 │  │         │                  │                            │   │
@@ -114,7 +114,7 @@
                           │ Tap "Activity AI"
                           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                  ACTIVITY AI TEST SCREEN                        │
+│                  ACTIVITY AI SCREEN                             │
 │                  (TensorFlow Lite Classifier)                   │
 │                                                                 │
 │  Anxiety Gap Demo                                          ✕    │
@@ -162,8 +162,8 @@
 ### 2. **Dashboard → Activity AI**
 - **Location**: Dashboard Home Tab → Quick Track section
 - **Button**: "Activity AI" (purple CPU icon)
-- **Action**: Tap to test TensorFlow Lite activity classifier
-- **Route**: `/trackertest`
+- **Action**: Tap to open TensorFlow Lite activity classifier
+- **Route**: `/activity-classifier`
 
 ### 3. **Live Heart Rate Features**
 - ✅ Real-time BPM display
@@ -252,7 +252,7 @@ UI Display (Stress/Cardio/Strength)
 | `/signup` | SignUpScreen | User registration |
 | `/dashboard` | DashboardScreen | Main dashboard with tabs |
 | `/home` | PhoneHomePage | **Live heart rate monitoring** |
-| `/trackertest` | TrackerPage | Activity classifier test |
+| `/activity-classifier` | TrackerPage | Activity classifier |
 | `/survey1` | SurveyScreen1 | Onboarding survey |
 | `/survey2` | SurveyScreen2 | Onboarding survey |
 | `/survey3` | SurveyScreen3 | Onboarding survey |

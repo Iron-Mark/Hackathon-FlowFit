@@ -20,8 +20,8 @@ Added authentication guards and proper logout functionality to ensure users can 
 
 ```dart
 _buildSettingItem(
-  context, 
-  'Logout', 
+  context,
+  'Logout',
   SolarIconsOutline.logout,
   onTap: () async {
     // Show confirmation dialog
@@ -49,7 +49,7 @@ _buildSettingItem(
     if (shouldLogout == true && context.mounted) {
       // Sign out using auth notifier
       await ref.read(authNotifierProvider.notifier).signOut();
-      
+
       // Navigate to welcome screen and clear stack
       if (context.mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil(
@@ -91,7 +91,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   void _checkAuthState() {
     final authState = ref.read(authNotifierProvider);
-    
+
     // If not authenticated, redirect to welcome screen
     if (authState.user == null) {
       Navigator.of(context).pushNamedAndRemoveUntil(
@@ -113,7 +113,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         );
       }
     });
-    
+
     // ... rest of build
   }
 }
@@ -147,7 +147,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
   void _checkAuthState() {
     final authState = ref.read(authNotifierProvider);
-    
+
     // If already authenticated, redirect to dashboard
     if (authState.user != null && mounted) {
       Navigator.of(context).pushReplacementNamed('/dashboard');
@@ -180,7 +180,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _checkAuthState() {
     final authState = ref.read(authNotifierProvider);
-    
+
     // If already authenticated, redirect to dashboard
     if (authState.user != null && mounted) {
       Navigator.of(context).pushReplacementNamed('/dashboard');
@@ -282,7 +282,7 @@ enum AuthStatus {
 
 ### Authenticated Only
 - `/dashboard` - Main app dashboard
-- `/trackertest` - Activity tracker
+- `/activity-classifier` - Activity classifier
 - `/phone_heart_rate` - Heart rate monitor
 - `/mission` - Maps/missions
 

@@ -15,7 +15,7 @@ If you didn't create a FlowFit account, you can safely ignore this email.
 
 ---
 FlowFit - Your Personal Fitness Companion
-Questions? Contact us at support@flowfit.app
+Questions? Contact us at support@flowfit.com
 
-Privacy Policy: https://flowfit.app/privacy
-Terms of Service: https://flowfit.app/terms
+Privacy Policy: https://flowfit.your-owned-domain.com/privacy.html
+Account Deletion: https://flowfit.your-owned-domain.com/account-deletion.html

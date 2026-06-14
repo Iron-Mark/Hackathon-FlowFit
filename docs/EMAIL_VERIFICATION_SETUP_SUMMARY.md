@@ -13,23 +13,23 @@ This is your quick reference for setting up and testing email verification with 
 
 ### 1. Configure Supabase Dashboard (2 min)
 
-Go to: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/url-configuration
+Go to: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/url-configuration
 
 **Add these Redirect URLs**:
 ```
-com.example.flowfit://auth-callback
-com.example.flowfit.dev://auth-callback
+com.oldstlabs.flowfit://auth-callback
+com.oldstlabs.flowfit.dev://auth-callback
 http://localhost:3000/**
 ```
 
 **Set Site URL to**:
 ```
-com.example.flowfit://auth-callback
+com.oldstlabs.flowfit://auth-callback
 ```
 
 ### 2. Update Email Template (1 min)
 
-Go to: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/templates
+Go to: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/templates
 
 Make sure the "Confirm signup" template uses:
 ```html
@@ -44,8 +44,8 @@ flutter run -d <your-device-id>
 
 # Test deep link opens app
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.example.flowfit://auth-callback" \
-  com.example.flowfit
+  -d "com.oldstlabs.flowfit://auth-callback" \
+  com.oldstlabs.flowfit
 ```
 
 ## Testing Email Verification
@@ -62,8 +62,8 @@ adb shell am start -W -a android.intent.action.VIEW \
 ```bash
 # Simulate auth callback
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.example.flowfit://auth-callback?type=signup&token=test" \
-  com.example.flowfit
+  -d "com.oldstlabs.flowfit://auth-callback?type=signup&token=test" \
+  com.oldstlabs.flowfit
 
 # Watch logs
 adb logcat | grep -i "deep link\|auth"
@@ -92,7 +92,7 @@ Make sure you're passing `emailRedirectTo`:
 final response = await Supabase.instance.client.auth.signUp(
   email: email,
   password: password,
-  emailRedirectTo: 'com.example.flowfit://auth-callback', // Add this!
+  emailRedirectTo: 'com.oldstlabs.flowfit://auth-callback', // Add this!
 );
 ```
 
@@ -101,8 +101,8 @@ final response = await Supabase.instance.client.auth.signUp(
 ```bash
 # This should open your app
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.example.flowfit://auth-callback" \
-  com.example.flowfit
+  -d "com.oldstlabs.flowfit://auth-callback" \
+  com.oldstlabs.flowfit
 ```
 
 If the app doesn't open, check AndroidManifest.xml.
@@ -131,8 +131,8 @@ If the app doesn't open, check AndroidManifest.xml.
 
 ### Before Production
 
-1. Update package name from `com.example.flowfit` to production package
-2. Update deep link schemes to match
+1. Confirm production package identity is `com.oldstlabs.flowfit`
+2. Confirm deep link schemes match the production package
 3. Remove development schemes
 4. Test on multiple devices
 5. Set up custom SMTP for better email delivery
@@ -155,7 +155,7 @@ If the app doesn't open, check AndroidManifest.xml.
 
 **Cause**: Email confirmation might be disabled
 
-**Fix**: Enable in Auth Settings: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/auth/providers
+**Fix**: Enable in Auth Settings: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/providers
 
 ### Token expired error
 
@@ -167,7 +167,7 @@ If the app doesn't open, check AndroidManifest.xml.
 
 If you're still having issues:
 
-1. Check Supabase logs: https://supabase.com/dashboard/project/dnasghxxqwibwqnljvxr/logs/explorer
+1. Check Supabase logs: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/logs/explorer
 2. Check app logs: `adb logcat | grep -i "flutter\|auth"`
 3. Review the detailed guides in `docs/` folder
 4. Check Supabase Discord or GitHub issues

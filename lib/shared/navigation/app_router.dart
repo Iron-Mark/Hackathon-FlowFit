@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flowfit/features/wellness/presentation/maps_page_wrapper.dart';
 import 'package:flowfit/screens/font_demo_screen.dart';
@@ -88,10 +89,11 @@ class AppRouter {
         path: '/wellness',
         builder: (context, state) => const MapsPageWrapper(),
       ),
-      GoRoute(
-        path: '/font-demo',
-        builder: (context, state) => const FontDemoScreen(),
-      ),
+      if (kDebugMode)
+        GoRoute(
+          path: '/font-demo',
+          builder: (context, state) => const FontDemoScreen(),
+        ),
     ],
     errorBuilder: (context, state) =>
         Scaffold(body: Center(child: Text('Page not found: ${state.uri}'))),

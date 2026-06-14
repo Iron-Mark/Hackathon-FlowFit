@@ -1,3 +1,6 @@
+import java.util.Base64
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -6,8 +9,125 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val flowfitApplicationId = providers
+    .gradleProperty("FLOWFIT_ANDROID_APPLICATION_ID")
+    .orElse("com.oldstlabs.flowfit")
+    .get()
+val flowfitAuthScheme = providers
+    .gradleProperty("FLOWFIT_AUTH_SCHEME")
+    .orElse(flowfitApplicationId)
+    .get()
+val flowfitDevAuthScheme = providers
+    .gradleProperty("FLOWFIT_DEV_AUTH_SCHEME")
+    .orElse("$flowfitApplicationId.dev")
+    .get()
+
+fun isProductionShapedFlowFitValue(value: String?): Boolean {
+    val normalized = value?.trim().orEmpty()
+    if (normalized.isBlank()) {
+        return false
+    }
+
+    val lower = normalized.lowercase()
+    return !(
+        lower.contains("your_") ||
+            lower.contains("replace_with") ||
+            lower.contains("<your-") ||
+            lower.contains("your-") ||
+            lower.contains("your_") ||
+            lower.contains("com.example.") ||
+            lower.contains("com.yourcompany.") ||
+            lower == "com.flowfit.smoke" ||
+            lower.startsWith("com.flowfit.smoke.") ||
+            lower.contains(".example.") ||
+            lower.endsWith(".example") ||
+            lower.contains("localhost") ||
+            lower.contains("127.0.0.1") ||
+            lower.contains("\$(")
+    )
+}
+
+val dartDefines = providers
+    .gradleProperty("dart-defines")
+    .orElse("")
+    .get()
+    .split(",")
+    .filter { it.isNotBlank() }
+    .mapNotNull {
+        runCatching {
+            String(Base64.getDecoder().decode(it), Charsets.UTF_8)
+        }.getOrNull()
+    }
+    .mapNotNull {
+        val separator = it.indexOf('=')
+        if (separator <= 0) null else it.substring(0, separator) to it.substring(separator + 1)
+    }
+    .toMap()
+
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+val hasReleaseSigning = listOf(
+    "storeFile",
+    "storePassword",
+    "keyAlias",
+    "keyPassword",
+).all { (keystoreProperties[it] as String?)?.isNotBlank() == true }
+val allowDebugReleaseSigning = providers
+    .gradleProperty("FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING")
+    .map { it.equals("true", ignoreCase = true) }
+    .orElse(false)
+    .get()
+
+gradle.taskGraph.whenReady {
+    val isReleasePackage = allTasks.any {
+        it.path == ":app:bundleRelease" || it.path == ":app:assembleRelease"
+    }
+    val hasProductionApplicationId =
+        isProductionShapedFlowFitValue(flowfitApplicationId)
+    val hasProductionAuthScheme =
+        isProductionShapedFlowFitValue(flowfitAuthScheme)
+
+    if (isReleasePackage && !hasReleaseSigning && !allowDebugReleaseSigning) {
+        throw GradleException(
+            "Release signing is not configured. Copy android/key.properties.example " +
+                "to android/key.properties and add an upload keystore, or set " +
+                "Gradle property FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true " +
+                "(or env var ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true) " +
+                "only for local smoke builds.",
+        )
+    }
+    if (
+        isReleasePackage &&
+        (!hasProductionApplicationId || !hasProductionAuthScheme) &&
+        (hasReleaseSigning || !allowDebugReleaseSigning)
+    ) {
+        throw GradleException(
+            "Release builds must not use placeholder, smoke, or example FlowFit package/auth IDs. " +
+                "Set FLOWFIT_ANDROID_APPLICATION_ID and FLOWFIT_AUTH_SCHEME before building a store artifact.",
+        )
+    }
+    if (isReleasePackage && hasReleaseSigning) {
+        val dartAuthScheme = dartDefines["FLOWFIT_AUTH_SCHEME"]
+        val hasProductionDartAuthScheme =
+            dartAuthScheme != null &&
+                dartAuthScheme == flowfitAuthScheme &&
+                isProductionShapedFlowFitValue(dartAuthScheme)
+
+        if (!hasProductionDartAuthScheme) {
+            throw GradleException(
+                "Signed release builds must pass matching Dart auth schemes: " +
+                    "--dart-define=FLOWFIT_AUTH_SCHEME=$flowfitAuthScheme",
+            )
+        }
+    }
+}
+
 android {
-    namespace = "com.example.flowfit"
+    namespace = "com.oldstlabs.flowfit"
     compileSdk = 36  // Use Android 15 (API 36) - required by plugins
     ndkVersion = "28.0.13004108"  // Updated to match ultralytics_yolo requirement
 
@@ -27,21 +147,39 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.flowfit"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // Defaults are local-development values. Set FLOWFIT_ANDROID_APPLICATION_ID
+        // for Play Store builds so the package belongs to the maintainer account.
+        applicationId = flowfitApplicationId
         minSdk = 30  // Required for Wear OS 3.0+ and Samsung Health Sensor API (article recommends 23, but 30 needed for Samsung Health)
         targetSdk = 36  // Use Android 15 (API 36) - required by plugins
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["flowfitAuthScheme"] = flowfitAuthScheme
+        manifestPlaceholders["flowfitDevAuthScheme"] = flowfitDevAuthScheme
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasReleaseSigning) {
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

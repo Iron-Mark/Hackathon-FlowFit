@@ -69,7 +69,7 @@ CREATE POLICY "Users can update own profile"
 
 ### 3. Survey Screen 1: Basic Info
 **Collects**:
-- ✅ Age (13-120)
+- ✅ Age (7-120)
 - ✅ Gender (Male/Female/Other/Prefer not to say)
 
 **Auto-saved**:
@@ -180,7 +180,7 @@ Dashboard
 ```sql
 user_id UUID PRIMARY KEY
 full_name TEXT NOT NULL
-age INTEGER NOT NULL (13-120)
+age INTEGER (7-120)
 gender TEXT NOT NULL (male/female/other/prefer_not_to_say)
 weight DECIMAL(5,2) NOT NULL (0-500)
 height DECIMAL(5,2) NOT NULL (0-300)
@@ -227,7 +227,7 @@ All 4 survey screens now have consistent:
 - [ ] Confirm navigation to dashboard
 
 ### Error Testing
-- [ ] Try invalid age (12, 121)
+- [ ] Try invalid age (6, 121)
 - [ ] Try invalid weight (0, 501)
 - [ ] Try invalid height (0, 301)
 - [ ] Try submitting without selecting gender

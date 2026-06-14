@@ -132,7 +132,7 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
 
   void _decrementAge() {
     final currentAge = int.tryParse(_ageController.text) ?? 0;
-    if (currentAge > 13) {
+    if (currentAge > 7) {
       _ageController.text = (currentAge - 1).toString();
       setState(() {});
     }
@@ -146,8 +146,8 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
     if (age == null) {
       return 'Please enter a valid number';
     }
-    if (age < 13) {
-      return 'You must be at least 13 years old';
+    if (age < 7) {
+      return 'Age must be between 7 and 120';
     }
     if (age > 120) {
       return 'Please enter a valid age';
@@ -419,7 +419,7 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
 
   Widget _buildAgeInput() {
     final currentAge = int.tryParse(_ageController.text);
-    final canDecrement = currentAge != null && currentAge > 13;
+    final canDecrement = currentAge != null && currentAge > 7;
     final canIncrement = currentAge != null && currentAge < 120;
 
     return Form(

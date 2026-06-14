@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Permissions for Samsung Health Sensor API -->
     <!-- Location permissions for geofencing -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -61,12 +65,7 @@
                 
                 <!-- Production deep link -->
                 <data
-                    android:scheme="com.example.flowfit"
-                    android:host="auth-callback" />
-                    
-                <!-- Development deep link -->
-                <data
-                    android:scheme="com.example.flowfit.dev"
+                    android:scheme="${flowfitAuthScheme}"
                     android:host="auth-callback" />
             </intent-filter>
         </activity>
@@ -81,13 +80,6 @@
         <uses-library
             android:name="com.google.android.wearable"
             android:required="false" />
-            
-        <!-- Foreground service for sensor tracking -->
-        <service
-            android:name=".SensorTrackingService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="health" />
             
         <!-- Data listener service for receiving data from watch -->
         <service

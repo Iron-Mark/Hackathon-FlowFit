@@ -1,0 +1,192 @@
+name: Flutter CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - develop
+      - "supabase/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Analyze, Test, and Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-36" "build-tools;36.1.0" "ndk;28.0.13004108"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.41.9"
+          cache: true
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Release readiness audit
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/release_readiness_audit.ps1
+
+      - name: Release source safety
+        shell: bash
+        run: |
+          blocked_email_redirect="emailRedirectTo: 'com.example.flowfit"
+          blocked_email_redirect="${blocked_email_redirect}://auth-callback'"
+          blocked_return_redirect="return 'com.example.flowfit"
+          blocked_return_redirect="${blocked_return_redirect}://auth-callback'"
+          blocked_security_mode="security"
+          blocked_security_mode="${blocked_security_mode} definer"
+
+          ! grep -F "$blocked_email_redirect" lib/data/repositories/auth_repository.dart
+          ! grep -F "$blocked_return_redirect" lib/utils/deep_link_handler.dart
+          ! grep -Fi "$blocked_security_mode" supabase/migrations/20260614062844_recreate_flowfit_backend.sql
+
+      - name: Dart analyzer machine output
+        run: dart analyze --format=machine
+
+      - name: Flutter analyzer
+        run: flutter analyze
+
+      - name: Flutter tests
+        run: flutter test --reporter compact
+
+      - name: Flutter web JavaScript release build
+        run: >
+          flutter build web --release --no-pub
+          --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com
+          --dart-define=SUPABASE_URL=https://example.supabase.co
+          --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_smoke_not_for_auth
+
+      - name: Verify web compliance pages
+        shell: bash
+        run: |
+          test -f build/web/privacy.html
+          test -f build/web/account-deletion.html
+          grep -F '<title>FlowFit Privacy Policy</title>' build/web/privacy.html
+          grep -F 'account-deletion.html' build/web/privacy.html
+          grep -F 'account and associated app data' build/web/privacy.html
+          grep -F 'Profile &gt; Settings &gt; Delete Account' build/web/privacy.html
+          grep -F '<title>FlowFit Account Deletion</title>' build/web/account-deletion.html
+          grep -F 'privacy.html' build/web/account-deletion.html
+          grep -F 'mailto:support@flowfit.com' build/web/account-deletion.html
+          grep -F 'FlowFit account deletion request' build/web/account-deletion.html
+          grep -F 'associated app data' build/web/account-deletion.html
+          grep -F 'without reinstalling the app' build/web/account-deletion.html
+          grep -F 'Profile &gt; Settings &gt; Delete Account' build/web/account-deletion.html
+          ! grep -E 'Replace this address|backend deletion|maintainer verification|privileged backend|Play Console|App Store Connect' build/web/privacy.html build/web/account-deletion.html
+
+      - name: Verify web static artifact smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8791 --bind 127.0.0.1 --directory build/web >/tmp/flowfit-web-smoke.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8791/ >/dev/null; then
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              cat /tmp/flowfit-web-smoke.log
+              exit 1
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat /tmp/flowfit-web-smoke.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/verify_web_deployment.ps1 -BaseUrl http://127.0.0.1:8791 -SupportEmail support@flowfit.com -AllowInsecureLocalhost -OutFile build/web-static-ci-smoke.json
+
+      - name: Flutter web Wasm release build
+        run: >
+          flutter build web --wasm --release --no-pub --output=build/web-wasm
+          --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com
+          --dart-define=SUPABASE_URL=https://example.supabase.co
+          --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_smoke_not_for_auth
+
+      - name: Verify web Wasm artifact
+        shell: bash
+        run: |
+          test -f build/web-wasm/flutter_bootstrap.js
+          test -f build/web-wasm/main.dart.mjs
+          test -f build/web-wasm/main.dart.wasm
+          test -f build/web-wasm/privacy.html
+          test -f build/web-wasm/account-deletion.html
+
+      - name: Android debug APK build
+        shell: bash
+        run: |
+          rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          flutter build apk --debug --no-pub
+
+      - name: Wear OS debug APK build
+        shell: bash
+        run: |
+          rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          flutter build apk --debug -t lib/main_wear.dart --no-pub
+
+      - name: Android release App Bundle smoke build
+        env:
+          ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING: "true"
+          ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID: com.flowfit.smoke
+          ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME: com.flowfit.smoke
+        shell: bash
+        run: |
+          rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          flutter build appbundle --release --no-pub \
+            --dart-define=FLOWFIT_AUTH_SCHEME=com.flowfit.smoke \
+            --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com \
+            --dart-define=SUPABASE_URL=https://example.supabase.co \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_smoke_not_for_auth
+
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowfit-web-smoke-not-for-store
+          path: build/web
+          if-no-files-found: error
+
+      - name: Upload web Wasm build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowfit-web-wasm-smoke-not-for-store
+          path: build/web-wasm
+          if-no-files-found: error
+
+      - name: Upload web static verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowfit-web-static-verification-smoke
+          path: build/web-static-ci-smoke.json
+          if-no-files-found: error
+
+      - name: Upload release smoke App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowfit-release-smoke-not-for-store
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error

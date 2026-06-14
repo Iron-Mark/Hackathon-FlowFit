@@ -3,6 +3,7 @@ import '../../domain/entities/user.dart' as domain;
 import '../../domain/repositories/i_auth_repository.dart';
 import '../../domain/exceptions/auth_exceptions.dart' as domain_exceptions;
 import '../../core/utils/error_logger.dart';
+import '../../core/config/flowfit_runtime_config.dart';
 
 /// Implementation of IAuthRepository using Supabase as the backend.
 class AuthRepository implements IAuthRepository {
@@ -34,25 +35,19 @@ class AuthRepository implements IAuthRepository {
 
       // Validate password length
       if (password.length < 8) {
-        ErrorLogger.logWarning(
-          'AuthRepository.signUp',
-          'Password too short',
-        );
+        ErrorLogger.logWarning('AuthRepository.signUp', 'Password too short');
         throw domain_exceptions.WeakPasswordException();
       }
 
       // Prepare user metadata
-      final userMetadata = {
-        'full_name': fullName,
-        ...metadata,
-      };
+      final userMetadata = {'full_name': fullName, ...metadata};
 
       // Call Supabase signUp with deep link redirect
       final response = await _client.auth.signUp(
         email: email,
         password: password,
         data: userMetadata,
-        emailRedirectTo: 'com.example.flowfit://auth-callback',
+        emailRedirectTo: FlowFitRuntimeConfig.authRedirectUrl(),
       );
 
       if (response.user == null) {
@@ -69,19 +64,11 @@ class AuthRepository implements IAuthRepository {
     } on domain_exceptions.AuthException {
       rethrow;
     } on AuthApiException catch (e, stackTrace) {
-      ErrorLogger.logError(
-        'AuthRepository.signUp',
-        e,
-        stackTrace,
-      );
+      ErrorLogger.logError('AuthRepository.signUp', e, stackTrace);
       throw _mapSupabaseError(e);
     } catch (e, stackTrace) {
-      ErrorLogger.logError(
-        'AuthRepository.signUp',
-        e,
-        stackTrace,
-      );
-      if (e.toString().contains('network') || 
+      ErrorLogger.logError('AuthRepository.signUp', e, stackTrace);
+      if (e.toString().contains('network') ||
           e.toString().contains('connection')) {
         throw domain_exceptions.NetworkException();
       }
@@ -114,19 +101,11 @@ class AuthRepository implements IAuthRepository {
     } on domain_exceptions.AuthException {
       rethrow;
     } on AuthApiException catch (e, stackTrace) {
-      ErrorLogger.logError(
-        'AuthRepository.signIn',
-        e,
-        stackTrace,
-      );
+      ErrorLogger.logError('AuthRepository.signIn', e, stackTrace);
       throw _mapSupabaseError(e);
     } catch (e, stackTrace) {
-      ErrorLogger.logError(
-        'AuthRepository.signIn',
-        e,
-        stackTrace,
-      );
-      if (e.toString().contains('network') || 
+      ErrorLogger.logError('AuthRepository.signIn', e, stackTrace);
+      if (e.toString().contains('network') ||
           e.toString().contains('connection')) {
         throw domain_exceptions.NetworkException();
       }
@@ -140,19 +119,11 @@ class AuthRepository implements IAuthRepository {
       // Call Supabase signOut to clear session
       await _client.auth.signOut();
     } on AuthApiException catch (e, stackTrace) {
-      ErrorLogger.logError(
-        'AuthRepository.signOut',
-        e,
-        stackTrace,
-      );
+      ErrorLogger.logError('AuthRepository.signOut', e, stackTrace);
       throw _mapSupabaseError(e);
     } catch (e, stackTrace) {
-      ErrorLogger.logError(
-        'AuthRepository.signOut',
-        e,
-        stackTrace,
-      );
-      if (e.toString().contains('network') || 
+      ErrorLogger.logError('AuthRepository.signOut', e, stackTrace);
+      if (e.toString().contains('network') ||
           e.toString().contains('connection')) {
         throw domain_exceptions.NetworkException();
       }
@@ -176,11 +147,7 @@ class AuthRepository implements IAuthRepository {
       return _mapSupabaseUserToDomain(user);
     } catch (e, stackTrace) {
       // If there's an error getting current user, log it and return null
-      ErrorLogger.logError(
-        'AuthRepository.getCurrentUser',
-        e,
-        stackTrace,
-      );
+      ErrorLogger.logError('AuthRepository.getCurrentUser', e, stackTrace);
       return null;
     }
   }
@@ -203,7 +170,7 @@ class AuthRepository implements IAuthRepository {
       email: supabaseUser.email ?? '',
       fullName: supabaseUser.userMetadata?['full_name'] as String?,
       createdAt: DateTime.parse(supabaseUser.createdAt),
-      emailConfirmedAt: supabaseUser.emailConfirmedAt != null 
+      emailConfirmedAt: supabaseUser.emailConfirmedAt != null
           ? DateTime.parse(supabaseUser.emailConfirmedAt!)
           : null,
     );
@@ -212,26 +179,26 @@ class AuthRepository implements IAuthRepository {
   /// Maps Supabase errors to domain exceptions.
   domain_exceptions.AuthException _mapSupabaseError(AuthApiException error) {
     final message = error.message.toLowerCase();
-    
+
     if (message.contains('email') && message.contains('already')) {
       return domain_exceptions.EmailAlreadyExistsException();
     }
-    
-    if (message.contains('invalid') && 
-        (message.contains('credentials') || 
-         message.contains('email') || 
-         message.contains('password'))) {
+
+    if (message.contains('invalid') &&
+        (message.contains('credentials') ||
+            message.contains('email') ||
+            message.contains('password'))) {
       return domain_exceptions.InvalidCredentialsException();
     }
-    
+
     if (message.contains('weak') || message.contains('password')) {
       return domain_exceptions.WeakPasswordException();
     }
-    
+
     if (message.contains('network') || message.contains('connection')) {
       return domain_exceptions.NetworkException();
     }
-    
+
     return domain_exceptions.UnknownException();
   }
 }

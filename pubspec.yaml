@@ -14,7 +14,7 @@ dependencies:
   # Device Features
   # google_maps_flutter removed per maps migration to flutter_map
   geolocator: ^14.0.1 # Keep current - major upgrade to 14.x may break things
-  sensors_plus: ^4.0.2 # Keep current - 7.x is major version change
+  sensors_plus: ^5.0.1 # 5.x keeps the current API shape while unblocking Flutter web Wasm builds
   wakelock_plus: ^1.1.0 # Keep screen on during Sleep Mode
   permission_handler: ^11.0.0 # Keep current - 12.x may have breaking changes
   wear_plus: ^1.2.0 # Wear OS support
@@ -63,7 +63,7 @@ dependencies:
   flutter_cache_manager: ^3.4.1 # For caching map tiles
   share_plus: ^10.1.2 # For sharing workout achievements
   image_picker: ^1.1.2 # For selecting background images for share cards
-  image: ^4.0.0 # For camera image conversion (YUV to RGB)
+  image: ^4.6.0 # For camera image conversion (YUV to RGB)
 
   gotrue: ^2.16.0
   path: ^1.9.1

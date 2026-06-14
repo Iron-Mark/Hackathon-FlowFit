@@ -137,7 +137,7 @@ Each screen validates before proceeding:
 
 **Screen 1:**
 - Name required
-- Age: 13-120
+- Age: 7-120
 - Gender required
 
 **Screen 2:**

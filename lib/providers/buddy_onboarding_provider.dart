@@ -358,7 +358,9 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
 
   /// Save Buddy profile to Supabase
   Future<void> _saveBuddyProfile(BuddyProfile profile) async {
-    await _client.from('buddy_profiles').insert(profile.toJson());
+    await _client
+        .from('buddy_profiles')
+        .upsert(profile.toJson(), onConflict: 'user_id');
   }
 
   /// Update user profile with nickname and kids mode flag
@@ -387,7 +389,10 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
     }
 
     if (updates.isNotEmpty) {
-      await _client.from('user_profiles').update(updates).eq('id', userId);
+      await _client.from('user_profiles').upsert({
+        'user_id': userId,
+        ...updates,
+      }, onConflict: 'user_id');
     }
   }
 

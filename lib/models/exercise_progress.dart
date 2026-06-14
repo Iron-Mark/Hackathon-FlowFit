@@ -2,24 +2,21 @@
 class SetData {
   /// Number of reps completed
   final int reps;
-  
+
   /// Weight used in kilograms
   final double? weight;
-  
+
   /// When the set was completed
   final DateTime completedAt;
 
-  SetData({
-    required this.reps,
-    this.weight,
-    required this.completedAt,
-  }) : assert(reps > 0, 'Reps must be positive');
+  SetData({required this.reps, this.weight, required this.completedAt})
+    : assert(reps > 0, 'Reps must be positive');
 
   /// Creates a SetData from JSON
   factory SetData.fromJson(Map<String, dynamic> json) {
     return SetData(
       reps: json['reps'] as int,
-      weight: json['weight'] as double?,
+      weight: (json['weight'] as num?)?.toDouble(),
       completedAt: json['completed_at'] is DateTime
           ? json['completed_at'] as DateTime
           : DateTime.parse(json['completed_at'] as String),
@@ -56,22 +53,22 @@ class SetData {
 }
 
 /// Progress tracking for a single exercise
-/// 
+///
 /// Tracks sets, reps, and completion status for an exercise
 /// within a resistance training workout.
 class ExerciseProgress {
   /// Exercise name (e.g., "Bench Press")
   final String exerciseName;
-  
+
   /// Emoji icon for the exercise
   final String emoji;
-  
+
   /// Total number of sets to complete
   final int totalSets;
-  
+
   /// Target reps per set
   final int targetReps;
-  
+
   /// List of completed sets
   final List<SetData> completedSets;
 
@@ -97,7 +94,7 @@ class ExerciseProgress {
       weight: weight,
       completedAt: DateTime.now(),
     );
-    
+
     return ExerciseProgress(
       exerciseName: exerciseName,
       emoji: emoji,
@@ -114,7 +111,8 @@ class ExerciseProgress {
       emoji: json['emoji'] as String,
       totalSets: json['total_sets'] as int,
       targetReps: json['target_reps'] as int,
-      completedSets: (json['completed_sets'] as List<dynamic>?)
+      completedSets:
+          (json['completed_sets'] as List<dynamic>?)
               ?.map((e) => SetData.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

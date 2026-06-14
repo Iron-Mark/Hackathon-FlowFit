@@ -102,6 +102,11 @@ void main() {
       expect(mockRepository._localProfile!.age, 30);
       expect(mockRepository._localProfile!.isSynced, true);
       expect(mockRepository._backendProfile, isNotNull);
+      expect(mockRepository._backendProfile!.surveyCompleted, true);
+      expect(
+        mockRepository._backendProfile!.toSupabaseJson()['survey_completed'],
+        true,
+      );
     });
 
     test('completeSurvey succeeds even if backend sync fails', () async {

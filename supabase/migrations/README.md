@@ -1,134 +1,52 @@
 # Supabase Database Migrations
 
-This directory contains SQL migration files for setting up the FlowFit database schema in Supabase.
+This directory contains the active FlowFit Supabase migration set.
 
-## Migration Files
+## Active Migration
 
-1. **001_create_user_profiles_table.sql** - Creates the user_profiles table with all required columns, constraints, and indexes
-2. **002_configure_rls_policies.sql** - Configures Row Level Security policies for the user_profiles table
-3. **003_add_updated_at_trigger.sql** - Adds automatic timestamp update trigger for the updated_at column
+- `20260614062844_recreate_flowfit_backend.sql`
 
-## How to Apply Migrations
+This is the canonical recovery migration for the maintained fork. It creates or
+repairs the current app backend schema:
 
-### Option 1: Using Supabase Dashboard (Recommended)
+- `public.user_profiles`
+- `public.buddy_profiles`
+- `public.workout_sessions`
+- `public.heart_rate`
+- `public.account_deletion_requests`
+- `public.flowfit_recovery_quarantine`
 
-1. Go to your Supabase project dashboard at https://app.supabase.com
-2. Navigate to the SQL Editor (left sidebar)
-3. Copy and paste the contents of each migration file in order (001, 002, 003)
-4. Click "Run" to execute each migration
-5. Verify the table was created by checking the Table Editor
+It also enables RLS, creates user-owned policies, refreshes `updated_at`
+triggers, and grants authenticated clients explicit Data API privileges.
+Invalid legacy rows are copied into the service-role-only quarantine table
+before cleanup deletes run, so partially populated development repair attempts
+are auditable. Back up production or valuable data and write a purpose-built
+data migration instead of applying this recovery migration directly.
 
-### Option 2: Using Combined Migration File
+## Legacy Migrations
 
-For convenience, you can use the `combined_migration.sql` file which contains all migrations in the correct order:
+The older fragmented SQL files were moved to:
 
-1. Go to your Supabase project dashboard
-2. Navigate to the SQL Editor
-3. Copy and paste the entire contents of `combined_migration.sql`
-4. Click "Run" to execute all migrations at once
-
-### Option 3: Using Supabase CLI (Advanced)
-
-If you have the Supabase CLI installed:
-
-```bash
-# Link your project
-supabase link --project-ref your-project-ref
-
-# Apply migrations
-supabase db push
+```text
+supabase/legacy_migrations/
 ```
 
-## Database Schema
+Keep them for historical reference only. Do not apply them to a new FlowFit
+development project. They predate the current Buddy/profile schema and can
+produce stale tables or conflicting policies.
 
-### user_profiles Table
+## Apply
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| user_id | UUID | PRIMARY KEY, REFERENCES auth.users(id) | Foreign key to auth.users |
-| full_name | TEXT | NOT NULL | User's full name |
-| age | INTEGER | NOT NULL, CHECK (13-120) | User's age in years |
-| gender | TEXT | NOT NULL, CHECK (enum) | User's gender |
-| weight | DECIMAL(5,2) | NOT NULL, CHECK (0-500) | User's weight in kg |
-| height | DECIMAL(5,2) | NOT NULL, CHECK (0-300) | User's height in cm |
-| activity_level | TEXT | NOT NULL, CHECK (enum) | User's activity level |
-| goals | TEXT[] | NOT NULL | Array of user's fitness goals |
-| daily_calorie_target | INTEGER | NOT NULL, CHECK (> 0) | Calculated daily calorie target |
-| survey_completed | BOOLEAN | NOT NULL, DEFAULT false | Survey completion flag |
-| created_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record creation timestamp |
-| updated_at | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Record update timestamp |
+After creating and linking a new `flowfit-dev` Supabase project:
 
-### Constraints
-
-- **Age**: Must be between 13 and 120 years
-- **Gender**: Must be one of: 'male', 'female', 'other', 'prefer_not_to_say'
-- **Weight**: Must be greater than 0 and less than 500 kg
-- **Height**: Must be greater than 0 and less than 300 cm
-- **Activity Level**: Must be one of: 'sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active'
-- **Daily Calorie Target**: Must be greater than 0
-
-### Row Level Security (RLS)
-
-RLS is enabled on the user_profiles table with the following policies:
-
-- **Users can view own profile**: Users can only SELECT their own profile data
-- **Users can insert own profile**: Users can only INSERT their own profile record
-- **Users can update own profile**: Users can only UPDATE their own profile data
-
-### Triggers
-
-- **update_user_profiles_updated_at**: Automatically updates the `updated_at` column to the current timestamp whenever a row is updated
-
-## Verification
-
-After applying the migrations, verify the setup:
-
-```sql
--- Check if table exists
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
-AND table_name = 'user_profiles';
-
--- Check if RLS is enabled
-SELECT tablename, rowsecurity 
-FROM pg_tables 
-WHERE tablename = 'user_profiles';
-
--- Check policies
-SELECT policyname, cmd, qual 
-FROM pg_policies 
-WHERE tablename = 'user_profiles';
-
--- Check triggers
-SELECT trigger_name, event_manipulation, event_object_table 
-FROM information_schema.triggers 
-WHERE event_object_table = 'user_profiles';
+```powershell
+npx -y supabase@latest db push --linked --dry-run
+npx -y supabase@latest db push --linked
 ```
 
-## Rollback
+For full recovery steps, MCP setup, dashboard settings, credential recovery, and
+verification SQL, see:
 
-If you need to rollback the migrations:
-
-```sql
--- Drop trigger
-DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
-
--- Drop function
-DROP FUNCTION IF EXISTS update_updated_at_column();
-
--- Drop policies
-DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Users can insert own profile" ON user_profiles;
-DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
-
--- Drop table (this will cascade delete all data)
-DROP TABLE IF EXISTS user_profiles CASCADE;
+```text
+docs/SUPABASE_RECOVERY_RUNBOOK.md
 ```
-
-## Notes
-
-- The user_id column references auth.users(id) with ON DELETE CASCADE, meaning if a user is deleted from auth.users, their profile will be automatically deleted
-- The updated_at trigger ensures the timestamp is always current when a profile is modified
-- RLS policies ensure users can only access their own data, providing security at the database level
-- All constraints are enforced at the database level for data integrity

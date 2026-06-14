@@ -1,4 +1,4 @@
-package com.example.flowfit
+package com.oldstlabs.flowfit
 
 import kotlinx.serialization.Serializable
 

@@ -110,7 +110,7 @@ final avgHR = heartRates.map((d) => d.bpm ?? 0).reduce((a, b) => a + b) / heartR
 ```dart
 watchBridge.heartRateStream.listen((data) async {
   if (data.bpm != null) {
-    await supabase.from('heart_rates').insert({
+    await supabase.from('heart_rate').insert({
       'bpm': data.bpm,
       'timestamp': data.timestamp.toIso8601String(),
       'ibi_values': data.ibiValues,

@@ -168,7 +168,7 @@ While automated tests cover most scenarios, some aspects require manual verifica
 - [ ] **Survey Validation**
   1. Try to proceed with empty required fields
   2. Verify validation errors
-  3. Try invalid age (e.g., 12, 121)
+  3. Try invalid age (e.g., 6, 121)
   4. Verify range validation
   5. Try invalid weight/height
   6. Verify range validation
@@ -220,8 +220,8 @@ Ensure `setUpAll()` is called before tests run:
 setUpAll(() async {
   TestWidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
-    url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
+    url: SupabaseRuntimeConfig.url,
+    anonKey: SupabaseRuntimeConfig.publishableKey,
   );
 });
 ```
@@ -257,8 +257,8 @@ To run these tests in CI/CD:
 3. Run tests with environment variables:
 
 ```bash
-export SUPABASE_URL="your-test-url"
-export SUPABASE_ANON_KEY="your-test-key"
+export SUPABASE_URL="https://PROJECT_REF.supabase.co"
+export SUPABASE_PUBLISHABLE_KEY="REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY"
 flutter test test/integration/
 ```
 

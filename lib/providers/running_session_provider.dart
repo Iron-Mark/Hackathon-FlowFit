@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../models/running_session.dart';
 import '../models/mood_rating.dart';
@@ -33,6 +34,21 @@ final workoutSessionServiceProvider = Provider(
   (ref) => WorkoutSessionService(),
 );
 
+/// Provider for resolving the current signed-in user for workout ownership.
+final workoutSessionUserIdProvider = Provider<String?>((ref) {
+  return Supabase.instance.client.auth.currentUser?.id;
+});
+
+String requireWorkoutSessionUserId(String? Function() readCurrentUserId) {
+  final userId = readCurrentUserId();
+  if (userId == null || userId.trim().isEmpty) {
+    throw StateError(
+      'A signed-in Supabase user is required before starting a workout.',
+    );
+  }
+  return userId;
+}
+
 /// Provider for phone data listener (for smartwatch data)
 final phoneDataListenerProvider = Provider((ref) => PhoneDataListener());
 
@@ -49,8 +65,10 @@ class RunningSessionNotifier extends StateNotifier<RunningSession?> {
   final TimerService _timerService;
   final HeartRateService _hrService;
   final CalorieCalculatorService _calorieService;
+  final WorkoutSessionService _sessionService;
   final PhoneStepCounterService _phoneStepCounterService;
   final PhoneDataListener _phoneDataListener;
+  final String? Function() _readCurrentUserId;
 
   StreamSubscription<LatLng>? _gpsSubscription;
   StreamSubscription<int>? _timerSubscription;
@@ -63,14 +81,18 @@ class RunningSessionNotifier extends StateNotifier<RunningSession?> {
     required TimerService timerService,
     required HeartRateService hrService,
     required CalorieCalculatorService calorieService,
+    required WorkoutSessionService sessionService,
     required PhoneStepCounterService phoneStepCounterService,
     required PhoneDataListener phoneDataListener,
+    required String? Function() readCurrentUserId,
   }) : _gpsService = gpsService,
        _timerService = timerService,
        _hrService = hrService,
        _calorieService = calorieService,
+       _sessionService = sessionService,
        _phoneStepCounterService = phoneStepCounterService,
        _phoneDataListener = phoneDataListener,
+       _readCurrentUserId = readCurrentUserId,
        super(null);
 
   /// Starts a new running session
@@ -80,15 +102,18 @@ class RunningSessionNotifier extends StateNotifier<RunningSession?> {
     int? targetDuration,
     MoodRating? preMood,
   }) async {
+    final userId = requireWorkoutSessionUserId(_readCurrentUserId);
     final session = RunningSession(
       id: const Uuid().v4(),
-      userId: 'current-user-id', // TODO: Get from auth
+      userId: userId,
       startTime: DateTime.now(),
       goalType: goalType,
       targetDistance: targetDistance,
       targetDuration: targetDuration,
       preMood: preMood,
     );
+
+    await _sessionService.createSession(session);
 
     state = session;
 
@@ -144,8 +169,6 @@ class RunningSessionNotifier extends StateNotifier<RunningSession?> {
       const Duration(seconds: 1),
       (_) => _updateMetrics(),
     );
-
-    // TODO: Re-enable session persistence when backend is ready.
   }
 
   /// Updates location and route
@@ -279,7 +302,7 @@ class RunningSessionNotifier extends StateNotifier<RunningSession?> {
       status: WorkoutStatus.completed,
     );
 
-    // TODO: Re-enable session persistence when backend is ready.
+    await _sessionService.saveSession(state!);
 
     // Reset timer for next session
     _timerService.reset();
@@ -315,7 +338,9 @@ final runningSessionProvider =
         timerService: ref.watch(timerServiceProvider),
         hrService: ref.watch(heartRateServiceProvider),
         calorieService: ref.watch(calorieCalculatorServiceProvider),
+        sessionService: ref.watch(workoutSessionServiceProvider),
         phoneStepCounterService: ref.watch(phoneStepCounterServiceProvider),
         phoneDataListener: ref.watch(phoneDataListenerProvider),
+        readCurrentUserId: () => ref.read(workoutSessionUserIdProvider),
       ),
     );

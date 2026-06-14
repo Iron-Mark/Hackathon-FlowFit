@@ -20,11 +20,8 @@ class SurveyState {
   });
 
   /// Factory constructor for initial state
-  factory SurveyState.initial() => const SurveyState(
-        surveyData: {},
-        currentStep: 0,
-        isLoading: false,
-      );
+  factory SurveyState.initial() =>
+      const SurveyState(surveyData: {}, currentStep: 0, isLoading: false);
 
   /// Creates a copy of this state with the given fields replaced
   SurveyState copyWith({
@@ -69,10 +66,10 @@ class SurveyState {
 }
 
 /// StateNotifier for managing survey data and submission.
-/// 
+///
 /// Handles survey data collection, validation, local persistence,
 /// and submission to the profile repository.
-/// 
+///
 /// Requirements: 3.2, 3.3, 3.4, 3.5, 4.1, 4.3
 class SurveyNotifier extends StateNotifier<SurveyState> {
   final IProfileRepository _profileRepository;
@@ -84,13 +81,13 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
   }
 
   /// Load survey data from local storage on initialization.
-  /// 
+  ///
   /// Requirement 3.2: Preserve partial survey data locally
   Future<void> _loadSurveyData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_storageKey);
-      
+
       if (jsonString != null) {
         final data = json.decode(jsonString) as Map<String, dynamic>;
         state = state.copyWith(surveyData: data);
@@ -102,9 +99,9 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
   }
 
   /// Updates survey data with a new key-value pair.
-  /// 
+  ///
   /// Persists the updated data to local storage.
-  /// 
+  ///
   /// Requirement 3.2: Preserve partial survey data locally
   Future<void> updateSurveyData(String key, dynamic value) async {
     final updatedData = Map<String, dynamic>.from(state.surveyData);
@@ -128,7 +125,7 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
   }
 
   /// Validates basic info step data.
-  /// 
+  ///
   /// Requirement 3.3: Validate all required fields before proceeding
   String? validateBasicInfo() {
     final fullName = state.surveyData['fullName'] as String?;
@@ -143,8 +140,8 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
       return 'Age is required';
     }
 
-    if (age < 13 || age > 120) {
-      return 'Age must be between 13 and 120';
+    if (age < 7 || age > 120) {
+      return 'Age must be between 7 and 120';
     }
 
     if (gender == null || gender.isEmpty) {
@@ -155,7 +152,7 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
   }
 
   /// Validates body measurements step data.
-  /// 
+  ///
   /// Requirement 3.4: Validate numeric inputs are within reasonable ranges
   String? validateBodyMeasurements() {
     final weight = state.surveyData['weight'] as double?;
@@ -181,7 +178,7 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
   }
 
   /// Validates activity goals step data.
-  /// 
+  ///
   /// Requirement 3.5: Validate at least one goal is selected
   String? validateActivityGoals() {
     final activityLevel = state.surveyData['activityLevel'] as String?;
@@ -196,7 +193,7 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
       'lightly_active',
       'moderately_active',
       'very_active',
-      'extremely_active'
+      'extremely_active',
     ];
 
     if (!validActivityLevels.contains(activityLevel)) {
@@ -237,10 +234,10 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
   }
 
   /// Submits the complete survey data to create a user profile.
-  /// 
+  ///
   /// Validates all data, creates a UserProfile entity, and calls the repository
   /// with retry logic (up to 3 attempts).
-  /// 
+  ///
   /// Requirement 4.1: Save all survey data to Supabase
   /// Requirement 4.3: Retry operation up to 3 times on failure
   Future<bool> submitSurvey(String userId) async {
@@ -281,10 +278,7 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
       } on AuthException catch (e) {
         if (attempt == _maxRetries) {
           // Final attempt failed
-          state = state.copyWith(
-            isLoading: false,
-            errorMessage: e.message,
-          );
+          state = state.copyWith(isLoading: false, errorMessage: e.message);
           return false;
         }
         // Wait before retrying (exponential backoff)

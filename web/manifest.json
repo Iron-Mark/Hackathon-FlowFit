@@ -1,11 +1,11 @@
 {
-    "name": "flowfit",
-    "short_name": "flowfit",
+    "name": "FlowFit",
+    "short_name": "FlowFit",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#3183E8",
+    "description": "FlowFit tracks workouts, wellness missions, and heart-rate activity across phone, watch, and web.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

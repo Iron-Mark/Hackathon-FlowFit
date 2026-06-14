@@ -1,4 +1,4 @@
-package com.example.flowfit
+package com.oldstlabs.flowfit
 
 import android.content.Intent
 import android.os.Handler

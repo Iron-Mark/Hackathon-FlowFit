@@ -16,7 +16,6 @@ FlowFit is a dual-platform fitness app that runs on:
 - **Android Phone** - Companion app for data visualization and management
 
 ### Key Features
-5r
 - ✅ **Real-time Heart Rate Monitoring** - Continuous HR tracking with Samsung Health Sensor SDK
 - ✅ **Inter-Beat Interval (IBI) Data** - Advanced HRV analysis
 - ✅ **Activity Tracking** - Workout logging and exercise monitoring
@@ -80,7 +79,8 @@ FlowFit is a dual-platform fitness app that runs on:
 - Both devices paired via Galaxy Wearable app
 
 **Software:**
-- Flutter SDK (3.10.0+)
+- Flutter SDK 3.41.9 stable (CI/release baseline; `pubspec.yaml` uses Dart
+  SDK constraint `^3.10.0`)
 - Android Studio with Kotlin support
 - Samsung Health app installed on watch
 - Supabase account (for backend)
@@ -95,8 +95,12 @@ FlowFit is a dual-platform fitness app that runs on:
    ```
 
 2. **Configure Supabase**
-   - Copy `lib/secrets.dart.example` to `lib/secrets.dart`
-   - Add your Supabase URL and anon key
+   - Preferred: pass `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` with
+     `--dart-define` or use `scripts\store_release_build.ps1`, which does
+     that for production builds.
+   - Optional local fallback: copy `lib/secrets.dart.example` to
+     `lib/secrets.dart` for scripts that read the ignored fallback file.
+   - Do not put service-role or secret keys in the Flutter app
 
 3. **Deploy to devices**
    ```bash
@@ -228,7 +232,7 @@ Both devices sync to Supabase for persistent storage:
 
 ```dart
 // Save heart rate to Supabase
-await supabase.from('heart_rates').insert({
+await supabase.from('heart_rate').insert({
   'user_id': userId,
   'bpm': heartRateData.bpm,
   'timestamp': heartRateData.timestamp.toIso8601String(),
@@ -244,7 +248,7 @@ flowfit/
 │   ├── app/
 │   │   ├── libs/
 │   │   │   └── samsung-health-sensor-api-1.4.1.aar
-│   │   └── src/main/kotlin/com/example/flowfit/
+│   │   └── src/main/kotlin/com/oldstlabs/flowfit/
 │   │       ├── MainActivity.kt
 │   │       └── HealthTrackingManager.kt
 │   └── build.gradle.kts
@@ -363,7 +367,7 @@ flutter run -d <device-id>
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Flutter 3.10.0+
+- **Frontend**: Flutter 3.41.9 stable
 - **Language**: Dart
 - **Backend**: Supabase (PostgreSQL)
 - **Watch SDK**: Samsung Health Sensor SDK 1.4.1
@@ -445,7 +449,7 @@ adb -s 6ece264d logcat | findstr "FlowFit"
 adb devices
 
 # Uninstall
-adb -s 6ece264d uninstall com.example.flowfit
+adb -s 6ece264d uninstall com.oldstlabs.flowfit
 ```
 
 ---

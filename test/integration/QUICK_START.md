@@ -112,8 +112,8 @@ DELETE FROM user_profiles WHERE user_id IN (
 
 1. **Configure Supabase Test Instance**
    ```bash
-   export SUPABASE_URL="your-test-url"
-   export SUPABASE_ANON_KEY="your-test-key"
+   export SUPABASE_URL="https://PROJECT_REF.supabase.co"
+   export SUPABASE_PUBLISHABLE_KEY="REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY"
    ```
 
 2. **Create Test Users** (via migration script)

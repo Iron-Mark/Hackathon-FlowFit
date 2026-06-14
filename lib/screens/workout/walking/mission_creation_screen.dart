@@ -395,14 +395,28 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
           : _descriptionController.text.trim(),
     );
 
-    // Start walking session with mission
-    await ref
-        .read(walkingSessionProvider.notifier)
-        .startSession(
-          mode: WalkingMode.mission,
-          mission: mission,
-          preMood: widget.preMood,
+    try {
+      // Start walking session with mission
+      await ref
+          .read(walkingSessionProvider.notifier)
+          .startSession(
+            mode: WalkingMode.mission,
+            mission: mission,
+            preMood: widget.preMood,
+          );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not start the mission. Sign in and check your connection, then try again.',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
+      }
+      return;
+    }
 
     if (context.mounted) {
       // Navigate to active walking screen

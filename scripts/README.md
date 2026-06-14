@@ -66,6 +66,238 @@ scripts\run_phone.bat
 
 ---
 
+### 4. release_preflight.ps1
+**Purpose**: Repeatable local release-readiness gate for analyzer, tests, web,
+public privacy/account-deletion pages, release source safety, Android phone,
+Wear OS, and optional release App Bundle smoke checks.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts/release_preflight.ps1
+```
+
+**Optional release smoke build**:
+```powershell
+pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke
+```
+
+**Optional Flutter web Wasm compile-smoke build**:
+```powershell
+pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeWasmSmoke
+```
+
+The release smoke build sets Gradle property
+`FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true` through env var
+`ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true` temporarily.
+If production values are not already set, it also uses
+`com.flowfit.smoke` package/auth defaults and matching Dart auth-scheme defines.
+It also passes `FLOWFIT_SUPPORT_EMAIL`, defaulting to `support@flowfit.com`
+when the environment does not override it. It passes placeholder Supabase
+client values as Dart defines only for compile smoke coverage. Its App Bundle
+proves release compilation, but it is not a Play Store upload artifact. Real
+Play Store builds require `android/key.properties`, a maintainer-owned package
+ID, real Supabase client env, and matching Dart auth-scheme/support-email
+defines.
+The strict audit and production wrapper reject `com.flowfit.smoke`,
+`com.example.*`, `com.yourcompany.*`, reserved `.example`, `.invalid`, `.test`,
+and localhost web hosts.
+
+The app now compiles from tracked build-time defaults in
+`lib/core/config/supabase_runtime_config.dart`, so preflight does not create a
+temporary `lib/secrets.dart`.
+
+`-IncludeWasmSmoke` runs a separate `flutter build web --wasm` after the normal
+JavaScript web build. JS remains the default web handoff target; use the Wasm
+smoke when the release needs explicit Flutter WebAssembly compile evidence.
+
+After the Flutter web build, the script also verifies that
+`build/web/privacy.html` and `build/web/account-deletion.html` exist, link to
+each other, have the expected titles, and do not contain internal maintainer or
+store-review wording.
+
+Before analyzer/build checks, it also fails if release source reintroduces the
+hard-coded example mobile auth redirect or a public privileged deletion RPC.
+
+---
+
+### 5. release_readiness_audit.ps1
+**Purpose**: Non-secret readiness audit for Supabase recovery, MCP setup,
+Android signing/package IDs, iOS bundle/auth schemes, public web compliance
+URLs, support inbox verification, and local tooling gaps.
+
+**Advisory usage**:
+```powershell
+pwsh -NoProfile -File scripts/release_readiness_audit.ps1
+```
+
+Advisory mode exits successfully when unresolved items are external setup gaps.
+Use it during normal development and before running `release_preflight.ps1`.
+
+**Strict pre-release usage**:
+```powershell
+pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict
+```
+
+Strict mode turns unresolved store/Supabase configuration gaps into failures.
+Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the deployed HTTPS origin and
+`FLOWFIT_SUPPORT_EMAIL_VERIFIED=true` only after the configured
+`FLOWFIT_SUPPORT_EMAIL` value, or the default `support@flowfit.com`, is the
+final support/privacy inbox. The script never prints Supabase keys or signing
+passwords.
+
+Write a JSON evidence artifact for release handoff:
+```powershell
+pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
+```
+
+---
+
+### 6. store_release_build.ps1
+**Purpose**: Production artifact build wrapper for store/web handoff. It fails
+early when the git working tree is dirty, required production environment
+values, signing files, or public web URLs are missing. By default it also runs
+analyzer, Flutter tests, and Android release lint before producing artifacts.
+
+**Required environment values**:
+```powershell
+$env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
+$env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://flowfit.your-owned-domain.com'
+$env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
+$env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
+# Optional on macOS when Xcode signing needs an explicit export profile:
+$env:FLOWFIT_IOS_EXPORT_OPTIONS_PLIST = "$HOME/export_options.plist"
+```
+
+You can also copy `.env.release.example` to ignored `.env.release`, fill the
+same values there, and pass `-EnvFile .env.release` to the audit or build
+wrapper. The loader accepts simple `NAME=value` lines and does not print key
+values.
+
+The iOS target reads production bundle/auth values from
+`ios/Flutter/FlowFit.xcconfig`, requires macOS with Xcode, and uses
+`FLOWFIT_IOS_EXPORT_OPTIONS_PLIST` when the variable is set.
+
+**Build Android, iOS, and web artifacts**:
+```powershell
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All
+```
+
+Run `-Target All` on macOS for the complete Play Store, App Store, and web
+handoff. On Windows, run the Android and web targets separately because iOS IPA
+archive/export is not available from the Windows Flutter toolchain.
+
+**Build only iOS for App Store/TestFlight**:
+```powershell
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS
+```
+
+**Build only Flutter web**:
+```powershell
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web
+```
+
+**Build only Flutter web with WebAssembly output**:
+```powershell
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm
+```
+
+**Run the strict audit before building**:
+```powershell
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -SupportEmailVerified
+```
+
+**Build from an ignored release env file**:
+```powershell
+Copy-Item .env.release.example .env.release
+# Fill .env.release locally, then:
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -EnvFile .env.release
+```
+
+The Android target requires ignored `android/key.properties` and the referenced
+upload keystore. Every target requires real Supabase client values from
+`SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, or the local fallback
+`lib/secrets.dart`; the wrapper passes those values to Flutter as
+`--dart-define` inputs and never writes them to the artifact manifest. The iOS
+target produces the signed IPA under `build/ios/ipa/` when Apple signing is
+configured. The web target builds `build/web`, replaces `support@flowfit.com`
+in the built public compliance pages with `FLOWFIT_SUPPORT_EMAIL`, creates
+`build/release/flowfit-web-release.zip` for static-host uploads, and writes
+`build/store-release-artifacts.json`. The web target uses the JavaScript
+backend by default; pass `-WebWasm` when the deployed web release should be
+Flutter WebAssembly. The artifact manifest records the selected backend in
+`releaseInputs.webBuildBackend`.
+Use `-AllowDirty` only for an explicitly documented emergency rebuild from
+uncommitted source. Use `-SkipValidation` only when the same commit already has
+fresh analyzer, test, and release-lint evidence.
+That manifest includes artifact paths, SHA-256 digests, byte sizes, file
+counts, git commit/dirty state, selected toolchain versions, non-secret release
+inputs, and strict-audit summary when `-RunStrictAudit` is used. When
+`-AllowDirty` is used, it also records the uncommitted status lines.
+For web releases, confirm the manifest includes both `flutter-web-build` and
+`flutter-web-release-zip`.
+Confirm `com.oldstlabs.flowfit` belongs to the maintainer's store accounts and
+replace every `your-owned-domain.com`, `PROJECT_REF`, and
+`REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY` example before running the production
+wrapper. Production URLs must use a real HTTPS origin, not `.example`,
+`.invalid`, `.test`, localhost, or an IP-loopback host.
+Pass `-SupportEmailVerified` only after the configured/default support inbox is
+owned by the maintainer and usable for privacy/account deletion contact.
+When `-RunStrictAudit` is used, the wrapper also writes
+`build/store-release-readiness-audit.json` and includes it in the artifact
+manifest after the strict audit passes.
+
+---
+
+### 7. verify_web_deployment.ps1
+**Purpose**: Verify the deployed Flutter web origin before using it in Play
+Console or App Store Connect.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts/verify_web_deployment.ps1 `
+  -BaseUrl 'https://flowfit.your-owned-domain.com' `
+  -SupportEmail 'support@flowfit.com' `
+  -OutFile build/web-deployment-verification.json
+```
+
+The script checks the app shell, `manifest.json`, public privacy page, and
+public account-deletion page. It requires HTTPS for real deployment URLs,
+verifies the configured support email, rejects internal maintainer/store-review
+wording, and writes JSON evidence when `-OutFile` is provided.
+
+For local smoke testing only, run a local static server for `build/web` and add
+`-AllowInsecureLocalhost`.
+
+---
+
+### 8. configure_local_release.ps1
+**Purpose**: Create/update local release configuration from validated inputs.
+By default it writes only non-secret Android package/auth IDs to tracked
+`android/gradle.properties`. When real Supabase client values are provided, it
+also writes ignored `lib/secrets.dart` as a local fallback for the production
+wrapper without printing the key. Store/web builds should prefer
+`SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` environment variables.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts/configure_local_release.ps1
+```
+
+**With Supabase client config**:
+```powershell
+pwsh -NoProfile -File scripts/configure_local_release.ps1 `
+  -SupabaseUrl 'https://PROJECT_REF.supabase.co' `
+  -SupabasePublishableKey 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY' `
+  -Force
+```
+
+The helper rejects placeholder/example/smoke IDs and secret/service-role
+Supabase keys.
+
+---
+
 ## 🚀 Quick Start
 
 ### First Time Setup
@@ -128,7 +360,7 @@ adb -s 6ece264d install -r build\app\outputs\flutter-apk\app-debug.apk
 flutter run -d 6ece264d
 
 # Uninstall
-adb -s 6ece264d uninstall com.example.flowfit
+adb -s 6ece264d uninstall com.oldstlabs.flowfit
 ```
 
 ### Phone Commands
@@ -244,6 +476,24 @@ Common issues:
    adb -s 6ece264d logcat | findstr "FlowFit"
    ```
 
+4. **Run release readiness checks before handoff**
+   ```powershell
+   pwsh -NoProfile -File scripts/release_readiness_audit.ps1
+   ```
+
+5. **Run release preflight before handoff**
+   ```powershell
+   pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke
+   ```
+
+6. **Build production artifacts after external config is complete**
+   ```powershell
+   pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -SupportEmailVerified
+   ```
+   Run this on macOS for the complete Android, iOS, and web handoff. On
+   Windows, use `-Target Android` and `-Target Web` separately because iOS
+   archive/export requires Xcode.
+
 ### Performance Tips
 
 - **Keep watch connected via USB** for faster deployment
@@ -262,7 +512,7 @@ You can create your own scripts based on these templates:
 @echo off
 echo Cleaning and reinstalling...
 flutter clean
-adb -s 6ece264d uninstall com.example.flowfit
+adb -s 6ece264d uninstall com.oldstlabs.flowfit
 flutter pub get
 flutter run -d 6ece264d
 ```

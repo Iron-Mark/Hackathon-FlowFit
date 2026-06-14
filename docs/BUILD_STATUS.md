@@ -1,12 +1,75 @@
 # Build Status
 
-## ✅ Latest Build Status: READY
+## ✅ Latest Local Build Status: READY
 
-**Last Updated**: 2025-01-XX
+**Last Updated**: 2026-06-15
 
-All compilation errors have been resolved. The project is ready to build and install.
+All blocking compilation errors found in the local recovery pass have been
+resolved. Android phone, Wear OS debug APK, Flutter test, analyzer, JS web,
+explicitly opted-in web Wasm smoke, and explicitly opted-in local release App
+Bundle smoke checks pass from the repo root after `flutter pub get`.
+
+Flutter web still defaults to the standard JavaScript backend for release
+handoff. A separate `flutter build web --wasm` smoke build now compiles after
+the `sensors_plus` 5.x and `image` 4.8.x dependency updates, so Wasm is no
+longer blocked at compile time.
+
+Production Play Store upload still requires a real Android application ID,
+upload keystore, and matching Supabase redirect URLs. App Store archive/signing
+must be done on macOS with Xcode and an Apple Developer team.
+
+Native Android and iOS launcher icons now use the FlowFit mark instead of the
+default Flutter icon.
 
 ## 🔧 Recent Fixes
+
+### Flutter Web TFLite Import Guard (FIXED)
+- **Issue**: `flutter build web --no-pub` failed because the app imported
+  `tflite_flutter`, which depends on `dart:ffi`.
+- **Error**: `Dart library 'dart:ffi' is not available on this platform`
+- **Solution**: Split `TFLiteActivityClassifier` behind a conditional export.
+  Android/iOS use the native TFLite implementation, while web compiles with a
+  same-API unsupported-feature adapter.
+- **Status**: ✅ JS WEB BUILD RESOLVED
+
+### Supabase Recovery Setup (FIXED)
+- **Issue**: Local credentials and migrations pointed at stale Supabase setup.
+- **Solution**: Added project-scoped MCP config placeholder, publishable-key
+  secret template, canonical backend migration, and recovery runbook.
+- **Status**: ✅ LOCAL SETUP RESOLVED, LIVE SUPABASE PROJECT STILL USER-AUTHED
+
+### Android Release Build Guard (FIXED)
+- **Issue**: Release App Bundles could silently fall back to debug signing.
+- **Solution**: Added upload-keystore configuration, ProGuard rules, and a
+  release task guard. Store release builds now require `android/key.properties`,
+  while local smoke release builds require explicit
+  Gradle property `FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true` opt-in, or env var
+  `ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true`.
+- **Status**: ✅ LOCAL RELEASE SMOKE RESOLVED, PLAY SIGNING STILL REQUIRED
+
+### Native Release Metadata (FIXED)
+- **Issue**: Native launcher icons still used Flutter defaults, and iOS auth
+  schemes/bundle ID were hard-coded to `com.example.flowfit`.
+- **Solution**: Regenerated Android/iOS app icons with the FlowFit mark and
+  added `ios/Flutter/FlowFit.xcconfig` so iOS bundle/auth scheme values can be
+  changed for TestFlight/App Store without editing generated Flutter config.
+- **Status**: ✅ LOCAL METADATA RESOLVED, STORE ACCOUNT SIGNING STILL REQUIRED
+
+### Release Preflight Automation (ADDED)
+- **Issue**: The maintained fork had no repeatable CI gate for analyzer, tests,
+  web build, Android phone build, Wear OS build, and release App Bundle smoke.
+- **Solution**: Added `scripts/release_preflight.ps1` for local handoff checks
+  and `.github/workflows/flutter-ci.yml` for pull request/push verification.
+  Use `-IncludeWasmSmoke` when a web handoff also needs Flutter Wasm compile
+  evidence.
+- **Status**: ✅ LOCAL SCRIPT VERIFIED, CI WILL RUN AFTER PUSH
+
+### Flutter Web Wasm Smoke Build (FIXED)
+- **Issue**: `flutter build web --wasm` failed through `sensors_plus 4.0.2`
+  imports of `dart:html` and `dart:js_util`.
+- **Solution**: Updated `sensors_plus` to the 5.x line and `image` to 4.8.x,
+  preserving the current app API surface while unblocking Wasm compilation.
+- **Status**: ✅ WASM COMPILE SMOKE RESOLVED, JS WEB REMAINS DEFAULT TARGET
 
 ### ConnectionListener Implementation (FIXED)
 - **Issue**: Argument type mismatch on line 41 of HealthTrackingManager.kt
@@ -28,12 +91,24 @@ All compilation errors have been resolved. The project is ready to build and ins
 # Option 1: Automated script (recommended)
 scripts\build_and_install.bat
 
-# Option 2: Manual build
+# Option 2: Manual Android build
 flutter clean
 flutter pub get
 flutter build apk --debug
 
-# Option 3: Direct run
+# Option 3: Wear OS build
+flutter build apk --debug -t lib\main_wear.dart --no-pub
+
+# Option 4: Web build
+flutter build web --no-pub
+
+# Option 5: Web Wasm compile-smoke build
+flutter build web --wasm --no-pub
+
+# Option 6: Local release App Bundle smoke build
+pwsh -NoProfile -File scripts\release_preflight.ps1 -IncludeReleaseSmoke
+
+# Option 7: Direct run
 flutter run -d 6ece264d
 ```
 
