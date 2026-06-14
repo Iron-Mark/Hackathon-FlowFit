@@ -283,6 +283,14 @@ void main() {
     expect(ciWorkflow, isNot(contains('Verify web deployment smoke')));
   });
 
+  test('ci installs Android SDK command-line tools before sdkmanager use', () {
+    expect(ciWorkflow, contains('android-actions/setup-android@v3'));
+    expect(
+      ciWorkflow.indexOf('android-actions/setup-android@v3'),
+      lessThan(ciWorkflow.indexOf('sdkmanager "platforms;android-36"')),
+    );
+  });
+
   test('ci keeps web Wasm and Android generated artifacts isolated', () {
     expect(ciWorkflow, contains('Flutter web Wasm release build'));
     expect(ciWorkflow, contains('--wasm'));
