@@ -414,10 +414,12 @@ void main() {
       '-SkipValidation',
     ], environment: env);
     expect(store.exitCode, isNot(0));
-    expect(
-      '${store.stdout}\n${store.stderr}',
-      contains('must provide a real Supabase publishable client key'),
-    );
+    final storeOutput = '${store.stdout}\n${store.stderr}'
+        .replaceAll(RegExp(r'\x1B\[[0-9;]*m'), '')
+        .replaceAll(RegExp(r'\s+'), ' ');
+    expect(storeOutput, contains('must provide a real Supabase'));
+    expect(storeOutput, contains('publishable client key'));
+    expect(storeOutput, contains('sb_publishable_'));
   });
 
   test('store release native manifests exclude development auth schemes', () {
