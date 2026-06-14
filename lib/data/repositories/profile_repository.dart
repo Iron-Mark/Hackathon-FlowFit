@@ -21,11 +21,11 @@ class ProfileRepository implements IProfileRepository {
       try {
         // Convert domain entity to data model
         final model = UserProfileModel.fromDomain(profile);
-        
-        // Insert into Supabase
+
+        // Upsert so survey completion can repair/finish partial recovered rows.
         final response = await _client
             .from(_tableName)
-            .insert(model.toJson())
+            .upsert(model.toJson(), onConflict: 'user_id')
             .select()
             .single();
 
@@ -33,18 +33,10 @@ class ProfileRepository implements IProfileRepository {
         final createdModel = UserProfileModel.fromJson(response);
         return createdModel.toDomain();
       } on PostgrestException catch (e, stackTrace) {
-        ErrorLogger.logError(
-          'ProfileRepository.createProfile',
-          e,
-          stackTrace,
-        );
+        ErrorLogger.logError('ProfileRepository.createProfile', e, stackTrace);
         throw _mapPostgrestException(e);
       } catch (e, stackTrace) {
-        ErrorLogger.logError(
-          'ProfileRepository.createProfile',
-          e,
-          stackTrace,
-        );
+        ErrorLogger.logError('ProfileRepository.createProfile', e, stackTrace);
         throw domain_exceptions.UnknownException();
       }
     });
@@ -56,7 +48,7 @@ class ProfileRepository implements IProfileRepository {
       try {
         // Convert domain entity to data model
         final model = UserProfileModel.fromDomain(profile);
-        
+
         // Update in Supabase
         final response = await _client
             .from(_tableName)
@@ -69,18 +61,10 @@ class ProfileRepository implements IProfileRepository {
         final updatedModel = UserProfileModel.fromJson(response);
         return updatedModel.toDomain();
       } on PostgrestException catch (e, stackTrace) {
-        ErrorLogger.logError(
-          'ProfileRepository.updateProfile',
-          e,
-          stackTrace,
-        );
+        ErrorLogger.logError('ProfileRepository.updateProfile', e, stackTrace);
         throw _mapPostgrestException(e);
       } catch (e, stackTrace) {
-        ErrorLogger.logError(
-          'ProfileRepository.updateProfile',
-          e,
-          stackTrace,
-        );
+        ErrorLogger.logError('ProfileRepository.updateProfile', e, stackTrace);
         throw domain_exceptions.UnknownException();
       }
     });
@@ -102,18 +86,10 @@ class ProfileRepository implements IProfileRepository {
       final model = UserProfileModel.fromJson(response);
       return model.toDomain();
     } on PostgrestException catch (e, stackTrace) {
-      ErrorLogger.logError(
-        'ProfileRepository.getProfile',
-        e,
-        stackTrace,
-      );
+      ErrorLogger.logError('ProfileRepository.getProfile', e, stackTrace);
       throw _mapPostgrestException(e);
     } catch (e, stackTrace) {
-      ErrorLogger.logError(
-        'ProfileRepository.getProfile',
-        e,
-        stackTrace,
-      );
+      ErrorLogger.logError('ProfileRepository.getProfile', e, stackTrace);
       throw domain_exceptions.UnknownException();
     }
   }
@@ -151,7 +127,7 @@ class ProfileRepository implements IProfileRepository {
 
   /// Executes an operation with retry logic.
   /// Retries up to [_maxRetries] times on failure.
-  /// 
+  ///
   /// This method is marked as @visibleForTesting to allow unit tests
   /// to verify retry behavior.
   @visibleForTesting
@@ -169,14 +145,14 @@ class ProfileRepository implements IProfileRepository {
       } catch (e) {
         lastException = e as Exception;
         attempts++;
-        
+
         // Don't retry on validation errors or auth errors
-        if (e is domain_exceptions.AuthException && 
-            e is! domain_exceptions.NetworkException && 
+        if (e is domain_exceptions.AuthException &&
+            e is! domain_exceptions.NetworkException &&
             e is! domain_exceptions.UnknownException) {
           rethrow;
         }
-        
+
         // If we've exhausted retries, throw the last exception
         if (attempts >= _maxRetries) {
           ErrorLogger.logWarning(
@@ -185,13 +161,13 @@ class ProfileRepository implements IProfileRepository {
           );
           rethrow;
         }
-        
+
         // Log retry attempt
         ErrorLogger.logInfo(
           'ProfileRepository._executeWithRetry',
           'Retry attempt $attempts of $_maxRetries',
         );
-        
+
         // Wait before retrying (exponential backoff)
         await Future.delayed(Duration(milliseconds: 100 * attempts));
       }

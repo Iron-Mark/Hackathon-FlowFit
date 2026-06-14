@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flowfit/domain/exceptions/auth_exceptions.dart';
 
@@ -76,6 +78,26 @@ void main() {
       // We can verify this by checking the implementation
       // The constant should be 3 as per requirements
       expect(3, equals(3)); // Max retries should be 3
+    });
+
+    test('createProfile upserts by user_id for recovered partial rows', () {
+      final source = File(
+        'lib/data/repositories/profile_repository.dart',
+      ).readAsStringSync();
+      final createProfileStart = source.indexOf(
+        'Future<UserProfile> createProfile',
+      );
+      final updateProfileStart = source.indexOf(
+        'Future<UserProfile> updateProfile',
+      );
+      final createProfileBody = source.substring(
+        createProfileStart,
+        updateProfileStart,
+      );
+
+      expect(createProfileBody, contains('.upsert('));
+      expect(createProfileBody, contains("onConflict: 'user_id'"));
+      expect(createProfileBody, isNot(contains('.insert(')));
     });
 
     test('Retry logic logs retry attempts', () {
