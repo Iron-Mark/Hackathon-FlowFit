@@ -40,6 +40,11 @@ Notes:
 - Do not store Supabase personal access tokens, service-role keys, or database passwords in the repo.
 - After editing `.mcp.json`, reload or restart Codex so the project-scoped Supabase MCP appears.
 - Complete the Supabase OAuth flow when Codex asks for MCP authentication.
+- Advisory audit mode defaults to recovery MCP posture and expects write access:
+  `pwsh -NoProfile -File scripts/release_readiness_audit.ps1`.
+- Strict release audit mode defaults to release MCP posture and expects
+  `read_only=true` after migrations/advisors are done:
+  `pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict`.
 
 ## 3. Restore Local Flutter Credentials
 
@@ -133,7 +138,8 @@ MCP path after Codex reload:
    or processing.
 7. After migrations and advisor fixes are complete, switch verification-only
    MCP use to `read_only=true` or remove the MCP config until more schema work
-   is needed. Never point this MCP config at production data.
+   is needed. Strict release audit treats a write-capable MCP URL as a release
+   blocker. Never point this MCP config at production data.
 
 CLI path if you prefer terminal auth:
 

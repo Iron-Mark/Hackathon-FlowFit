@@ -142,8 +142,16 @@ Strict mode turns unresolved store/Supabase configuration gaps into failures.
 Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the deployed HTTPS origin and
 `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true` only after the configured
 `FLOWFIT_SUPPORT_EMAIL` value, or the default `support@flowfit.com`, is the
-final support/privacy inbox. The script never prints Supabase keys or signing
-passwords.
+final support/privacy inbox. Advisory mode defaults to recovery MCP posture,
+where the project-scoped Supabase MCP remains write-capable for migrations.
+Strict mode defaults to release MCP posture and expects `read_only=true` after
+migrations and advisors are complete. The script never prints Supabase keys or
+signing passwords.
+
+Use `-McpMode Recovery` to force the write-capable migration posture, or
+`-McpMode Release` to force the read-only verification posture. The default
+`-McpMode Auto` chooses `Recovery` for advisory runs and `Release` for
+`-Strict` runs.
 
 Write a JSON evidence artifact for release handoff:
 ```powershell

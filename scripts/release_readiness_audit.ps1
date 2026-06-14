@@ -2,6 +2,9 @@ param(
     [switch]$Strict,
     [switch]$SupportEmailVerified,
     [string]$EnvFile = '',
+    [ValidateSet('Auto', 'Recovery', 'Release')]
+    [string]$McpMode = 'Auto',
+    [string]$McpConfigPath = '.mcp.json',
     [string]$OutFile = ''
 )
 
@@ -9,6 +12,11 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 $results = New-Object System.Collections.Generic.List[object]
 $supportEmailVerifiedForAudit = $false
+$effectiveMcpMode = if ($McpMode -eq 'Auto') {
+    if ($Strict) { 'Release' } else { 'Recovery' }
+} else {
+    $McpMode
+}
 
 function Add-Result {
     param(
@@ -63,6 +71,19 @@ function Read-RepoText {
     }
 
     return Get-Content -Raw $fullPath
+}
+
+function Read-AuditText {
+    param([string]$Path)
+
+    if ([System.IO.Path]::IsPathRooted($Path)) {
+        if (-not (Test-Path -LiteralPath $Path)) {
+            return $null
+        }
+        return Get-Content -Raw -LiteralPath $Path
+    }
+
+    return Read-RepoText $Path
 }
 
 function Read-Properties {
@@ -229,10 +250,10 @@ function Assert-RequiredText {
 }
 
 function Test-McpConfig {
-    $path = '.mcp.json'
-    $content = Read-RepoText $path
+    $path = $script:McpConfigPath
+    $content = Read-AuditText $path
     if ($null -eq $content) {
-        Add-Fail 'Supabase MCP config' 'Missing project-scoped .mcp.json.'
+        Add-Fail 'Supabase MCP config' "Missing project-scoped $path."
         return
     }
 
@@ -262,10 +283,17 @@ function Test-McpConfig {
         Add-Pass 'Supabase MCP project scope' 'MCP URL includes a project_ref.'
     }
 
-    if ($url -match 'read_only=true') {
-        Add-Fail 'Supabase MCP write access' 'Recovery MCP config is read-only; migrations need development write access.'
+    $hasReadOnly = $url -match '(^|[?&])read_only=true($|&)'
+    if ($script:effectiveMcpMode -eq 'Release') {
+        if ($hasReadOnly) {
+            Add-Pass 'Supabase MCP release read-only' 'MCP URL enables read_only=true for post-migration release hardening.'
+        } else {
+            Add-Warn 'Supabase MCP release read-only' 'Strict release MCP posture should add read_only=true after migrations and advisors are complete.'
+        }
+    } elseif ($hasReadOnly) {
+        Add-Fail 'Supabase MCP recovery write access' 'Recovery MCP config is read-only; migrations need development write access.'
     } else {
-        Add-Pass 'Supabase MCP write access' 'MCP URL does not force read_only=true.'
+        Add-Pass 'Supabase MCP recovery write access' 'MCP URL does not force read_only=true.'
     }
 
     $requiredFeatures = @('database', 'docs', 'debugging', 'development')

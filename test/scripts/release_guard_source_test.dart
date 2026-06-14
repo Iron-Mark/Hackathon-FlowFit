@@ -406,6 +406,45 @@ void main() {
     expect('${audit.stdout}\n${audit.stderr}', contains('reserved'));
   });
 
+  test('recovery audit rejects read-only Supabase MCP config', () {
+    final audit = _runAuditWithMcpConfig(
+      'https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true',
+    );
+
+    expect(audit.exitCode, isNot(0));
+    expect(
+      '${audit.stdout}\n${audit.stderr}',
+      contains('[FAIL] Supabase MCP recovery write access'),
+    );
+  });
+
+  test('strict release audit requires read-only Supabase MCP config', () {
+    final writableAudit = _runAuditWithMcpConfig(
+      'https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development',
+      strict: true,
+    );
+
+    expect(writableAudit.exitCode, isNot(0));
+    expect(
+      '${writableAudit.stdout}\n${writableAudit.stderr}',
+      contains('[FAIL] Supabase MCP release read-only'),
+    );
+
+    final readOnlyAudit = _runAuditWithMcpConfig(
+      'https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true',
+      strict: true,
+    );
+
+    expect(
+      '${readOnlyAudit.stdout}\n${readOnlyAudit.stderr}',
+      contains('[PASS] Supabase MCP release read-only'),
+    );
+    expect(
+      '${readOnlyAudit.stdout}\n${readOnlyAudit.stderr}',
+      isNot(contains('[FAIL] Supabase MCP recovery write access')),
+    );
+  });
+
   test('release guards reject fake publishable keys', () {
     expect(storeReleaseBuild, contains('Assert-SupabasePublishableKey'));
     expect(readinessAudit, contains('Test-SupabasePublishableKey'));
@@ -491,4 +530,33 @@ void main() {
   test('Supabase auth password policy matches app minimum length', () {
     expect(supabaseConfig, contains('minimum_password_length = 8'));
   });
+}
+
+ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
+  final tempDir = Directory.systemTemp.createTempSync('flowfit_mcp_audit_');
+  try {
+    final mcpFile = File('${tempDir.path}${Platform.pathSeparator}.mcp.json');
+    mcpFile.writeAsStringSync(
+      '{"mcpServers":{"supabase":{"type":"http","url":"$url"}}}',
+    );
+
+    final env = Map<String, String>.from(Platform.environment)
+      ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = 'https://flowfit.app'
+      ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
+      ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+      ..['SUPABASE_PUBLISHABLE_KEY'] =
+          'sb_publishable_abcdefghijklmnopqrstuvwxyz123456';
+
+    return Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      'scripts/release_readiness_audit.ps1',
+      '-McpConfigPath',
+      mcpFile.path,
+      if (strict) '-Strict',
+      if (strict) '-SupportEmailVerified',
+    ], environment: env);
+  } finally {
+    tempDir.deleteSync(recursive: true);
+  }
 }

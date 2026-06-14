@@ -313,6 +313,8 @@ Minimum completion criteria before release:
 - Supabase MCP OAuth is complete.
 - Canonical migration has been applied.
 - Advisors have no unresolved high-risk security/performance findings.
+- After migrations/advisors are complete, `.mcp.json` includes
+  `read_only=true` for release verification.
 - App signup/login/onboarding/workout smoke flows have been tested against the
   live project.
 
@@ -345,8 +347,8 @@ account data on the current device on a best-effort basis before signing out.
 # Non-secret external readiness audit:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1
 
-# Strict pre-release audit; expected to fail until production Supabase, signing,
-# public web URL, and support inbox decisions are in place:
+# Strict pre-release audit; expected to fail until production Supabase, read-only
+# MCP posture, signing, public web URL, and support inbox decisions are in place:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict
 
 # Strict audit with JSON evidence for release handoff:
@@ -465,8 +467,10 @@ The production wrapper rejects smoke/example IDs and reserved `.example`,
 `.invalid`, `.test`, localhost, or IP-loopback web hosts even when signing files
 are present.
 
-CI intentionally runs the audit in advisory mode. Strict mode requires external
-maintainer-controlled inputs: real Supabase project credentials, MCP OAuth,
+CI intentionally runs the audit in advisory mode. Advisory mode defaults to
+recovery MCP posture so migrations can still run. Strict mode defaults to
+release MCP posture and requires maintainer-controlled inputs: real Supabase
+project credentials, MCP OAuth, `read_only=true` on the project-scoped MCP URL,
 upload signing, deployed web URL, and support inbox verification.
 
 `.github/workflows/flutter-web-pages.yml` is separate from CI because it is a
