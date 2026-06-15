@@ -11,6 +11,7 @@ void main() {
   late String readinessAudit;
   late String releaseStatusSnapshot;
   late String createAndroidUploadKeystore;
+  late String supportInboxVerifier;
   late String scriptsReadme;
   late String gitignore;
   late String supabaseConfig;
@@ -49,6 +50,9 @@ void main() {
     ).readAsStringSync();
     createAndroidUploadKeystore = File(
       'scripts/create_android_upload_keystore.ps1',
+    ).readAsStringSync();
+    supportInboxVerifier = File(
+      'scripts/verify_support_inbox.ps1',
     ).readAsStringSync();
     scriptsReadme = File('scripts/README.md').readAsStringSync();
     gitignore = File('.gitignore').readAsStringSync();
@@ -1307,10 +1311,130 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(readinessAudit, contains('FLOWFIT_SUPPORT_EMAIL'));
     expect(readinessAudit, contains('\$expectedSupportEmail'));
     expect(readinessAudit, contains('configured support inbox'));
+    expect(readinessAudit, contains('verify_support_inbox.ps1'));
+    expect(supportInboxVerifier, contains('ConfirmedInbound'));
+    expect(supportInboxVerifier, contains('EvidenceNote is required'));
+    expect(supportInboxVerifier, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
+    expect(supportInboxVerifier, contains('Resolve-MxEvidence'));
+    expect(
+      supportInboxVerifier,
+      contains('manual-inbound-confirmation-required'),
+    );
+    expect(supportInboxVerifier, contains('SUPPORT_INBOX_EVIDENCE_WRITTEN'));
+    expect(supportInboxVerifier, contains('exit 2'));
+    expect(scriptsReadme, contains('verify_support_inbox.ps1'));
+    expect(releaseReadinessRunbook, contains('verify_support_inbox.ps1'));
+    expect(storeSubmissionChecklist, contains('verify_support_inbox.ps1'));
     expect(storeReleaseBuild, contains('valid support email address'));
     expect(webDeploymentVerifier, contains('valid support email address'));
     expect(storeReleaseBuild, contains(r'^[A-Za-z0-9._+-]+@[A-Za-z0-9]'));
     expect(webDeploymentVerifier, contains(r'^[A-Za-z0-9._+-]+@[A-Za-z0-9]'));
+  });
+
+  test('support inbox verifier writes evidence with guarded exit codes', () {
+    final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
+    final inventoryOut = File('build/support-inbox-inventory-$unique.json');
+    final missingNoteOut = File(
+      'build/support-inbox-missing-note-$unique.json',
+    );
+    final confirmedOut = File('build/support-inbox-confirmed-$unique.json');
+
+    try {
+      final inventory = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_support_inbox.ps1',
+        '-SupportEmail',
+        'support@flowfit.com',
+        '-SkipDns',
+        '-OutFile',
+        inventoryOut.path,
+      ]);
+      expect(
+        inventory.exitCode,
+        2,
+        reason: '${inventory.stdout}\n${inventory.stderr}',
+      );
+      expect(inventory.stdout, contains('SUPPORT_INBOX_EVIDENCE_WRITTEN'));
+      final inventoryJson =
+          jsonDecode(inventoryOut.readAsStringSync()) as Map<String, dynamic>;
+      expect(inventoryJson['confirmedInbound'], false);
+      expect(inventoryJson['summary'], 'manual-inbound-confirmation-required');
+      expect(
+        (inventoryJson['releaseVariable'] as Map<String, dynamic>)['name'],
+        'FLOWFIT_SUPPORT_EMAIL_VERIFIED',
+      );
+      expect(
+        (inventoryJson['releaseVariable']
+            as Map<String, dynamic>)['valueWhenReady'],
+        'false',
+      );
+      expect((inventoryJson['sourceOccurrences'] as List<dynamic>), isNotEmpty);
+      expect(
+        (inventoryJson['dnsMx'] as Map<String, dynamic>)['status'],
+        'skipped',
+      );
+
+      final missingNote = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_support_inbox.ps1',
+        '-SupportEmail',
+        'support@flowfit.com',
+        '-ConfirmedInbound',
+        '-SkipDns',
+        '-OutFile',
+        missingNoteOut.path,
+      ]);
+      expect(missingNote.exitCode, isNot(0));
+      expect(
+        '${missingNote.stdout}\n${missingNote.stderr}',
+        contains('EvidenceNote is required'),
+      );
+      expect(missingNoteOut.existsSync(), isFalse);
+
+      final confirmed = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_support_inbox.ps1',
+        '-SupportEmail',
+        'support@flowfit.com',
+        '-ConfirmedInbound',
+        '-EvidenceNote',
+        'Received external test email during automated smoke coverage',
+        '-SkipDns',
+        '-OutFile',
+        confirmedOut.path,
+      ]);
+      expect(
+        confirmed.exitCode,
+        0,
+        reason: '${confirmed.stdout}\n${confirmed.stderr}',
+      );
+      expect(confirmed.stdout, contains('SUPPORT_INBOX_EVIDENCE_WRITTEN'));
+      final confirmedJson =
+          jsonDecode(confirmedOut.readAsStringSync()) as Map<String, dynamic>;
+      expect(confirmedJson['confirmedInbound'], true);
+      expect(
+        confirmedJson['summary'],
+        'ready-for-release-variable-dns-skipped',
+      );
+      expect(
+        (confirmedJson['releaseVariable']
+            as Map<String, dynamic>)['valueWhenReady'],
+        'true',
+      );
+      expect(
+        confirmedJson['evidenceNote'],
+        'Received external test email during automated smoke coverage',
+      );
+    } finally {
+      for (final file in [inventoryOut, missingNoteOut, confirmedOut]) {
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
+      }
+    }
   });
 
   test(

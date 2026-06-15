@@ -210,7 +210,37 @@ values.
 
 ---
 
-### 6. verify_supabase_backend.ps1
+### 6. verify_support_inbox.ps1
+**Purpose**: Create a non-secret support inbox evidence file before setting
+`FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`.
+
+**Inventory only**:
+```powershell
+pwsh -NoProfile -File scripts\verify_support_inbox.ps1
+```
+
+Without `-ConfirmedInbound`, the helper writes
+`build/support-inbox-verification.json` and exits non-zero because a human still
+must confirm that the configured/default inbox receives mail from outside the
+maintainer account.
+
+**After sending and receiving an external test email**:
+```powershell
+pwsh -NoProfile -File scripts\verify_support_inbox.ps1 `
+  -ConfirmedInbound `
+  -EvidenceNote 'Received external test email on 2026-06-15'
+```
+
+`-EvidenceNote` is required with `-ConfirmedInbound`. The helper validates the
+email shape, inventories public/in-app references, checks MX records when local
+DNS tooling is available, and records the manual inbound confirmation. DNS
+status is written into the JSON summary; it never sends email and does not prove
+inbox ownership by itself. Keep the received test email or mailbox screenshot as
+private release evidence.
+
+---
+
+### 7. verify_supabase_backend.ps1
 **Purpose**: Validate and optionally run the read-only Supabase backend
 verification SQL after the canonical migration has been applied.
 
@@ -243,7 +273,7 @@ or `--db-url`. The SQL returns one row per backend check; every row should have
 
 ---
 
-### 7. configure_supabase_mcp.ps1
+### 8. configure_supabase_mcp.ps1
 **Purpose**: Validate and write project-scoped Supabase MCP config without
 storing tokens, service-role keys, or database passwords in the repo.
 
@@ -275,7 +305,7 @@ prompted.
 
 ---
 
-### 8. configure_github_release_variables.ps1
+### 9. configure_github_release_variables.ps1
 **Purpose**: Validate and set GitHub repository variables used by strict audit
 and the GitHub Pages deployment workflow after the maintainer has real Supabase
 client values and a verified support inbox.
@@ -314,7 +344,7 @@ required so the production web deploy cannot be enabled by accident.
 
 ---
 
-### 9. create_android_upload_keystore.ps1
+### 10. create_android_upload_keystore.ps1
 **Purpose**: Create private Android Play upload signing material for local
 release builds and CI secret handoff without printing generated passwords.
 
@@ -338,7 +368,7 @@ that helper is intentionally limited to public repository variables.
 
 ---
 
-### 10. store_release_build.ps1
+### 11. store_release_build.ps1
 **Purpose**: Production artifact build wrapper for store/web handoff. It fails
 early when the git working tree is dirty, required production environment
 values, signing files, or public web URLs are missing. By default it also runs
@@ -452,7 +482,7 @@ manifest after the strict audit passes.
 
 ---
 
-### 11. verify_web_deployment.ps1
+### 12. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -499,7 +529,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 12. configure_local_release.ps1
+### 13. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it

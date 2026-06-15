@@ -43,7 +43,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] In-app Privacy Policy, Terms, and Delete Account screens have final
       maintainer/legal-reviewed copy.
 - [ ] `support@flowfit.com` has been replaced or verified as the production
-      support/privacy inbox in public pages and in-app copy.
+      support/privacy inbox in public pages and in-app copy. Run
+      `pwsh -NoProfile -File scripts/verify_support_inbox.ps1`, then rerun with
+      `-ConfirmedInbound` and `-EvidenceNote` after receiving an external test
+      email.
 - [ ] Location disclosures describe foreground-only wellness routes, walking
       paths, and geofence missions; release manifests must not request
       background location until native background geofencing is implemented.

@@ -1077,15 +1077,15 @@ function Test-WebAndStoreConfig {
     }
 
     if ($filesWithExpectedSupport.Count -gt 0 -and -not $supportEmailVerifiedForAudit) {
-        Add-Warn 'Production support inbox' "Configured support inbox $expectedSupportEmail appears in $($filesWithExpectedSupport.Count) public/in-app files; verify it before store submission."
+        Add-Warn 'Production support inbox' "Configured support inbox $expectedSupportEmail appears in $($filesWithExpectedSupport.Count) public/in-app files; verify it before store submission with scripts/verify_support_inbox.ps1."
     } elseif ($filesWithExpectedSupport.Count -gt 0) {
         Add-Pass 'Production support inbox' "Configured support inbox $expectedSupportEmail is present and marked verified for this audit run."
     } elseif ($expectedSupportEmail -ne $defaultSupportEmail -and $filesWithDefaultSupport.Count -gt 0 -and -not $supportEmailVerifiedForAudit) {
-        Add-Warn 'Production support inbox' "Source templates still use $defaultSupportEmail; store_release_build.ps1 will replace it with configured support inbox $expectedSupportEmail, which still needs verification."
+        Add-Warn 'Production support inbox' "Source templates still use $defaultSupportEmail; store_release_build.ps1 will replace it with configured support inbox $expectedSupportEmail, which still needs verification with scripts/verify_support_inbox.ps1."
     } elseif ($expectedSupportEmail -ne $defaultSupportEmail -and $filesWithDefaultSupport.Count -gt 0) {
         Add-Pass 'Production support inbox' "Configured support inbox $expectedSupportEmail is marked verified; source templates use $defaultSupportEmail as the wrapper replacement token."
     } elseif ($filesWithDefaultSupport.Count -gt 0 -and -not $supportEmailVerifiedForAudit) {
-        Add-Warn 'Production support inbox' "Default support@flowfit.com appears in $($filesWithDefaultSupport.Count) public/in-app files; verify or replace it before store submission."
+        Add-Warn 'Production support inbox' "Default support@flowfit.com appears in $($filesWithDefaultSupport.Count) public/in-app files; verify or replace it before store submission with scripts/verify_support_inbox.ps1."
     } elseif ($filesWithDefaultSupport.Count -gt 0) {
         Add-Pass 'Production support inbox' 'Default support@flowfit.com is present and marked verified for this audit run.'
     } else {

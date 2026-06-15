@@ -299,6 +299,34 @@ The verifier checks the app shell, `manifest.json`, `privacy.html`, and
 configured support inbox text, rejects internal maintainer/store-review terms,
 and writes JSON evidence for store handoff.
 
+### Support Inbox Verification
+
+Before setting `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, verify that the configured
+or default support inbox can receive mail from outside the maintainer account.
+Create the non-secret evidence file first:
+
+```powershell
+pwsh -NoProfile -File scripts/verify_support_inbox.ps1 `
+  -OutFile build/support-inbox-verification.json
+```
+
+That command inventories source references and DNS MX evidence when local DNS
+tooling is available, but exits non-zero until a human confirms inbound mail.
+After sending and receiving an external test email, rerun:
+
+```powershell
+pwsh -NoProfile -File scripts/verify_support_inbox.ps1 `
+  -ConfirmedInbound `
+  -EvidenceNote 'Received external test email on 2026-06-15' `
+  -OutFile build/support-inbox-verification.json
+```
+
+`-EvidenceNote` is required with `-ConfirmedInbound`. Archive the JSON evidence
+and private mailbox proof before using `-SupportEmailVerified` in release
+variable or store-build commands. DNS MX status is recorded in the JSON summary
+when local DNS tooling is available, but it is not a substitute for the received
+external test email.
+
 ### GitHub Pages Deployment
 
 `.github/workflows/flutter-web-pages.yml` provides a concrete Flutter web
