@@ -18,6 +18,10 @@ void main() {
   late String scriptsReadme;
   late String gitignore;
   late String supabaseConfig;
+  late String supabaseConfirmSignupHtml;
+  late String supabaseConfirmSignupText;
+  late String supabaseEmailSetupGuide;
+  late String supabaseEmailQuickSetup;
   late String releaseEnvExample;
   late String configureLocalRelease;
   late String configureSupabaseMcp;
@@ -73,6 +77,18 @@ void main() {
     scriptsReadme = File('scripts/README.md').readAsStringSync();
     gitignore = File('.gitignore').readAsStringSync();
     supabaseConfig = File('supabase/config.toml').readAsStringSync();
+    supabaseConfirmSignupHtml = File(
+      'supabase/email_templates/confirm_signup.html',
+    ).readAsStringSync();
+    supabaseConfirmSignupText = File(
+      'supabase/email_templates/confirm_signup.txt',
+    ).readAsStringSync();
+    supabaseEmailSetupGuide = File(
+      'supabase/email_templates/EMAIL_SETUP_GUIDE.md',
+    ).readAsStringSync();
+    supabaseEmailQuickSetup = File(
+      'supabase/email_templates/QUICK_SETUP.md',
+    ).readAsStringSync();
     releaseEnvExample = File('.env.release.example').readAsStringSync();
     configureLocalRelease = File(
       'scripts/configure_local_release.ps1',
@@ -161,14 +177,33 @@ void main() {
     }
   });
 
-  test('Android manifest relative components resolve to Kotlin classes', () {
-    final declaredComponents = RegExp(r'android:name="\.(\w+)"')
-        .allMatches('$androidMainManifest\n$androidDebugManifest')
-        .map((match) => match.group(1)!)
-        .toSet();
+  test('Android manifest native components are fully qualified', () {
+    final manifestContent = '$androidMainManifest\n$androidDebugManifest';
+    final relativeComponents = RegExp(
+      r'android:name="\.(FlowFitApp|MainActivity|PhoneDataListenerService)"',
+    ).allMatches(manifestContent);
+    final declaredComponents = RegExp(
+      r'android:name="com\.oldstlabs\.flowfit\.(\w+)"',
+    ).allMatches(manifestContent).map((match) => match.group(1)!).toSet();
 
     expect(androidMainManifest, isNot(contains('.SensorTrackingService')));
-    expect(declaredComponents, containsAll(['FlowFitApp', 'MainActivity']));
+    expect(relativeComponents, isEmpty);
+    expect(
+      declaredComponents,
+      containsAll(['FlowFitApp', 'MainActivity', 'PhoneDataListenerService']),
+    );
+    expect(
+      readinessAudit,
+      contains('Native Android manifest components must be fully qualified'),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('fully qualified native class names'),
+    );
+    expect(
+      storeSubmissionChecklist,
+      contains('native component class names must stay fully'),
+    );
 
     for (final component in declaredComponents) {
       expect(
@@ -176,7 +211,7 @@ void main() {
           'android/app/src/main/kotlin/com/oldstlabs/flowfit/$component.kt',
         ).existsSync(),
         isTrue,
-        reason: '$component is declared as a relative Android component',
+        reason: '$component is declared as a native Android component',
       );
     }
   });
@@ -897,6 +932,11 @@ storeFile=upload-keystore.jks
     }
 
     expect(helper, contains('gh variable set'));
+    expect(
+      helper,
+      contains("\$supportEmail = Get-RequiredEnv 'FLOWFIT_SUPPORT_EMAIL'"),
+    );
+    expect(helper, isNot(contains("\$supportEmail = 'support@flowfit.com'")));
     expect(helper, contains('DryRun'));
     expect(helper, contains('redacted'));
     expect(helper, contains('sb_secret_'));
@@ -1040,6 +1080,15 @@ storeFile=upload-keystore.jks
       expect(
         supabase['url'],
         'https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnopqrst&features=database,docs,debugging,development&read_only=true',
+      );
+      expect(supabaseRecoveryRunbook, contains('development or staging'));
+      expect(
+        supabaseRecoveryRunbook,
+        contains('temporary read-only verification'),
+      );
+      expect(
+        releaseReadinessRunbook,
+        contains('Production MCP access is not part of the normal workflow'),
       );
     } finally {
       tempDir.deleteSync(recursive: true);
@@ -1542,7 +1591,19 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(pagesWorkflow, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(pagesWorkflow, contains('SUPABASE_URL'));
     expect(pagesWorkflow, contains('SUPABASE_PUBLISHABLE_KEY'));
+    expect(
+      pagesWorkflow,
+      contains('FLOWFIT_SUPPORT_EMAIL: \${{ vars.FLOWFIT_SUPPORT_EMAIL }}'),
+    );
     expect(pagesWorkflow, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
+    expect(
+      pagesWorkflow,
+      isNot(contains("vars.FLOWFIT_SUPPORT_EMAIL || 'support@flowfit.com'")),
+    );
+    expect(
+      pagesWorkflow,
+      contains('FLOWFIT_SUPPORT_EMAIL repo variable is required'),
+    );
     expect(
       pagesWorkflow,
       contains(
@@ -1704,6 +1765,15 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     } finally {
       tempDir.deleteSync(recursive: true);
     }
+  });
+
+  test('GitHub variable audit failure explains auth and token options', () {
+    expect(readinessAudit, contains('ghExitCode'));
+    expect(readinessAudit, contains('gh auth status'));
+    expect(readinessAudit, contains('GH_TOKEN'));
+    expect(readinessAudit, contains('Actions variables read access'));
+    expect(scriptsReadme, contains('gh auth token --user Iron-Mark'));
+    expect(releaseReadinessRunbook, contains('gh auth token --user Iron-Mark'));
   });
 
   test('strict audit surfaces support inbox DNS evidence failures', () {
@@ -1869,6 +1939,10 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(readinessAudit, contains('SupportInboxEvidencePath'));
     expect(readinessAudit, contains('Get-SupportInboxEvidence'));
     expect(readinessAudit, contains('dnsMx'));
+    expect(
+      readinessAudit,
+      contains('Strict release audit requires FLOWFIT_SUPPORT_EMAIL'),
+    );
     expect(supportInboxVerifier, contains('ConfirmedInbound'));
     expect(supportInboxVerifier, contains('EvidenceNote is required'));
     expect(supportInboxVerifier, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
@@ -1886,6 +1960,19 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(
       releaseReadinessRunbook,
       contains('support-inbox-verification.json'),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('validates Supabase client config'),
+    );
+    expect(releaseReadinessRunbook, contains('`FLOWFIT_SUPPORT_EMAIL`'));
+    expect(
+      releaseReadinessRunbook,
+      contains('requires `FLOWFIT_SUPPORT_EMAIL`'),
+    );
+    expect(
+      storeSubmissionChecklist,
+      contains('Production wrapper builds set `FLOWFIT_SUPPORT_EMAIL`'),
     );
     expect(storeSubmissionChecklist, contains('verify_support_inbox.ps1'));
     expect(storeReleaseBuild, contains('valid support email address'));
@@ -2081,6 +2168,32 @@ function Resolve-DnsName {
         isNot(contains('com.example.flowfit.dev://auth-callback')),
       );
       expect(supabaseConfig, contains('enable_confirmations = true'));
+      for (final template in [
+        supabaseConfirmSignupHtml,
+        supabaseConfirmSignupText,
+      ]) {
+        expect(template, contains('{{ .SiteURL }}'));
+        expect(template, contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'));
+        expect(template, isNot(contains('flowfit.your-owned-domain.com')));
+        expect(template, isNot(contains('support@flowfit.com')));
+      }
+      expect(readinessAudit, contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'));
+      expect(readinessAudit, contains('Supabase email templates'));
+      expect(
+        supabaseEmailSetupGuide,
+        contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'),
+      );
+      expect(supabaseEmailSetupGuide, contains('{{ .SiteURL }}'));
+      expect(
+        supabaseEmailQuickSetup,
+        contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'),
+      );
+      expect(supabaseEmailQuickSetup, contains('{{ .SiteURL }}'));
+      expect(
+        releaseReadinessRunbook,
+        contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'),
+      );
+      expect(releaseReadinessRunbook, contains('{{ .SiteURL }}'));
     },
   );
 

@@ -17,7 +17,8 @@ scripts\build_and_install.bat
 2. Gets dependencies (`flutter pub get`)
 3. Builds debug APK (`flutter build apk --debug`)
 4. Checks connected devices (`adb devices`)
-5. Installs on watch (`adb -s 6ece264d install`)
+5. Installs on the configured watch
+   (`adb -s adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp install`)
 
 **Requirements**:
 - Watch connected and visible in `adb devices`
@@ -37,7 +38,7 @@ scripts\run_watch.bat
 ```
 
 **What it does**:
-- Runs `flutter run -d 6ece264d`
+- Runs `flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dart`
 - Launches app on watch in debug mode
 - Enables hot reload
 
@@ -186,6 +187,20 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 `
   -Strict `
   -GitHubRepo Iron-Mark/Hackathon-FlowFit `
   -OutFile build/store-release-readiness-audit.json
+```
+
+If the active `gh` account cannot read repository Actions variables, keep the
+account unchanged and pass the repo-owning token only to this process:
+```powershell
+$env:GH_TOKEN = (gh auth token --user Iron-Mark).Trim()
+try {
+  pwsh -NoProfile -File scripts/release_readiness_audit.ps1 `
+    -Strict `
+    -GitHubRepo Iron-Mark/Hackathon-FlowFit `
+    -OutFile build/store-release-readiness-audit.json
+} finally {
+  Remove-Item Env:\GH_TOKEN -ErrorAction SilentlyContinue
+}
 ```
 
 The GitHub-variable import is allowlisted to release client/config values:
@@ -621,7 +636,7 @@ Configure repository variables before dispatching it:
   `https://iron-mark.github.io/Hackathon-FlowFit`.
 - `SUPABASE_URL`.
 - `SUPABASE_PUBLISHABLE_KEY`.
-- Optional `FLOWFIT_SUPPORT_EMAIL`.
+- `FLOWFIT_SUPPORT_EMAIL`.
 - `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after the configured/default
   support inbox is receiving mail from outside the maintainer account.
 

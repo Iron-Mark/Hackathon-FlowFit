@@ -191,10 +191,7 @@ if (-not $DryRun -and -not (Get-Command gh -ErrorAction SilentlyContinue)) {
 }
 
 $publicWebBaseUrl = Get-RequiredEnv 'FLOWFIT_PUBLIC_WEB_BASE_URL'
-$supportEmail = [Environment]::GetEnvironmentVariable('FLOWFIT_SUPPORT_EMAIL')
-if ([string]::IsNullOrWhiteSpace($supportEmail)) {
-    $supportEmail = 'support@flowfit.com'
-}
+$supportEmail = Get-RequiredEnv 'FLOWFIT_SUPPORT_EMAIL'
 $supportEmail = $supportEmail.Trim()
 $supabaseUrl = Get-RequiredEnv 'SUPABASE_URL'
 $supabasePublishableKey = Get-RequiredEnv 'SUPABASE_PUBLISHABLE_KEY'

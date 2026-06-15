@@ -25,8 +25,8 @@ com.oldstlabs.flowfit.dev://auth-callback
 
 **For Production:**
 ```
-https://flowfit.your-owned-domain.com
-https://flowfit.your-owned-domain.com/auth/callback
+<FLOWFIT_PUBLIC_WEB_BASE_URL>
+<FLOWFIT_PUBLIC_WEB_BASE_URL>/auth/callback
 com.oldstlabs.flowfit://auth-callback
 com.oldstlabs.flowfit.dev://auth-callback
 ```
@@ -49,7 +49,11 @@ Confirm Your FlowFit Signup ⚡
 ```
 
 #### Email Body (HTML):
-Copy the content from `confirm_signup.html` file in this directory.
+Copy the content from `confirm_signup.html` file in this directory after
+replacing `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` with the verified deliverable
+support inbox. The template uses Supabase's `{{ .SiteURL }}` variable for
+privacy and account-deletion links, so the dashboard Site URL must be the final
+`FLOWFIT_PUBLIC_WEB_BASE_URL` origin before production use.
 
 ### Step 4: Email Template Variables
 

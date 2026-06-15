@@ -170,8 +170,9 @@ function Import-GitHubReleaseVariables {
         }
 
         $ghResult = & gh variable list --repo $GitHubRepo --json name,value 2>&1
-        if ($LASTEXITCODE -ne 0) {
-            Add-Fail 'GitHub release variables' 'Unable to read GitHub repository variables with gh.'
+        $ghExitCode = $LASTEXITCODE
+        if ($ghExitCode -ne 0) {
+            Add-Fail 'GitHub release variables' "Unable to read GitHub repository variables with gh exit code $ghExitCode. Check gh auth status and use an account or GH_TOKEN with repository Actions variables read access."
             return
         }
         $jsonText = ($ghResult | Out-String).Trim()
@@ -762,6 +763,43 @@ function Test-SupabaseConfig {
     } else {
         Add-Pass 'Supabase email confirmation' 'Local config does not disable email confirmation.'
     }
+
+    $templatePaths = @(
+        'supabase/email_templates/confirm_signup.html',
+        'supabase/email_templates/confirm_signup.txt'
+    )
+    $templateIssues = New-Object System.Collections.Generic.List[string]
+    $templateReplacementTokens = New-Object System.Collections.Generic.List[string]
+    $templatesUseSiteUrl = $true
+    foreach ($path in $templatePaths) {
+        $template = Read-RepoText $path
+        if ($null -eq $template) {
+            $templateIssues.Add("$path is missing")
+            $templatesUseSiteUrl = $false
+            continue
+        }
+        if ($template.Contains('flowfit.your-owned-domain.com')) {
+            $templateIssues.Add("$path contains placeholder production URLs")
+        }
+        if ($template.Contains('support@flowfit.com')) {
+            $templateIssues.Add("$path contains the non-deliverable default support inbox")
+        }
+        if ($template.Contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL')) {
+            $templateReplacementTokens.Add($path)
+        }
+        if (-not $template.Contains('{{ .SiteURL }}')) {
+            $templatesUseSiteUrl = $false
+        }
+    }
+    if ($templateIssues.Count -gt 0) {
+        Add-Fail 'Supabase email templates' "Supabase auth email templates have release-blocking placeholders: $($templateIssues -join '; ')."
+    } elseif ($templateReplacementTokens.Count -gt 0) {
+        Add-Warn 'Supabase email templates' "Replace REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL with the verified deliverable support inbox before copying Supabase auth email templates to the dashboard: $($templateReplacementTokens -join ', ')." -StrictFailure $false
+    } elseif ($templatesUseSiteUrl) {
+        Add-Pass 'Supabase email templates' 'Supabase auth email templates use {{ .SiteURL }} for public compliance links and no known placeholder support inbox.'
+    } else {
+        Add-Warn 'Supabase email templates' 'Supabase auth email templates should use {{ .SiteURL }} for public compliance links so dashboard Site URL controls the release host.'
+    }
 }
 
 function Test-AndroidReleaseConfig {
@@ -809,28 +847,44 @@ function Test-AndroidReleaseConfig {
     $mainManifest = Read-RepoText 'android/app/src/main/AndroidManifest.xml'
     $debugManifest = Read-RepoText 'android/app/src/debug/AndroidManifest.xml'
     $manifestComponentIssues = New-Object System.Collections.Generic.List[string]
-    $manifestComponents = New-Object System.Collections.Generic.HashSet[string]
+    $relativeComponents = New-Object System.Collections.Generic.List[string]
+    $requiredManifestComponents = @(
+        'com.oldstlabs.flowfit.FlowFitApp',
+        'com.oldstlabs.flowfit.MainActivity',
+        'com.oldstlabs.flowfit.PhoneDataListenerService'
+    )
+
     foreach ($manifest in @($mainManifest, $debugManifest)) {
         if ($null -eq $manifest) {
             continue
         }
 
         foreach ($match in [regex]::Matches($manifest, 'android:name="\.(?<class>[A-Za-z_][A-Za-z0-9_]*)"')) {
-            [void]$manifestComponents.Add($match.Groups['class'].Value)
+            $relativeComponents.Add($match.Groups['class'].Value)
         }
     }
 
-    foreach ($component in $manifestComponents) {
-        $componentPath = Get-RepoPath "android/app/src/main/kotlin/com/oldstlabs/flowfit/$component.kt"
+    foreach ($component in $requiredManifestComponents) {
+        $simpleName = $component.Substring($component.LastIndexOf('.') + 1)
+        $componentPath = Get-RepoPath "android/app/src/main/kotlin/com/oldstlabs/flowfit/$simpleName.kt"
+        if (
+            ($null -eq $mainManifest -or -not $mainManifest.Contains("android:name=`"$component`"")) -and
+            ($null -eq $debugManifest -or -not $debugManifest.Contains("android:name=`"$component`""))
+        ) {
+            $manifestComponentIssues.Add("$component missing from manifests")
+            continue
+        }
         if (-not (Test-Path $componentPath)) {
-            $manifestComponentIssues.Add($component)
+            $manifestComponentIssues.Add("$component missing Kotlin class")
         }
     }
 
-    if ($manifestComponentIssues.Count -eq 0) {
-        Add-Pass 'Android manifest app components' 'Relative Android manifest components have matching Kotlin classes.'
+    if ($relativeComponents.Count -gt 0) {
+        Add-Fail 'Android manifest app components' "Native Android manifest components must be fully qualified so configurable applicationId values still resolve classes: $($relativeComponents -join ', ')."
+    } elseif ($manifestComponentIssues.Count -eq 0) {
+        Add-Pass 'Android manifest app components' 'Android manifest native components are fully qualified and have matching Kotlin classes.'
     } else {
-        Add-Fail 'Android manifest app components' "Missing Kotlin class files for manifest components: $($manifestComponentIssues -join ', ')."
+        Add-Fail 'Android manifest app components' "Missing or unresolved native Android manifest components: $($manifestComponentIssues -join ', ')."
     }
 
     $gradleProperties = Read-Properties 'android/gradle.properties'
@@ -1059,10 +1113,15 @@ function Test-WebAndStoreConfig {
     $deletion = Read-RepoText 'web/account-deletion.html'
     $defaultSupportEmail = 'support@flowfit.com'
     $configuredSupportEmail = [Environment]::GetEnvironmentVariable('FLOWFIT_SUPPORT_EMAIL')
+    $hasConfiguredSupportEmail = -not [string]::IsNullOrWhiteSpace($configuredSupportEmail)
     $expectedSupportEmail = if ([string]::IsNullOrWhiteSpace($configuredSupportEmail)) {
         $defaultSupportEmail
     } else {
         $configuredSupportEmail.Trim()
+    }
+
+    if ($Strict -and -not $hasConfiguredSupportEmail) {
+        Add-Fail 'Production support inbox' 'Strict release audit requires FLOWFIT_SUPPORT_EMAIL to be set to a verified deliverable support/privacy inbox; the source default is only a local replacement token.'
     }
 
     if ($null -eq $privacy) {
@@ -1177,6 +1236,10 @@ function Test-WebAndStoreConfig {
             Add-Fail 'Production support inbox' "Support inbox evidence does not confirm inbound delivery for $expectedSupportEmail."
             return
         }
+    }
+
+    if ($Strict -and -not $hasConfiguredSupportEmail) {
+        return
     }
 
     if ($filesWithExpectedSupport.Count -gt 0 -and -not $supportEmailVerifiedForAudit) {

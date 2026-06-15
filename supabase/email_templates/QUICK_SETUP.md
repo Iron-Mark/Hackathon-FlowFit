@@ -31,7 +31,10 @@ Confirm Your FlowFit Signup ⚡
 ```
 
 **Body:**
-Copy and paste the content from `confirm_signup.html` file.
+Copy and paste the content from `confirm_signup.html` after replacing
+`REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` with the verified deliverable support
+inbox. The privacy and account-deletion links use Supabase's `{{ .SiteURL }}`
+template variable, so set Site URL to the correct app/web origin first.
 
 ### 4. Test the Flow
 
@@ -53,13 +56,13 @@ The app will:
 
 Update Site URL to your production domain:
 ```
-https://flowfit.your-owned-domain.com
+<FLOWFIT_PUBLIC_WEB_BASE_URL>
 ```
 
 And add production redirect URLs:
 ```
-https://flowfit.your-owned-domain.com
-https://flowfit.your-owned-domain.com/auth/callback
+<FLOWFIT_PUBLIC_WEB_BASE_URL>
+<FLOWFIT_PUBLIC_WEB_BASE_URL>/auth/callback
 com.oldstlabs.flowfit://auth-callback
 com.oldstlabs.flowfit.dev://auth-callback
 ```

@@ -98,6 +98,12 @@ FLOWFIT_ANDROID_APPLICATION_ID=com.oldstlabs.flowfit
 FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit
 ```
 
+The Android manifest uses fully qualified native class names under
+`com.oldstlabs.flowfit`, so a maintainer-owned Play package can differ from the
+Kotlin namespace without breaking activity/application/service lookup. If the
+Play package changes, keep `FLOWFIT_AUTH_SCHEME` aligned with the Supabase
+redirect URL and rerun the Android release wrapper before upload.
+
 Create or update tracked non-secret Android release identity in
 `android/gradle.properties` with:
 
@@ -110,7 +116,7 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1
 
 ```powershell
 $authScheme = 'com.oldstlabs.flowfit'
-$supportEmail = 'support@flowfit.com'
+$env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
 ```
 
 4. Add the production auth scheme to Supabase redirect URLs:
@@ -125,12 +131,13 @@ com.oldstlabs.flowfit://auth-callback
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android
 ```
 
-The production wrapper always validates Supabase client config before building
-any target, even if `-RunStrictAudit` is not passed. Prefer
-`SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`; if they are absent, the wrapper
-can use ignored `lib/secrets.dart` as a local fallback. The values must contain
-a real Supabase Project URL and current `sb_publishable_` key, not
-placeholders, the old project ref, a service-role key, or a secret key.
+The production wrapper always validates Supabase client config and
+`FLOWFIT_SUPPORT_EMAIL` before building any target, even if `-RunStrictAudit`
+is not passed. Prefer `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`; if they
+are absent, the wrapper can use ignored `lib/secrets.dart` as a local fallback.
+The values must contain a real Supabase Project URL and current
+`sb_publishable_` key, not placeholders, the old project ref, a service-role
+key, or a secret key.
 
 For CI or an ephemeral release machine, provide those Gradle properties plus
 the signing env secrets, then run the release wrapper instead of committing key
@@ -139,6 +146,7 @@ material:
 ```powershell
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
+$env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
 $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
 $env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
 $env:FLOWFIT_ANDROID_KEYSTORE_BASE64 = 'REPLACE_WITH_BASE64_ENCODED_UPLOAD_KEYSTORE'
@@ -267,11 +275,13 @@ App Store bundle in `build/ios/ipa/` when signing is configured.
 Build:
 
 ```powershell
+$env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web
 ```
 
-Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the final deployed URL before building.
-Root-domain hosts can use an origin such as `https://flowfit.example.com`.
+Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the final deployed URL before building,
+and set `FLOWFIT_SUPPORT_EMAIL` to the deliverable support/privacy inbox. Root
+domain hosts can use an origin such as `https://flowfit.example.com`.
 Project-site hosts can include the path, for example
 `https://iron-mark.github.io/Hackathon-FlowFit`. The wrapper derives Flutter's
 `--base-href` from that path, so GitHub Pages project sites load assets from
@@ -309,9 +319,9 @@ The web output includes static store-compliance pages:
 
 After deployment, use `https://<your-web-host>/privacy.html` and
 `https://<your-web-host>/account-deletion.html` in Play Console and App Store
-Connect. The store release build wrapper replaces `support@flowfit.com` in the
-built public pages with `FLOWFIT_SUPPORT_EMAIL`; keep the source default unless
-the default inbox is wrong for every environment.
+Connect. The store release build wrapper requires `FLOWFIT_SUPPORT_EMAIL` and
+replaces `support@flowfit.com` in the built public pages with that value; keep
+the source default unless the default inbox is wrong for every environment.
 The release audit, preflight, and store wrapper also verify that the public
 account deletion page keeps an email request link, account-and-associated-data
 wording, no-reinstall wording, and the in-app
@@ -381,9 +391,9 @@ Configure these repository variables before running it:
   `https://iron-mark.github.io/Hackathon-FlowFit` when the variable is absent.
 - `SUPABASE_URL` for the release Supabase project.
 - `SUPABASE_PUBLISHABLE_KEY` for the release Supabase project.
-- Optional `FLOWFIT_SUPPORT_EMAIL` when the production inbox is not
-  `support@flowfit.com`.
-- `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after the configured/default
+- `FLOWFIT_SUPPORT_EMAIL` for the deliverable production support/privacy
+  inbox.
+- `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after that configured
   support inbox is receiving mail from outside the maintainer account.
 
 After filling the ignored release env file, validate the values before writing
@@ -409,6 +419,25 @@ The helper rejects placeholder/test-shaped values, secret/service-role Supabase
 keys, and the retired Supabase project ref. It redacts the publishable key in
 all output.
 
+If a local `gh` command cannot read or write repository Actions variables
+because the active account is not the repo owner, pass the repo account token
+only to that process and clear it immediately:
+
+```powershell
+$env:GH_TOKEN = (gh auth token --user Iron-Mark).Trim()
+try {
+  pwsh -NoProfile -File scripts/release_readiness_audit.ps1 `
+    -Strict `
+    -GitHubRepo Iron-Mark/Hackathon-FlowFit `
+    -OutFile build/store-release-readiness-audit.json
+} finally {
+  Remove-Item Env:\GH_TOKEN -ErrorAction SilentlyContinue
+}
+```
+
+The audit reports the imported repository-variable count but does not print
+Supabase keys.
+
 The workflow has a `deploy-ready` job. Until the Supabase variables and
 verified support-inbox flag are configured, it skips production GitHub Pages
 deployment with a notice instead of failing pushes to `main` or manual
@@ -425,10 +454,16 @@ Use `docs/SUPABASE_RECOVERY_RUNBOOK.md`.
 
 Minimum completion criteria before release:
 
-- New `flowfit-dev` or production Supabase project exists.
-- `.mcp.json` contains the real project ref and Codex has been reloaded. Prefer
+- New `flowfit-dev`, staging, or owner-approved production Supabase project
+  exists for the release backend.
+- `.mcp.json` contains the real development/staging release-verification
+  project ref and Codex has been reloaded. Prefer
   the guarded helper:
   `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>'`.
+- Production MCP access is not part of the normal workflow. If production MCP
+  verification is explicitly approved, configure it only as temporary
+  `read_only=true`, avoid user-data queries, capture the release evidence, and
+  remove `.mcp.json` afterward.
 - Supabase MCP OAuth is complete.
 - Canonical migration has been applied.
 - `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
@@ -438,6 +473,11 @@ Minimum completion criteria before release:
 - After migrations/advisors are complete, `.mcp.json` includes
   `read_only=true` for release verification. Use:
   `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>' -ReleaseReadOnly`.
+- Before copying `supabase/email_templates/confirm_signup.html` or `.txt` into
+  the Supabase dashboard, replace `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` with the
+  verified deliverable support inbox. The templates use Supabase `{{ .SiteURL }}`
+  for public compliance links, so the dashboard Site URL must match the final
+  `FLOWFIT_PUBLIC_WEB_BASE_URL`.
 - App signup/login/onboarding/workout smoke flows have been tested against the
   live project.
 
@@ -612,8 +652,9 @@ file so a previous web/Wasm build cannot poison native Kotlin compilation.
 
 That CI smoke App Bundle is not acceptable for Play Store upload. Store upload
 still requires the real upload keystore, production package/auth values, and
-matching Dart auth-scheme defines. Pass `FLOWFIT_SUPPORT_EMAIL` as a Dart
-define when the production support/privacy inbox differs from the default.
+matching Dart auth-scheme defines. Production wrapper builds require
+`FLOWFIT_SUPPORT_EMAIL`; manual Flutter release commands should pass that same
+deliverable inbox as a Dart define.
 For production handoff, prefer `scripts/store_release_build.ps1`; it also
 writes `build/store-release-artifacts.json` for the generated AAB/web outputs,
 including `build/release/flowfit-web-release.zip` for static web hosting.

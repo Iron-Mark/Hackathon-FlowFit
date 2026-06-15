@@ -38,12 +38,14 @@ jobs:
         shell: bash
         env:
           FLOWFIT_SUPPORT_EMAIL_VERIFIED: ${{ vars.FLOWFIT_SUPPORT_EMAIL_VERIFIED }}
+          FLOWFIT_SUPPORT_EMAIL: ${{ vars.FLOWFIT_SUPPORT_EMAIL }}
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
         run: |
           set -euo pipefail
 
           if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&
+                -n "${FLOWFIT_SUPPORT_EMAIL}" &&
                 -n "${SUPABASE_URL}" &&
                 "${SUPABASE_PUBLISHABLE_KEY}" == sb_publishable_* ]]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
@@ -64,7 +66,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     env:
       FLOWFIT_PUBLIC_WEB_BASE_URL: ${{ vars.FLOWFIT_PUBLIC_WEB_BASE_URL || 'https://iron-mark.github.io/Hackathon-FlowFit/' }}
-      FLOWFIT_SUPPORT_EMAIL: ${{ vars.FLOWFIT_SUPPORT_EMAIL || 'support@flowfit.com' }}
+      FLOWFIT_SUPPORT_EMAIL: ${{ vars.FLOWFIT_SUPPORT_EMAIL }}
       FLOWFIT_SUPPORT_EMAIL_VERIFIED: ${{ vars.FLOWFIT_SUPPORT_EMAIL_VERIFIED }}
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
@@ -95,6 +97,10 @@ jobs:
           fi
           if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" != "true" ]]; then
             echo "Set FLOWFIT_SUPPORT_EMAIL_VERIFIED=true only after the configured support inbox is receiving mail." >&2
+            exit 1
+          fi
+          if [[ -z "${FLOWFIT_SUPPORT_EMAIL}" ]]; then
+            echo "FLOWFIT_SUPPORT_EMAIL repo variable is required and must point to a verified deliverable inbox." >&2
             exit 1
           fi
           if [[ -z "${SUPABASE_URL}" ]]; then

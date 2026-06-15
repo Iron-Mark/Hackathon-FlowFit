@@ -26,7 +26,7 @@ void main() {
     );
   });
 
-  test('support email has a store-ready default', () {
+  test('support email has a local fallback replacement token', () {
     expect(FlowFitRuntimeConfig.supportEmail, 'support@flowfit.com');
   });
 

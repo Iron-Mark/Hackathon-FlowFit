@@ -23,7 +23,7 @@ FlowFit is a dual-platform fitness app that runs on:
 - ✅ **Nutrition Logging** - Food diary and calorie tracking
 - ✅ **Mood Tracking** - Mental wellness monitoring
 - ✅ **Data Synchronization** - Watch ↔ Phone data transfer
-- ✅ **Supabase Backend** - Cloud storage and sync
+- ✅ **Supabase Backend** - Cloud storage and sync when configured with a live project
 
 ## 🏗️ Architecture
 
@@ -229,7 +229,9 @@ class DataListenerService extends WearableListenerService {
 
 ### Supabase Sync
 
-Both devices sync to Supabase for persistent storage:
+When the app is launched with real `SUPABASE_URL` and
+`SUPABASE_PUBLISHABLE_KEY` values, both devices can sync to Supabase for
+persistent storage:
 
 ```dart
 // Save heart rate to Supabase
@@ -347,6 +349,7 @@ pwsh -NoProfile -File scripts\run_phone.ps1 -Device <device-id>
 - **[WATCH_TO_PHONE_COMPLETE_FLOW.md](docs/WATCH_TO_PHONE_COMPLETE_FLOW.md)** - Live data flow from watch to phone
 - **[ALL_ISSUES_FIXED.md](docs/ALL_ISSUES_FIXED.md)** - Summary of all fixes applied
 - **[KOTLIN_COMPARISON_ANALYSIS.md](docs/KOTLIN_COMPARISON_ANALYSIS.md)** - Architecture comparison
+- **[RELEASE_READINESS_RUNBOOK.md](docs/RELEASE_READINESS_RUNBOOK.md)** - Store/web release readiness and remaining external gates
 
 ### 🐛 Troubleshooting
 - **[CONNECTION_TIMEOUT_FIX.md](docs/CONNECTION_TIMEOUT_FIX.md)** - Connection issues

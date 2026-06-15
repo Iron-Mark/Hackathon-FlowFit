@@ -167,7 +167,10 @@ MCP path after Codex reload:
 7. After migrations and advisor fixes are complete, switch verification-only
    MCP use to `read_only=true` or remove the MCP config until more schema work
    is needed. Strict release audit treats a write-capable MCP URL as a release
-   blocker. Never point this MCP config at production data.
+   blocker. Use a development or staging Supabase project for normal MCP work.
+   Do not point MCP at a production project unless the owner explicitly approves
+   temporary read-only verification; in that case, avoid user-data queries and
+   remove the MCP config after the release evidence is captured.
 
 CLI path if you prefer terminal auth:
 

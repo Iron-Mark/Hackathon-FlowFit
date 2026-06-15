@@ -10,13 +10,16 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 
 - [ ] Production Supabase project exists and canonical migration is applied.
 - [ ] `.mcp.json` has `REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF` replaced with
-      the production/development project ref used for this release; Codex has
+      the development/staging release-verification project ref; Codex has
       been restarted/reloaded, Supabase MCP OAuth is complete, the MCP URL has
       `read_only=true` after migrations/advisors are done, and
       `pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict`
       no longer reports the MCP project-scope or release read-only blockers.
       Prefer the helper instead of hand-editing:
       `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>' -ReleaseReadOnly`.
+      If production verification through MCP is unavoidable, use temporary
+      owner-approved read-only MCP access only, avoid user-data queries, and
+      remove `.mcp.json` after capturing release evidence.
 - [ ] Supabase advisors have no unresolved high-risk security/performance
       findings.
 - [ ] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
@@ -27,9 +30,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `.env.release`, or ignored local fallback `lib/secrets.dart`.
 - [ ] Flutter release commands pass the production auth scheme with
       `--dart-define=FLOWFIT_AUTH_SCHEME=...`.
-- [ ] Flutter release commands pass
-      `--dart-define=FLOWFIT_SUPPORT_EMAIL=...` if the final inbox differs
-      from the default.
+- [ ] Production wrapper builds set `FLOWFIT_SUPPORT_EMAIL` to the final
+      deliverable support/privacy inbox; manual Flutter release commands pass
+      the same value with `--dart-define=FLOWFIT_SUPPORT_EMAIL=...`.
 - [ ] Strict audit rejects local smoke/example values; do not use
       `com.flowfit.smoke`, `com.example.*`, `com.yourcompany.*`, `.example`,
       `.invalid`, `.test`, localhost, or IP-loopback web hosts for production
@@ -65,6 +68,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Confirm signed release builds fail if `FLOWFIT_ANDROID_APPLICATION_ID`,
       `FLOWFIT_AUTH_SCHEME`, or matching Dart defines are still placeholders,
       examples, or smoke values.
+- [ ] If `FLOWFIT_ANDROID_APPLICATION_ID` differs from
+      `com.oldstlabs.flowfit`, confirm the release wrapper still passes Android
+      manifest component checks; native component class names must stay fully
+      qualified under `com.oldstlabs.flowfit`.
 - [ ] Generate upload keystore and configure either ignored
       `android/key.properties` plus the referenced keystore, or CI/release env
       secrets `FLOWFIT_ANDROID_KEYSTORE_BASE64`,
@@ -145,10 +152,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `build/release/flowfit-web-release.zip` to a static host that unpacks ZIP
       deploy artifacts.
 - [ ] For GitHub Pages, configure repository variables `FLOWFIT_PUBLIC_WEB_BASE_URL`,
-      `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and optional
-      `FLOWFIT_SUPPORT_EMAIL`; set `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`
-      only after the configured/default inbox is receiving external mail, then
-      run `.github/workflows/flutter-web-pages.yml`.
+      `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and
+      `FLOWFIT_SUPPORT_EMAIL`; set `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true` only
+      after the configured inbox is receiving external mail, then run
+      `.github/workflows/flutter-web-pages.yml`.
       Prefer `scripts/configure_github_release_variables.ps1 -DryRun` before
       setting them so placeholders and secret/service-role keys are rejected.
       Use `https://iron-mark.github.io/Hackathon-FlowFit` as the default project
