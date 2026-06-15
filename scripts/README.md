@@ -282,6 +282,12 @@ pwsh -NoProfile -File scripts\verify_store_metadata.ps1 `
   -SupportEmail 'support@flowfit.com'
 ```
 
+`-PublicWebBaseUrl` may be a root origin such as
+`https://flowfit.example.com` or a project-site base path such as
+`https://iron-mark.github.io/Hackathon-FlowFit`. The helper appends
+`/privacy.html` and `/account-deletion.html`, and still rejects query strings
+or fragments.
+
 The helper validates required store metadata sections, Play/App Store text
 lengths, reviewer-facing privacy/account-deletion wording, privacy data map
 coverage, checklist coverage, Android/iOS/web icon dimensions, support email

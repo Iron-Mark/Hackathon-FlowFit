@@ -495,7 +495,7 @@ pwsh -NoProfile -File scripts/verify_store_metadata.ps1 `
 ```
 
 Advisory mode exits `2` while only draft/finalization warnings remain. Before
-submission, rerun strict mode with the deployed web origin and final support
+submission, rerun strict mode with the deployed web base URL and final support
 inbox:
 
 ```powershell
@@ -505,6 +505,11 @@ pwsh -NoProfile -File scripts/verify_store_metadata.ps1 `
   -SupportEmail 'support@flowfit.com' `
   -OutFile build/store-metadata-verification.json
 ```
+
+`-PublicWebBaseUrl` can include a static-host base path, for example
+`https://iron-mark.github.io/Hackathon-FlowFit`. The verifier appends
+`/privacy.html` and `/account-deletion.html` to that base URL, so project-site
+GitHub Pages URLs are checked correctly.
 
 The in-app Delete Account screen requires the account password, then calls
 `request_account_deletion()`. The canonical migration exposes that RPC as
@@ -613,7 +618,7 @@ without creating a temporary `lib/secrets.dart`; tracked build-time defaults
 keep compile checks independent from ignored local files. For store handoff,
 run the audit separately with `-Strict`; it should fail until the maintainer has
 provided the real Supabase project ref/credentials, Android signing inputs,
-production Android/iOS IDs, deployed web origin, and verified support inbox.
+production Android/iOS IDs, deployed web base URL, and verified support inbox.
 When `-OutFile` is provided, the audit writes JSON evidence with pass/warn/fail
 counts and non-secret result details. The production wrapper writes
 `build/store-release-readiness-audit.json` automatically when `-RunStrictAudit`

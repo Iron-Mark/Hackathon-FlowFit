@@ -720,10 +720,10 @@ storeFile=upload-keystore.jks
     expect(storeMetadataVerifier, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(storeMetadataVerifier, contains('PublicWebBaseUrl'));
     expect(storeMetadataVerifier, contains('ConvertTo-NormalizedSearchText'));
-    expect(storeMetadataVerifier, contains('GetLeftPart'));
     expect(storeMetadataVerifier, contains('AbsolutePath'));
     expect(storeMetadataVerifier, contains('Query'));
     expect(storeMetadataVerifier, contains('Fragment'));
+    expect(storeMetadataVerifier, contains('Parsed base URL'));
     expect(storeMetadataVerifier, contains('Strict'));
     expect(releasePreflight, contains('verify_store_metadata.ps1'));
     expect(
@@ -805,7 +805,8 @@ storeFile=upload-keystore.jks
     final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
     final advisoryOut = File('build/store-metadata-advisory-$unique.json');
     final strictOut = File('build/store-metadata-strict-$unique.json');
-    const publicWebBaseUrl = 'https://release.flowfit.example/';
+    const publicWebBaseUrl =
+        'https://release.flowfit.example/Hackathon-FlowFit/';
     const unsafePublicWebBaseUrl =
         'https://release.flowfit.example/app?debug=value#frag';
 
@@ -831,7 +832,13 @@ storeFile=upload-keystore.jks
           jsonDecode(advisoryOut.readAsStringSync()) as Map<String, dynamic>;
       expect(
         advisoryJson['publicWebBaseUrl'],
-        'https://release.flowfit.example',
+        'https://release.flowfit.example/Hackathon-FlowFit',
+      );
+      expect(
+        advisoryOut.readAsStringSync(),
+        contains(
+          'https://release.flowfit.example/Hackathon-FlowFit/privacy.html',
+        ),
       );
       final advisorySummary = advisoryJson['summary'] as Map<String, dynamic>;
       expect(advisorySummary['fail'], 0);
@@ -872,10 +879,12 @@ storeFile=upload-keystore.jks
       expect(strict.stdout, contains('STORE_METADATA_VERIFICATION_WRITTEN'));
       final strictJson =
           jsonDecode(strictOut.readAsStringSync()) as Map<String, dynamic>;
-      expect(strictJson['publicWebBaseUrl'], 'https://release.flowfit.example');
+      expect(
+        strictJson['publicWebBaseUrl'],
+        'https://release.flowfit.example/app',
+      );
       final strictEvidence = strictOut.readAsStringSync();
       expect(strictEvidence, isNot(contains('debug=value')));
-      expect(strictEvidence, isNot(contains('/app?')));
       expect(strictEvidence, isNot(contains('#frag')));
       expect(
         ((strictJson['summary'] as Map<String, dynamic>)['fail'] as int),

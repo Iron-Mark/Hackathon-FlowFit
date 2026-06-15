@@ -113,7 +113,7 @@ credentials, debug labels, staging project refs, or private user data.
 - [ ] Supabase redirect URLs include Android, iOS, and web production origins.
 - [ ] Public `privacy.html` loads from the deployed HTTPS origin.
 - [ ] Public `account-deletion.html` loads from the deployed HTTPS origin.
-- [ ] `build/web-deployment-verification.json` shows the deployed web origin,
+- [ ] `build/web-deployment-verification.json` shows the deployed web base URL,
       public compliance pages, support inbox, and manifest all pass.
 - [ ] Android AAB is signed with the upload key, not debug signing.
 - [ ] iOS archive/IPA is signed with the Apple Developer team and provisioning

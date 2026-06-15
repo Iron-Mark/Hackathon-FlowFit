@@ -96,7 +96,7 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       full description.
 - [ ] Review and finalize listing copy from `docs/STORE_METADATA_DRAFT.md`.
 - [ ] Run `pwsh -NoProfile -File scripts/verify_store_metadata.ps1 -Strict`
-      with the final web origin/support inbox and archive
+      with the final web base URL/support inbox and archive
       `build/store-metadata-verification.json`.
 - [ ] Validate that the uploaded AAB is signed with the upload key, not the
       debug release-smoke key.

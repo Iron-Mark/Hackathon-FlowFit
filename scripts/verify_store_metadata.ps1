@@ -351,24 +351,31 @@ function Resolve-ExpectedWebUrls {
 
     try {
         $uri = [System.Uri]$candidateBaseUrl
-        $origin = $uri.GetLeftPart([System.UriPartial]::Authority).TrimEnd('/')
-        $script:resolvedPublicWebBaseUrl = $origin
         if ($uri.Scheme -ne 'https' -or [string]::IsNullOrWhiteSpace($uri.Host)) {
-            Add-Fail 'Store public web origin' "PublicWebBaseUrl must be a deployed HTTPS origin. Parsed origin: $origin"
+            Add-Fail 'Store public web URL' 'PublicWebBaseUrl must be a deployed HTTPS URL.'
             return $null
         }
-        if ($uri.AbsolutePath -ne '/' -or -not [string]::IsNullOrEmpty($uri.Query) -or -not [string]::IsNullOrEmpty($uri.Fragment)) {
-            Add-Fail 'Store public web origin' "PublicWebBaseUrl must be an origin only, with no path, query, or fragment. Parsed origin: $origin"
+
+        $origin = $uri.GetLeftPart([System.UriPartial]::Authority).TrimEnd('/')
+        $path = $uri.AbsolutePath.TrimEnd('/')
+        if ($path -eq '/') {
+            $path = ''
+        }
+        $baseUrl = "$origin$path"
+        $script:resolvedPublicWebBaseUrl = $baseUrl
+
+        if (-not [string]::IsNullOrEmpty($uri.Query) -or -not [string]::IsNullOrEmpty($uri.Fragment)) {
+            Add-Fail 'Store public web URL' "PublicWebBaseUrl must not contain a query or fragment. Parsed base URL: $baseUrl"
             return $null
         }
 
         return [pscustomobject]@{
-            privacy = "$origin/privacy.html"
-            accountDeletion = "$origin/account-deletion.html"
+            privacy = "$baseUrl/privacy.html"
+            accountDeletion = "$baseUrl/account-deletion.html"
         }
     } catch {
         $script:resolvedPublicWebBaseUrl = ''
-        Add-Fail 'Store public web origin' 'Unable to parse PublicWebBaseUrl as a deployed HTTPS origin.'
+        Add-Fail 'Store public web URL' 'Unable to parse PublicWebBaseUrl as a deployed HTTPS URL.'
         return $null
     }
 }
