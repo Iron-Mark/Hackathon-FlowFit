@@ -606,6 +606,7 @@ storeFile=upload-keystore.jks
     expect(createIosExportOptions, contains('FLOWFIT_IOS_BUNDLE_IDENTIFIER'));
     expect(createIosExportOptions, contains('app-store-connect'));
     expect(createIosExportOptions, contains('ProvisioningProfileName'));
+    expect(createIosExportOptions, contains('-SupportEmailVerified'));
     expect(createIosExportOptions, contains('will not be overwritten'));
     expect(createIosExportOptions, isNot(contains('AuthKey_')));
     expect(createIosExportOptions, isNot(contains('.p12')));
@@ -2157,6 +2158,18 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       storeSubmissionChecklist,
       contains('Production wrapper builds set `FLOWFIT_SUPPORT_EMAIL`'),
     );
+    expect(
+      storeSubmissionChecklist,
+      contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED=true'),
+    );
+    for (final command in [
+      'scripts/store_release_build.ps1 -Target Android -SupportEmailVerified',
+      'scripts/store_release_build.ps1 -Target iOS -SupportEmailVerified',
+      'scripts/store_release_build.ps1 -Target Web -SupportEmailVerified',
+      'scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified',
+    ]) {
+      expect(storeSubmissionChecklist, contains(command));
+    }
     expect(
       storeSubmissionChecklist,
       contains('Production wrapper builds set `FLOWFIT_PUBLIC_WEB_BASE_URL`'),

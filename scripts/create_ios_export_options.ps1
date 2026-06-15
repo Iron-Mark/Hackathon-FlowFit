@@ -219,7 +219,7 @@ $profileXml
     if ($SigningStyle -eq 'manual') {
         Write-Host 'Provisioning profile name was written to the ignored plist and was not printed.'
     }
-    Write-Host "Set FLOWFIT_IOS_EXPORT_OPTIONS_PLIST=$relativePath on the macOS release host before running scripts/store_release_build.ps1 -Target iOS."
+    Write-Host "Set FLOWFIT_IOS_EXPORT_OPTIONS_PLIST=$relativePath on the macOS release host before running scripts/store_release_build.ps1 -Target iOS -SupportEmailVerified."
     Write-Host 'IOS_EXPORT_OPTIONS_PLIST_WRITTEN'
 } finally {
     Pop-Location

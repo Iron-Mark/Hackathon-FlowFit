@@ -92,7 +92,7 @@ credentials, debug labels, staging project refs, or private user data.
       passes locally.
 - [ ] If using Flutter WebAssembly, `pwsh -NoProfile -File scripts\release_preflight.ps1 -IncludeWasmSmoke`
       passes locally.
-- [ ] If deploying Flutter WebAssembly, `pwsh -NoProfile -File scripts\store_release_build.ps1 -Target Web -WebWasm`
+- [ ] If deploying Flutter WebAssembly, `pwsh -NoProfile -File scripts\store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified`
       records `releaseInputs.webBuildBackend = wasm` in the artifact manifest.
 - [ ] On macOS, `pwsh -NoProfile -File scripts\store_release_build.ps1 -Target All -RunStrictAudit -SupportEmailVerified`
       produces `build/store-release-artifacts.json` with Android, iOS, and web
