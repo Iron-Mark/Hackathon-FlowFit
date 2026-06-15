@@ -1602,10 +1602,14 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
   test('GitHub Pages workflow publishes production web artifacts', () {
     expect(pagesWorkflow, contains('name: Flutter Web Pages'));
     expect(pagesWorkflow, contains('deploy-ready:'));
+    expect(pagesWorkflow, contains('pull_request:'));
+    expect(pagesWorkflow, contains('- "supabase/**"'));
     expect(
       pagesWorkflow,
-      contains('if: needs.deploy-ready.outputs.ready == \'true\''),
+      contains("needs.deploy-ready.outputs.ready == 'true' &&"),
     );
+    expect(pagesWorkflow, contains("github.ref == 'refs/heads/main'"));
+    expect(pagesWorkflow, contains("github.event_name == 'workflow_dispatch'"));
     expect(
       pagesWorkflow,
       contains('production web deploy variables are not configured'),
@@ -1613,6 +1617,8 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(releaseReadinessRunbook, contains('deploy-ready'));
     expect(releaseReadinessRunbook, contains('skips production GitHub Pages'));
     expect(releaseReadinessRunbook, contains('deployment with a notice'));
+    expect(releaseReadinessRunbook, contains('readiness-only check'));
+    expect(releaseReadinessRunbook, contains('limited to pushes on `main`'));
     expect(pagesWorkflow, contains('actions/configure-pages@v6'));
     expect(pagesWorkflow, contains('actions/upload-pages-artifact@v5'));
     expect(pagesWorkflow, contains('actions/deploy-pages@v5'));

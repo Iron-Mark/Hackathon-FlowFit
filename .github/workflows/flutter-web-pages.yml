@@ -1,9 +1,19 @@
 name: Flutter Web Pages
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/flutter-web-pages.yml"
+      - "lib/**"
+      - "pubspec.lock"
+      - "pubspec.yaml"
+      - "scripts/store_release_build.ps1"
+      - "scripts/verify_web_deployment.ps1"
+      - "web/**"
   push:
     branches:
       - main
+      - "supabase/**"
     paths:
       - ".github/workflows/flutter-web-pages.yml"
       - "lib/**"
@@ -58,7 +68,9 @@ jobs:
   deploy:
     name: Build and Deploy Flutter Web
     needs: deploy-ready
-    if: needs.deploy-ready.outputs.ready == 'true'
+    if: >
+      needs.deploy-ready.outputs.ready == 'true' &&
+      (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment:

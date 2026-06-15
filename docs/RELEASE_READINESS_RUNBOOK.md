@@ -443,6 +443,12 @@ verified support-inbox flag are configured, it skips production GitHub Pages
 deployment with a notice instead of failing pushes to `main` or manual
 dispatches.
 
+The workflow also runs a readiness-only check on pull requests and pushes to
+`supabase/**` recovery branches. Those branch/PR runs can prove whether the
+required repository variables are present, but the actual `deploy-pages` job is
+still limited to pushes on `main` or an explicit manual dispatch. This keeps the
+deployment path visible before merge without publishing every recovery branch.
+
 If the GitHub Pages API still returns 404 for this repository, open repository
 Settings > Pages and set the Pages build/deploy source to GitHub Actions. The
 workflow is safe to keep in the repo before that switch; it will publish only
