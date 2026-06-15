@@ -737,6 +737,11 @@ storeFile=upload-keystore.jks
     expect(storeMetadataVerifier, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(storeMetadataVerifier, contains('PublicWebBaseUrl'));
     expect(storeMetadataVerifier, contains('Store support email finalization'));
+    expect(storeMetadataVerifier, contains('Test-ProductionSupportEmail'));
+    expect(
+      storeMetadataVerifier,
+      contains('reserved source replacement token'),
+    );
     expect(storeMetadataVerifier, contains('ConvertTo-NormalizedSearchText'));
     expect(storeMetadataVerifier, contains('AbsolutePath'));
     expect(storeMetadataVerifier, contains('Query'));
@@ -822,6 +827,9 @@ storeFile=upload-keystore.jks
   test('store metadata verifier records advisory and strict evidence', () {
     final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
     final advisoryOut = File('build/store-metadata-advisory-$unique.json');
+    final reservedSupportOut = File(
+      'build/store-metadata-reserved-support-$unique.json',
+    );
     final strictOut = File('build/store-metadata-strict-$unique.json');
     const publicWebBaseUrl =
         'https://release.flowfit.example/Hackathon-FlowFit/';
@@ -883,6 +891,35 @@ storeFile=upload-keystore.jks
         isTrue,
       );
 
+      final reservedSupport = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_store_metadata.ps1',
+        '-Strict',
+        '-PublicWebBaseUrl',
+        publicWebBaseUrl,
+        '-SupportEmail',
+        'support@flowfit.com',
+        '-OutFile',
+        reservedSupportOut.path,
+      ]);
+      expect(reservedSupport.exitCode, 1);
+      final reservedSupportJson =
+          jsonDecode(reservedSupportOut.readAsStringSync())
+              as Map<String, dynamic>;
+      final reservedSupportResults =
+          reservedSupportJson['results'] as List<dynamic>;
+      final reservedSupportFinding = reservedSupportResults
+          .cast<Map<String, dynamic>>()
+          .firstWhere(
+            (result) =>
+                result['name'] == 'Store support email finalization' &&
+                (result['detail'] as String).contains(
+                  'reserved source replacement token',
+                ),
+          );
+      expect(reservedSupportFinding['level'], 'FAIL');
+
       final strict = Process.runSync('pwsh', [
         '-NoProfile',
         '-File',
@@ -909,7 +946,7 @@ storeFile=upload-keystore.jks
         greaterThanOrEqualTo(1),
       );
     } finally {
-      for (final file in [advisoryOut, strictOut]) {
+      for (final file in [advisoryOut, reservedSupportOut, strictOut]) {
         if (file.existsSync()) {
           file.deleteSync();
         }

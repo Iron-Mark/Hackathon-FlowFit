@@ -116,7 +116,7 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1
 
 ```powershell
 $authScheme = 'com.oldstlabs.flowfit'
-$env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
 $env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 ```
@@ -148,7 +148,7 @@ material:
 ```powershell
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
-$env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
 $env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
@@ -282,7 +282,7 @@ App Store bundle in `build/ios/ipa/` when signing is configured.
 Build:
 
 ```powershell
-$env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
 $env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SupportEmailVerified
@@ -342,7 +342,7 @@ After the static host deploys, run the public deployment verifier:
 ```powershell
 pwsh -NoProfile -File scripts/verify_web_deployment.ps1 `
   -BaseUrl 'https://<your-web-host>' `
-  -SupportEmail 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL' `
+  -SupportEmail (Read-Host 'Verified support email') `
   -OutFile build/web-deployment-verification.json
 ```
 
@@ -531,7 +531,7 @@ inbox:
 pwsh -NoProfile -File scripts/verify_store_metadata.ps1 `
   -Strict `
   -PublicWebBaseUrl 'https://your-production-host.example' `
-  -SupportEmail 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL' `
+  -SupportEmail (Read-Host 'Verified support email') `
   -OutFile build/store-metadata-verification.json
 ```
 
@@ -541,7 +541,9 @@ pwsh -NoProfile -File scripts/verify_store_metadata.ps1 `
 GitHub Pages URLs are checked correctly. If `-SupportEmail` and
 `FLOWFIT_SUPPORT_EMAIL` are both omitted, the verifier treats
 `support@flowfit.com` only as the source replacement token and reports a
-finalization warning.
+finalization warning. In strict mode, explicitly passing `support@flowfit.com`
+is a failure because final store metadata must use the verified deliverable
+support/privacy inbox.
 
 The in-app Delete Account screen requires the account password, then calls
 `request_account_deletion()`. The canonical migration exposes that RPC as

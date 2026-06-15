@@ -280,7 +280,7 @@ or draft listing statuses.
 pwsh -NoProfile -File scripts\verify_store_metadata.ps1 `
   -Strict `
   -PublicWebBaseUrl 'https://your-production-host.example' `
-  -SupportEmail 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+  -SupportEmail (Read-Host 'Verified support email')
 ```
 
 `-PublicWebBaseUrl` may be a root origin such as
@@ -296,6 +296,8 @@ shape, and final deployed privacy/account-deletion URLs. Strict mode treats
 draft placeholders as failures. If `-SupportEmail` and `FLOWFIT_SUPPORT_EMAIL`
 are both omitted, the helper only uses `support@flowfit.com` as a source
 replacement token and warns that a verified deliverable inbox is still required.
+In strict mode, explicitly passing `support@flowfit.com` is a failure because
+final store metadata must use the verified deliverable support/privacy inbox.
 
 ---
 
@@ -501,7 +503,7 @@ analyzer, Flutter tests, and Android release lint before producing artifacts.
 
 **Required environment values**:
 ```powershell
-$env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
 # Set only after that inbox is maintainer-owned and receiving external mail.
 $env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
@@ -643,7 +645,7 @@ Console or App Store Connect.
 ```powershell
 pwsh -NoProfile -File scripts/verify_web_deployment.ps1 `
   -BaseUrl 'https://iron-mark.github.io/Hackathon-FlowFit' `
-  -SupportEmail 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL' `
+  -SupportEmail (Read-Host 'Verified support email') `
   -OutFile build/web-deployment-verification.json
 ```
 

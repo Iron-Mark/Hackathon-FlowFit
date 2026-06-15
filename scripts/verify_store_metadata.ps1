@@ -10,6 +10,7 @@ $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $results = New-Object System.Collections.Generic.List[object]
 $resolvedPublicWebBaseUrl = $PublicWebBaseUrl
 $supportEmailWasDefaulted = $false
+$reservedSupportEmail = 'support@flowfit.com'
 
 function Add-Result {
     param(
@@ -141,6 +142,16 @@ function Assert-Email {
         Add-Fail 'Store support email' "Support email is missing, placeholder-shaped, or invalid: $Value"
     } else {
         Add-Pass 'Store support email' "Support email is syntactically valid: $Value"
+    }
+}
+
+function Test-ProductionSupportEmail {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value.Trim().ToLowerInvariant() -eq $script:reservedSupportEmail) {
+        Add-Warn 'Store support email finalization' "$script:reservedSupportEmail is the reserved source replacement token. Store metadata must use a verified deliverable support/privacy inbox before final handoff."
+    } else {
+        Add-Pass 'Store support email finalization' 'Support email is not the reserved source replacement token.'
     }
 }
 
@@ -447,6 +458,8 @@ try {
     Assert-Email -Value $SupportEmail
     if ($supportEmailWasDefaulted) {
         Add-Warn 'Store support email finalization' 'No SupportEmail/FLOWFIT_SUPPORT_EMAIL was provided; support@flowfit.com is only the source replacement token and must be replaced with a verified deliverable inbox before final store metadata handoff.'
+    } else {
+        Test-ProductionSupportEmail -Value $SupportEmail
     }
 
     $expectedUrls = Resolve-ExpectedWebUrls
