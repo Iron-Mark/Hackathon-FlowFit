@@ -80,6 +80,35 @@ function Get-HttpStatus {
     }
 }
 
+function ConvertTo-SafeRemoteUrl {
+    param([string]$Url)
+
+    if ([string]::IsNullOrWhiteSpace($Url)) {
+        return ''
+    }
+
+    $trimmed = $Url.Trim()
+
+    try {
+        $uri = [System.Uri]::new($trimmed)
+        if ($uri.IsAbsoluteUri -and -not [string]::IsNullOrEmpty($uri.UserInfo)) {
+            $builder = [System.UriBuilder]::new($uri)
+            $builder.UserName = ''
+            $builder.Password = ''
+            return $builder.Uri.AbsoluteUri
+        }
+    } catch {
+        # Fall through to scp-like git remote handling.
+    }
+
+    $scpLike = [regex]::Match($trimmed, '^(?<userinfo>[^@\s/]+)@(?<rest>[^:\s]+:.+)$')
+    if ($scpLike.Success) {
+        return $scpLike.Groups['rest'].Value
+    }
+
+    return $trimmed
+}
+
 Push-Location $repoRoot
 try {
     $lines = New-Object System.Collections.Generic.List[string]
@@ -88,7 +117,7 @@ try {
     $branch = (Invoke-NativeCapture -FilePath 'git' -Arguments @('branch', '--show-current')).Output
     $commit = (Invoke-NativeCapture -FilePath 'git' -Arguments @('rev-parse', 'HEAD')).Output
     $status = (Invoke-NativeCapture -FilePath 'git' -Arguments @('status', '--short', '--branch')).Output
-    $remoteUrl = (Invoke-NativeCapture -FilePath 'git' -Arguments @('remote', 'get-url', 'origin')).Output
+    $remoteUrl = ConvertTo-SafeRemoteUrl -Url ((Invoke-NativeCapture -FilePath 'git' -Arguments @('remote', 'get-url', 'origin')).Output)
 
     Add-Line $lines '# FlowFit Release Status Snapshot'
     Add-Line $lines ''

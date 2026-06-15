@@ -187,6 +187,10 @@ void main() {
     expect(releaseStatusSnapshot, contains('variable'));
     expect(releaseStatusSnapshot, contains('name,updatedAt'));
     expect(releaseStatusSnapshot, isNot(contains('name,value')));
+    expect(releaseStatusSnapshot, contains('ConvertTo-SafeRemoteUrl'));
+    expect(releaseStatusSnapshot, contains(r'$uri.UserInfo'));
+    expect(releaseStatusSnapshot, contains('[System.UriBuilder]'));
+    expect(releaseStatusSnapshot, contains("(?<userinfo>[^@\\s/]+)@"));
     expect(releaseStatusSnapshot, contains('SkipRemote'));
     expect(releaseStatusSnapshot, contains('SkipStrictAudit'));
     expect(releaseStatusSnapshot, contains('RELEASE_STATUS_SNAPSHOT_WRITTEN'));
@@ -217,6 +221,64 @@ void main() {
       expect(snapshot, contains('Strict audit skipped'));
       expect(snapshot, contains('Remote checks skipped'));
       expect(snapshot, isNot(contains('SUPABASE_PUBLISHABLE_KEY=')));
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('release status snapshot redacts credential-bearing origin URLs', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_release_snapshot_remote_',
+    );
+    const fakeToken = 'ghp_FAKE_TOKEN_FOR_SNAPSHOT_TEST';
+    try {
+      final repoDir = Directory('${tempDir.path}${Platform.pathSeparator}repo')
+        ..createSync();
+      final scriptsDir = Directory(
+        '${repoDir.path}${Platform.pathSeparator}scripts',
+      )..createSync();
+      final snapshotScript = File(
+        '${scriptsDir.path}${Platform.pathSeparator}release_status_snapshot.ps1',
+      );
+      File('scripts/release_status_snapshot.ps1').copySync(snapshotScript.path);
+
+      final init = Process.runSync('git', [
+        'init',
+      ], workingDirectory: repoDir.path);
+      expect(init.exitCode, 0, reason: '${init.stdout}\n${init.stderr}');
+
+      final addRemote = Process.runSync('git', [
+        'remote',
+        'add',
+        'origin',
+        'https://$fakeToken@github.com/Iron-Mark/Hackathon-FlowFit.git',
+      ], workingDirectory: repoDir.path);
+      expect(
+        addRemote.exitCode,
+        0,
+        reason: '${addRemote.stdout}\n${addRemote.stderr}',
+      );
+
+      final outFile = File(
+        '${tempDir.path}${Platform.pathSeparator}snapshot.md',
+      );
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        snapshotScript.path,
+        '-SkipRemote',
+        '-SkipStrictAudit',
+        '-OutFile',
+        outFile.path,
+      ], workingDirectory: repoDir.path);
+
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      final snapshot = outFile.readAsStringSync();
+      expect(snapshot, isNot(contains(fakeToken)));
+      expect(
+        snapshot,
+        contains('https://github.com/Iron-Mark/Hackathon-FlowFit.git'),
+      );
     } finally {
       tempDir.deleteSync(recursive: true);
     }
