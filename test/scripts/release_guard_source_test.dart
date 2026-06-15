@@ -419,6 +419,26 @@ void main() {
     );
   });
 
+  test('ci frees disk before Android builds', () {
+    expect(ciWorkflow, contains('Free CI disk space'));
+    expect(
+      ciWorkflow,
+      contains('Free web artifact build outputs before Android'),
+    );
+
+    final webUploadIndex = ciWorkflow.indexOf('Upload web build artifact');
+    final webCleanupIndex = ciWorkflow.indexOf(
+      'Free web artifact build outputs before Android',
+    );
+    final androidBuildIndex = ciWorkflow.indexOf('Android debug APK build');
+
+    expect(webUploadIndex, isNonNegative);
+    expect(webCleanupIndex, isNonNegative);
+    expect(androidBuildIndex, isNonNegative);
+    expect(webUploadIndex, lessThan(webCleanupIndex));
+    expect(webCleanupIndex, lessThan(androidBuildIndex));
+  });
+
   test('GitHub Pages workflow publishes production web artifacts', () {
     expect(pagesWorkflow, contains('name: Flutter Web Pages'));
     expect(pagesWorkflow, contains('actions/configure-pages@v5'));

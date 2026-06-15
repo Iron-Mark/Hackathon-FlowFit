@@ -25,6 +25,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Free CI disk space
+        shell: bash
+        run: |
+          set -euo pipefail
+          df -h
+          sudo rm -rf \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/local/share/boost \
+            /usr/share/dotnet
+          df -h
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -143,6 +155,33 @@ jobs:
           test -f build/web-wasm/privacy.html
           test -f build/web-wasm/account-deletion.html
 
+      - name: Upload web build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowfit-web-smoke-not-for-store
+          path: build/web
+          if-no-files-found: error
+
+      - name: Upload web Wasm build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowfit-web-wasm-smoke-not-for-store
+          path: build/web-wasm
+          if-no-files-found: error
+
+      - name: Upload web static verification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: flowfit-web-static-verification-smoke
+          path: build/web-static-ci-smoke.json
+          if-no-files-found: error
+
+      - name: Free web artifact build outputs before Android
+        shell: bash
+        run: |
+          rm -rf build/web build/web-wasm
+          df -h
+
       - name: Android debug APK build
         shell: bash
         run: |
@@ -168,27 +207,6 @@ jobs:
             --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com \
             --dart-define=SUPABASE_URL=https://example.supabase.co \
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_smoke_not_for_auth
-
-      - name: Upload web build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: flowfit-web-smoke-not-for-store
-          path: build/web
-          if-no-files-found: error
-
-      - name: Upload web Wasm build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: flowfit-web-wasm-smoke-not-for-store
-          path: build/web-wasm
-          if-no-files-found: error
-
-      - name: Upload web static verification evidence
-        uses: actions/upload-artifact@v4
-        with:
-          name: flowfit-web-static-verification-smoke
-          path: build/web-static-ci-smoke.json
-          if-no-files-found: error
 
       - name: Upload release smoke App Bundle
         uses: actions/upload-artifact@v4
