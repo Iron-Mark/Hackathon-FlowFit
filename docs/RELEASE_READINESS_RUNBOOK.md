@@ -117,6 +117,7 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1
 ```powershell
 $authScheme = 'com.oldstlabs.flowfit'
 $env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 ```
 
 4. Add the production auth scheme to Supabase redirect URLs:
@@ -147,6 +148,7 @@ material:
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
 $env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
 $env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
 $env:FLOWFIT_ANDROID_KEYSTORE_BASE64 = 'REPLACE_WITH_BASE64_ENCODED_UPLOAD_KEYSTORE'
@@ -177,7 +179,8 @@ $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.flowfit.smoke'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.flowfit.smoke'
 flutter build appbundle --release --no-pub `
   --dart-define=FLOWFIT_AUTH_SCHEME=com.flowfit.smoke `
-  --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com
+  --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com `
+  --dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit
 Remove-Item Env:\ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING
 Remove-Item Env:\ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID
 Remove-Item Env:\ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME
@@ -196,6 +199,7 @@ FLOWFIT_IOS_BUNDLE_IDENTIFIER = com.oldstlabs.flowfit
 
 ```bash
 export FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL
+export FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit
 # Optional when Xcode export needs an explicit profile:
 export FLOWFIT_IOS_EXPORT_OPTIONS_PLIST=$HOME/export_options.plist
 ```
@@ -263,6 +267,7 @@ flutter build ipa --release \
   --export-options-plist=$HOME/export_options.plist \
   --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit \
   --dart-define=FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL \
+  --dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=$FLOWFIT_PUBLIC_WEB_BASE_URL \
   --dart-define=SUPABASE_URL=$SUPABASE_URL \
   --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY
 ```
@@ -276,6 +281,7 @@ Build:
 
 ```powershell
 $env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web
 ```
 
@@ -599,6 +605,7 @@ flutter build web --release --no-pub
 flutter build appbundle --release --no-pub `
   --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit `
   --dart-define=FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL `
+  --dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=$env:FLOWFIT_PUBLIC_WEB_BASE_URL `
   --dart-define=SUPABASE_URL=$env:SUPABASE_URL `
   --dart-define=SUPABASE_PUBLISHABLE_KEY=$env:SUPABASE_PUBLISHABLE_KEY
 
@@ -668,7 +675,10 @@ That CI smoke App Bundle is not acceptable for Play Store upload. Store upload
 still requires the real upload keystore, production package/auth values, and
 matching Dart auth-scheme defines. Production wrapper builds require
 `FLOWFIT_SUPPORT_EMAIL`; manual Flutter release commands should pass that same
-deliverable inbox as a Dart define.
+deliverable inbox as a Dart define. App help/legal screens also read
+`FLOWFIT_PUBLIC_WEB_BASE_URL`; production Android/iOS/Web release builds should
+pass the same deployed HTTPS base URL so in-app contact links match the public
+compliance pages.
 For production handoff, prefer `scripts/store_release_build.ps1`; it also
 writes `build/store-release-artifacts.json` for the generated AAB/web outputs,
 including `build/release/flowfit-web-release.zip` for static web hosting.

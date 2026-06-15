@@ -17,6 +17,11 @@ class FlowFitRuntimeConfig {
     defaultValue: 'support@flowfit.com',
   );
 
+  static const String publicWebBaseUrl = String.fromEnvironment(
+    'FLOWFIT_PUBLIC_WEB_BASE_URL',
+    defaultValue: 'https://iron-mark.github.io/Hackathon-FlowFit',
+  );
+
   static String authRedirectUrl({bool isDevelopment = false}) {
     if (kIsWeb) {
       final webOrigin = _currentWebOrigin();

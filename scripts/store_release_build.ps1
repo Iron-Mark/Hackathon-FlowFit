@@ -394,7 +394,7 @@ function Resolve-WebBaseHref {
     return $baseHref
 }
 
-function Resolve-WebReleaseConfig {
+function Resolve-PublicWebBaseUrl {
     param(
         [Parameter(Mandatory = $true)]
         [string]$PublicWebBaseUrl
@@ -413,6 +413,24 @@ function Resolve-WebReleaseConfig {
         throw 'FLOWFIT_PUBLIC_WEB_BASE_URL must not include query strings or fragments.'
     }
 
+    $normalizedUrl = $uri.GetLeftPart([System.UriPartial]::Authority).TrimEnd('/')
+    $basePath = $uri.AbsolutePath
+    if (-not [string]::IsNullOrWhiteSpace($basePath) -and $basePath -ne '/') {
+        $normalizedUrl += $basePath.TrimEnd('/')
+    }
+
+    return $normalizedUrl
+}
+
+function Resolve-WebReleaseConfig {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PublicWebBaseUrl
+    )
+
+    $normalizedUrl = Resolve-PublicWebBaseUrl -PublicWebBaseUrl $PublicWebBaseUrl
+    $uri = [System.Uri]$normalizedUrl
+
     $basePath = $uri.AbsolutePath
     if ([string]::IsNullOrWhiteSpace($basePath)) {
         $basePath = '/'
@@ -426,11 +444,6 @@ function Resolve-WebReleaseConfig {
         Resolve-WebBaseHref -Value $basePath
     } else {
         Resolve-WebBaseHref -Value $baseHrefOverride
-    }
-
-    $normalizedUrl = $uri.GetLeftPart([System.UriPartial]::Authority).TrimEnd('/')
-    if ($basePath -ne '/') {
-        $normalizedUrl += $basePath.TrimEnd('/')
     }
 
     return [pscustomobject]@{
@@ -792,10 +805,12 @@ function Invoke-AndroidReleaseBuild {
     $applicationId = Get-RequiredEnv 'ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID' 'Android Play Store package ID'
     $authScheme = Get-RequiredEnv 'ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME' 'Android Supabase auth redirect scheme'
     $supportEmail = Get-RequiredEnv 'FLOWFIT_SUPPORT_EMAIL' 'in-app support and privacy contact'
+    $publicWebBaseUrl = Get-RequiredEnv 'FLOWFIT_PUBLIC_WEB_BASE_URL' 'in-app website and public compliance URL'
 
     Assert-ProductionValue 'ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID' $applicationId
     Assert-ProductionValue 'ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME' $authScheme
     Assert-Email 'FLOWFIT_SUPPORT_EMAIL' $supportEmail
+    $publicWebBaseUrl = Resolve-PublicWebBaseUrl -PublicWebBaseUrl $publicWebBaseUrl
     Assert-AndroidSigning
 
     Remove-IgnoredGeneratedAndroidRegistrant
@@ -807,6 +822,7 @@ function Invoke-AndroidReleaseBuild {
         '--no-pub',
         "--dart-define=FLOWFIT_AUTH_SCHEME=$authScheme",
         "--dart-define=FLOWFIT_SUPPORT_EMAIL=$supportEmail",
+        "--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=$publicWebBaseUrl",
         "--dart-define=SUPABASE_URL=$($script:supabaseClientConfig.Url)",
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )
@@ -823,7 +839,9 @@ function Invoke-IosReleaseBuild {
     Assert-MacOsBuildHost
 
     $supportEmail = Get-RequiredEnv 'FLOWFIT_SUPPORT_EMAIL' 'App Store support and privacy contact'
+    $publicWebBaseUrl = Get-RequiredEnv 'FLOWFIT_PUBLIC_WEB_BASE_URL' 'in-app website and public compliance URL'
     Assert-Email 'FLOWFIT_SUPPORT_EMAIL' $supportEmail
+    $publicWebBaseUrl = Resolve-PublicWebBaseUrl -PublicWebBaseUrl $publicWebBaseUrl
 
     $iosConfigPath = 'ios/Flutter/FlowFit.xcconfig'
     if (-not (Test-Path $iosConfigPath)) {
@@ -849,6 +867,7 @@ function Invoke-IosReleaseBuild {
         '--no-pub',
         "--dart-define=FLOWFIT_AUTH_SCHEME=$bundleId",
         "--dart-define=FLOWFIT_SUPPORT_EMAIL=$supportEmail",
+        "--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=$publicWebBaseUrl",
         "--dart-define=SUPABASE_URL=$($script:supabaseClientConfig.Url)",
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )
@@ -905,6 +924,7 @@ function Invoke-WebReleaseBuild {
         '--no-pub',
         "--base-href=$webBaseHref",
         "--dart-define=FLOWFIT_SUPPORT_EMAIL=$supportEmail",
+        "--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=$publicWebBaseUrl",
         "--dart-define=SUPABASE_URL=$($script:supabaseClientConfig.Url)",
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )

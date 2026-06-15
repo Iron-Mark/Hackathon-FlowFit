@@ -37,6 +37,9 @@ void main() {
   late String docsIndex;
   late String ciWorkflow;
   late String pagesWorkflow;
+  late String flowFitRuntimeConfig;
+  late String helpSupportScreen;
+  late String termsOfServiceScreen;
   late String copilotInstructions;
   late String androidMainManifest;
   late String androidDebugManifest;
@@ -119,6 +122,15 @@ void main() {
     ).readAsStringSync();
     docsIndex = File('docs/INDEX.md').readAsStringSync();
     ciWorkflow = File('.github/workflows/flutter-ci.yml').readAsStringSync();
+    flowFitRuntimeConfig = File(
+      'lib/core/config/flowfit_runtime_config.dart',
+    ).readAsStringSync();
+    helpSupportScreen = File(
+      'lib/screens/profile/settings/general/help_support_screen.dart',
+    ).readAsStringSync();
+    termsOfServiceScreen = File(
+      'lib/screens/profile/settings/general/terms_of_service_screen.dart',
+    ).readAsStringSync();
     final pagesWorkflowFile = File('.github/workflows/flutter-web-pages.yml');
     pagesWorkflow = pagesWorkflowFile.existsSync()
         ? pagesWorkflowFile.readAsStringSync()
@@ -1409,6 +1421,12 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
           source,
           contains('--dart-define=SUPABASE_PUBLISHABLE_KEY=$smokeKey'),
         );
+        expect(
+          source,
+          contains(
+            '--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit',
+          ),
+        );
         expect(source, isNot(contains('https://example.supabase.co')));
         expect(source, isNot(contains('sb_publishable_smoke_not_for_auth')));
       }
@@ -1461,6 +1479,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
 
   test('store web release supports path-based static hosts', () {
     expect(storeReleaseBuild, contains('Resolve-WebReleaseConfig'));
+    expect(storeReleaseBuild, contains('Resolve-PublicWebBaseUrl'));
     expect(storeReleaseBuild, contains('FLOWFIT_WEB_BASE_HREF'));
     expect(storeReleaseBuild, contains('--base-href'));
     expect(storeReleaseBuild, contains('webBaseHref'));
@@ -1468,6 +1487,17 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       storeReleaseBuild,
       contains('https://iron-mark.github.io/Hackathon-FlowFit'),
     );
+    expect(
+      storeReleaseBuild,
+      contains('--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL='),
+    );
+  });
+
+  test('store release public web URL resolver validates behavior', () {
+    final result = _runPublicWebBaseUrlFixture();
+
+    expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+    expect(result.stdout, contains('PUBLIC_WEB_RESOLVER_FIXTURE_OK'));
   });
 
   test('web deployment verifier checks deployed compliance pages', () {
@@ -2009,14 +2039,59 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       contains('requires `FLOWFIT_SUPPORT_EMAIL`'),
     );
     expect(
+      releaseReadinessRunbook,
+      contains(
+        "\$env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'",
+      ),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains(
+        'export FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit',
+      ),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains(
+        '--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=\$FLOWFIT_PUBLIC_WEB_BASE_URL',
+      ),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains(
+        '--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=\$env:FLOWFIT_PUBLIC_WEB_BASE_URL',
+      ),
+    );
+    expect(
       storeSubmissionChecklist,
       contains('Production wrapper builds set `FLOWFIT_SUPPORT_EMAIL`'),
     );
+    expect(
+      storeSubmissionChecklist,
+      contains('Production wrapper builds set `FLOWFIT_PUBLIC_WEB_BASE_URL`'),
+    );
+    expect(scriptsReadme, contains('in-app help/legal links'));
     expect(storeSubmissionChecklist, contains('verify_support_inbox.ps1'));
     expect(storeReleaseBuild, contains('valid support email address'));
     expect(webDeploymentVerifier, contains('valid support email address'));
     expect(storeReleaseBuild, contains(r'^[A-Za-z0-9._+-]+@[A-Za-z0-9]'));
     expect(webDeploymentVerifier, contains(r'^[A-Za-z0-9._+-]+@[A-Za-z0-9]'));
+  });
+
+  test('in-app help and legal surfaces use runtime release contact config', () {
+    expect(flowFitRuntimeConfig, contains('FLOWFIT_SUPPORT_EMAIL'));
+    expect(flowFitRuntimeConfig, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
+    expect(helpSupportScreen, contains('FlowFitRuntimeConfig.supportEmail'));
+    expect(
+      helpSupportScreen,
+      contains('FlowFitRuntimeConfig.publicWebBaseUrl'),
+    );
+    expect(termsOfServiceScreen, contains('FlowFitRuntimeConfig.supportEmail'));
+
+    for (final source in [helpSupportScreen, termsOfServiceScreen]) {
+      expect(source, isNot(contains('legal@flowfit.com')));
+      expect(source, isNot(contains('www.flowfit.com')));
+    }
   });
 
   test('support inbox verifier writes evidence with guarded exit codes', () {
@@ -2338,6 +2413,105 @@ function Resolve-DnsName {
       );
     }
   });
+}
+
+ProcessResult _runPublicWebBaseUrlFixture() {
+  final tempDir = Directory.systemTemp.createTempSync(
+    'flowfit_public_web_url_fixture_',
+  );
+  try {
+    final fixtureScript = File(
+      '${tempDir.path}${Platform.pathSeparator}public_web_url_fixture.ps1',
+    );
+    fixtureScript.writeAsStringSync(r'''
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$RepoRoot
+)
+
+$ErrorActionPreference = 'Stop'
+
+function Assert-Condition {
+    param(
+        [Parameter(Mandatory = $true)]
+        [bool]$Condition,
+        [Parameter(Mandatory = $true)]
+        [string]$Message
+    )
+
+    if (-not $Condition) {
+        throw $Message
+    }
+}
+
+$storeReleaseBuildPath = Join-Path $RepoRoot 'scripts/store_release_build.ps1'
+$tokens = $null
+$parseErrors = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile(
+    $storeReleaseBuildPath,
+    [ref]$tokens,
+    [ref]$parseErrors
+)
+if ($parseErrors.Count -gt 0) {
+    throw ($parseErrors | Out-String)
+}
+
+foreach ($name in @(
+    'Assert-ProductionValue',
+    'Resolve-WebBaseHref',
+    'Resolve-PublicWebBaseUrl',
+    'Resolve-WebReleaseConfig'
+)) {
+    $functionAst = $ast.Find({
+        param($node)
+        $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+            $node.Name -eq $name
+    }, $true)
+    Assert-Condition ($null -ne $functionAst) "Missing function in production script: $name"
+    Invoke-Expression $functionAst.Extent.Text
+}
+
+$normalized = Resolve-PublicWebBaseUrl -PublicWebBaseUrl 'https://release.flowfit.app/Hackathon-FlowFit/'
+Assert-Condition ($normalized -eq 'https://release.flowfit.app/Hackathon-FlowFit') 'Public web URL was not normalized.'
+
+$config = Resolve-WebReleaseConfig -PublicWebBaseUrl 'https://release.flowfit.app/Hackathon-FlowFit/'
+Assert-Condition ($config.PublicWebBaseUrl -eq 'https://release.flowfit.app/Hackathon-FlowFit') 'Resolved public web URL mismatch.'
+Assert-Condition ($config.WebBaseHref -eq '/Hackathon-FlowFit/') 'Derived web base href mismatch.'
+
+[Environment]::SetEnvironmentVariable('FLOWFIT_WEB_BASE_HREF', '/custom/', 'Process')
+$overrideConfig = Resolve-WebReleaseConfig -PublicWebBaseUrl 'https://release.flowfit.app/Hackathon-FlowFit/'
+Assert-Condition ($overrideConfig.WebBaseHref -eq '/custom/') 'Web base href override was not honored.'
+[Environment]::SetEnvironmentVariable('FLOWFIT_WEB_BASE_HREF', $null, 'Process')
+
+foreach ($case in @(
+    @{ Value = 'https://flowfit.app?preview=true'; Pattern = 'query strings or fragments' },
+    @{ Value = 'https://flowfit.app#preview'; Pattern = 'query strings or fragments' },
+    @{ Value = 'http://flowfit.app'; Pattern = 'must use HTTPS' },
+    @{ Value = 'https://flowfit.invalid/app'; Pattern = 'placeholder/test/reserved-shaped' }
+)) {
+    try {
+        Resolve-PublicWebBaseUrl -PublicWebBaseUrl $case.Value | Out-Null
+        throw "Expected rejection did not occur for $($case.Value)"
+    } catch {
+        if ($_.Exception.Message -notmatch [regex]::Escape($case.Pattern)) {
+            throw
+        }
+    }
+}
+
+Write-Output 'PUBLIC_WEB_RESOLVER_FIXTURE_OK'
+''');
+
+    return Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      fixtureScript.path,
+      '-RepoRoot',
+      Directory.current.path,
+    ]);
+  } finally {
+    tempDir.deleteSync(recursive: true);
+  }
 }
 
 ProcessResult _runAndroidSigningEnvFixture() {

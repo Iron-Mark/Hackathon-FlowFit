@@ -33,6 +33,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Production wrapper builds set `FLOWFIT_SUPPORT_EMAIL` to the final
       deliverable support/privacy inbox; manual Flutter release commands pass
       the same value with `--dart-define=FLOWFIT_SUPPORT_EMAIL=...`.
+- [ ] Production wrapper builds set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the deployed
+      public HTTPS base URL; manual Flutter release commands pass the same value
+      with `--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=...`.
 - [ ] Strict audit rejects local smoke/example values; do not use
       `com.flowfit.smoke`, `com.example.*`, `com.yourcompany.*`, `.example`,
       `.invalid`, `.test`, localhost, or IP-loopback web hosts for production
@@ -105,7 +108,7 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 
 - [ ] Run on macOS with Xcode and CocoaPods available.
 - [ ] Set `FLOWFIT_IOS_BUNDLE_IDENTIFIER` in `ios/Flutter/FlowFit.xcconfig`.
-- [ ] Set `FLOWFIT_SUPPORT_EMAIL` and optional
+- [ ] Set `FLOWFIT_SUPPORT_EMAIL`, `FLOWFIT_PUBLIC_WEB_BASE_URL`, and optional
       `FLOWFIT_IOS_EXPORT_OPTIONS_PLIST` on the macOS build host.
       If Xcode export needs explicit options, create ignored
       `ios/ExportOptions.plist` with

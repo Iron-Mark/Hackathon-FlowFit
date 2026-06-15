@@ -571,7 +571,9 @@ the build and removes them before exit. It fails instead of overwriting an
 existing keystore file. Every target requires real Supabase client values from
 `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, or the local fallback
 `lib/secrets.dart`; the wrapper passes those values to Flutter as
-`--dart-define` inputs and never writes them to the artifact manifest. The iOS
+`--dart-define` inputs and never writes them to the artifact manifest. Android,
+iOS, and web targets also pass `FLOWFIT_PUBLIC_WEB_BASE_URL` as a Dart define so
+in-app help/legal links match the deployed public compliance pages. The iOS
 target produces the signed IPA under `build/ios/ipa/` when Apple signing is
 configured. The web target builds `build/web`, replaces `support@flowfit.com`
 in the built public compliance pages with `FLOWFIT_SUPPORT_EMAIL`, creates

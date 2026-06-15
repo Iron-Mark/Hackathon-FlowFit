@@ -229,7 +229,7 @@ class HelpSupportScreen extends StatelessWidget {
                     context,
                     SolarIconsOutline.globus,
                     'Website',
-                    'www.flowfit.com',
+                    FlowFitRuntimeConfig.publicWebBaseUrl,
                   ),
                   const SizedBox(height: 16),
                   _buildContactRow(

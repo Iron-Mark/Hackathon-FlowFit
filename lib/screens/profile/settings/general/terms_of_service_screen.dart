@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 class TermsOfServiceScreen extends StatelessWidget {
@@ -143,7 +144,7 @@ class TermsOfServiceScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'legal@flowfit.com',
+                    FlowFitRuntimeConfig.supportEmail,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w600,

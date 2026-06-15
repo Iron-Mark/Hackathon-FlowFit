@@ -30,6 +30,24 @@ void main() {
     expect(FlowFitRuntimeConfig.supportEmail, 'support@flowfit.com');
   });
 
+  test('public web URL has a maintained fork fallback', () {
+    expect(
+      FlowFitRuntimeConfig.publicWebBaseUrl,
+      'https://iron-mark.github.io/Hackathon-FlowFit',
+    );
+  });
+
+  test('public web URL honors dart define override when expected', () {
+    const expectedOverride = String.fromEnvironment(
+      'FLOWFIT_EXPECTED_PUBLIC_WEB_BASE_URL',
+    );
+    if (expectedOverride.isEmpty) {
+      return;
+    }
+
+    expect(FlowFitRuntimeConfig.publicWebBaseUrl, expectedOverride);
+  });
+
   test('Supabase client config is supplied through build-time defines', () {
     expect(SupabaseRuntimeConfig.url, 'https://YOUR_PROJECT_REF.supabase.co');
     expect(SupabaseRuntimeConfig.publishableKey, 'sb_publishable_YOUR_KEY');

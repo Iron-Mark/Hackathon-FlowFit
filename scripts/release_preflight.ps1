@@ -13,6 +13,7 @@ $previousGradleEnv = @{
     AuthScheme = $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME
     DevAuthScheme = $env:ORG_GRADLE_PROJECT_FLOWFIT_DEV_AUTH_SCHEME
     SupportEmail = $env:FLOWFIT_SUPPORT_EMAIL
+    PublicWebBaseUrl = $env:FLOWFIT_PUBLIC_WEB_BASE_URL
 }
 
 function Invoke-CheckedCommand {
@@ -193,6 +194,7 @@ try {
             '--release',
             '--no-pub',
             '--dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com',
+            '--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit',
             '--dart-define=SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co',
             '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
         )
@@ -205,6 +207,7 @@ try {
                 '--wasm',
                 '--no-pub',
                 '--dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com',
+                '--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit',
                 '--dart-define=SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co',
                 '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
             )
@@ -227,6 +230,9 @@ try {
         if ([string]::IsNullOrWhiteSpace($env:FLOWFIT_SUPPORT_EMAIL)) {
             $env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
         }
+        if ([string]::IsNullOrWhiteSpace($env:FLOWFIT_PUBLIC_WEB_BASE_URL)) {
+            $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
+        }
 
         Remove-IgnoredGeneratedAndroidRegistrant
         Invoke-CheckedCommand 'Android release App Bundle smoke build, not for store upload' @(
@@ -237,6 +243,7 @@ try {
             '--no-pub',
             "--dart-define=FLOWFIT_AUTH_SCHEME=$($env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME)",
             "--dart-define=FLOWFIT_SUPPORT_EMAIL=$($env:FLOWFIT_SUPPORT_EMAIL)",
+            "--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=$($env:FLOWFIT_PUBLIC_WEB_BASE_URL)",
             '--dart-define=SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co',
             '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
         )
@@ -270,6 +277,11 @@ finally {
         Remove-Item Env:\FLOWFIT_SUPPORT_EMAIL -ErrorAction SilentlyContinue
     } else {
         $env:FLOWFIT_SUPPORT_EMAIL = $previousGradleEnv.SupportEmail
+    }
+    if ($null -eq $previousGradleEnv.PublicWebBaseUrl) {
+        Remove-Item Env:\FLOWFIT_PUBLIC_WEB_BASE_URL -ErrorAction SilentlyContinue
+    } else {
+        $env:FLOWFIT_PUBLIC_WEB_BASE_URL = $previousGradleEnv.PublicWebBaseUrl
     }
 
     Pop-Location
