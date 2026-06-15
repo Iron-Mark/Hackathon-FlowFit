@@ -1097,7 +1097,7 @@ function Test-Tooling {
     if (Get-Command docker -ErrorAction SilentlyContinue) {
         Add-Pass 'Docker tooling' 'Docker CLI is available for local Supabase validation.'
     } else {
-        Add-Warn 'Docker tooling' 'Docker CLI is not available; local Supabase db reset/lint validation cannot run on this machine.' -StrictFailure $false
+        Add-Warn 'Docker tooling' 'Docker CLI is not available; local Supabase CLI validation cannot run on this machine.' -StrictFailure $false
     }
 
     if (Get-Command supabase -ErrorAction SilentlyContinue) {
