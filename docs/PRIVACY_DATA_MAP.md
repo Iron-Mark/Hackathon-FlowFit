@@ -62,7 +62,9 @@ privacy labels.
 - Supabase traffic uses HTTPS.
 - Public database tables are protected by RLS in the canonical migration.
 - Store releases must not include service-role keys or secret keys.
-- `lib/secrets.dart` must contain only the project URL and publishable key.
+- Flutter runtime config must use only the project URL and publishable key.
+  Prefer `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` Dart defines; ignored
+  `lib/secrets.dart` is only a local fallback for release/audit scripts.
 - Account deletion is initiated in-app through `request_account_deletion()`.
   The function deletes app-owned public records immediately and creates a
   pending `account_deletion_requests` row for privileged auth-account deletion.
@@ -77,11 +79,13 @@ privacy labels.
 - `web/account-deletion.html` is the public account-deletion page for users who
   removed the app or cannot access the in-app deletion flow.
 
-## Disclosure Risks to Resolve Before Store Review
+## Disclosure Requirements to Resolve Before Store Review
 
-- Confirm whether background location is required for the release build. If it
-  is, keep prominent in-app disclosure before permission and describe background
-  usage in store forms.
+- Release builds request background location: Android declares
+  `ACCESS_BACKGROUND_LOCATION` and native geofence components, while iOS
+  declares `UIBackgroundModes` location. Keep prominent in-app disclosure before
+  requesting permission and describe background geofence/mission usage in Play
+  Data safety and App Store privacy forms.
 - Confirm whether camera/photo features are user-facing in production or debug
   only. Remove or hide debug-only routes before release if they are not intended
   for store users.

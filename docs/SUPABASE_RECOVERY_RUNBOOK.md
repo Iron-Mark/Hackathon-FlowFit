@@ -228,8 +228,11 @@ Expected RPC grants:
 
 Expected deletion queue grants:
 
-- `authenticated` has only `SELECT` and `INSERT` on
+- `authenticated` has `SELECT` plus column-scoped `INSERT` on only
+  `user_id`, `user_email`, `status`, and `requested_at` for
   `public.account_deletion_requests`.
+- The insert policy requires the `request_account_deletion()` RPC transaction
+  flag, own `user_id`, `pending` status, and null processor fields.
 - `service_role` has `SELECT` and `UPDATE` on
   `public.account_deletion_requests` for admin queue processing.
 - `account_deletion_requests_user_id_fkey` is absent, so the queue row is not

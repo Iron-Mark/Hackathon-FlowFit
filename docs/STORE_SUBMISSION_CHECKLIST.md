@@ -39,6 +39,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       maintainer/legal-reviewed copy.
 - [ ] `support@flowfit.com` has been replaced or verified as the production
       support/privacy inbox in public pages and in-app copy.
+- [ ] Background location is disclosed as enabled for release builds because
+      Android requests `ACCESS_BACKGROUND_LOCATION` and iOS declares background
+      location mode.
 - [ ] Debug-only routes/screens are hidden or removed from production builds.
 - [ ] Legacy debug aliases such as `/trackertest` are not reachable from
       production UI; use production route names such as `/activity-classifier`.
@@ -116,7 +119,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       deploy artifacts.
 - [ ] For GitHub Pages, configure repository variables `FLOWFIT_PUBLIC_WEB_BASE_URL`,
       `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and optional
-      `FLOWFIT_SUPPORT_EMAIL`, then run `.github/workflows/flutter-web-pages.yml`.
+      `FLOWFIT_SUPPORT_EMAIL`; set `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`
+      only after the configured/default inbox is receiving external mail, then
+      run `.github/workflows/flutter-web-pages.yml`.
       Use `https://iron-mark.github.io/Hackathon-FlowFit` as the default project
       site unless a custom domain is configured.
 - [ ] If the web host serves from a subpath, confirm the wrapper-derived

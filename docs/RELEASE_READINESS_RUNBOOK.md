@@ -308,6 +308,8 @@ Configure these repository variables before running it:
 - `SUPABASE_PUBLISHABLE_KEY` for the release Supabase project.
 - Optional `FLOWFIT_SUPPORT_EMAIL` when the production inbox is not
   `support@flowfit.com`.
+- `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after the configured/default
+  support inbox is receiving mail from outside the maintainer account.
 
 If the GitHub Pages API still returns 404 for this repository, open repository
 Settings > Pages and set the Pages build/deploy source to GitHub Actions. The
@@ -344,6 +346,9 @@ app-owned public rows and records a pending `account_deletion_requests` row.
 While that request is `pending` or `processing`, RLS blocks authenticated
 client inserts and updates on profile, Buddy, workout, and heart-rate tables so
 another active session cannot recreate app-owned rows before admin processing.
+The queue insert policy also requires the `request_account_deletion()` RPC's
+local transaction flag, so authenticated clients cannot create arbitrary queue
+rows directly through the Data API or set processor fields.
 That queue row intentionally does not cascade when the Supabase Auth user is
 later deleted, so the admin processor can retain operational evidence according
 to the project's retention policy. An admin process is still required to remove

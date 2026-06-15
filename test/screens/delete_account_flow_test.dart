@@ -75,7 +75,31 @@ void main() {
     );
     expect(
       migrationSource,
-      contains('grant select, insert\n  on public.account_deletion_requests'),
+      contains("set_config('app.flowfit_account_deletion_rpc', '1', true)"),
+    );
+    expect(
+      migrationSource,
+      contains(
+        "coalesce(current_setting('app.flowfit_account_deletion_rpc', true), '') = '1'",
+      ),
+    );
+    expect(
+      migrationSource,
+      contains('grant select\n  on public.account_deletion_requests'),
+    );
+    expect(
+      migrationSource,
+      contains('grant insert (user_id, user_email, status, requested_at)'),
+    );
+    expect(
+      migrationSource,
+      isNot(
+        contains('grant select, insert\n  on public.account_deletion_requests'),
+      ),
+    );
+    expect(
+      migrationSource,
+      isNot(contains('Users can create own account deletion requests')),
     );
     expect(
       migrationSource,

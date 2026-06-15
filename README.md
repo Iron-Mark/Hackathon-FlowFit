@@ -330,7 +330,8 @@ flutter run -d <device-id>
 - Check network connectivity
 
 **Supabase sync failing**
-- Verify `secrets.dart` configuration
+- Verify `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` dart defines, or the
+  ignored `lib/secrets.dart` fallback used by release scripts
 - Check internet connection
 - Review Supabase logs
 

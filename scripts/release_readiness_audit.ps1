@@ -200,6 +200,49 @@ function Test-SupabasePublishableKey {
     return $normalized -match '^sb_publishable_[A-Za-z0-9_-]{20,}$'
 }
 
+function Test-PublicWebBaseUrl {
+    param([string]$Value)
+
+    if (Test-PlaceholderValue $Value) {
+        return @{
+            Valid = $false
+            Detail = 'FLOWFIT_PUBLIC_WEB_BASE_URL is missing, placeholder/test-shaped, reserved, or not set to a deployed HTTPS URL for store submission.'
+        }
+    }
+
+    $normalized = $Value.Trim().TrimEnd('/')
+    $uri = $null
+    if (-not [System.Uri]::TryCreate($normalized, [System.UriKind]::Absolute, [ref]$uri)) {
+        return @{
+            Valid = $false
+            Detail = 'FLOWFIT_PUBLIC_WEB_BASE_URL must be an absolute HTTPS URL without query strings or fragments.'
+        }
+    }
+    if ($uri.Scheme -ne 'https') {
+        return @{
+            Valid = $false
+            Detail = 'FLOWFIT_PUBLIC_WEB_BASE_URL must use HTTPS.'
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($uri.Host)) {
+        return @{
+            Valid = $false
+            Detail = 'FLOWFIT_PUBLIC_WEB_BASE_URL must include a public host.'
+        }
+    }
+    if (-not [string]::IsNullOrWhiteSpace($uri.Query) -or -not [string]::IsNullOrWhiteSpace($uri.Fragment)) {
+        return @{
+            Valid = $false
+            Detail = 'FLOWFIT_PUBLIC_WEB_BASE_URL must not include query strings or fragments.'
+        }
+    }
+
+    return @{
+        Valid = $true
+        Detail = 'FLOWFIT_PUBLIC_WEB_BASE_URL is configured for deployed compliance URLs, including path-based static hosts when needed.'
+    }
+}
+
 function Get-AndroidSetting {
     param(
         [hashtable]$GradleProperties,
@@ -475,6 +518,15 @@ function Test-SupabaseMigration {
     Assert-RequiredText 'Helper function execute revoke' $path $content 'revoke all on function public.update_updated_at_column()' 'Migration revokes direct execute access on trigger helper function.'
     Assert-RequiredText 'Deletion queue retention' $path $content 'drop constraint if exists account_deletion_requests_user_id_fkey' 'Deletion request queue is not cascaded away when an auth user is later deleted.'
     if (
+        $content.Contains("set_config('app.flowfit_account_deletion_rpc', '1', true)") -and
+        $content.Contains("coalesce(current_setting('app.flowfit_account_deletion_rpc', true), '') = '1'") -and
+        $content.Contains('Deletion RPC can create own pending account deletion requests')
+    ) {
+        Add-Pass 'Deletion queue RPC insert gate' 'Account deletion queue inserts require the request_account_deletion RPC transaction flag.'
+    } else {
+        Add-Fail 'Deletion queue RPC insert gate' 'Account deletion queue inserts must be gated behind request_account_deletion(), not broad direct client inserts.'
+    }
+    if (
         $content.Contains('create or replace function public.has_pending_account_deletion(target_user_id uuid)') -and
         $content.Contains("and status in ('pending', 'processing')") -and
         $content.Contains('grant execute on function public.has_pending_account_deletion(uuid)') -and
@@ -535,6 +587,15 @@ function Test-SupabaseMigration {
         Add-Pass 'Deletion queue service-role grant' 'Migration grants service_role select/update access to process deletion requests.'
     } else {
         Add-Fail 'Deletion queue service-role grant' 'Migration is missing service_role select/update access for account_deletion_requests.'
+    }
+
+    if (
+        $content -match '(?s)grant select\s+on public\.account_deletion_requests\s+to authenticated;' -and
+        $content -match '(?s)grant insert \(user_id, user_email, status, requested_at\)\s+on public\.account_deletion_requests\s+to authenticated;'
+    ) {
+        Add-Pass 'Deletion queue authenticated grant scope' 'Authenticated insert access is column-scoped and still constrained by the RPC-gated RLS policy.'
+    } else {
+        Add-Fail 'Deletion queue authenticated grant scope' 'Authenticated account_deletion_requests access must be select plus column-scoped insert only.'
     }
 }
 
@@ -836,10 +897,11 @@ function Test-WebAndStoreConfig {
     }
 
     $webBaseUrl = [Environment]::GetEnvironmentVariable('FLOWFIT_PUBLIC_WEB_BASE_URL')
-    if (Test-PlaceholderValue $webBaseUrl -or $webBaseUrl -notmatch '^https://[^/]+') {
-        Add-Warn 'Public web deployment URL' 'FLOWFIT_PUBLIC_WEB_BASE_URL is missing, placeholder/test-shaped, reserved, or not set to a deployed HTTPS URL for store submission.'
+    $webBaseUrlResult = Test-PublicWebBaseUrl $webBaseUrl
+    if (-not $webBaseUrlResult.Valid) {
+        Add-Warn 'Public web deployment URL' $webBaseUrlResult.Detail
     } else {
-        Add-Pass 'Public web deployment URL' 'FLOWFIT_PUBLIC_WEB_BASE_URL is configured for deployed compliance URLs, including path-based static hosts when needed.'
+        Add-Pass 'Public web deployment URL' $webBaseUrlResult.Detail
     }
 
     $filesWithDefaultSupport = @()

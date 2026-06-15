@@ -80,7 +80,7 @@ Future<void> main() async {
   // Ensure Flutter bindings are initialized before async operations
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase with configuration from secrets and deep link support
+  // Initialize Supabase with dart-define configuration and deep link support
   SupabaseRuntimeConfig.validate();
   await Supabase.initialize(
     url: SupabaseRuntimeConfig.url,

@@ -312,6 +312,8 @@ Configure repository variables before dispatching it:
 - `SUPABASE_URL`.
 - `SUPABASE_PUBLISHABLE_KEY`.
 - Optional `FLOWFIT_SUPPORT_EMAIL`.
+- `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after the configured/default
+  support inbox is receiving mail from outside the maintainer account.
 
 If the repository has no Pages site yet, enable Settings > Pages > GitHub
 Actions as the source before expecting the workflow to publish.

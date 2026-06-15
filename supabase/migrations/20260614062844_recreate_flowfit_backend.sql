@@ -972,6 +972,8 @@ begin
   delete from public.buddy_profiles where user_id = current_user_id;
   delete from public.user_profiles where user_id = current_user_id;
 
+  perform set_config('app.flowfit_account_deletion_rpc', '1', true);
+
   insert into public.account_deletion_requests (
     user_id,
     user_email,
@@ -1199,11 +1201,17 @@ create policy "Users can view own account deletion requests"
   to authenticated
   using ((select auth.uid()) = user_id);
 
-create policy "Users can create own account deletion requests"
+create policy "Deletion RPC can create own pending account deletion requests"
   on public.account_deletion_requests
   for insert
   to authenticated
-  with check ((select auth.uid()) = user_id);
+  with check (
+    (select auth.uid()) = user_id
+    and status = 'pending'
+    and processed_at is null
+    and processor_notes is null
+    and coalesce(current_setting('app.flowfit_account_deletion_rpc', true), '') = '1'
+  );
 
 alter default privileges for role postgres in schema public
   revoke select, insert, update, delete on tables
@@ -1235,7 +1243,10 @@ grant select, insert, update, delete
      public.workout_sessions,
      public.heart_rate
   to service_role;
-grant select, insert
+grant select
+  on public.account_deletion_requests
+  to authenticated;
+grant insert (user_id, user_email, status, requested_at)
   on public.account_deletion_requests
   to authenticated;
 grant select, update

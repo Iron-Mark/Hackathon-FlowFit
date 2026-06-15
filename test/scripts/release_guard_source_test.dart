@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -331,17 +332,47 @@ void main() {
     expect(webDeploymentVerifier, contains('[string]\$BaseUrl'));
     expect(webDeploymentVerifier, contains('[switch]\$AllowInsecureLocalhost'));
     expect(webDeploymentVerifier, contains('Invoke-WebRequest'));
-    expect(webDeploymentVerifier, contains('/flutter_bootstrap.js'));
-    expect(webDeploymentVerifier, contains('/main.dart.js'));
+    expect(webDeploymentVerifier, contains('Resolve-IndexBaseUri'));
+    expect(webDeploymentVerifier, contains('Assert-SupportEmail'));
+    expect(webDeploymentVerifier, contains('flutter_bootstrap.js'));
+    expect(webDeploymentVerifier, contains('main.dart.js'));
     expect(webDeploymentVerifier, contains('/privacy.html'));
     expect(webDeploymentVerifier, contains('/account-deletion.html'));
-    expect(webDeploymentVerifier, contains('/manifest.json'));
+    expect(webDeploymentVerifier, contains('manifest.json'));
     expect(webDeploymentVerifier, contains('FLOWFIT_SUPPORT_EMAIL'));
     expect(webDeploymentVerifier, contains('FlowFit Privacy Policy'));
     expect(webDeploymentVerifier, contains('FlowFit Account Deletion'));
     expect(webDeploymentVerifier, contains('without reinstalling the app'));
     expect(webDeploymentVerifier, contains('ConvertTo-Json'));
     expect(webDeploymentVerifier, contains('[string]\$OutFile'));
+  });
+
+  test(
+    'web deployment verifier rejects mismatched Flutter base href',
+    () async {
+      final result = await _runWebDeploymentVerifierAgainstFixture(
+        baseHref: '/',
+      );
+
+      expect(result.exitCode, isNot(0));
+      expect(
+        '${result.stdout}\n${result.stderr}',
+        contains('Flutter base href'),
+      );
+    },
+  );
+
+  test('web deployment verifier rejects HTML-unsafe support emails', () async {
+    final result = await _runWebDeploymentVerifierAgainstFixture(
+      baseHref: '/app/',
+      supportEmail: 'support"><script@flowfit.com',
+    );
+
+    expect(result.exitCode, isNot(0));
+    expect(
+      '${result.stdout}\n${result.stderr}',
+      contains('SupportEmail must be a valid support email address'),
+    );
   });
 
   test('ci runs web static verifier against built web output', () {
@@ -400,6 +431,13 @@ void main() {
     expect(pagesWorkflow, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(pagesWorkflow, contains('SUPABASE_URL'));
     expect(pagesWorkflow, contains('SUPABASE_PUBLISHABLE_KEY'));
+    expect(pagesWorkflow, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
+    expect(
+      pagesWorkflow,
+      contains(
+        'Set FLOWFIT_SUPPORT_EMAIL_VERIFIED=true only after the configured support inbox is receiving mail.',
+      ),
+    );
     expect(pagesWorkflow, contains('flowfit-github-pages-verification'));
     expect(pagesWorkflow, contains('/Hackathon-FlowFit/'));
   });
@@ -448,6 +486,33 @@ void main() {
       contains('[FAIL] Public web deployment URL'),
     );
     expect('${audit.stdout}\n${audit.stderr}', contains('reserved'));
+  });
+
+  test('strict audit rejects public web URLs with query strings', () {
+    final env = Map<String, String>.from(Platform.environment)
+      ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = 'https://flowfit.app?preview=true'
+      ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
+      ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+      ..['SUPABASE_PUBLISHABLE_KEY'] =
+          'sb_publishable_abcdefghijklmnopqrstuvwxyz123456';
+
+    final audit = Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      'scripts/release_readiness_audit.ps1',
+      '-Strict',
+      '-SupportEmailVerified',
+    ], environment: env);
+
+    expect(audit.exitCode, isNot(0));
+    expect(
+      '${audit.stdout}\n${audit.stderr}',
+      contains('[FAIL] Public web deployment URL'),
+    );
+    expect(
+      '${audit.stdout}\n${audit.stderr}',
+      contains('query strings or fragments'),
+    );
   });
 
   test('recovery audit rejects read-only Supabase MCP config', () {
@@ -549,6 +614,10 @@ void main() {
     expect(readinessAudit, contains('FLOWFIT_SUPPORT_EMAIL'));
     expect(readinessAudit, contains('\$expectedSupportEmail'));
     expect(readinessAudit, contains('configured support inbox'));
+    expect(storeReleaseBuild, contains('valid support email address'));
+    expect(webDeploymentVerifier, contains('valid support email address'));
+    expect(storeReleaseBuild, contains(r'^[A-Za-z0-9._+-]+@[A-Za-z0-9]'));
+    expect(webDeploymentVerifier, contains(r'^[A-Za-z0-9._+-]+@[A-Za-z0-9]'));
   });
 
   test(
@@ -573,6 +642,26 @@ void main() {
 
   test('Supabase auth password policy matches app minimum length', () {
     expect(supabaseConfig, contains('minimum_password_length = 8'));
+  });
+
+  test('store docs disclose release background location surface', () {
+    final privacyDataMap = File('docs/PRIVACY_DATA_MAP.md').readAsStringSync();
+    final storeMetadata = File(
+      'docs/STORE_METADATA_DRAFT.md',
+    ).readAsStringSync();
+
+    expect(
+      privacyDataMap,
+      contains('Release builds request background location'),
+    );
+    expect(
+      privacyDataMap,
+      isNot(contains('Confirm whether background location is required')),
+    );
+    expect(
+      storeMetadata,
+      contains('background location/geofence features are enabled'),
+    );
   });
 }
 
@@ -712,6 +801,88 @@ try {
     ]);
   } finally {
     tempDir.deleteSync(recursive: true);
+  }
+}
+
+Future<ProcessResult> _runWebDeploymentVerifierAgainstFixture({
+  required String baseHref,
+  String supportEmail = 'support@flowfit.com',
+}) async {
+  final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+  late final StreamSubscription<HttpRequest> subscription;
+
+  subscription = server.listen((request) {
+    final path = request.uri.path;
+    final response = request.response;
+
+    switch (path) {
+      case '/app/':
+        response.headers.contentType = ContentType.html;
+        response.write('''
+<!doctype html>
+<html>
+<head>
+  <base href="$baseHref">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <script src="flutter_bootstrap.js" async></script>
+  manifest.json
+</body>
+</html>
+''');
+      case '/app/flutter_bootstrap.js':
+        response.headers.contentType = ContentType('application', 'javascript');
+        response.write("import('./main.dart.js');");
+      case '/app/main.dart.js':
+        response.headers.contentType = ContentType('application', 'javascript');
+        response.write('function main() {}');
+      case '/app/manifest.json':
+        response.headers.contentType = ContentType.json;
+        response.write('{"name": "FlowFit", "short_name": "FlowFit"}');
+      case '/app/privacy.html':
+        response.headers.contentType = ContentType.html;
+        response.write('''
+<title>FlowFit Privacy Policy</title>
+$supportEmail
+account-deletion.html
+account and associated app data
+''');
+      case '/app/account-deletion.html':
+        response.headers.contentType = ContentType.html;
+        response.write('''
+<title>FlowFit Account Deletion</title>
+mailto:$supportEmail
+privacy.html
+FlowFit account deletion request
+associated app data
+without reinstalling the app
+Profile &gt; Settings &gt; Delete Account
+''');
+      default:
+        response.statusCode = HttpStatus.notFound;
+        response.write('not found');
+    }
+
+    response.close();
+  });
+
+  try {
+    return await Process.run('pwsh', [
+      '-NoProfile',
+      '-File',
+      'scripts/verify_web_deployment.ps1',
+      '-BaseUrl',
+      'http://127.0.0.1:${server.port}/app',
+      '-SupportEmail',
+      supportEmail,
+      '-AllowInsecureLocalhost',
+      '-TimeoutSeconds',
+      '5',
+    ]);
+  } finally {
+    await subscription.cancel();
+    await server.close(force: true);
   }
 }
 

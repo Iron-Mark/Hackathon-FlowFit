@@ -467,8 +467,13 @@ function Assert-Email {
         [string]$Value
     )
 
-    if ($Value -notmatch '^[^@\s]+@[^@\s]+\.[^@\s]+$') {
-        throw "$Name must be a valid-looking support email address."
+    $normalized = $Value.Trim()
+    if (
+        [string]::IsNullOrWhiteSpace($normalized) -or
+        $normalized -notmatch '^[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$' -or
+        $normalized -match '["''<>?&/%\x00-\x1F\x7F]'
+    ) {
+        throw "$Name must be a valid support email address. Use a plain mailbox like support@flowfit.com."
     }
 }
 

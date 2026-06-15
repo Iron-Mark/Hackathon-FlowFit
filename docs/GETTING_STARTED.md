@@ -32,9 +32,9 @@ cd flowfit
 # Install dependencies
 flutter pub get
 
-# Configure Supabase (optional)
-# Copy lib/secrets.dart.example to lib/secrets.dart
-# Add your Supabase credentials
+# Configure Supabase
+# Preferred: pass SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY with --dart-define
+# Optional script fallback: copy lib/secrets.dart.example to lib/secrets.dart
 ```
 
 ### 3. Connect Devices

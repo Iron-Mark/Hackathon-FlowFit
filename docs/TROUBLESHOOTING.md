@@ -10,7 +10,9 @@ PostgrestException(message: Could not find the table 'public.user_profiles' in t
 
 Check these first:
 
-1. `lib/secrets.dart` points to the intended Supabase project URL.
+1. Runtime `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` dart defines, or the
+   ignored `lib/secrets.dart` script fallback, point to the intended Supabase
+   project.
 2. The project uses a publishable key, not a service-role or secret key.
 3. `supabase/migrations/20260614062844_recreate_flowfit_backend.sql` has been
    applied to that same project.
@@ -43,7 +45,9 @@ debug-signed release App Bundle smoke build.
 
 ### App crashes on startup
 
-- Confirm `lib/secrets.dart` exists locally and is not using placeholder values.
+- Confirm the app was launched with real `SUPABASE_URL` and
+  `SUPABASE_PUBLISHABLE_KEY` dart defines, or use the release wrapper to pass
+  the ignored `lib/secrets.dart` fallback values.
 - Confirm the Supabase project is active.
 - Check the device network connection.
 

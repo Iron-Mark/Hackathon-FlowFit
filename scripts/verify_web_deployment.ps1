@@ -115,6 +115,60 @@ function Join-DeploymentPath {
     return [System.Uri]::new($Root.AbsoluteUri.TrimEnd('/') + $Path)
 }
 
+function Assert-SupportEmail {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$Value
+    )
+
+    $normalized = $Value.Trim()
+    if (
+        [string]::IsNullOrWhiteSpace($normalized) -or
+        $normalized -notmatch '^[A-Za-z0-9._+-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+$' -or
+        $normalized -match '["''<>?&/%\x00-\x1F\x7F]'
+    ) {
+        throw "$Name must be a valid support email address. Use a plain mailbox like support@flowfit.com."
+    }
+}
+
+function Resolve-IndexBaseUri {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Uri]$Root,
+        [Parameter(Mandatory = $true)]
+        [string]$Content
+    )
+
+    $indexUri = Join-DeploymentPath -Root $Root -Path '/'
+    $baseMatch = [regex]::Match(
+        $Content,
+        '<base\s+[^>]*href\s*=\s*["''](?<href>[^"'']+)["'']',
+        [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+    )
+
+    if (-not $baseMatch.Success) {
+        Add-Fail 'Flutter base href' 'Deployed index.html is missing a <base href> tag.'
+        return $indexUri
+    }
+
+    $baseHref = $baseMatch.Groups['href'].Value.Trim()
+    if ([string]::IsNullOrWhiteSpace($baseHref)) {
+        Add-Fail 'Flutter base href' 'Deployed index.html has an empty <base href>.'
+        return $indexUri
+    }
+
+    $resolvedBaseUri = [System.Uri]::new($indexUri, $baseHref)
+    if ($resolvedBaseUri.AbsoluteUri.TrimEnd('/') -ne $indexUri.AbsoluteUri.TrimEnd('/')) {
+        Add-Fail 'Flutter base href' "Base href '$baseHref' resolves assets under $($resolvedBaseUri.AbsoluteUri.TrimEnd('/')), but deployment root is $($indexUri.AbsoluteUri.TrimEnd('/'))."
+    } else {
+        Add-Pass 'Flutter base href' "Base href '$baseHref' resolves assets under the deployment root."
+    }
+
+    return $resolvedBaseUri
+}
+
 function Invoke-WebCheck {
     param(
         [Parameter(Mandatory = $true)]
@@ -145,9 +199,7 @@ if ([string]::IsNullOrWhiteSpace($SupportEmail)) {
     $SupportEmail = 'support@flowfit.com'
 }
 
-if ($SupportEmail -notmatch '^[^@\s]+@[^@\s]+\.[^@\s]+$') {
-    throw 'SupportEmail must be a valid-looking email address.'
-}
+Assert-SupportEmail -Name 'SupportEmail' -Value $SupportEmail
 
 $rootUri = Resolve-DeploymentUri -Value $BaseUrl
 $internalTerms = @(
@@ -163,21 +215,23 @@ Write-Host "==> FlowFit web deployment verification"
 Write-Host "BaseUrl: $($rootUri.AbsoluteUri.TrimEnd('/'))"
 
 $index = Invoke-WebCheck -Name 'App shell' -Uri (Join-DeploymentPath -Root $rootUri -Path '/')
+$assetBaseUri = Join-DeploymentPath -Root $rootUri -Path '/'
 if (-not [string]::IsNullOrWhiteSpace($index)) {
     [void](Assert-TextContains -CheckName 'App shell content' -Content $index -Terms @('flutter_bootstrap.js', 'manifest.json'))
+    $assetBaseUri = Resolve-IndexBaseUri -Root $rootUri -Content $index
 }
 
-$flutterBootstrap = Invoke-WebCheck -Name 'Flutter bootstrap' -Uri (Join-DeploymentPath -Root $rootUri -Path '/flutter_bootstrap.js')
+$flutterBootstrap = Invoke-WebCheck -Name 'Flutter bootstrap' -Uri ([System.Uri]::new($assetBaseUri, 'flutter_bootstrap.js'))
 if (-not [string]::IsNullOrWhiteSpace($flutterBootstrap)) {
     [void](Assert-TextContains -CheckName 'Flutter bootstrap content' -Content $flutterBootstrap -Terms @('main.dart.js'))
 }
 
-$compiledApp = Invoke-WebCheck -Name 'Compiled Flutter app' -Uri (Join-DeploymentPath -Root $rootUri -Path '/main.dart.js')
+$compiledApp = Invoke-WebCheck -Name 'Compiled Flutter app' -Uri ([System.Uri]::new($assetBaseUri, 'main.dart.js'))
 if (-not [string]::IsNullOrWhiteSpace($compiledApp)) {
     [void](Assert-TextContains -CheckName 'Compiled Flutter app content' -Content $compiledApp -Terms @('main'))
 }
 
-$manifest = Invoke-WebCheck -Name 'Web manifest' -Uri (Join-DeploymentPath -Root $rootUri -Path '/manifest.json')
+$manifest = Invoke-WebCheck -Name 'Web manifest' -Uri ([System.Uri]::new($assetBaseUri, 'manifest.json'))
 if (-not [string]::IsNullOrWhiteSpace($manifest)) {
     [void](Assert-TextContains -CheckName 'Web manifest content' -Content $manifest -Terms @('"name": "FlowFit"', '"short_name": "FlowFit"'))
 }
