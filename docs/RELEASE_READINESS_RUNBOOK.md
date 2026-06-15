@@ -585,6 +585,10 @@ pwsh -NoProfile -File scripts/release_status_snapshot.ps1 -Repo Iron-Mark/Hackat
 # remain:
 pwsh -NoProfile -File scripts/verify_store_metadata.ps1 -OutFile build/store-metadata-verification.json
 
+# Strict store metadata evidence using GitHub repository variables for the
+# deployed web URL and support inbox:
+pwsh -NoProfile -File scripts/verify_store_metadata.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit -OutFile build/store-metadata-verification.json
+
 # Same strict audit using the ignored release env file:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -EnvFile .env.release -OutFile build/store-release-readiness-audit.json
 

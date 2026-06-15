@@ -106,8 +106,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Upload screenshots, feature graphic, app icon, short description, and
       full description.
 - [ ] Review and finalize listing copy from `docs/STORE_METADATA_DRAFT.md`.
-- [ ] Run `pwsh -NoProfile -File scripts/verify_store_metadata.ps1 -Strict`
-      with the final web base URL/support inbox and archive
+- [ ] Run
+      `pwsh -NoProfile -File scripts/verify_store_metadata.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit`
+      or pass the final web base URL/support inbox explicitly, then archive
       `build/store-metadata-verification.json`.
 - [ ] Validate that the uploaded AAB is signed with the upload key, not the
       debug release-smoke key.
@@ -152,6 +153,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `docs/STORE_METADATA_DRAFT.md`.
 - [ ] Confirm `build/store-metadata-verification.json` has no failures after
       final metadata, icon assets, support inbox, and public web URLs are set.
+      If those values live in repository variables, run
+      `pwsh -NoProfile -File scripts/verify_store_metadata.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit`.
 
 ## Flutter Web
 

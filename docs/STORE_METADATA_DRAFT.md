@@ -2,23 +2,23 @@
 
 Last updated: 2026-06-15
 
-This is a draft handoff pack for Google Play, App Store, and Flutter web
-release work. Replace placeholders only after the production Supabase project,
-package/bundle IDs, support inbox, and deployed web URLs are final.
+This is a release handoff pack for Google Play, App Store, and Flutter web
+release work. Final store upload still depends on the production Supabase
+project, package/bundle ownership, and a verified support inbox.
 
 ## Release Identity
 
 | Field | Draft value | Status |
 | --- | --- | --- |
 | App name | FlowFit | Ready for review |
-| Short tagline | Fitness tracking with a wellness companion | Draft |
-| Android package ID | `com.oldstlabs.flowfit` | Confirm ownership before release |
-| iOS bundle ID | `com.oldstlabs.flowfit` | Confirm Apple Developer ownership before release |
+| Short tagline | Fitness tracking with a wellness companion | Ready for review |
+| Android package ID | `com.oldstlabs.flowfit` | Store account confirmation required |
+| iOS bundle ID | `com.oldstlabs.flowfit` | Apple Developer confirmation required |
 | Production auth scheme | `com.oldstlabs.flowfit` | Add to Supabase redirect URLs |
 | Dev auth scheme | `com.oldstlabs.flowfit.dev` | Add to Supabase redirect URLs |
-| Support email | `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` | Replace with verified `FLOWFIT_SUPPORT_EMAIL` |
-| Privacy policy URL | `https://<your-web-host>/privacy.html` | Replace after web deploy |
-| Account deletion URL | `https://<your-web-host>/account-deletion.html` | Replace after web deploy |
+| Support email | `support@flowfit.com` | Reserved source token; replace with verified `FLOWFIT_SUPPORT_EMAIL` |
+| Privacy policy URL | `https://iron-mark.github.io/Hackathon-FlowFit/privacy.html` | GitHub Pages release origin |
+| Account deletion URL | `https://iron-mark.github.io/Hackathon-FlowFit/account-deletion.html` | GitHub Pages release origin |
 
 ## Short Description
 
@@ -43,7 +43,8 @@ access.
 
 ## App Review Notes
 
-- Test account: provide after the production Supabase project exists.
+- Test account: create in the production Supabase project before final upload
+  and store the credentials outside the repo.
 - Supabase auth: Email provider must be enabled. For store review, email
   confirmation should be configured according to the reviewer test account
   instructions.
@@ -102,8 +103,8 @@ credentials, debug labels, staging project refs, or private user data.
 - [ ] `build/store-release-readiness-audit.json` is archived with the store
       handoff evidence after strict audit passes.
 - [ ] `build/store-metadata-verification.json` is archived after
-      `scripts/verify_store_metadata.ps1 -Strict` passes with final public web
-      URLs and support inbox values.
+      `scripts/verify_store_metadata.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit`
+      passes with final public web URLs and support inbox values.
 - [ ] `build/store-release-artifacts.json` is archived with artifact paths,
       SHA-256 hashes, byte sizes, git/toolchain metadata, and release inputs.
 - [ ] On Windows, Android and web targets pass separately; iOS IPA generation is

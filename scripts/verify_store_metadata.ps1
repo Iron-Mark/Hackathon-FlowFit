@@ -2,7 +2,9 @@ param(
     [switch]$Strict,
     [string]$OutFile = 'build/store-metadata-verification.json',
     [string]$PublicWebBaseUrl = '',
-    [string]$SupportEmail = ''
+    [string]$SupportEmail = '',
+    [string]$GitHubRepo = '',
+    [string]$GitHubVariablesPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -66,6 +68,90 @@ function Read-RepoText {
     }
 
     return Get-Content -Raw -LiteralPath $fullPath
+}
+
+function Read-MetadataEvidenceText {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if ([System.IO.Path]::IsPathRooted($Path)) {
+        if (-not (Test-Path -LiteralPath $Path)) {
+            return $null
+        }
+        return Get-Content -Raw -LiteralPath $Path
+    }
+
+    $fullPath = Get-RepoPath $Path
+    if (-not (Test-Path -LiteralPath $fullPath)) {
+        return $null
+    }
+    return Get-Content -Raw -LiteralPath $fullPath
+}
+
+function Import-GitHubMetadataVariables {
+    if (
+        [string]::IsNullOrWhiteSpace($GitHubRepo) -and
+        [string]::IsNullOrWhiteSpace($GitHubVariablesPath)
+    ) {
+        return
+    }
+
+    $jsonText = ''
+    if (-not [string]::IsNullOrWhiteSpace($GitHubVariablesPath)) {
+        $jsonText = Read-MetadataEvidenceText $GitHubVariablesPath
+        if ($null -eq $jsonText) {
+            Add-Fail 'GitHub metadata variables' "Missing GitHub variables evidence file: $GitHubVariablesPath."
+            return
+        }
+    } else {
+        if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+            Add-Fail 'GitHub metadata variables' 'GitHub CLI is required when -GitHubRepo is used.'
+            return
+        }
+
+        $ghResult = & gh variable list --repo $GitHubRepo --json name,value 2>&1
+        $ghExitCode = $LASTEXITCODE
+        if ($ghExitCode -ne 0) {
+            Add-Fail 'GitHub metadata variables' "Unable to read GitHub repository variables with gh exit code $ghExitCode. Check gh auth status and use an account or GH_TOKEN with repository Actions variables read access."
+            return
+        }
+        $jsonText = ($ghResult | Out-String).Trim()
+    }
+
+    try {
+        $variables = @($jsonText | ConvertFrom-Json)
+    } catch {
+        Add-Fail 'GitHub metadata variables' 'GitHub variables evidence is not valid JSON.'
+        return
+    }
+
+    $allowedNames = @(
+        'FLOWFIT_PUBLIC_WEB_BASE_URL',
+        'FLOWFIT_SUPPORT_EMAIL'
+    )
+    $importedCount = 0
+
+    foreach ($variable in $variables) {
+        $name = [string]$variable.name
+        $value = [string]$variable.value
+        if (-not $allowedNames.Contains($name)) {
+            continue
+        }
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            continue
+        }
+        if (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+            continue
+        }
+
+        [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+        $importedCount++
+    }
+
+    if ($importedCount -gt 0) {
+        Add-Pass 'GitHub metadata variables' "Imported $importedCount allowed repository variable value(s) for this metadata audit without printing them."
+    } else {
+        Add-Warn 'GitHub metadata variables' 'No allowed GitHub repository metadata variables were available to import.' -StrictFailure $false
+    }
 }
 
 function Get-MarkdownSection {
@@ -394,6 +480,8 @@ function Resolve-ExpectedWebUrls {
 
 Push-Location $repoRoot
 try {
+    Import-GitHubMetadataVariables
+
     $metadata = Read-RepoText 'docs/STORE_METADATA_DRAFT.md'
     $privacyMap = Read-RepoText 'docs/PRIVACY_DATA_MAP.md'
     $checklist = Read-RepoText 'docs/STORE_SUBMISSION_CHECKLIST.md'
@@ -475,6 +563,7 @@ try {
 
     $draftPatterns = @(
         '<your-web-host>',
+        'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL',
         'provide after the production Supabase project exists',
         'Confirm ownership before release',
         'Draft handoff',

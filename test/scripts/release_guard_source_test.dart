@@ -736,6 +736,9 @@ storeFile=upload-keystore.jks
     expect(storeMetadataVerifier, contains('Icon-maskable-512.png'));
     expect(storeMetadataVerifier, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(storeMetadataVerifier, contains('PublicWebBaseUrl'));
+    expect(storeMetadataVerifier, contains('GitHubRepo'));
+    expect(storeMetadataVerifier, contains('GitHubVariablesPath'));
+    expect(storeMetadataVerifier, contains('Import-GitHubMetadataVariables'));
     expect(storeMetadataVerifier, contains('Store support email finalization'));
     expect(storeMetadataVerifier, contains('Test-ProductionSupportEmail'));
     expect(
@@ -755,8 +758,17 @@ storeFile=upload-keystore.jks
     );
     expect(releasePreflight, contains('@(0, 2)'));
     expect(scriptsReadme, contains('verify_store_metadata.ps1'));
+    expect(scriptsReadme, contains('GitHub metadata import'));
     expect(releaseReadinessRunbook, contains('verify_store_metadata.ps1'));
+    expect(
+      releaseReadinessRunbook,
+      contains('verify_store_metadata.ps1 -Strict -GitHubRepo'),
+    );
     expect(storeSubmissionChecklist, contains('verify_store_metadata.ps1'));
+    expect(
+      storeSubmissionChecklist,
+      contains('-GitHubRepo Iron-Mark/Hackathon-FlowFit'),
+    );
     expect(
       storeSubmissionChecklist,
       contains('store-metadata-verification.json'),
@@ -831,12 +843,35 @@ storeFile=upload-keystore.jks
       'build/store-metadata-reserved-support-$unique.json',
     );
     final strictOut = File('build/store-metadata-strict-$unique.json');
+    final githubVariablesFile = File(
+      'build/store-metadata-github-vars-$unique.json',
+    );
+    final githubVariablesOut = File(
+      'build/store-metadata-github-vars-out-$unique.json',
+    );
     const publicWebBaseUrl =
         'https://release.flowfit.example/Hackathon-FlowFit/';
     const unsafePublicWebBaseUrl =
         'https://release.flowfit.example/app?debug=value#frag';
 
     try {
+      githubVariablesFile.writeAsStringSync('''
+[
+  {
+    "name": "FLOWFIT_PUBLIC_WEB_BASE_URL",
+    "value": "https://iron-mark.github.io/Hackathon-FlowFit/"
+  },
+  {
+    "name": "FLOWFIT_SUPPORT_EMAIL",
+    "value": "support@flowfit.com"
+  },
+  {
+    "name": "SUPABASE_PUBLISHABLE_KEY",
+    "value": "sb_publishable_not_imported_by_metadata_verifier"
+  }
+]
+''');
+
       final advisory = Process.runSync(
         'pwsh',
         [
@@ -920,6 +955,49 @@ storeFile=upload-keystore.jks
           );
       expect(reservedSupportFinding['level'], 'FAIL');
 
+      final githubVariables = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_store_metadata.ps1',
+        '-Strict',
+        '-GitHubVariablesPath',
+        githubVariablesFile.path,
+        '-OutFile',
+        githubVariablesOut.path,
+      ]);
+      expect(githubVariables.exitCode, 1);
+      final githubVariablesJson =
+          jsonDecode(githubVariablesOut.readAsStringSync())
+              as Map<String, dynamic>;
+      expect(
+        githubVariablesJson['publicWebBaseUrl'],
+        'https://iron-mark.github.io/Hackathon-FlowFit',
+      );
+      final githubVariableResults =
+          githubVariablesJson['results'] as List<dynamic>;
+      expect(
+        githubVariableResults.any(
+          (result) =>
+              (result as Map<String, dynamic>)['name'] ==
+                  'GitHub metadata variables' &&
+              result['level'] == 'PASS',
+        ),
+        isTrue,
+      );
+      expect(
+        githubVariableResults.any(
+          (result) =>
+              (result as Map<String, dynamic>)['name'] ==
+                  'Store public web URLs' &&
+              result['level'] == 'PASS',
+        ),
+        isTrue,
+      );
+      expect(
+        githubVariablesOut.readAsStringSync(),
+        isNot(contains('sb_publishable_not_imported_by_metadata_verifier')),
+      );
+
       final strict = Process.runSync('pwsh', [
         '-NoProfile',
         '-File',
@@ -946,7 +1024,13 @@ storeFile=upload-keystore.jks
         greaterThanOrEqualTo(1),
       );
     } finally {
-      for (final file in [advisoryOut, reservedSupportOut, strictOut]) {
+      for (final file in [
+        advisoryOut,
+        reservedSupportOut,
+        strictOut,
+        githubVariablesFile,
+        githubVariablesOut,
+      ]) {
         if (file.existsSync()) {
           file.deleteSync();
         }

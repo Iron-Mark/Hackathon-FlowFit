@@ -291,6 +291,19 @@ pwsh -NoProfile -File scripts\verify_store_metadata.ps1 `
 `/privacy.html` and `/account-deletion.html`, and still rejects query strings
 or fragments.
 
+When the web/support metadata values live in GitHub repository variables, import
+the non-secret values directly without copying them into a local file:
+```powershell
+pwsh -NoProfile -File scripts\verify_store_metadata.ps1 `
+  -Strict `
+  -GitHubRepo Iron-Mark/Hackathon-FlowFit `
+  -OutFile build/store-metadata-verification.json
+```
+
+The GitHub metadata import is allowlisted to `FLOWFIT_PUBLIC_WEB_BASE_URL` and
+`FLOWFIT_SUPPORT_EMAIL`. It reports how many values were imported and does not
+import or print Supabase client keys.
+
 The helper validates required store metadata sections, Play/App Store text
 lengths, reviewer-facing privacy/account-deletion wording, privacy data map
 coverage, checklist coverage, Android/iOS/web icon dimensions, support email
