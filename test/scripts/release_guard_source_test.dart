@@ -1233,16 +1233,26 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
   });
 
   test('ci installs Android SDK command-line tools before sdkmanager use', () {
-    expect(ciWorkflow, contains('android-actions/setup-android@v3'));
+    expect(ciWorkflow, contains('android-actions/setup-android@v4'));
     expect(
-      ciWorkflow.indexOf('android-actions/setup-android@v3'),
+      ciWorkflow.indexOf('android-actions/setup-android@v4'),
       lessThan(ciWorkflow.indexOf('sdkmanager "platforms;android-36"')),
     );
   });
 
-  test('GitHub workflows opt JavaScript actions into Node 24', () {
+  test('GitHub workflows use current Node 24 action majors', () {
     expect(ciWorkflow, contains('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24'));
     expect(pagesWorkflow, contains('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24'));
+    for (final workflow in [ciWorkflow, pagesWorkflow]) {
+      expect(workflow, contains('actions/checkout@v6'));
+      expect(workflow, contains('actions/upload-artifact@v7'));
+      expect(workflow, isNot(contains('actions/checkout@v4')));
+      expect(workflow, isNot(contains('actions/upload-artifact@v4')));
+    }
+    expect(ciWorkflow, contains('actions/setup-java@v5'));
+    expect(ciWorkflow, contains('android-actions/setup-android@v4'));
+    expect(ciWorkflow, isNot(contains('actions/setup-java@v4')));
+    expect(ciWorkflow, isNot(contains('android-actions/setup-android@v3')));
   });
 
   test('ci keeps web Wasm and Android generated artifacts isolated', () {
@@ -1300,10 +1310,10 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(releaseReadinessRunbook, contains('deploy-ready'));
     expect(releaseReadinessRunbook, contains('skips production GitHub Pages'));
     expect(releaseReadinessRunbook, contains('deployment with a notice'));
-    expect(pagesWorkflow, contains('actions/configure-pages@v5'));
-    expect(pagesWorkflow, contains('actions/upload-pages-artifact@v3'));
-    expect(pagesWorkflow, contains('actions/deploy-pages@v4'));
-    expect(pagesWorkflow, contains('actions/upload-artifact@v4'));
+    expect(pagesWorkflow, contains('actions/configure-pages@v6'));
+    expect(pagesWorkflow, contains('actions/upload-pages-artifact@v5'));
+    expect(pagesWorkflow, contains('actions/deploy-pages@v5'));
+    expect(pagesWorkflow, contains('actions/upload-artifact@v7'));
     expect(pagesWorkflow, contains('scripts/store_release_build.ps1'));
     expect(pagesWorkflow, contains('-Target Web'));
     expect(pagesWorkflow, contains('-SkipFlutterPubGet'));

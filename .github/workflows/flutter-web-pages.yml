@@ -71,7 +71,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -118,16 +118,16 @@ jobs:
         run: pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: build/web
 
       - name: Deploy GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: Verify deployed GitHub Pages site
         shell: pwsh
@@ -138,7 +138,7 @@ jobs:
           -OutFile build/web-pages-deployment-verification.json
 
       - name: Upload GitHub Pages verification evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: flowfit-github-pages-verification
           path: build/web-pages-deployment-verification.json
