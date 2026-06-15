@@ -311,6 +311,29 @@ Configure these repository variables before running it:
 - `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after the configured/default
   support inbox is receiving mail from outside the maintainer account.
 
+After filling the ignored release env file, validate the values before writing
+repository variables:
+
+```powershell
+pwsh -NoProfile -File scripts/configure_github_release_variables.ps1 `
+  -Repo Iron-Mark/Hackathon-FlowFit `
+  -EnvFile .env.release `
+  -DryRun
+```
+
+After the support inbox has been verified, write the variables with:
+
+```powershell
+pwsh -NoProfile -File scripts/configure_github_release_variables.ps1 `
+  -Repo Iron-Mark/Hackathon-FlowFit `
+  -EnvFile .env.release `
+  -SupportEmailVerified
+```
+
+The helper rejects placeholder/test-shaped values, secret/service-role Supabase
+keys, and the retired Supabase project ref. It redacts the publishable key in
+all output.
+
 The workflow has a `deploy-ready` job. Until the Supabase variables and
 verified support-inbox flag are configured, it skips production GitHub Pages
 deployment with a notice instead of failing pushes to `main` or manual

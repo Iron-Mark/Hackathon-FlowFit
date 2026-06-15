@@ -122,6 +122,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `FLOWFIT_SUPPORT_EMAIL`; set `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`
       only after the configured/default inbox is receiving external mail, then
       run `.github/workflows/flutter-web-pages.yml`.
+      Prefer `scripts/configure_github_release_variables.ps1 -DryRun` before
+      setting them so placeholders and secret/service-role keys are rejected.
       Use `https://iron-mark.github.io/Hackathon-FlowFit` as the default project
       site unless a custom domain is configured.
       Until those variables are complete, the Pages workflow's `deploy-ready`

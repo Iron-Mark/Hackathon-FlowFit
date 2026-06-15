@@ -8,6 +8,7 @@ void main() {
   late String releasePreflight;
   late String storeReleaseBuild;
   late String readinessAudit;
+  late String scriptsReadme;
   late String supabaseConfig;
   late String releaseEnvExample;
   late String configureLocalRelease;
@@ -32,6 +33,7 @@ void main() {
     readinessAudit = File(
       'scripts/release_readiness_audit.ps1',
     ).readAsStringSync();
+    scriptsReadme = File('scripts/README.md').readAsStringSync();
     supabaseConfig = File('supabase/config.toml').readAsStringSync();
     releaseEnvExample = File('.env.release.example').readAsStringSync();
     configureLocalRelease = File(
@@ -218,6 +220,85 @@ void main() {
     expect(releaseEnvExample, isNot(contains('service_role')));
     expect(releaseEnvExample, isNot(contains('sb_secret_')));
     expect(releaseEnvExample, isNot(contains('dnasghxxqwibwqnljvxr')));
+  });
+
+  test('GitHub release variable helper validates and redacts values', () {
+    final helper = File(
+      'scripts/configure_github_release_variables.ps1',
+    ).readAsStringSync();
+
+    for (final name in [
+      'FLOWFIT_PUBLIC_WEB_BASE_URL',
+      'FLOWFIT_WEB_BASE_HREF',
+      'FLOWFIT_SUPPORT_EMAIL',
+      'FLOWFIT_SUPPORT_EMAIL_VERIFIED',
+      'SUPABASE_URL',
+      'SUPABASE_PUBLISHABLE_KEY',
+    ]) {
+      expect(helper, contains(name));
+    }
+
+    expect(helper, contains('gh variable set'));
+    expect(helper, contains('DryRun'));
+    expect(helper, contains('redacted'));
+    expect(helper, contains('sb_secret_'));
+    expect(helper, contains('service_role'));
+    expect(helper, contains('dnasghxxqwibwqnljvxr'));
+    expect(helper, contains('REPLACE_WITH'));
+    expect(
+      helper,
+      contains('SupportEmailVerified must be passed before setting true'),
+    );
+    expect(scriptsReadme, contains('configure_github_release_variables.ps1'));
+    expect(
+      storeSubmissionChecklist,
+      contains('configure_github_release_variables.ps1'),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('configure_github_release_variables.ps1'),
+    );
+  });
+
+  test('GitHub release variable helper dry-run redacts publishable key', () {
+    const publishableKey = 'sb_publishable_abcdefghijklmnopqrstuvwxyz123456';
+    final env = Map<String, String>.from(Platform.environment)
+      ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] =
+          'https://iron-mark.github.io/Hackathon-FlowFit/'
+      ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@flowfit.com'
+      ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
+      ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+      ..['SUPABASE_PUBLISHABLE_KEY'] = publishableKey;
+
+    final dryRun = Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      'scripts/configure_github_release_variables.ps1',
+      '-Repo',
+      'Iron-Mark/Hackathon-FlowFit',
+      '-DryRun',
+      '-SupportEmailVerified',
+    ], environment: env);
+
+    expect(dryRun.exitCode, 0, reason: '${dryRun.stdout}\n${dryRun.stderr}');
+    expect(dryRun.stdout, contains('GH_RELEASE_VARIABLES_DRY_RUN_OK'));
+    expect(dryRun.stdout, contains('SUPABASE_PUBLISHABLE_KEY=<redacted>'));
+    expect(dryRun.stdout, isNot(contains(publishableKey)));
+
+    final blocked = Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      'scripts/configure_github_release_variables.ps1',
+      '-Repo',
+      'Iron-Mark/Hackathon-FlowFit',
+      '-DryRun',
+    ], environment: env);
+
+    expect(blocked.exitCode, isNot(0));
+    expect(
+      '${blocked.stdout}\n${blocked.stderr}',
+      contains('SupportEmailVerified must be passed before setting true'),
+    );
   });
 
   test('legacy Kiro specs do not pin retired Supabase credentials', () {
