@@ -9,6 +9,7 @@ void main() {
   late String releasePreflight;
   late String storeReleaseBuild;
   late String readinessAudit;
+  late String releaseStatusSnapshot;
   late String scriptsReadme;
   late String supabaseConfig;
   late String releaseEnvExample;
@@ -40,6 +41,9 @@ void main() {
     ).readAsStringSync();
     readinessAudit = File(
       'scripts/release_readiness_audit.ps1',
+    ).readAsStringSync();
+    releaseStatusSnapshot = File(
+      'scripts/release_status_snapshot.ps1',
     ).readAsStringSync();
     scriptsReadme = File('scripts/README.md').readAsStringSync();
     supabaseConfig = File('supabase/config.toml').readAsStringSync();
@@ -174,6 +178,48 @@ void main() {
     expect(storeReleaseBuild, contains('[string]\$EnvFile'));
     expect(readinessAudit, contains('Import-ReleaseEnvFile'));
     expect(storeReleaseBuild, contains('Import-ReleaseEnvFile'));
+  });
+
+  test('release status snapshot captures handoff state without secrets', () {
+    expect(releaseStatusSnapshot, contains('release_readiness_audit.ps1'));
+    expect(releaseStatusSnapshot, contains('-Strict'));
+    expect(releaseStatusSnapshot, contains('gh'));
+    expect(releaseStatusSnapshot, contains('variable'));
+    expect(releaseStatusSnapshot, contains('name,updatedAt'));
+    expect(releaseStatusSnapshot, isNot(contains('name,value')));
+    expect(releaseStatusSnapshot, contains('SkipRemote'));
+    expect(releaseStatusSnapshot, contains('SkipStrictAudit'));
+    expect(releaseStatusSnapshot, contains('RELEASE_STATUS_SNAPSHOT_WRITTEN'));
+    expect(scriptsReadme, contains('release_status_snapshot.ps1'));
+    expect(releaseReadinessRunbook, contains('release_status_snapshot.ps1'));
+
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_release_snapshot_',
+    );
+    try {
+      final outFile = File(
+        '${tempDir.path}${Platform.pathSeparator}snapshot.md',
+      );
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/release_status_snapshot.ps1',
+        '-SkipRemote',
+        '-SkipStrictAudit',
+        '-OutFile',
+        outFile.path,
+      ]);
+
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      expect(result.stdout, contains('RELEASE_STATUS_SNAPSHOT_WRITTEN'));
+      final snapshot = outFile.readAsStringSync();
+      expect(snapshot, contains('FlowFit Release Status Snapshot'));
+      expect(snapshot, contains('Strict audit skipped'));
+      expect(snapshot, contains('Remote checks skipped'));
+      expect(snapshot, isNot(contains('SUPABASE_PUBLISHABLE_KEY=')));
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
   });
 
   test(

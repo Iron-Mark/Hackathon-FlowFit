@@ -405,6 +405,9 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict
 # Strict audit with JSON evidence for release handoff:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
 
+# Non-secret release status snapshot for PR/store handoff:
+pwsh -NoProfile -File scripts/release_status_snapshot.ps1 -Repo Iron-Mark/Hackathon-FlowFit -OutFile build/release-status-snapshot.md
+
 # Same strict audit using the ignored release env file:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -EnvFile .env.release -OutFile build/store-release-readiness-audit.json
 

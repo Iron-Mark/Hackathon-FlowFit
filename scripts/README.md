@@ -191,6 +191,25 @@ does not print Supabase keys.
 
 ---
 
+### Release status snapshot: release_status_snapshot.ps1
+**Purpose**: Write a non-secret markdown handoff snapshot that combines local
+git state, strict audit output, PR/check status, GitHub repository variable
+names, and GitHub Pages status.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts/release_status_snapshot.ps1 `
+  -Repo Iron-Mark/Hackathon-FlowFit `
+  -OutFile build/release-status-snapshot.md
+```
+
+Use `-SkipRemote` for offline local snapshots and `-SkipStrictAudit` when you
+only need git/PR/Page state. The helper lists repository variable names and
+update timestamps only; it does not print Supabase publishable keys or signing
+values.
+
+---
+
 ### 6. verify_supabase_backend.ps1
 **Purpose**: Validate and optionally run the read-only Supabase backend
 verification SQL after the canonical migration has been applied.
