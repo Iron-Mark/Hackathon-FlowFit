@@ -6,13 +6,17 @@ Do not run the archived legacy migration files for a new project.
 ## Setup Order
 
 1. Create a new Supabase project for FlowFit.
-2. Replace the project ref in `.mcp.json`, then reload Codex and complete
-   Supabase MCP OAuth.
+2. Run `scripts/configure_supabase_mcp.ps1 -ProjectRef <new-flowfit-dev-ref>`,
+   then reload Codex and complete Supabase MCP OAuth.
 3. Copy `lib/secrets.dart.example` to ignored `lib/secrets.dart` and fill the
    Project URL plus publishable key.
 4. Apply `supabase/migrations/20260614062844_recreate_flowfit_backend.sql`.
-5. Run Supabase advisors and fix high-risk findings.
-6. Smoke test signup, login, profile onboarding, Buddy onboarding, workout
+5. Run `scripts/verify_supabase_backend.ps1 -Linked` or execute
+   `supabase/verification/verify_flowfit_backend.sql` through MCP/dashboard.
+6. Run Supabase advisors and fix high-risk findings.
+7. After migration verification/advisors pass, run
+   `scripts/configure_supabase_mcp.ps1 -ProjectRef <new-flowfit-dev-ref> -ReleaseReadOnly`.
+8. Smoke test signup, login, profile onboarding, Buddy onboarding, workout
    session persistence, and account deletion request.
 
 ## CLI Path
@@ -25,6 +29,7 @@ npx --yes supabase login
 npx --yes supabase link --project-ref <new-flowfit-dev-ref>
 npx --yes supabase db push --linked --dry-run
 npx --yes supabase db push --linked
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
 ```
 
 `supabase/config.toml` is present for local CLI workflows. Commands that inspect

@@ -356,6 +356,9 @@ Minimum completion criteria before release:
   `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>'`.
 - Supabase MCP OAuth is complete.
 - Canonical migration has been applied.
+- `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
+  `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
+  returns only passing backend verification rows.
 - Advisors have no unresolved high-risk security/performance findings.
 - After migrations/advisors are complete, `.mcp.json` includes
   `read_only=true` for release verification. Use:
@@ -404,6 +407,10 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailV
 
 # Same strict audit using the ignored release env file:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -EnvFile .env.release -OutFile build/store-release-readiness-audit.json
+
+# Read-only backend verification after the Supabase migration is applied:
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -ValidateOnly
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
 
 # Full local gate, including release App Bundle smoke:
 pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke

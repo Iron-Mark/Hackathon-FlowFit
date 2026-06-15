@@ -609,6 +609,39 @@ function Test-SupabaseMigration {
         Add-Fail 'Pending deletion write guard' 'Migration must block profile, buddy, workout, and heart-rate writes after pending deletion.'
     }
 
+    $verificationSqlPath = 'supabase/verification/verify_flowfit_backend.sql'
+    $verificationSql = Read-RepoText $verificationSqlPath
+    if (
+        $null -ne $verificationSql -and
+        $verificationSql.Contains('flowfit_backend_verification') -and
+        $verificationSql.Contains('information_schema.columns') -and
+        $verificationSql.Contains('pg_policies') -and
+        $verificationSql.Contains('role_table_grants') -and
+        $verificationSql.Contains('relrowsecurity') -and
+        $verificationSql -notmatch '(?im)^\s*(create|alter|drop|delete|insert|update|truncate|grant|revoke|comment|begin|commit)\b'
+    ) {
+        Add-Pass 'Supabase backend verification SQL' 'Read-only backend verification SQL is present for post-migration checks.'
+    } else {
+        Add-Fail 'Supabase backend verification SQL' "Missing or unsafe $verificationSqlPath."
+    }
+
+    $verificationScriptPath = 'scripts/verify_supabase_backend.ps1'
+    $verificationScript = Read-RepoText $verificationScriptPath
+    if (
+        $null -ne $verificationScript -and
+        $verificationScript.Contains('supabase@latest') -and
+        $verificationScript.Contains("'db'") -and
+        $verificationScript.Contains("'query'") -and
+        $verificationScript.Contains('--linked') -and
+        $verificationScript.Contains('--local') -and
+        $verificationScript.Contains('--db-url') -and
+        $verificationScript.Contains('SUPABASE_BACKEND_VERIFICATION_SQL_OK')
+    ) {
+        Add-Pass 'Supabase backend verification runner' 'Runner validates the read-only SQL and can execute it through current Supabase CLI targets.'
+    } else {
+        Add-Fail 'Supabase backend verification runner' "Missing or incomplete $verificationScriptPath."
+    }
+
     foreach ($table in @(
         'user_profiles',
         'buddy_profiles',

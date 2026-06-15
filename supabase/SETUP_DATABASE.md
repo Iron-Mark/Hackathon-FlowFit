@@ -54,8 +54,21 @@ Codex.
 
 ## Verify
 
-Use the verification SQL in `docs/SUPABASE_RECOVERY_RUNBOOK.md` to confirm
-columns, policies, grants, and constraints.
+Run the canonical read-only backend verifier:
+
+```powershell
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -ValidateOnly
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
+```
+
+The same SQL lives at:
+
+```text
+supabase/verification/verify_flowfit_backend.sql
+```
+
+It can also be run through Supabase MCP `execute_sql` or the dashboard SQL
+editor. Every returned row should have `status = pass` before release.
 
 Then run the local app gate:
 

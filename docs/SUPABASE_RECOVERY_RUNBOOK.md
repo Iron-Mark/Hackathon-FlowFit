@@ -175,6 +175,25 @@ npx -y supabase@latest db push --linked
 
 ## 5. Verify Database Shape
 
+Preferred repeatable verification:
+
+```powershell
+pwsh -NoProfile -File scripts\verify_supabase_backend.ps1 -ValidateOnly
+pwsh -NoProfile -File scripts\verify_supabase_backend.ps1 -Linked
+```
+
+The runner validates that
+`supabase/verification/verify_flowfit_backend.sql` is read-only before running
+it through the current Supabase CLI. Use `-Local` for a local Supabase stack,
+or `-DbUrl '<percent-encoded-postgres-url>'` when you intentionally want to
+target a database URL from a secure local shell. The SQL returns one row per
+backend check with `status = pass` or `status = fail`; every row should pass
+before moving to release MCP `read_only=true`.
+
+If Supabase MCP is active instead, run
+`supabase/verification/verify_flowfit_backend.sql` through MCP `execute_sql`.
+You can also paste the same SQL into the dashboard SQL editor.
+
 Use MCP `execute_sql` or the dashboard SQL editor:
 
 ```sql

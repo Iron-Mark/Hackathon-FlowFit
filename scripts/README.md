@@ -178,7 +178,40 @@ does not print Supabase keys.
 
 ---
 
-### 6. configure_supabase_mcp.ps1
+### 6. verify_supabase_backend.ps1
+**Purpose**: Validate and optionally run the read-only Supabase backend
+verification SQL after the canonical migration has been applied.
+
+**Static validation only**:
+```powershell
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -ValidateOnly
+```
+
+**Run against the linked Supabase project**:
+```powershell
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
+```
+
+**Run against a local Supabase stack**:
+```powershell
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Local
+```
+
+**Run against an explicit database URL from a secure shell**:
+```powershell
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 `
+  -DbUrl '<percent-encoded-postgres-url>'
+```
+
+The script validates that
+`supabase/verification/verify_flowfit_backend.sql` remains read-only, then uses
+the current Supabase CLI `db query --file` surface with `--linked`, `--local`,
+or `--db-url`. The SQL returns one row per backend check; every row should have
+`status = pass` before switching MCP to release `read_only=true`.
+
+---
+
+### 7. configure_supabase_mcp.ps1
 **Purpose**: Validate and write project-scoped Supabase MCP config without
 storing tokens, service-role keys, or database passwords in the repo.
 
@@ -210,7 +243,7 @@ prompted.
 
 ---
 
-### 7. configure_github_release_variables.ps1
+### 8. configure_github_release_variables.ps1
 **Purpose**: Validate and set GitHub repository variables used by strict audit
 and the GitHub Pages deployment workflow after the maintainer has real Supabase
 client values and a verified support inbox.
@@ -249,7 +282,7 @@ required so the production web deploy cannot be enabled by accident.
 
 ---
 
-### 8. store_release_build.ps1
+### 9. store_release_build.ps1
 **Purpose**: Production artifact build wrapper for store/web handoff. It fails
 early when the git working tree is dirty, required production environment
 values, signing files, or public web URLs are missing. By default it also runs
@@ -363,7 +396,7 @@ manifest after the strict audit passes.
 
 ---
 
-### 9. verify_web_deployment.ps1
+### 10. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -410,7 +443,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 10. configure_local_release.ps1
+### 11. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it

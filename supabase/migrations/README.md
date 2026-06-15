@@ -45,8 +45,20 @@ npx -y supabase@latest db push --linked
 ```
 
 For full recovery steps, MCP setup, dashboard settings, credential recovery, and
-verification SQL, see:
+verification, see:
 
 ```text
 docs/SUPABASE_RECOVERY_RUNBOOK.md
+```
+
+After applying the migration, run the canonical read-only verifier:
+
+```powershell
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
+```
+
+The SQL is tracked at:
+
+```text
+supabase/verification/verify_flowfit_backend.sql
 ```

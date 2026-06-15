@@ -14,6 +14,8 @@ void main() {
   late String releaseEnvExample;
   late String configureLocalRelease;
   late String configureSupabaseMcp;
+  late String verifySupabaseBackend;
+  late String supabaseBackendVerificationSql;
   late String webDeploymentVerifier;
   late String storeSubmissionChecklist;
   late String releaseReadinessRunbook;
@@ -44,6 +46,12 @@ void main() {
     ).readAsStringSync();
     configureSupabaseMcp = File(
       'scripts/configure_supabase_mcp.ps1',
+    ).readAsStringSync();
+    verifySupabaseBackend = File(
+      'scripts/verify_supabase_backend.ps1',
+    ).readAsStringSync();
+    supabaseBackendVerificationSql = File(
+      'supabase/verification/verify_flowfit_backend.sql',
     ).readAsStringSync();
     webDeploymentVerifier = File(
       'scripts/verify_web_deployment.ps1',
@@ -421,6 +429,132 @@ void main() {
         '${result.stdout}\n${result.stderr}',
         contains('Supabase project ref'),
       );
+    }
+  });
+
+  test('Supabase backend verification SQL is read-only and complete', () {
+    expect(
+      supabaseBackendVerificationSql,
+      contains('flowfit_backend_verification'),
+    );
+    expect(
+      supabaseBackendVerificationSql,
+      contains('information_schema.columns'),
+    );
+    expect(supabaseBackendVerificationSql, contains('pg_policies'));
+    expect(supabaseBackendVerificationSql, contains('role_table_grants'));
+    expect(supabaseBackendVerificationSql, contains('relrowsecurity'));
+    expect(supabaseBackendVerificationSql, contains('prosecdef = false'));
+    expect(
+      supabaseBackendVerificationSql,
+      contains('account_deletion_requests_user_id_fkey'),
+    );
+
+    for (final table in [
+      'user_profiles',
+      'buddy_profiles',
+      'workout_sessions',
+      'heart_rate',
+      'account_deletion_requests',
+      'flowfit_recovery_quarantine',
+    ]) {
+      expect(supabaseBackendVerificationSql, contains(table));
+    }
+
+    for (final routine in [
+      'request_account_deletion',
+      'has_pending_account_deletion',
+      'update_updated_at_column',
+    ]) {
+      expect(supabaseBackendVerificationSql, contains(routine));
+    }
+
+    for (final role in ['authenticated', 'anon', 'service_role']) {
+      expect(supabaseBackendVerificationSql, contains(role));
+    }
+
+    expect(
+      supabaseBackendVerificationSql,
+      isNot(
+        matches(
+          RegExp(
+            r'^\s*(create|alter|drop|delete|insert|update|truncate|grant|revoke|comment|begin|commit)\b',
+            caseSensitive: false,
+            multiLine: true,
+          ),
+        ),
+      ),
+    );
+  });
+
+  test('Supabase backend verification runner validates SQL safely', () {
+    expect(verifySupabaseBackend, contains('supabase@latest'));
+    expect(verifySupabaseBackend, contains('db'));
+    expect(verifySupabaseBackend, contains('query'));
+    expect(verifySupabaseBackend, contains('--linked'));
+    expect(verifySupabaseBackend, contains('--local'));
+    expect(verifySupabaseBackend, contains('--db-url'));
+    expect(
+      verifySupabaseBackend,
+      contains('SUPABASE_BACKEND_VERIFICATION_SQL_OK'),
+    );
+    expect(
+      verifySupabaseBackend,
+      contains('SUPABASE_BACKEND_VERIFICATION_RUN_OK'),
+    );
+    expect(scriptsReadme, contains('scripts/verify_supabase_backend.ps1'));
+    expect(
+      supabaseRecoveryRunbook,
+      contains('supabase/verification/verify_flowfit_backend.sql'),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('scripts/verify_supabase_backend.ps1'),
+    );
+    expect(readinessAudit, contains('Supabase backend verification SQL'));
+    expect(readinessAudit, contains('Supabase backend verification runner'));
+    expect(readinessAudit, contains('verify_flowfit_backend.sql'));
+    expect(readinessAudit, contains('verify_supabase_backend.ps1'));
+  });
+
+  test('Supabase backend verification runner validates read-only SQL', () {
+    final result = Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      'scripts/verify_supabase_backend.ps1',
+      '-ValidateOnly',
+    ]);
+
+    expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+    expect(result.stdout, contains('SUPABASE_BACKEND_VERIFICATION_SQL_OK'));
+  });
+
+  test('Supabase backend verification runner rejects mutating SQL', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_supabase_verifier_mutating_',
+    );
+    try {
+      final sqlFile = File(
+        '${tempDir.path}${Platform.pathSeparator}bad_verifier.sql',
+      );
+      sqlFile.writeAsStringSync('''
+with flowfit_backend_verification as (select 1 as ok)
+drop table public.user_profiles;
+''');
+
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_supabase_backend.ps1',
+        '-SqlFile',
+        sqlFile.path,
+        '-ValidateOnly',
+      ]);
+
+      expect(result.exitCode, isNot(0));
+      expect('${result.stdout}\n${result.stderr}', contains('read-only'));
+    } finally {
+      tempDir.deleteSync(recursive: true);
     }
   });
 
