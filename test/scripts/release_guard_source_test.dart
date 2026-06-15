@@ -13,6 +13,7 @@ void main() {
   late String createAndroidUploadKeystore;
   late String exportAndroidSigningEnv;
   late String supportInboxVerifier;
+  late String renderSupabaseEmailTemplates;
   late String storeMetadataVerifier;
   late String createIosExportOptions;
   late String scriptsReadme;
@@ -70,6 +71,9 @@ void main() {
     ).readAsStringSync();
     supportInboxVerifier = File(
       'scripts/verify_support_inbox.ps1',
+    ).readAsStringSync();
+    renderSupabaseEmailTemplates = File(
+      'scripts/render_supabase_email_templates.ps1',
     ).readAsStringSync();
     storeMetadataVerifier = File(
       'scripts/verify_store_metadata.ps1',
@@ -2421,23 +2425,157 @@ function Resolve-DnsName {
       }
       expect(readinessAudit, contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'));
       expect(readinessAudit, contains('Supabase email templates'));
+      expect(readinessAudit, contains('render_supabase_email_templates.ps1'));
+      expect(renderSupabaseEmailTemplates, contains('FLOWFIT_SUPPORT_EMAIL'));
+      expect(
+        renderSupabaseEmailTemplates,
+        contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'),
+      );
+      expect(
+        renderSupabaseEmailTemplates,
+        contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'),
+      );
+      expect(renderSupabaseEmailTemplates, contains('{{ .ConfirmationURL }}'));
+      expect(renderSupabaseEmailTemplates, contains('{{ .SiteURL }}'));
+      expect(renderSupabaseEmailTemplates, contains('manifest.json'));
+      expect(
+        renderSupabaseEmailTemplates,
+        contains('Get-FileHash -Algorithm SHA256'),
+      );
       expect(
         supabaseEmailSetupGuide,
         contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'),
+      );
+      expect(
+        supabaseEmailSetupGuide,
+        contains('render_supabase_email_templates.ps1'),
       );
       expect(supabaseEmailSetupGuide, contains('{{ .SiteURL }}'));
       expect(
         supabaseEmailQuickSetup,
         contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'),
       );
+      expect(
+        supabaseEmailQuickSetup,
+        contains('render_supabase_email_templates.ps1'),
+      );
       expect(supabaseEmailQuickSetup, contains('{{ .SiteURL }}'));
       expect(
         releaseReadinessRunbook,
         contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'),
       );
+      expect(
+        releaseReadinessRunbook,
+        contains('render_supabase_email_templates.ps1'),
+      );
+      expect(scriptsReadme, contains('render_supabase_email_templates.ps1'));
+      expect(
+        storeSubmissionChecklist,
+        contains('render_supabase_email_templates.ps1 -SupportEmailVerified'),
+      );
       expect(releaseReadinessRunbook, contains('{{ .SiteURL }}'));
     },
   );
+
+  test('Supabase email template renderer writes dashboard-ready outputs', () {
+    final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
+    final outDir = Directory('build/supabase-email-templates-test-$unique');
+
+    ProcessResult runRenderer(List<String> args, Map<String, String> env) {
+      return Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/render_supabase_email_templates.ps1',
+        '-OutDir',
+        outDir.path,
+        ...args,
+      ], environment: env);
+    }
+
+    final baseEnv = Map<String, String>.from(Platform.environment)
+      ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
+      ..remove('FLOWFIT_SUPPORT_EMAIL_VERIFIED');
+
+    try {
+      final unverified = runRenderer([], baseEnv);
+      expect(unverified.exitCode, isNot(0));
+      expect(
+        '${unverified.stdout}\n${unverified.stderr}',
+        contains(
+          'FLOWFIT_SUPPORT_EMAIL_VERIFIED=true or -SupportEmailVerified',
+        ),
+      );
+
+      final defaultInbox = runRenderer([
+        '-SupportEmail',
+        'support@flowfit.com',
+        '-SupportEmailVerified',
+      ], baseEnv);
+      expect(defaultInbox.exitCode, isNot(0));
+      final defaultInboxOutput =
+          '${defaultInbox.stdout}\n${defaultInbox.stderr}'
+              .replaceAll(RegExp(r'\x1B\[[0-9;]*m'), '')
+              .replaceAll(RegExp(r'\s+'), ' ');
+      expect(defaultInboxOutput, contains('support@flowfit.com'));
+      expect(defaultInboxOutput, contains('reserved source'));
+      expect(defaultInboxOutput, contains('replacement token'));
+
+      final sourceOverwriteAttempt = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/render_supabase_email_templates.ps1',
+        '-OutDir',
+        'supabase/email_templates',
+        '-SupportEmailVerified',
+      ], environment: baseEnv);
+      expect(sourceOverwriteAttempt.exitCode, isNot(0));
+      expect(
+        '${sourceOverwriteAttempt.stdout}\n${sourceOverwriteAttempt.stderr}',
+        contains('OutDir must be a generated directory under build/'),
+      );
+
+      final rendered = runRenderer(['-SupportEmailVerified'], baseEnv);
+      expect(
+        rendered.exitCode,
+        0,
+        reason: '${rendered.stdout}\n${rendered.stderr}',
+      );
+      expect(rendered.stdout, contains('SUPABASE_EMAIL_TEMPLATES_RENDERED'));
+
+      final html = File('${outDir.path}/confirm_signup.html');
+      final text = File('${outDir.path}/confirm_signup.txt');
+      final manifest = File('${outDir.path}/manifest.json');
+      for (final file in [html, text, manifest]) {
+        expect(file.existsSync(), isTrue, reason: '${file.path} should exist');
+      }
+
+      for (final content in [
+        html.readAsStringSync(),
+        text.readAsStringSync(),
+      ]) {
+        expect(content, contains('support@release.flowfit.app'));
+        expect(content, contains('{{ .ConfirmationURL }}'));
+        expect(content, contains('{{ .SiteURL }}'));
+        expect(content, isNot(contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL')));
+        expect(content, isNot(contains('support@flowfit.com')));
+      }
+
+      final manifestJson =
+          jsonDecode(manifest.readAsStringSync()) as Map<String, dynamic>;
+      expect(manifestJson['supportEmail'], 'support@release.flowfit.app');
+      expect(manifestJson['outputDirectory'], contains('build/'));
+      final templates = manifestJson['templates'] as List<dynamic>;
+      expect(templates, hasLength(2));
+      for (final template in templates.cast<Map<String, dynamic>>()) {
+        expect(template['sha256'], matches(RegExp(r'^[a-f0-9]{64}$')));
+        expect(template['bytes'], greaterThan(0));
+      }
+    } finally {
+      if (outDir.existsSync()) {
+        outDir.deleteSync(recursive: true);
+      }
+    }
+  });
 
   test('Supabase auth password policy matches app minimum length', () {
     expect(supabaseConfig, contains('minimum_password_length = 8'));

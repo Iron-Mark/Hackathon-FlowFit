@@ -31,10 +31,22 @@ Confirm Your FlowFit Signup ⚡
 ```
 
 **Body:**
-Copy and paste the content from `confirm_signup.html` after replacing
-`REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` with the verified deliverable support
-inbox. The privacy and account-deletion links use Supabase's `{{ .SiteURL }}`
-template variable, so set Site URL to the correct app/web origin first.
+Render dashboard-ready templates after the support inbox has received an
+external test email:
+
+```powershell
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
+$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
+pwsh -NoProfile -File scripts/render_supabase_email_templates.ps1 -SupportEmailVerified
+```
+
+Copy and paste the rendered
+`build/supabase-email-templates/confirm_signup.html` content into the dashboard
+body. Keep `build/supabase-email-templates/confirm_signup.txt` with the release
+handoff as a plain-text/archive fallback, and keep the source template
+placeholder `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` in git. The privacy and
+account-deletion links use Supabase's `{{ .SiteURL }}` template variable, so set
+Site URL to the correct app/web origin first.
 
 ### 4. Test the Flow
 

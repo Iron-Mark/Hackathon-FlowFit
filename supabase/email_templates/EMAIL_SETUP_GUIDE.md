@@ -49,11 +49,23 @@ Confirm Your FlowFit Signup ⚡
 ```
 
 #### Email Body (HTML):
-Copy the content from `confirm_signup.html` file in this directory after
-replacing `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` with the verified deliverable
-support inbox. The template uses Supabase's `{{ .SiteURL }}` variable for
-privacy and account-deletion links, so the dashboard Site URL must be the final
-`FLOWFIT_PUBLIC_WEB_BASE_URL` origin before production use.
+Render dashboard-ready templates after the support inbox has received an
+external test email:
+
+```powershell
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
+$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
+pwsh -NoProfile -File scripts/render_supabase_email_templates.ps1 -SupportEmailVerified
+```
+
+Copy the rendered `build/supabase-email-templates/confirm_signup.html` into the
+Supabase dashboard Confirm signup body. Keep
+`build/supabase-email-templates/confirm_signup.txt` with the release handoff as
+a plain-text/archive fallback. The source templates intentionally keep
+`REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL`; do not paste them directly for
+production. The rendered templates preserve Supabase's `{{ .SiteURL }}` variable
+for privacy and account-deletion links, so the dashboard Site URL must be the
+final `FLOWFIT_PUBLIC_WEB_BASE_URL` origin before production use.
 
 ### Step 4: Email Template Variables
 

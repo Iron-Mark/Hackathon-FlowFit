@@ -794,7 +794,7 @@ function Test-SupabaseConfig {
     if ($templateIssues.Count -gt 0) {
         Add-Fail 'Supabase email templates' "Supabase auth email templates have release-blocking placeholders: $($templateIssues -join '; ')."
     } elseif ($templateReplacementTokens.Count -gt 0) {
-        Add-Warn 'Supabase email templates' "Replace REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL with the verified deliverable support inbox before copying Supabase auth email templates to the dashboard: $($templateReplacementTokens -join ', ')." -StrictFailure $false
+        Add-Warn 'Supabase email templates' "Render dashboard-ready templates with scripts/render_supabase_email_templates.ps1 after the support inbox is verified, then copy them to Supabase Auth Email Templates. Source files still contain REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL: $($templateReplacementTokens -join ', ')." -StrictFailure $false
     } elseif ($templatesUseSiteUrl) {
         Add-Pass 'Supabase email templates' 'Supabase auth email templates use {{ .SiteURL }} for public compliance links and no known placeholder support inbox.'
     } else {

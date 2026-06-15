@@ -489,10 +489,23 @@ Minimum completion criteria before release:
 - After migrations/advisors are complete, `.mcp.json` includes
   `read_only=true` for release verification. Use:
   `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>' -ReleaseReadOnly`.
-- Before copying `supabase/email_templates/confirm_signup.html` or `.txt` into
-  the Supabase dashboard, replace `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` with the
-  verified deliverable support inbox. The templates use Supabase `{{ .SiteURL }}`
-  for public compliance links, so the dashboard Site URL must match the final
+- Before copying Supabase auth templates into the dashboard, render
+  dashboard-ready copies after the support inbox has received an external test
+  email:
+
+  ```powershell
+  $env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
+  $env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
+  pwsh -NoProfile -File scripts/render_supabase_email_templates.ps1 -SupportEmailVerified
+  ```
+
+  Copy `build/supabase-email-templates/confirm_signup.html` into the Supabase
+  Auth Confirm signup email body. Keep
+  `build/supabase-email-templates/confirm_signup.txt` with the release handoff
+  as a plain-text/archive fallback. The source templates intentionally keep
+  `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL`; do not paste them directly for
+  production. The rendered templates use Supabase `{{ .SiteURL }}` for public
+  compliance links, so the dashboard Site URL must match the final
   `FLOWFIT_PUBLIC_WEB_BASE_URL`.
 - App signup/login/onboarding/workout smoke flows have been tested against the
   live project.

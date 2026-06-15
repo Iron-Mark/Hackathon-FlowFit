@@ -613,7 +613,29 @@ manifest after the strict audit passes.
 
 ---
 
-### 15. verify_web_deployment.ps1
+### 15. render_supabase_email_templates.ps1
+**Purpose**: Render dashboard-ready Supabase Auth email templates after the
+support/privacy inbox is verified. Source templates keep
+`REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` so repo files never pin an
+environment-specific mailbox.
+
+```powershell
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
+$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
+pwsh -NoProfile -File scripts/render_supabase_email_templates.ps1 -SupportEmailVerified
+```
+
+The script writes `build/supabase-email-templates/confirm_signup.html`,
+`build/supabase-email-templates/confirm_signup.txt`, and a non-secret
+`manifest.json` with SHA-256 evidence. Copy the HTML output into the Supabase
+Confirm signup dashboard body and keep the text output with the release handoff
+as a plain-text/archive fallback. It preserves Supabase template variables such
+as `{{ .ConfirmationURL }}` and `{{ .SiteURL }}` and fails if the rendered files
+still contain the replacement token or reserved source inbox.
+
+---
+
+### 16. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -662,7 +684,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 16. configure_local_release.ps1
+### 17. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it

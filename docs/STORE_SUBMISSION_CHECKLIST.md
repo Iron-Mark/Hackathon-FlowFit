@@ -25,6 +25,11 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
       `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
       returns only passing backend verification rows.
+- [ ] Supabase Auth confirm-signup email templates are rendered with
+      `scripts/render_supabase_email_templates.ps1 -SupportEmailVerified` and
+      `build/supabase-email-templates/confirm_signup.html` is copied into the
+      dashboard body after the support inbox is verified. Keep the rendered
+      `.txt` file with the release handoff.
 - [ ] Production Supabase client values are supplied through `SUPABASE_URL` and
       `SUPABASE_PUBLISHABLE_KEY`, either from the process environment, ignored
       `.env.release`, or ignored local fallback `lib/secrets.dart`.
