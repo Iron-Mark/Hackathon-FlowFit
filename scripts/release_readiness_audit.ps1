@@ -7,6 +7,7 @@ param(
     [string]$McpConfigPath = '.mcp.json',
     [string]$GitHubRepo = '',
     [string]$GitHubVariablesPath = '',
+    [string]$SupportInboxEvidencePath = 'build/support-inbox-verification.json',
     [string]$OutFile = ''
 )
 
@@ -546,6 +547,24 @@ function Get-OptionalEnv {
     }
 
     return $value.Trim()
+}
+
+function Get-SupportInboxEvidence {
+    if ([string]::IsNullOrWhiteSpace($SupportInboxEvidencePath)) {
+        return $null
+    }
+
+    $content = Read-AuditText $SupportInboxEvidencePath
+    if ($null -eq $content) {
+        return $null
+    }
+
+    try {
+        return $content | ConvertFrom-Json
+    } catch {
+        Add-Fail 'Production support inbox' "Support inbox evidence is not valid JSON: $SupportInboxEvidencePath."
+        return $null
+    }
 }
 
 function Test-SupabaseMigration {
@@ -1134,6 +1153,29 @@ function Test-WebAndStoreConfig {
         }
         if ($null -ne $content -and $content.Contains($expectedSupportEmail)) {
             $filesWithExpectedSupport += $path
+        }
+    }
+
+    $supportEvidence = Get-SupportInboxEvidence
+    if ($null -ne $supportEvidence) {
+        $evidenceEmail = [string]$supportEvidence.supportEmail
+        if (
+            -not [string]::IsNullOrWhiteSpace($evidenceEmail) -and
+            $evidenceEmail.Trim() -ne $expectedSupportEmail
+        ) {
+            Add-Fail 'Production support inbox' "Support inbox evidence is for $evidenceEmail, but this audit expects $expectedSupportEmail."
+            return
+        }
+
+        $dnsMx = $supportEvidence.dnsMx
+        if ($null -ne $dnsMx -and [string]$dnsMx.status -eq 'fail') {
+            Add-Fail 'Production support inbox' "Support inbox DNS evidence failed for ${expectedSupportEmail}: $($dnsMx.detail)"
+            return
+        }
+
+        if ($supportEmailVerifiedForAudit -and -not [bool]$supportEvidence.confirmedInbound) {
+            Add-Fail 'Production support inbox' "Support inbox evidence does not confirm inbound delivery for $expectedSupportEmail."
+            return
         }
     }
 

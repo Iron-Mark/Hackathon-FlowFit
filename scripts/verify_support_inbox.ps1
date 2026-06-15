@@ -132,11 +132,25 @@ function Resolve-MxEvidence {
                     preference = [int]$_.Preference
                 }
             })
+            $deliverableRecords = @($records | Where-Object {
+                $exchange = [string]$_.exchange
+                -not [string]::IsNullOrWhiteSpace($exchange) -and $exchange.Trim() -ne '.'
+            })
+
+            if ($records.Count -gt 0 -and $deliverableRecords.Count -eq 0) {
+                return [pscustomobject]@{
+                    checked = $true
+                    status = 'fail'
+                    records = $records
+                    detail = "Null MX records found for $Domain; the domain declares that it does not accept email."
+                }
+            }
+
             return [pscustomobject]@{
                 checked = $true
-                status = if ($records.Count -gt 0) { 'pass' } else { 'fail' }
+                status = if ($deliverableRecords.Count -gt 0) { 'pass' } else { 'fail' }
                 records = $records
-                detail = if ($records.Count -gt 0) { "MX records found for $Domain." } else { "No MX records found for $Domain." }
+                detail = if ($deliverableRecords.Count -gt 0) { "Deliverable MX records found for $Domain." } else { "No deliverable MX records found for $Domain." }
             }
         } catch {
             return [pscustomobject]@{
@@ -151,12 +165,19 @@ function Resolve-MxEvidence {
     if (Get-Command nslookup -ErrorAction SilentlyContinue) {
         $output = & nslookup -type=mx $Domain 2>&1
         $text = ($output | Out-String).Trim()
+        $hasNullMx = $text -match '(?im)(mail exchanger|exchanger)\s*=\s*\.\s*$'
         $hasMx = $text -match 'mail exchanger|MX preference|exchanger ='
         return [pscustomobject]@{
             checked = $true
-            status = if ($hasMx) { 'pass' } else { 'unknown' }
+            status = if ($hasNullMx) { 'fail' } elseif ($hasMx) { 'pass' } else { 'unknown' }
             records = @()
-            detail = if ($hasMx) { "nslookup reported MX records for $Domain." } else { "nslookup did not return parseable MX records for $Domain." }
+            detail = if ($hasNullMx) {
+                "nslookup reported Null MX for $Domain; the domain declares that it does not accept email."
+            } elseif ($hasMx) {
+                "nslookup reported deliverable MX records for $Domain."
+            } else {
+                "nslookup did not return parseable MX records for $Domain."
+            }
         }
     }
 
@@ -188,6 +209,10 @@ try {
     $domain = ($supportEmail -split '@', 2)[1]
     $occurrences = Find-SupportEmailOccurrences -Email $supportEmail -DefaultEmail $defaultSupportEmail
     $mx = Resolve-MxEvidence -Domain $domain
+    if ($ConfirmedInbound -and $mx.checked -and $mx.status -eq 'fail') {
+        throw "Support inbox DNS MX check failed: $($mx.detail)"
+    }
+
     $confirmedAt = if ($ConfirmedInbound) { (Get-Date).ToUniversalTime().ToString('o') } else { $null }
     $releaseVerifiedEnvValue = if ($ConfirmedInbound) { 'true' } else { 'false' }
 

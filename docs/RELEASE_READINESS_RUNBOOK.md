@@ -344,6 +344,9 @@ pwsh -NoProfile -File scripts/verify_support_inbox.ps1 `
 
 That command inventories source references and DNS MX evidence when local DNS
 tooling is available, but exits non-zero until a human confirms inbound mail.
+If DNS reports Null MX, the domain is declaring that it does not accept email;
+configure a real mailbox/MX host or choose a different support address before
+trying to confirm inbound delivery.
 After sending and receiving an external test email, rerun:
 
 ```powershell
@@ -358,6 +361,11 @@ and private mailbox proof before using `-SupportEmailVerified` in release
 variable or store-build commands. DNS MX status is recorded in the JSON summary
 when local DNS tooling is available, but it is not a substitute for the received
 external test email.
+
+`scripts/release_readiness_audit.ps1` reads
+`build/support-inbox-verification.json` by default when it exists. If that file
+records DNS failure, including Null MX, strict audit keeps the support inbox
+gate failing even when `-SupportEmailVerified` is passed.
 
 ### GitHub Pages Deployment
 

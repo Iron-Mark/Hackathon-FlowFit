@@ -1589,6 +1589,8 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       'scripts/release_readiness_audit.ps1',
       '-Strict',
       '-SupportEmailVerified',
+      '-SupportInboxEvidencePath',
+      '',
     ], environment: env);
 
     expect(audit.exitCode, isNot(0));
@@ -1613,6 +1615,8 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       'scripts/release_readiness_audit.ps1',
       '-Strict',
       '-SupportEmailVerified',
+      '-SupportInboxEvidencePath',
+      '',
     ], environment: env);
 
     expect(audit.exitCode, isNot(0));
@@ -1684,6 +1688,8 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
         variablesFile.path,
         '-McpConfigPath',
         mcpFile.path,
+        '-SupportInboxEvidencePath',
+        '',
       ], environment: env);
 
       expect(audit.exitCode, 0, reason: '${audit.stdout}\n${audit.stderr}');
@@ -1695,6 +1701,66 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
         '${audit.stdout}\n${audit.stderr}',
         isNot(contains('sb_publishable_abcdefghijklmnopqrstuvwxyz123456')),
       );
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('strict audit surfaces support inbox DNS evidence failures', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_support_evidence_audit_',
+    );
+    try {
+      final mcpFile = File('${tempDir.path}${Platform.pathSeparator}.mcp.json');
+      mcpFile.writeAsStringSync(
+        '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true"}}}',
+      );
+      final supportEvidence = File(
+        '${tempDir.path}${Platform.pathSeparator}support-evidence.json',
+      );
+      supportEvidence.writeAsStringSync('''
+{
+  "supportEmail": "support@flowfit.com",
+  "confirmedInbound": false,
+  "dnsMx": {
+    "checked": true,
+    "status": "fail",
+    "detail": "Null MX records found for flowfit.com; the domain declares that it does not accept email."
+  }
+}
+''');
+
+      final env = Map<String, String>.from(Platform.environment)
+        ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] =
+            'https://iron-mark.github.io/Hackathon-FlowFit/'
+        ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@flowfit.com'
+        ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
+        ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+        ..['SUPABASE_PUBLISHABLE_KEY'] =
+            'sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
+        ..['FLOWFIT_ANDROID_KEYSTORE_BASE64'] = 'ZmFrZS1rZXlzdG9yZQ=='
+        ..['FLOWFIT_ANDROID_KEYSTORE_PASSWORD'] = 'store-password'
+        ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
+        ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
+
+      final audit = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/release_readiness_audit.ps1',
+        '-Strict',
+        '-SupportEmailVerified',
+        '-McpConfigPath',
+        mcpFile.path,
+        '-SupportInboxEvidencePath',
+        supportEvidence.path,
+      ], environment: env);
+
+      expect(audit.exitCode, isNot(0));
+      expect(
+        '${audit.stdout}\n${audit.stderr}',
+        contains('[FAIL] Production support inbox'),
+      );
+      expect('${audit.stdout}\n${audit.stderr}', contains('Null MX'));
     } finally {
       tempDir.deleteSync(recursive: true);
     }
@@ -1800,10 +1866,14 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(readinessAudit, contains('\$expectedSupportEmail'));
     expect(readinessAudit, contains('configured support inbox'));
     expect(readinessAudit, contains('verify_support_inbox.ps1'));
+    expect(readinessAudit, contains('SupportInboxEvidencePath'));
+    expect(readinessAudit, contains('Get-SupportInboxEvidence'));
+    expect(readinessAudit, contains('dnsMx'));
     expect(supportInboxVerifier, contains('ConfirmedInbound'));
     expect(supportInboxVerifier, contains('EvidenceNote is required'));
     expect(supportInboxVerifier, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
     expect(supportInboxVerifier, contains('Resolve-MxEvidence'));
+    expect(supportInboxVerifier, contains('Null MX'));
     expect(
       supportInboxVerifier,
       contains('manual-inbound-confirmation-required'),
@@ -1811,7 +1881,12 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(supportInboxVerifier, contains('SUPPORT_INBOX_EVIDENCE_WRITTEN'));
     expect(supportInboxVerifier, contains('exit 2'));
     expect(scriptsReadme, contains('verify_support_inbox.ps1'));
+    expect(scriptsReadme, contains('SupportInboxEvidencePath'));
     expect(releaseReadinessRunbook, contains('verify_support_inbox.ps1'));
+    expect(
+      releaseReadinessRunbook,
+      contains('support-inbox-verification.json'),
+    );
     expect(storeSubmissionChecklist, contains('verify_support_inbox.ps1'));
     expect(storeReleaseBuild, contains('valid support email address'));
     expect(webDeploymentVerifier, contains('valid support email address'));
@@ -1918,6 +1993,70 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       );
     } finally {
       for (final file in [inventoryOut, missingNoteOut, confirmedOut]) {
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
+      }
+    }
+  });
+
+  test('support inbox verifier treats null MX as non-deliverable', () {
+    final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
+    final nullMxOut = File('build/support-inbox-null-mx-$unique.json');
+    final confirmedNullMxOut = File(
+      'build/support-inbox-confirmed-null-mx-$unique.json',
+    );
+
+    try {
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-Command',
+        '''
+function Resolve-DnsName {
+  param([string]\$Name, [string]\$Type)
+  [pscustomobject]@{ NameExchange = ''; Preference = 0 }
+}
+& 'scripts/verify_support_inbox.ps1' `
+  -SupportEmail 'support@flowfit.com' `
+  -OutFile '${nullMxOut.path}'
+''',
+      ]);
+      expect(
+        result.exitCode,
+        isNot(0),
+        reason: '${result.stdout}\n${result.stderr}',
+      );
+      expect(result.stdout, contains('SUPPORT_INBOX_EVIDENCE_WRITTEN'));
+
+      final evidence =
+          jsonDecode(nullMxOut.readAsStringSync()) as Map<String, dynamic>;
+      final dnsMx = evidence['dnsMx'] as Map<String, dynamic>;
+      expect(dnsMx['status'], 'fail');
+      expect(dnsMx['detail'], contains('does not accept email'));
+
+      final confirmed = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-Command',
+        '''
+function Resolve-DnsName {
+  param([string]\$Name, [string]\$Type)
+  [pscustomobject]@{ NameExchange = ''; Preference = 0 }
+}
+& 'scripts/verify_support_inbox.ps1' `
+  -SupportEmail 'support@flowfit.com' `
+  -ConfirmedInbound `
+  -EvidenceNote 'Received external test email after mailbox setup' `
+  -OutFile '${confirmedNullMxOut.path}'
+''',
+      ]);
+      expect(confirmed.exitCode, isNot(0));
+      expect(
+        '${confirmed.stdout}\n${confirmed.stderr}',
+        contains('Support inbox DNS MX check failed'),
+      );
+      expect(confirmedNullMxOut.existsSync(), isFalse);
+    } finally {
+      for (final file in [nullMxOut, confirmedNullMxOut]) {
         if (file.existsSync()) {
           file.deleteSync();
         }
@@ -2292,6 +2431,8 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
       'scripts/release_readiness_audit.ps1',
       '-McpConfigPath',
       mcpFile.path,
+      '-SupportInboxEvidencePath',
+      '',
       if (strict) '-Strict',
       if (strict) '-SupportEmailVerified',
     ], environment: env);

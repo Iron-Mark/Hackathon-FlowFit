@@ -174,6 +174,11 @@ Write a JSON evidence artifact for release handoff:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
 ```
 
+When `build/support-inbox-verification.json` exists, the audit reads it by
+default. DNS failures such as Null MX keep the support inbox gate failing even
+if `-SupportEmailVerified` is passed. Use `-SupportInboxEvidencePath ''` only
+for isolated script tests that intentionally ignore local evidence.
+
 When the release web values live in GitHub repository variables, audit them
 directly without copying values into local files:
 ```powershell
@@ -234,9 +239,10 @@ pwsh -NoProfile -File scripts\verify_support_inbox.ps1 `
 `-EvidenceNote` is required with `-ConfirmedInbound`. The helper validates the
 email shape, inventories public/in-app references, checks MX records when local
 DNS tooling is available, and records the manual inbound confirmation. DNS
-status is written into the JSON summary; it never sends email and does not prove
-inbox ownership by itself. Keep the received test email or mailbox screenshot as
-private release evidence.
+status is written into the JSON summary; Null MX is treated as non-deliverable.
+The helper never sends email and DNS success does not prove inbox ownership by
+itself. Keep the received test email or mailbox screenshot as private release
+evidence.
 
 ---
 
