@@ -116,7 +116,7 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1
 
 ```powershell
 $authScheme = 'com.oldstlabs.flowfit'
-$env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
+$env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
 ```
 
 4. Add the production auth scheme to Supabase redirect URLs:
@@ -146,7 +146,7 @@ material:
 ```powershell
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
-$env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
+$env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
 $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
 $env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
 $env:FLOWFIT_ANDROID_KEYSTORE_BASE64 = 'REPLACE_WITH_BASE64_ENCODED_UPLOAD_KEYSTORE'
@@ -195,7 +195,7 @@ FLOWFIT_IOS_BUNDLE_IDENTIFIER = com.oldstlabs.flowfit
    build host:
 
 ```bash
-export FLOWFIT_SUPPORT_EMAIL=support@flowfit.com
+export FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL
 # Optional when Xcode export needs an explicit profile:
 export FLOWFIT_IOS_EXPORT_OPTIONS_PLIST=$HOME/export_options.plist
 ```
@@ -262,7 +262,7 @@ Manual fallback:
 flutter build ipa --release \
   --export-options-plist=$HOME/export_options.plist \
   --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit \
-  --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com \
+  --dart-define=FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL \
   --dart-define=SUPABASE_URL=$SUPABASE_URL \
   --dart-define=SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY
 ```
@@ -275,7 +275,7 @@ App Store bundle in `build/ios/ipa/` when signing is configured.
 Build:
 
 ```powershell
-$env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
+$env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web
 ```
 
@@ -332,7 +332,7 @@ After the static host deploys, run the public deployment verifier:
 ```powershell
 pwsh -NoProfile -File scripts/verify_web_deployment.ps1 `
   -BaseUrl 'https://<your-web-host>' `
-  -SupportEmail 'support@flowfit.com' `
+  -SupportEmail 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL' `
   -OutFile build/web-deployment-verification.json
 ```
 
@@ -502,14 +502,17 @@ inbox:
 pwsh -NoProfile -File scripts/verify_store_metadata.ps1 `
   -Strict `
   -PublicWebBaseUrl 'https://your-production-host.example' `
-  -SupportEmail 'support@flowfit.com' `
+  -SupportEmail 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL' `
   -OutFile build/store-metadata-verification.json
 ```
 
 `-PublicWebBaseUrl` can include a static-host base path, for example
 `https://iron-mark.github.io/Hackathon-FlowFit`. The verifier appends
 `/privacy.html` and `/account-deletion.html` to that base URL, so project-site
-GitHub Pages URLs are checked correctly.
+GitHub Pages URLs are checked correctly. If `-SupportEmail` and
+`FLOWFIT_SUPPORT_EMAIL` are both omitted, the verifier treats
+`support@flowfit.com` only as the source replacement token and reports a
+finalization warning.
 
 The in-app Delete Account screen requires the account password, then calls
 `request_account_deletion()`. The canonical migration exposes that RPC as
@@ -589,7 +592,7 @@ flutter build web --release --no-pub
 # Requires android/key.properties, unless the smoke-only env var above is set.
 flutter build appbundle --release --no-pub `
   --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit `
-  --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com `
+  --dart-define=FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL `
   --dart-define=SUPABASE_URL=$env:SUPABASE_URL `
   --dart-define=SUPABASE_PUBLISHABLE_KEY=$env:SUPABASE_PUBLISHABLE_KEY
 

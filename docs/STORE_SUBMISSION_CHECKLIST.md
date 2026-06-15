@@ -45,8 +45,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `https://<your-web-host>/account-deletion.html`.
 - [ ] In-app Privacy Policy, Terms, and Delete Account screens have final
       maintainer/legal-reviewed copy.
-- [ ] `support@flowfit.com` has been replaced or verified as the production
-      support/privacy inbox in public pages and in-app copy. Run
+- [ ] The source default `support@flowfit.com` has been replaced by a verified
+      production support/privacy inbox in public pages and in-app copy. Run
       `pwsh -NoProfile -File scripts/verify_support_inbox.ps1`, then rerun with
       `-ConfirmedInbound` and `-EvidenceNote` after receiving an external test
       email. If DNS reports Null MX, configure a deliverable mailbox/MX host or

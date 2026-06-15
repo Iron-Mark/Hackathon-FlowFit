@@ -9,6 +9,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $results = New-Object System.Collections.Generic.List[object]
 $resolvedPublicWebBaseUrl = $PublicWebBaseUrl
+$supportEmailWasDefaulted = $false
 
 function Add-Result {
     param(
@@ -441,8 +442,12 @@ try {
     }
     if ([string]::IsNullOrWhiteSpace($SupportEmail)) {
         $SupportEmail = 'support@flowfit.com'
+        $script:supportEmailWasDefaulted = $true
     }
     Assert-Email -Value $SupportEmail
+    if ($supportEmailWasDefaulted) {
+        Add-Warn 'Store support email finalization' 'No SupportEmail/FLOWFIT_SUPPORT_EMAIL was provided; support@flowfit.com is only the source replacement token and must be replaced with a verified deliverable inbox before final store metadata handoff.'
+    }
 
     $expectedUrls = Resolve-ExpectedWebUrls
     if ($null -eq $expectedUrls) {

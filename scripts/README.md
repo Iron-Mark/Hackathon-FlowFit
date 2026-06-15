@@ -156,10 +156,11 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict
 ```
 
 Strict mode turns unresolved store/Supabase configuration gaps into failures.
-Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the deployed HTTPS origin and
+Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the deployed HTTPS base URL and
 `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true` only after the configured
-`FLOWFIT_SUPPORT_EMAIL` value, or the default `support@flowfit.com`, is the
-final support/privacy inbox. Advisory mode defaults to recovery MCP posture,
+`FLOWFIT_SUPPORT_EMAIL` value is the final deliverable support/privacy inbox.
+The source default `support@flowfit.com` is only a local replacement token until
+that mailbox is proven deliverable. Advisory mode defaults to recovery MCP posture,
 where the project-scoped Supabase MCP remains write-capable for migrations.
 Strict mode defaults to release MCP posture and expects `read_only=true` after
 migrations and advisors are complete. The script never prints Supabase keys or
@@ -279,7 +280,7 @@ or draft listing statuses.
 pwsh -NoProfile -File scripts\verify_store_metadata.ps1 `
   -Strict `
   -PublicWebBaseUrl 'https://your-production-host.example' `
-  -SupportEmail 'support@flowfit.com'
+  -SupportEmail 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
 ```
 
 `-PublicWebBaseUrl` may be a root origin such as
@@ -292,7 +293,9 @@ The helper validates required store metadata sections, Play/App Store text
 lengths, reviewer-facing privacy/account-deletion wording, privacy data map
 coverage, checklist coverage, Android/iOS/web icon dimensions, support email
 shape, and final deployed privacy/account-deletion URLs. Strict mode treats
-draft placeholders as failures.
+draft placeholders as failures. If `-SupportEmail` and `FLOWFIT_SUPPORT_EMAIL`
+are both omitted, the helper only uses `support@flowfit.com` as a source
+replacement token and warns that a verified deliverable inbox is still required.
 
 ---
 
@@ -498,8 +501,8 @@ analyzer, Flutter tests, and Android release lint before producing artifacts.
 
 **Required environment values**:
 ```powershell
-$env:FLOWFIT_SUPPORT_EMAIL = 'support@flowfit.com'
-$env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://flowfit.your-owned-domain.com'
+$env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 # Optional when the deployed Flutter web app is served from a subpath.
 # The wrapper derives this from FLOWFIT_PUBLIC_WEB_BASE_URL when omitted.
 # $env:FLOWFIT_WEB_BASE_HREF = '/Hackathon-FlowFit/'
@@ -611,8 +614,8 @@ Console or App Store Connect.
 **Usage**:
 ```powershell
 pwsh -NoProfile -File scripts/verify_web_deployment.ps1 `
-  -BaseUrl 'https://flowfit.your-owned-domain.com' `
-  -SupportEmail 'support@flowfit.com' `
+  -BaseUrl 'https://iron-mark.github.io/Hackathon-FlowFit' `
+  -SupportEmail 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL' `
   -OutFile build/web-deployment-verification.json
 ```
 
@@ -642,9 +645,10 @@ Configure repository variables before dispatching it:
   `https://iron-mark.github.io/Hackathon-FlowFit`.
 - `SUPABASE_URL`.
 - `SUPABASE_PUBLISHABLE_KEY`.
-- `FLOWFIT_SUPPORT_EMAIL`.
-- `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after the configured/default
-  support inbox is receiving mail from outside the maintainer account.
+- `FLOWFIT_SUPPORT_EMAIL`, set to the verified deliverable support/privacy
+  inbox.
+- `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after that configured inbox
+  is receiving mail from outside the maintainer account.
 
 If the repository has no Pages site yet, enable Settings > Pages > GitHub
 Actions as the source before expecting the workflow to publish.

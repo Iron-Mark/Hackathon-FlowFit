@@ -719,6 +719,7 @@ storeFile=upload-keystore.jks
     expect(storeMetadataVerifier, contains('Icon-maskable-512.png'));
     expect(storeMetadataVerifier, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(storeMetadataVerifier, contains('PublicWebBaseUrl'));
+    expect(storeMetadataVerifier, contains('Store support email finalization'));
     expect(storeMetadataVerifier, contains('ConvertTo-NormalizedSearchText'));
     expect(storeMetadataVerifier, contains('AbsolutePath'));
     expect(storeMetadataVerifier, contains('Query'));
@@ -914,6 +915,20 @@ storeFile=upload-keystore.jks
     expect(
       releaseEnvExample,
       contains('REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'),
+    );
+    expect(
+      releaseEnvExample,
+      contains('FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'),
+    );
+    expect(
+      releaseEnvExample,
+      isNot(contains('FLOWFIT_SUPPORT_EMAIL=support@flowfit.com')),
+    );
+    expect(
+      releaseEnvExample,
+      contains(
+        'FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit',
+      ),
     );
     expect(
       releaseEnvExample,

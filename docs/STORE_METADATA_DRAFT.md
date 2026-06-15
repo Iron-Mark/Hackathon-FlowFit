@@ -16,7 +16,7 @@ package/bundle IDs, support inbox, and deployed web URLs are final.
 | iOS bundle ID | `com.oldstlabs.flowfit` | Confirm Apple Developer ownership before release |
 | Production auth scheme | `com.oldstlabs.flowfit` | Add to Supabase redirect URLs |
 | Dev auth scheme | `com.oldstlabs.flowfit.dev` | Add to Supabase redirect URLs |
-| Support email | `support@flowfit.com` | Verify or pass `FLOWFIT_SUPPORT_EMAIL` |
+| Support email | `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` | Replace with verified `FLOWFIT_SUPPORT_EMAIL` |
 | Privacy policy URL | `https://<your-web-host>/privacy.html` | Replace after web deploy |
 | Account deletion URL | `https://<your-web-host>/account-deletion.html` | Replace after web deploy |
 
