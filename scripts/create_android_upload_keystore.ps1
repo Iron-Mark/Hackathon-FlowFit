@@ -119,6 +119,7 @@ try {
             '-alias', $Alias,
             '-keyalg', 'RSA',
             '-keysize', '2048',
+            '-storetype', 'JKS',
             '-validity', [string]$ValidityDays,
             '-storepass', $storePassword,
             '-keypass', $keyPassword,

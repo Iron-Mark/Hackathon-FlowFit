@@ -342,6 +342,7 @@ void main() {
     'Android upload keystore generator writes only ignored private outputs',
     () {
       expect(createAndroidUploadKeystore, contains('keytool'));
+      expect(createAndroidUploadKeystore, contains("'-storetype', 'JKS'"));
       expect(createAndroidUploadKeystore, contains('New-RandomPassword'));
       expect(
         createAndroidUploadKeystore,
