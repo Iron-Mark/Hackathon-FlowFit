@@ -1923,8 +1923,16 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       'flowfit_support_evidence_audit_',
     );
     try {
-      final mcpFile = File('${tempDir.path}${Platform.pathSeparator}.mcp.json');
-      mcpFile.writeAsStringSync(
+      final advisoryMcpFile = File(
+        '${tempDir.path}${Platform.pathSeparator}.mcp.recovery.json',
+      );
+      advisoryMcpFile.writeAsStringSync(
+        '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development"}}}',
+      );
+      final releaseMcpFile = File(
+        '${tempDir.path}${Platform.pathSeparator}.mcp.release.json',
+      );
+      releaseMcpFile.writeAsStringSync(
         '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true"}}}',
       );
       final supportEvidence = File(
@@ -1955,6 +1963,30 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
         ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
         ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
 
+      final advisoryAudit = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/release_readiness_audit.ps1',
+        '-McpConfigPath',
+        advisoryMcpFile.path,
+        '-SupportInboxEvidencePath',
+        supportEvidence.path,
+      ], environment: env);
+
+      expect(
+        advisoryAudit.exitCode,
+        0,
+        reason: '${advisoryAudit.stdout}\n${advisoryAudit.stderr}',
+      );
+      expect(
+        '${advisoryAudit.stdout}\n${advisoryAudit.stderr}',
+        contains('[WARN] Production support inbox'),
+      );
+      expect(
+        '${advisoryAudit.stdout}\n${advisoryAudit.stderr}',
+        isNot(contains('[FAIL] Production support inbox')),
+      );
+
       final audit = Process.runSync('pwsh', [
         '-NoProfile',
         '-File',
@@ -1962,7 +1994,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
         '-Strict',
         '-SupportEmailVerified',
         '-McpConfigPath',
-        mcpFile.path,
+        releaseMcpFile.path,
         '-SupportInboxEvidencePath',
         supportEvidence.path,
       ], environment: env);
@@ -2126,6 +2158,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(readinessAudit, contains('verify_support_inbox.ps1'));
     expect(readinessAudit, contains('SupportInboxEvidencePath'));
     expect(readinessAudit, contains('Get-SupportInboxEvidence'));
+    expect(readinessAudit, contains('Add-SupportInboxEvidenceIssue'));
     expect(readinessAudit, contains('dnsMx'));
     expect(
       readinessAudit,

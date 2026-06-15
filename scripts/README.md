@@ -177,9 +177,11 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailV
 ```
 
 When `build/support-inbox-verification.json` exists, the audit reads it by
-default. DNS failures such as Null MX keep the support inbox gate failing even
-if `-SupportEmailVerified` is passed. Use `-SupportInboxEvidencePath ''` only
-for isolated script tests that intentionally ignore local evidence.
+default. In advisory mode, DNS failures such as Null MX are warnings so local
+preflight can continue through code and build checks. In strict mode, the same
+evidence keeps the support inbox gate failing even if `-SupportEmailVerified`
+is passed. Use `-SupportInboxEvidencePath ''` only for isolated script tests
+that intentionally ignore local evidence.
 
 When the release web values live in GitHub repository variables, audit them
 directly without copying values into local files:

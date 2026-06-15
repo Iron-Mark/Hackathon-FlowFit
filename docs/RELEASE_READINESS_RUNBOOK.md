@@ -384,8 +384,9 @@ external test email.
 
 `scripts/release_readiness_audit.ps1` reads
 `build/support-inbox-verification.json` by default when it exists. If that file
-records DNS failure, including Null MX, strict audit keeps the support inbox
-gate failing even when `-SupportEmailVerified` is passed.
+records DNS failure, including Null MX, advisory audit reports the support inbox
+as a warning so local preflight can continue, while strict audit keeps the gate
+failing even when `-SupportEmailVerified` is passed.
 
 ### GitHub Pages Deployment
 
@@ -654,6 +655,9 @@ keep compile checks independent from ignored local files. For store handoff,
 run the audit separately with `-Strict`; it should fail until the maintainer has
 provided the real Supabase project ref/credentials, Android signing inputs,
 production Android/iOS IDs, deployed web base URL, and verified support inbox.
+If local `build/support-inbox-verification.json` records a failed DNS or inbound
+mail check, preflight reports it as advisory evidence and still runs build
+checks; strict audit remains the release blocker.
 When `-OutFile` is provided, the audit writes JSON evidence with pass/warn/fail
 counts and non-secret result details. The production wrapper writes
 `build/store-release-readiness-audit.json` automatically when `-RunStrictAudit`
