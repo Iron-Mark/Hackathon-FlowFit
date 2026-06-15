@@ -13,6 +13,7 @@ void main() {
   late String configureLocalRelease;
   late String webDeploymentVerifier;
   late String storeSubmissionChecklist;
+  late String releaseReadinessRunbook;
   late String ciWorkflow;
   late String pagesWorkflow;
   late String copilotInstructions;
@@ -41,6 +42,9 @@ void main() {
     ).readAsStringSync();
     storeSubmissionChecklist = File(
       'docs/STORE_SUBMISSION_CHECKLIST.md',
+    ).readAsStringSync();
+    releaseReadinessRunbook = File(
+      'docs/RELEASE_READINESS_RUNBOOK.md',
     ).readAsStringSync();
     ciWorkflow = File('.github/workflows/flutter-ci.yml').readAsStringSync();
     final pagesWorkflowFile = File('.github/workflows/flutter-web-pages.yml');
@@ -450,6 +454,9 @@ void main() {
       pagesWorkflow,
       contains('production web deploy variables are not configured'),
     );
+    expect(releaseReadinessRunbook, contains('deploy-ready'));
+    expect(releaseReadinessRunbook, contains('skips production GitHub Pages'));
+    expect(releaseReadinessRunbook, contains('deployment with a notice'));
     expect(pagesWorkflow, contains('actions/configure-pages@v5'));
     expect(pagesWorkflow, contains('actions/upload-pages-artifact@v3'));
     expect(pagesWorkflow, contains('actions/deploy-pages@v4'));

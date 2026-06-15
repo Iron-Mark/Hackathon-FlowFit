@@ -311,6 +311,11 @@ Configure these repository variables before running it:
 - `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after the configured/default
   support inbox is receiving mail from outside the maintainer account.
 
+The workflow has a `deploy-ready` job. Until the Supabase variables and
+verified support-inbox flag are configured, it skips production GitHub Pages
+deployment with a notice instead of failing pushes to `main` or manual
+dispatches.
+
 If the GitHub Pages API still returns 404 for this repository, open repository
 Settings > Pages and set the Pages build/deploy source to GitHub Actions. The
 workflow is safe to keep in the repo before that switch; it will publish only
