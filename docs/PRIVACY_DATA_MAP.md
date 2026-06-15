@@ -1,6 +1,6 @@
 # FlowFit Privacy and Data Map
 
-Last updated: 2026-06-14
+Last updated: 2026-06-15
 
 This is an engineering source of truth for Play Console Data safety, App Store
 privacy labels, privacy-policy drafting, and reviewer notes. It is not legal
@@ -16,6 +16,10 @@ advice; the maintainer should review it before store submission.
 - Apple App Store Connect requires app privacy responses and a privacy policy
   URL. Apple also requires apps that support account creation to let users
   initiate account deletion in the app.
+- Apple privacy manifests describe app-level collected data, required-reason
+  API usage, and tracking domains in `PrivacyInfo.xcprivacy`. FlowFit's iOS
+  manifest is `ios/Runner/PrivacyInfo.xcprivacy`; verify the final combined
+  Xcode privacy report before App Store upload.
 
 Sources:
 
@@ -27,6 +31,12 @@ Sources:
   https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/
 - Apple account deletion reminder:
   https://developer.apple.com/news/?id=12m75xbj
+- Apple privacy manifest files:
+  https://developer.apple.com/documentation/bundleresources/privacy-manifest-files
+- Apple describing data use in privacy manifests:
+  https://developer.apple.com/documentation/bundleresources/describing-data-use-in-privacy-manifests
+- Apple describing use of required reason APIs:
+  https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api
 
 ## Data Inventory
 
@@ -78,6 +88,11 @@ privacy labels.
   with Flutter web before store submission.
 - `web/account-deletion.html` is the public account-deletion page for users who
   removed the app or cannot access the in-app deletion flow.
+- `ios/Runner/PrivacyInfo.xcprivacy` is the iOS app-level privacy manifest. It
+  declares no tracking domains, records FlowFit's app-level collected data
+  categories, and declares required-reason API use for app preferences and
+  app-container file metadata. App Store Connect answers still need to match
+  the generated Xcode privacy report and third-party SDK manifests.
 
 ## Disclosure Requirements to Resolve Before Store Review
 
@@ -93,3 +108,7 @@ privacy labels.
   production. If yes, disclose health and fitness data collection.
 - Publish `privacy.html` and `account-deletion.html` from the deployed Flutter
   web output before Play/App Store submission.
+- On the macOS release host, archive the app in Xcode and use Organizer's
+  Generate Privacy Report action. Reconcile that report, third-party SDK
+  manifests, `ios/Runner/PrivacyInfo.xcprivacy`, and this data map before
+  answering App Store Connect privacy questions.

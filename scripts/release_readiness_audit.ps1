@@ -941,6 +941,67 @@ function Test-IosReleaseConfig {
         Add-Fail 'iOS foreground location surface' 'Info.plist must avoid Always/background location until native background geofencing is implemented and tested.'
     }
 
+    $privacyManifest = Read-RepoText 'ios/Runner/PrivacyInfo.xcprivacy'
+    $pbxproj = Read-RepoText 'ios/Runner.xcodeproj/project.pbxproj'
+    if ([string]::IsNullOrWhiteSpace($privacyManifest)) {
+        Add-Fail 'iOS privacy manifest' 'Missing or blank ios/Runner/PrivacyInfo.xcprivacy.'
+    } else {
+        try {
+            [xml]$privacyManifest | Out-Null
+            Add-Pass 'iOS privacy manifest XML' 'PrivacyInfo.xcprivacy is valid XML.'
+        } catch {
+            Add-Fail 'iOS privacy manifest XML' "PrivacyInfo.xcprivacy is not valid XML: $($_.Exception.Message)"
+        }
+
+        $requiredPrivacyEntries = @(
+            'NSPrivacyAccessedAPITypes',
+            'NSPrivacyAccessedAPICategoryUserDefaults',
+            'CA92.1',
+            'NSPrivacyAccessedAPICategoryFileTimestamp',
+            'C617.1',
+            'NSPrivacyCollectedDataTypes',
+            'NSPrivacyCollectedDataTypeEmailAddress',
+            'NSPrivacyCollectedDataTypeName',
+            'NSPrivacyCollectedDataTypeUserID',
+            'NSPrivacyCollectedDataTypeHealth',
+            'NSPrivacyCollectedDataTypeFitness',
+            'NSPrivacyCollectedDataTypePreciseLocation',
+            'NSPrivacyCollectedDataTypePhotosorVideos',
+            'NSPrivacyCollectedDataTypeOtherUserContent',
+            'NSPrivacyCollectedDataTypeProductInteraction',
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+            'NSPrivacyTrackingDomains'
+        )
+        $missingPrivacyEntries = @()
+        foreach ($entry in $requiredPrivacyEntries) {
+            if (-not $privacyManifest.Contains($entry)) {
+                $missingPrivacyEntries += $entry
+            }
+        }
+        if ($privacyManifest -notmatch '(?ms)<key>NSPrivacyTracking</key>\s*<false\s*/>') {
+            $missingPrivacyEntries += 'NSPrivacyTracking=false'
+        }
+        if ($privacyManifest -notmatch '(?ms)<key>NSPrivacyTrackingDomains</key>\s*<array\s*/>') {
+            $missingPrivacyEntries += 'NSPrivacyTrackingDomains=empty'
+        }
+
+        if ($missingPrivacyEntries.Count -eq 0) {
+            Add-Pass 'iOS privacy manifest declarations' 'PrivacyInfo.xcprivacy declares app data categories, required-reason APIs, and no tracking domains.'
+        } else {
+            Add-Fail 'iOS privacy manifest declarations' "Missing privacy manifest entries: $($missingPrivacyEntries -join ', ')."
+        }
+    }
+
+    if (
+        $null -ne $pbxproj -and
+        $pbxproj.Contains('PrivacyInfo.xcprivacy in Resources') -and
+        $pbxproj.Contains('path = PrivacyInfo.xcprivacy')
+    ) {
+        Add-Pass 'iOS privacy manifest target resource' 'PrivacyInfo.xcprivacy is included in the Runner target resources.'
+    } else {
+        Add-Fail 'iOS privacy manifest target resource' 'PrivacyInfo.xcprivacy must be referenced by the Runner project and Resources build phase.'
+    }
+
     $releaseScript = Read-RepoText 'scripts/store_release_build.ps1'
     if (
         $null -ne $releaseScript -and

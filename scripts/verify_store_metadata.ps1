@@ -271,6 +271,63 @@ function Test-IosIcons {
     }
 }
 
+function Test-IosPrivacyManifest {
+    $manifest = Read-RepoText 'ios/Runner/PrivacyInfo.xcprivacy'
+    $pbxproj = Read-RepoText 'ios/Runner.xcodeproj/project.pbxproj'
+
+    if ([string]::IsNullOrWhiteSpace($manifest)) {
+        Add-Fail 'iOS privacy manifest' 'PrivacyInfo.xcprivacy must exist and must not be blank.'
+    } else {
+        try {
+            [xml]$manifest | Out-Null
+            Add-Pass 'iOS privacy manifest XML' 'PrivacyInfo.xcprivacy is valid XML.'
+        } catch {
+            Add-Fail 'iOS privacy manifest XML' "PrivacyInfo.xcprivacy is not valid XML: $($_.Exception.Message)"
+        }
+
+        Assert-RequiredPhrases -Name 'iOS privacy manifest declarations' -Content $manifest -Phrases @(
+            'NSPrivacyAccessedAPITypes',
+            'NSPrivacyAccessedAPICategoryUserDefaults',
+            'CA92.1',
+            'NSPrivacyAccessedAPICategoryFileTimestamp',
+            'C617.1',
+            'NSPrivacyCollectedDataTypes',
+            'NSPrivacyCollectedDataTypeEmailAddress',
+            'NSPrivacyCollectedDataTypeName',
+            'NSPrivacyCollectedDataTypeUserID',
+            'NSPrivacyCollectedDataTypeHealth',
+            'NSPrivacyCollectedDataTypeFitness',
+            'NSPrivacyCollectedDataTypePreciseLocation',
+            'NSPrivacyCollectedDataTypePhotosorVideos',
+            'NSPrivacyCollectedDataTypeOtherUserContent',
+            'NSPrivacyCollectedDataTypeProductInteraction',
+            'NSPrivacyCollectedDataTypePurposeAppFunctionality',
+            'NSPrivacyTrackingDomains'
+        )
+
+        if ($manifest -match '(?ms)<key>NSPrivacyTracking</key>\s*<false\s*/>') {
+            Add-Pass 'iOS privacy manifest tracking' 'PrivacyInfo.xcprivacy declares that the app does not track users.'
+        } else {
+            Add-Fail 'iOS privacy manifest tracking' 'PrivacyInfo.xcprivacy must set NSPrivacyTracking to false.'
+        }
+
+        if ($manifest -match '(?ms)<key>NSPrivacyTrackingDomains</key>\s*<array\s*/>') {
+            Add-Pass 'iOS privacy manifest tracking domains' 'PrivacyInfo.xcprivacy declares no tracking domains.'
+        } else {
+            Add-Fail 'iOS privacy manifest tracking domains' 'PrivacyInfo.xcprivacy must keep NSPrivacyTrackingDomains empty unless tracking is intentionally introduced.'
+        }
+    }
+
+    if (
+        $pbxproj.Contains('PrivacyInfo.xcprivacy in Resources') -and
+        $pbxproj.Contains('path = PrivacyInfo.xcprivacy')
+    ) {
+        Add-Pass 'iOS privacy manifest target resource' 'PrivacyInfo.xcprivacy is included in the Runner target resources.'
+    } else {
+        Add-Fail 'iOS privacy manifest target resource' 'PrivacyInfo.xcprivacy must be referenced by the Runner project and Resources build phase.'
+    }
+}
+
 function Test-WebIcons {
     Test-PngDimension -Name 'Web icon' -Path 'web/icons/Icon-192.png' -ExpectedWidth 192 -ExpectedHeight 192
     Test-PngDimension -Name 'Web icon' -Path 'web/icons/Icon-512.png' -ExpectedWidth 512 -ExpectedHeight 512
@@ -413,6 +470,7 @@ try {
 
     Test-AndroidIcons
     Test-IosIcons
+    Test-IosPrivacyManifest
     Test-WebIcons
 
     $summary = [pscustomobject]@{

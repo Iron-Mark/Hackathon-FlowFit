@@ -36,7 +36,10 @@ void main() {
   late String androidMainManifest;
   late String androidDebugManifest;
   late String iosInfoPlist;
+  late String iosPrivacyManifest;
+  late String iosPbxproj;
   late String androidMainActivity;
+  late String privacyDataMap;
   late List<String> androidKotlinSources;
 
   setUpAll(() {
@@ -110,9 +113,16 @@ void main() {
       'android/app/src/debug/AndroidManifest.xml',
     ).readAsStringSync();
     iosInfoPlist = File('ios/Runner/Info.plist').readAsStringSync();
+    iosPrivacyManifest = File(
+      'ios/Runner/PrivacyInfo.xcprivacy',
+    ).readAsStringSync();
+    iosPbxproj = File(
+      'ios/Runner.xcodeproj/project.pbxproj',
+    ).readAsStringSync();
     androidMainActivity = File(
       'android/app/src/main/kotlin/com/oldstlabs/flowfit/MainActivity.kt',
     ).readAsStringSync();
+    privacyDataMap = File('docs/PRIVACY_DATA_MAP.md').readAsStringSync();
     androidKotlinSources = Directory('android/app/src/main/kotlin')
         .listSync(recursive: true)
         .whereType<File>()
@@ -519,6 +529,9 @@ void main() {
     expect(storeMetadataVerifier, contains('Review Evidence Checklist'));
     expect(storeMetadataVerifier, contains('Get-PngDimensions'));
     expect(storeMetadataVerifier, contains('ios-marketing'));
+    expect(storeMetadataVerifier, contains('PrivacyInfo.xcprivacy'));
+    expect(storeMetadataVerifier, contains('NSPrivacyCollectedDataTypes'));
+    expect(storeMetadataVerifier, contains('NSPrivacyAccessedAPITypes'));
     expect(storeMetadataVerifier, contains('Icon-maskable-512.png'));
     expect(storeMetadataVerifier, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(storeMetadataVerifier, contains('PublicWebBaseUrl'));
@@ -542,6 +555,66 @@ void main() {
       contains('store-metadata-verification.json'),
     );
     expect(docsIndex, contains('verify_store_metadata.ps1'));
+  });
+
+  test('iOS privacy manifest is wired and guarded for App Store review', () {
+    expect(iosPbxproj, contains('PrivacyInfo.xcprivacy in Resources'));
+    expect(iosPbxproj, contains('path = PrivacyInfo.xcprivacy'));
+    expect(iosPrivacyManifest, contains('NSPrivacyAccessedAPITypes'));
+    expect(
+      iosPrivacyManifest,
+      contains('NSPrivacyAccessedAPICategoryUserDefaults'),
+    );
+    expect(iosPrivacyManifest, contains('CA92.1'));
+    expect(
+      iosPrivacyManifest,
+      contains('NSPrivacyAccessedAPICategoryFileTimestamp'),
+    );
+    expect(iosPrivacyManifest, contains('C617.1'));
+    expect(iosPrivacyManifest, contains('NSPrivacyCollectedDataTypes'));
+    for (final dataType in [
+      'NSPrivacyCollectedDataTypeEmailAddress',
+      'NSPrivacyCollectedDataTypeName',
+      'NSPrivacyCollectedDataTypeUserID',
+      'NSPrivacyCollectedDataTypeHealth',
+      'NSPrivacyCollectedDataTypeFitness',
+      'NSPrivacyCollectedDataTypePreciseLocation',
+      'NSPrivacyCollectedDataTypePhotosorVideos',
+      'NSPrivacyCollectedDataTypeOtherUserContent',
+      'NSPrivacyCollectedDataTypeProductInteraction',
+    ]) {
+      expect(iosPrivacyManifest, contains(dataType));
+    }
+    expect(
+      iosPrivacyManifest,
+      contains('NSPrivacyCollectedDataTypePurposeAppFunctionality'),
+    );
+    expect(
+      iosPrivacyManifest,
+      matches(RegExp(r'<key>NSPrivacyTracking</key>\s*<false\s*/>')),
+    );
+    expect(iosPrivacyManifest, contains('NSPrivacyTrackingDomains'));
+
+    expect(readinessAudit, contains('iOS privacy manifest'));
+    expect(readinessAudit, contains('Missing or blank'));
+    expect(
+      readinessAudit,
+      contains('NSPrivacyAccessedAPICategoryUserDefaults'),
+    );
+    expect(readinessAudit, contains('NSPrivacyCollectedDataTypeHealth'));
+    expect(readinessAudit, contains('NSPrivacyTrackingDomains=empty'));
+    expect(storeMetadataVerifier, contains('Test-IosPrivacyManifest'));
+    expect(storeMetadataVerifier, contains('must not be blank'));
+    expect(
+      storeMetadataVerifier,
+      contains('iOS privacy manifest tracking domains'),
+    );
+    expect(privacyDataMap, contains('PrivacyInfo.xcprivacy'));
+    expect(storeSubmissionChecklist, contains('PrivacyInfo.xcprivacy'));
+    expect(storeSubmissionChecklist, contains('Generate Privacy Report'));
+    expect(releaseReadinessRunbook, contains('PrivacyInfo.xcprivacy'));
+    expect(releaseReadinessRunbook, contains('Generate Privacy Report'));
+    expect(docsIndex, contains('PrivacyInfo.xcprivacy'));
   });
 
   test('store metadata verifier records advisory and strict evidence', () {

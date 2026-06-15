@@ -73,6 +73,8 @@ Technical implementation details and verification:
 
 - **PRIVACY_DATA_MAP.md**
   - Data inventory for Play Data safety and App Store privacy labels
+  - Points to `ios/Runner/PrivacyInfo.xcprivacy` as the iOS app privacy
+    manifest source
   - Third-party SDK data considerations
   - Account deletion, retention, and disclosure notes
 

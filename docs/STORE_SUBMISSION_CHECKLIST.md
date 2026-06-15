@@ -101,6 +101,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `pwsh -NoProfile -File scripts/create_ios_export_options.ps1 -TeamId <TEAMID> -ProvisioningProfileName '<profile name>'`.
 - [ ] Add production auth schemes to Supabase redirect URLs.
 - [ ] Assign Apple Developer team and signing profiles in Xcode.
+- [ ] Confirm `ios/Runner/PrivacyInfo.xcprivacy` is included in the Runner
+      target resources and matches `docs/PRIVACY_DATA_MAP.md`.
 - [ ] Build signed archive/IPA:
       `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS`.
 - [ ] Confirm `build/store-release-artifacts.json` includes
@@ -115,6 +117,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       evidence for the same commit.
 - [ ] Complete App Store Connect app privacy answers from
       `docs/PRIVACY_DATA_MAP.md`.
+- [ ] Generate Privacy Report from the Xcode archive and reconcile the app
+      manifest plus third-party SDK manifests with App Store Connect app
+      privacy answers before upload.
 - [ ] Add privacy policy URL.
 - [ ] Confirm in-app account deletion request flow is discoverable and works.
 - [ ] Review health, location, motion, camera, photo, and account-data

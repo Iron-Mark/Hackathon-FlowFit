@@ -229,6 +229,13 @@ Before archive/upload:
 - If explicit export settings are needed, create ignored
   `ios/ExportOptions.plist` with `scripts/create_ios_export_options.ps1` and
   set `FLOWFIT_IOS_EXPORT_OPTIONS_PLIST`.
+- Confirm `ios/Runner/PrivacyInfo.xcprivacy` is still included in the Runner
+  target resources. It is the app-level privacy manifest for collected data,
+  required-reason API declarations, and tracking-domain disclosure.
+- After archiving on macOS, use Xcode Organizer's Generate Privacy Report
+  action and reconcile the combined app/SDK report with
+  `docs/PRIVACY_DATA_MAP.md` before answering App Store Connect privacy
+  questions.
 - Review App Store privacy labels for location, motion/activity, camera,
   photos, health/heart-rate-related data, account data, and diagnostics.
 
