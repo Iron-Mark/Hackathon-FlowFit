@@ -217,6 +217,8 @@ Build and deployment scripts:
   icon-asset evidence for Play/App Store/web handoff
 - **create_android_upload_keystore.ps1** - Ignored Android upload signing
   material generator and private CI secret handoff
+- **export_android_signing_env.ps1** - Ignored private Android signing secret
+  handoff exporter from existing local keystore material
 - **create_ios_export_options.ps1** - Ignored App Store/TestFlight
   export-options plist generator for macOS release hosts
 - **store_release_build.ps1** - Production Android, iOS, and web artifact
@@ -251,7 +253,7 @@ Build and deployment scripts:
 - **Implementation Docs:** 9 files
 - **Feature Docs:** 21 files
 - **Root Docs:** 11 files
-- **Scripts:** 22 files
+- **Scripts:** 23 files
 
 ---
 

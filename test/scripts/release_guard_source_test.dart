@@ -11,6 +11,7 @@ void main() {
   late String readinessAudit;
   late String releaseStatusSnapshot;
   late String createAndroidUploadKeystore;
+  late String exportAndroidSigningEnv;
   late String supportInboxVerifier;
   late String storeMetadataVerifier;
   late String createIosExportOptions;
@@ -56,6 +57,9 @@ void main() {
     ).readAsStringSync();
     createAndroidUploadKeystore = File(
       'scripts/create_android_upload_keystore.ps1',
+    ).readAsStringSync();
+    exportAndroidSigningEnv = File(
+      'scripts/export_android_signing_env.ps1',
     ).readAsStringSync();
     supportInboxVerifier = File(
       'scripts/verify_support_inbox.ps1',
@@ -375,8 +379,152 @@ void main() {
         contains('create_android_upload_keystore.ps1'),
       );
       expect(gitignore, contains('.env.release.android-signing'));
+      expect(gitignore, contains('.env.release.android-signing*'));
+      expect(exportAndroidSigningEnv, contains('ANDROID_SIGNING_ENV_EXPORTED'));
+      expect(exportAndroidSigningEnv, contains('git'));
+      expect(exportAndroidSigningEnv, contains('check-ignore'));
+      expect(exportAndroidSigningEnv, contains('ToBase64String'));
+      expect(exportAndroidSigningEnv, contains('android/key.properties'));
+      expect(exportAndroidSigningEnv, contains('will not be overwritten'));
+      expect(
+        exportAndroidSigningEnv,
+        contains('Unsupported Java properties escaping'),
+      );
+      expect(
+        exportAndroidSigningEnv,
+        contains('FLOWFIT_ANDROID_KEYSTORE_BASE64'),
+      );
+      expect(
+        exportAndroidSigningEnv,
+        isNot(contains(r'Write-Host $keystoreBase64')),
+      );
     },
   );
+
+  test('Android signing env exporter writes ignored CI secret handoff', () {
+    final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
+    final fixtureDir = Directory('build/android-signing-export-$unique');
+    final androidDir = Directory('${fixtureDir.path}/android');
+    final keyProperties = File('${androidDir.path}/key.properties');
+    final escapedKeyProperties = File('${androidDir.path}/escaped.properties');
+    final keystore = File('${androidDir.path}/upload-keystore.jks');
+    final outFile = File(
+      '${fixtureDir.path}/.env.release.android-signing.generated',
+    );
+    final escapedOutFile = File(
+      '${fixtureDir.path}/.env.release.android-signing.escaped',
+    );
+    final nonIgnoredOutFile = File('android-signing-export-$unique.txt');
+
+    try {
+      final rootIgnore = Process.runSync('git', [
+        'check-ignore',
+        '-q',
+        '--',
+        '.env.release.android-signing.generated',
+      ]);
+      expect(rootIgnore.exitCode, 0);
+
+      androidDir.createSync(recursive: true);
+      keystore.writeAsStringSync('fake-keystore');
+      keyProperties.writeAsStringSync('''
+storePassword=store-password
+keyPassword=key-password
+keyAlias=upload
+storeFile=upload-keystore.jks
+''');
+
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/export_android_signing_env.ps1',
+        '-KeyPropertiesPath',
+        keyProperties.path,
+        '-OutFile',
+        outFile.path,
+      ]);
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      expect(result.stdout, contains('ANDROID_SIGNING_ENV_EXPORTED'));
+
+      final handoff = outFile.readAsStringSync();
+      expect(
+        handoff,
+        contains(
+          'FLOWFIT_ANDROID_KEYSTORE_BASE64=${base64Encode(utf8.encode('fake-keystore'))}',
+        ),
+      );
+      expect(
+        handoff,
+        contains('FLOWFIT_ANDROID_KEYSTORE_PASSWORD=store-password'),
+      );
+      expect(handoff, contains('FLOWFIT_ANDROID_KEY_ALIAS=upload'));
+      expect(handoff, contains('FLOWFIT_ANDROID_KEY_PASSWORD=key-password'));
+      expect(
+        handoff,
+        contains('FLOWFIT_ANDROID_KEYSTORE_FILE_NAME=upload-keystore.jks'),
+      );
+
+      final nonIgnored = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/export_android_signing_env.ps1',
+        '-KeyPropertiesPath',
+        keyProperties.path,
+        '-OutFile',
+        nonIgnoredOutFile.path,
+      ]);
+      expect(nonIgnored.exitCode, isNot(0));
+      expect(
+        '${nonIgnored.stdout}\n${nonIgnored.stderr}',
+        contains('OutFile must be gitignored'),
+      );
+      expect(nonIgnoredOutFile.existsSync(), isFalse);
+
+      final overwrite = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/export_android_signing_env.ps1',
+        '-KeyPropertiesPath',
+        keyProperties.path,
+        '-OutFile',
+        outFile.path,
+      ]);
+      expect(overwrite.exitCode, isNot(0));
+      expect(
+        '${overwrite.stdout}\n${overwrite.stderr}',
+        contains('will not be overwritten'),
+      );
+
+      escapedKeyProperties.writeAsStringSync(r'''
+storePassword=store\ password
+keyPassword=key-password
+keyAlias=upload
+storeFile=upload-keystore.jks
+''');
+      final escaped = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/export_android_signing_env.ps1',
+        '-KeyPropertiesPath',
+        escapedKeyProperties.path,
+        '-OutFile',
+        escapedOutFile.path,
+      ]);
+      expect(escaped.exitCode, isNot(0));
+      expect(
+        '${escaped.stdout}\n${escaped.stderr}',
+        contains('Unsupported Java properties escaping'),
+      );
+      expect(escapedOutFile.existsSync(), isFalse);
+    } finally {
+      if (fixtureDir.existsSync()) {
+        fixtureDir.deleteSync(recursive: true);
+      }
+      if (nonIgnoredOutFile.existsSync()) {
+        nonIgnoredOutFile.deleteSync();
+      }
+    }
+  });
 
   test('store release wrapper refuses to overwrite existing env keystore', () {
     expect(

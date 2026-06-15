@@ -395,9 +395,40 @@ Store artifact; losing the upload key can block future app updates. Do not use
 `scripts\configure_github_release_variables.ps1` for signing values because
 that helper is intentionally limited to public repository variables.
 
+If `android/key.properties` and the upload keystore already exist and only the
+private CI secret handoff needs to be regenerated, export a new ignored handoff
+file instead of deleting the old one:
+
+```powershell
+pwsh -NoProfile -File scripts\export_android_signing_env.ps1 `
+  -OutFile .env.release.android-signing.generated
+```
+
+The exporter refuses to write to a path that is not ignored by Git and refuses
+to overwrite an existing handoff file.
+
 ---
 
-### 12. create_ios_export_options.ps1
+### 12. export_android_signing_env.ps1
+**Purpose**: Export private GitHub Actions Android signing secret values from
+an existing ignored `android/key.properties` and upload keystore.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts\export_android_signing_env.ps1 `
+  -OutFile .env.release.android-signing.generated
+```
+
+The output contains the base64 keystore and matching passwords for GitHub
+repository secrets. Secret values are written only to the ignored output file
+and are not printed. The exporter supports the plain `key=value` format written
+by `create_android_upload_keystore.ps1`; regenerate or simplify
+`android/key.properties` before exporting if it uses Java properties escaping,
+continuations, or whitespace-sensitive values.
+
+---
+
+### 13. create_ios_export_options.ps1
 **Purpose**: Create an ignored App Store/TestFlight export-options plist for
 `flutter build ipa` when the macOS release host needs explicit Xcode export
 settings.
@@ -432,7 +463,7 @@ before running `scripts\store_release_build.ps1 -Target iOS`.
 
 ---
 
-### 13. store_release_build.ps1
+### 14. store_release_build.ps1
 **Purpose**: Production artifact build wrapper for store/web handoff. It fails
 early when the git working tree is dirty, required production environment
 values, signing files, or public web URLs are missing. By default it also runs
@@ -546,7 +577,7 @@ manifest after the strict audit passes.
 
 ---
 
-### 14. verify_web_deployment.ps1
+### 15. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -593,7 +624,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 15. configure_local_release.ps1
+### 16. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it

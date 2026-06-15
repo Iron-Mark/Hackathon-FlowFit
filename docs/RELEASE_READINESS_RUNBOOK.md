@@ -85,6 +85,12 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1 `
      `android/key.properties`, and `.env.release.android-signing`. Back them up
      in a private password manager before uploading an AAB; losing the upload
      key can block future Play Store updates.
+   - If the keystore and `android/key.properties` already exist and only the
+     private CI secret handoff must be refreshed, write a new ignored handoff
+     file without overwriting the old one:
+     `pwsh -NoProfile -File scripts/export_android_signing_env.ps1 -OutFile .env.release.android-signing.generated`.
+     Copy values from the newest matching handoff file into private GitHub
+     repository secrets only after backing up the upload key material.
 2. Set production package/auth values in `android/gradle.properties`:
 
 ```properties

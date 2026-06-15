@@ -71,6 +71,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `FLOWFIT_ANDROID_KEY_PASSWORD`. For a new local upload key, run
       `pwsh -NoProfile -File scripts/create_android_upload_keystore.ps1` and
       back up the ignored generated files privately before uploading an AAB.
+      If the CI handoff file must be refreshed from an existing keystore, run
+      `pwsh -NoProfile -File scripts/export_android_signing_env.ps1 -OutFile .env.release.android-signing.generated`
+      and use the newest matching ignored handoff file.
 - [ ] Add production auth schemes to Supabase redirect URLs.
 - [ ] Build upload artifact:
       `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android`.
