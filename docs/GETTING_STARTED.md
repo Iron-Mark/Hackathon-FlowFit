@@ -33,7 +33,7 @@ cd flowfit
 flutter pub get
 
 # Configure Supabase
-# Preferred: pass SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY with --dart-define
+# Preferred: set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your shell
 # Optional script fallback: copy lib/secrets.dart.example to lib/secrets.dart
 ```
 
@@ -54,8 +54,8 @@ adb devices
 # Option A: Use automated script (recommended)
 scripts\build_and_install.bat
 
-# Option B: Manual run
-flutter run -d 6ece264d
+# Option B: Phone run with Supabase dart defines resolved from env or lib/secrets.dart
+scripts\run_phone.bat
 ```
 
 ### 5. Approve Installation

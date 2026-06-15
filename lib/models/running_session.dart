@@ -186,7 +186,7 @@ class RunningSession extends WorkoutSession {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       startTime: DateTime.parse(json['start_time'] as String),
-      goalType: GoalType.values.byName(json['goal_type'] as String),
+      goalType: _goalTypeFromJson(json['goal_type']),
       targetDistance: (json['target_distance'] as num?)?.toDouble(),
       targetDuration: json['target_duration'] as int?,
       currentDistance: (json['current_distance'] as num?)?.toDouble() ?? 0.0,
@@ -214,4 +214,15 @@ class RunningSession extends WorkoutSession {
       status: WorkoutStatus.values.byName(json['status'] as String),
     );
   }
+}
+
+GoalType _goalTypeFromJson(Object? value) {
+  if (value is String) {
+    for (final type in GoalType.values) {
+      if (type.name == value) {
+        return type;
+      }
+    }
+  }
+  return GoalType.distance;
 }

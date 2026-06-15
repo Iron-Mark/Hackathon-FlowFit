@@ -487,7 +487,7 @@ function Assert-SupabaseClientValues {
         [string]$PublishableKey
     )
 
-    if ($Url -match 'YOUR_|REPLACE_WITH|<your-|dnasghxxqwibwqnljvxr') {
+    if ($Url -match 'YOUR_|REPLACE_WITH|<your-|project_ref|placeholder|dnasghxxqwibwqnljvxr|(^|[./:-])(example|invalid|test|localhost)(\.|/|:|$)|127\.0\.0\.1') {
         throw "$Source Supabase URL still contains placeholder or old project values."
     }
     if ($Url -notmatch '^https://[a-z0-9-]+\.supabase\.co$') {

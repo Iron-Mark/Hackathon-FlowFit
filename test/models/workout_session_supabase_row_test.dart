@@ -77,5 +77,43 @@ void main() {
 
       expect(session.mode, WalkingMode.free);
     });
+
+    test('legacy invalid type-specific enum values fall back safely', () {
+      final running = RunningSession.fromJson({
+        'id': '7ad0520e-2f0f-4b97-a974-9f339541cc0b',
+        'user_id': '154748e0-165f-40aa-a4a1-a59f69723a0f',
+        'workout_type': 'running',
+        'start_time': '2026-06-14T00:00:00.000Z',
+        'goal_type': 'legacy_goal',
+        'current_distance': 2,
+        'status': 'active',
+      });
+
+      final resistance = ResistanceSession.fromJson({
+        'id': 'ef1ffb99-748b-4b47-a352-58717a694a65',
+        'user_id': '154748e0-165f-40aa-a4a1-a59f69723a0f',
+        'workout_type': 'resistance',
+        'workout_subtype': 'legacy_split',
+        'start_time': '2026-06-14T00:00:00.000Z',
+        'exercises_completed': const [],
+        'status': 'completed',
+      });
+
+      final walking = WalkingSession.fromJson({
+        'id': '34c81212-6f64-4a91-bf83-bdc7c51f91fa',
+        'user_id': '154748e0-165f-40aa-a4a1-a59f69723a0f',
+        'workout_type': 'walking',
+        'start_time': '2026-06-14T00:00:00.000Z',
+        'mode': 'legacy_mode',
+        'current_distance': 1,
+        'steps': 1300,
+        'mission_completed': false,
+        'status': 'completed',
+      });
+
+      expect(running.goalType, GoalType.distance);
+      expect(resistance.split, BodySplit.upper);
+      expect(walking.mode, WalkingMode.free);
+    });
   });
 }

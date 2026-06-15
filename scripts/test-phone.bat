@@ -5,7 +5,7 @@ echo ========================================
 echo.
 
 echo Building and installing on phone (22101320G)...
-flutter run -d 6ece264d -t lib/main.dart --release
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0run_phone.ps1" -Device 6ece264d -Release
 
 echo.
 echo ========================================

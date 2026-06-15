@@ -164,6 +164,12 @@ void main() {
             'delete from public.workout_sessions\nwhere workout_type is null',
       ),
       (
+        table: 'workout_sessions',
+        reason: 'invalid type-specific workout fields',
+        deleteSql:
+            'delete from public.workout_sessions\nwhere workout_type not in',
+      ),
+      (
         table: 'heart_rate',
         reason: 'missing user_id',
         deleteSql: 'delete from public.heart_rate\nwhere user_id is null;',
@@ -207,6 +213,24 @@ void main() {
             '${cleanup.table} rows should be copied to recovery quarantine '
             'with a cleanup reason before deleting $cleanup.reason rows.',
       );
+    }
+  });
+
+  test('recovery migration constrains workout type-specific fields', () {
+    expect(migration, contains('invalid type-specific workout fields'));
+    expect(migration, contains('workout_sessions_type_specific_fields_valid'));
+
+    for (final fragment in [
+      "workout_type = 'running'",
+      "goal_type is not null",
+      "goal_type in ('distance', 'duration')",
+      "workout_type = 'walking'",
+      "coalesce(mode, 'free') in ('free', 'mission')",
+      "workout_type = 'resistance'",
+      "workout_subtype is not null",
+      "workout_subtype in ('upper', 'lower')",
+    ]) {
+      expect(migration, contains(fragment));
     }
   });
 

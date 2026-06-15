@@ -173,7 +173,7 @@ class ResistanceSession extends WorkoutSession {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       startTime: DateTime.parse(json['start_time'] as String),
-      split: BodySplit.values.byName(json['workout_subtype'] as String),
+      split: _bodySplitFromJson(json['workout_subtype']),
       exercises: (json['exercises_completed'] as List<dynamic>)
           .map((e) => ExerciseProgress.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -202,4 +202,15 @@ class ResistanceSession extends WorkoutSession {
       status: WorkoutStatus.values.byName(json['status'] as String),
     );
   }
+}
+
+BodySplit _bodySplitFromJson(Object? value) {
+  if (value is String) {
+    for (final split in BodySplit.values) {
+      if (split.name == value) {
+        return split;
+      }
+    }
+  }
+  return BodySplit.upper;
 }

@@ -16,6 +16,9 @@ void main() {
   late String configureSupabaseMcp;
   late String verifySupabaseBackend;
   late String supabaseBackendVerificationSql;
+  late String runPhoneScript;
+  late String runPhoneBat;
+  late String testPhoneBat;
   late String webDeploymentVerifier;
   late String storeSubmissionChecklist;
   late String releaseReadinessRunbook;
@@ -53,6 +56,9 @@ void main() {
     supabaseBackendVerificationSql = File(
       'supabase/verification/verify_flowfit_backend.sql',
     ).readAsStringSync();
+    runPhoneScript = File('scripts/run_phone.ps1').readAsStringSync();
+    runPhoneBat = File('scripts/run_phone.bat').readAsStringSync();
+    testPhoneBat = File('scripts/test-phone.bat').readAsStringSync();
     webDeploymentVerifier = File(
       'scripts/verify_web_deployment.ps1',
     ).readAsStringSync();
@@ -445,6 +451,15 @@ void main() {
     expect(supabaseBackendVerificationSql, contains('role_table_grants'));
     expect(supabaseBackendVerificationSql, contains('relrowsecurity'));
     expect(supabaseBackendVerificationSql, contains('prosecdef = false'));
+    expect(supabaseBackendVerificationSql, contains('expected_constraints'));
+    expect(
+      supabaseBackendVerificationSql,
+      contains('workout_sessions_type_specific_fields_valid'),
+    );
+    expect(
+      supabaseBackendVerificationSql,
+      contains('required check constraints'),
+    );
     expect(
       supabaseBackendVerificationSql,
       contains('account_deletion_requests_user_id_fkey'),
@@ -515,6 +530,7 @@ void main() {
     expect(readinessAudit, contains('Supabase backend verification runner'));
     expect(readinessAudit, contains('verify_flowfit_backend.sql'));
     expect(readinessAudit, contains('verify_supabase_backend.ps1'));
+    expect(readinessAudit, contains('Workout type-specific constraints'));
   });
 
   test('Supabase backend verification runner validates read-only SQL', () {
@@ -553,6 +569,57 @@ drop table public.user_profiles;
 
       expect(result.exitCode, isNot(0));
       expect('${result.stdout}\n${result.stderr}', contains('read-only'));
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('phone run wrapper passes required Supabase dart defines', () {
+    expect(runPhoneScript, contains('SUPABASE_URL'));
+    expect(runPhoneScript, contains('SUPABASE_PUBLISHABLE_KEY'));
+    expect(runPhoneScript, contains('lib/secrets.dart'));
+    expect(runPhoneScript, contains('--dart-define=SUPABASE_URL='));
+    expect(runPhoneScript, contains('--dart-define=SUPABASE_PUBLISHABLE_KEY='));
+    expect(runPhoneScript, contains('sb_secret_'));
+    expect(runPhoneScript, contains('service_role'));
+    expect(runPhoneScript, contains('dnasghxxqwibwqnljvxr'));
+    expect(runPhoneBat, contains('run_phone.ps1'));
+    expect(testPhoneBat, contains('run_phone.ps1'));
+    expect(runPhoneBat, isNot(contains('flutter run -d 6ece264d')));
+    expect(testPhoneBat, isNot(contains('flutter run -d 6ece264d')));
+    expect(scriptsReadme, contains('scripts\\run_phone.ps1'));
+    expect(
+      scriptsReadme,
+      contains('passes them to Flutter as `--dart-define` inputs'),
+    );
+  });
+
+  test('phone run wrapper rejects placeholder Supabase env file', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_run_phone_test_',
+    );
+    try {
+      final envFile =
+          File('${tempDir.path}${Platform.pathSeparator}.env.release')
+            ..writeAsStringSync('''
+SUPABASE_URL=https://PROJECT_REF.supabase.co
+SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
+''');
+
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/run_phone.ps1',
+        '-EnvFile',
+        envFile.path,
+      ]);
+
+      expect(result.exitCode, isNot(0));
+      expect(
+        '${result.stdout}\n${result.stderr}',
+        contains('environment Supabase URL still contains placeholder'),
+      );
+      expect(result.stdout, isNot(contains('Running phone app')));
     } finally {
       tempDir.deleteSync(recursive: true);
     }
@@ -621,6 +688,31 @@ drop table public.user_profiles;
     expect(releasePreflight, contains("'--wasm'"));
     expect(releasePreflight, contains('Flutter web Wasm release smoke build'));
   });
+
+  test(
+    'ci and preflight smoke builds use runtime-valid Supabase dummy values',
+    () {
+      const smokeUrl = 'https://abcdefghijklmnopqrst.supabase.co';
+      const smokeKey = 'sb_publishable_abcdefghijklmnopqrstuvwxyz123456';
+
+      for (final source in [ciWorkflow, releasePreflight]) {
+        expect(source, contains('--dart-define=SUPABASE_URL=$smokeUrl'));
+        expect(
+          source,
+          contains('--dart-define=SUPABASE_PUBLISHABLE_KEY=$smokeKey'),
+        );
+        expect(source, isNot(contains('https://example.supabase.co')));
+        expect(source, isNot(contains('sb_publishable_smoke_not_for_auth')));
+      }
+
+      expect(scriptsReadme, contains('validation-shaped dummy'));
+      expect(scriptsReadme, contains('Supabase client values as Dart defines'));
+      expect(
+        releaseReadinessRunbook,
+        contains('validation-shaped dummy Supabase client Dart defines'),
+      );
+    },
+  );
 
   test('store checklist supports env-only Supabase release inputs', () {
     expect(storeSubmissionChecklist, contains('SUPABASE_URL'));

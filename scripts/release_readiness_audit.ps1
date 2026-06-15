@@ -609,6 +609,18 @@ function Test-SupabaseMigration {
         Add-Fail 'Pending deletion write guard' 'Migration must block profile, buddy, workout, and heart-rate writes after pending deletion.'
     }
 
+    if (
+        $content.Contains('invalid type-specific workout fields') -and
+        $content.Contains('workout_sessions_type_specific_fields_valid') -and
+        $content.Contains("goal_type in ('distance', 'duration')") -and
+        $content.Contains("workout_subtype in ('upper', 'lower')") -and
+        $content.Contains("coalesce(mode, 'free') in ('free', 'mission')")
+    ) {
+        Add-Pass 'Workout type-specific constraints' 'Migration quarantines invalid recovered workout rows and constrains parsed enum fields.'
+    } else {
+        Add-Fail 'Workout type-specific constraints' 'Migration must quarantine and constrain workout fields parsed by RunningSession, WalkingSession, and ResistanceSession.'
+    }
+
     $verificationSqlPath = 'supabase/verification/verify_flowfit_backend.sql'
     $verificationSql = Read-RepoText $verificationSqlPath
     if (
@@ -618,6 +630,7 @@ function Test-SupabaseMigration {
         $verificationSql.Contains('pg_policies') -and
         $verificationSql.Contains('role_table_grants') -and
         $verificationSql.Contains('relrowsecurity') -and
+        $verificationSql.Contains('workout_sessions_type_specific_fields_valid') -and
         $verificationSql -notmatch '(?im)^\s*(create|alter|drop|delete|insert|update|truncate|grant|revoke|comment|begin|commit)\b'
     ) {
         Add-Pass 'Supabase backend verification SQL' 'Read-only backend verification SQL is present for post-migration checks.'

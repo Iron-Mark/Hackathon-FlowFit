@@ -92,7 +92,7 @@ Create or update tracked non-secret Android release identity in
 pwsh -NoProfile -File scripts/configure_local_release.ps1
 ```
 
-4. Build Dart with the same auth schemes. The native manifest reads the Gradle
+3. Build Dart with the same auth schemes. The native manifest reads the Gradle
    properties above; Flutter code reads these `--dart-define` values:
 
 ```powershell
@@ -100,13 +100,13 @@ $authScheme = 'com.oldstlabs.flowfit'
 $supportEmail = 'support@flowfit.com'
 ```
 
-5. Add the production auth scheme to Supabase redirect URLs:
+4. Add the production auth scheme to Supabase redirect URLs:
 
 ```text
 com.oldstlabs.flowfit://auth-callback
 ```
 
-6. Build the Play Store artifact:
+5. Build the Play Store artifact:
 
 ```powershell
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android
@@ -494,16 +494,15 @@ release-readiness audit, builds the JS web artifact, builds Android phone/Wear
 debug APKs, and produces a debug-signed release App Bundle smoke artifact named
 `flowfit-release-smoke-not-for-store`. The CI release smoke uses
 `com.flowfit.smoke` package/auth values plus matching Dart defines and
-placeholder Supabase client Dart defines, mirroring the local preflight. It
-also verifies the built public privacy and account-deletion pages, serves
+validation-shaped dummy Supabase client Dart defines, mirroring the local
+preflight. It also verifies the built public privacy and account-deletion pages,
+serves
 `build/web` locally, runs `scripts/verify_web_deployment.ps1` with
 `-AllowInsecureLocalhost`, and uploads
 `flowfit-web-static-verification-smoke` before uploading the web artifact.
 The CI web artifact is named `flowfit-web-smoke-not-for-store` because it uses
-smoke Supabase Dart defines and is not a production web deploy artifact. This
-CI check is static artifact verification; it does not execute the Flutter app
-runtime because the smoke build intentionally uses placeholder Supabase values.
-CI also compiles a separate Wasm smoke artifact under `build/web-wasm`, verifies
+dummy Supabase Dart defines and is not a production web deploy artifact. CI also
+compiles a separate Wasm smoke artifact under `build/web-wasm`, verifies
 `main.dart.wasm` and the public compliance pages are present there, and uploads
 it as `flowfit-web-wasm-smoke-not-for-store`. That keeps the normal JS web
 artifact as the default handoff while proving the Wasm backend still compiles.

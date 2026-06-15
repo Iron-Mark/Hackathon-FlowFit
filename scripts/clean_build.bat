@@ -6,5 +6,5 @@ echo Getting dependencies...
 flutter pub get
 echo.
 echo Build cache cleared! Now run:
-echo flutter run -d 6ece264d -t lib/main.dart
+echo scripts\run_phone.bat
 pause

@@ -173,8 +173,8 @@ try {
             '--release',
             '--no-pub',
             '--dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com',
-            '--dart-define=SUPABASE_URL=https://example.supabase.co',
-            '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_smoke_not_for_auth'
+            '--dart-define=SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co',
+            '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
         )
         Assert-WebCompliancePages
         if ($IncludeWasmSmoke) {
@@ -185,8 +185,8 @@ try {
                 '--wasm',
                 '--no-pub',
                 '--dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com',
-                '--dart-define=SUPABASE_URL=https://example.supabase.co',
-                '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_smoke_not_for_auth'
+                '--dart-define=SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co',
+                '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
             )
             Assert-WebCompliancePages
         }
@@ -217,8 +217,8 @@ try {
             '--no-pub',
             "--dart-define=FLOWFIT_AUTH_SCHEME=$($env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME)",
             "--dart-define=FLOWFIT_SUPPORT_EMAIL=$($env:FLOWFIT_SUPPORT_EMAIL)",
-            '--dart-define=SUPABASE_URL=https://example.supabase.co',
-            '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_smoke_not_for_auth'
+            '--dart-define=SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co',
+            '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
         )
     }
 

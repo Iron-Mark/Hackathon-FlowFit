@@ -56,13 +56,25 @@ scripts\run_phone.bat
 ```
 
 **What it does**:
-- Runs `flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp`
+- Calls `scripts\run_phone.ps1`, which resolves `SUPABASE_URL` and
+  `SUPABASE_PUBLISHABLE_KEY` from the environment or ignored `lib/secrets.dart`
+  and passes them to Flutter as `--dart-define` inputs.
+- Runs `flutter run -d 6ece264d -t lib/main.dart`
 - Launches companion app on phone
 - Enables hot reload
 
 **Requirements**:
 - Phone connected
-- Previous build successful
+- Real Supabase client values in the process environment or ignored
+  `lib/secrets.dart`
+
+PowerShell options:
+
+```powershell
+pwsh -NoProfile -File scripts\run_phone.ps1 -Device 6ece264d
+pwsh -NoProfile -File scripts\run_phone.ps1 -Device 6ece264d -Release
+pwsh -NoProfile -File scripts\run_phone.ps1 -Device 6ece264d -EnvFile .env.release
+```
 
 ---
 
@@ -92,11 +104,12 @@ The release smoke build sets Gradle property
 If production values are not already set, it also uses
 `com.flowfit.smoke` package/auth defaults and matching Dart auth-scheme defines.
 It also passes `FLOWFIT_SUPPORT_EMAIL`, defaulting to `support@flowfit.com`
-when the environment does not override it. It passes placeholder Supabase
-client values as Dart defines only for compile smoke coverage. Its App Bundle
-proves release compilation, but it is not a Play Store upload artifact. Real
-Play Store builds require either ignored `android/key.properties` plus the
-referenced upload keystore, or wrapper-managed signing env secrets
+when the environment does not override it. It passes validation-shaped dummy
+Supabase client values as Dart defines only for smoke coverage, so startup
+configuration checks still pass if the artifact is opened. Its App Bundle proves
+release compilation, but it is not a Play Store upload artifact. Real Play Store
+builds require either ignored `android/key.properties` plus the referenced
+upload keystore, or wrapper-managed signing env secrets
 (`FLOWFIT_ANDROID_KEYSTORE_BASE64`, `FLOWFIT_ANDROID_KEYSTORE_PASSWORD`,
 `FLOWFIT_ANDROID_KEY_ALIAS`, and `FLOWFIT_ANDROID_KEY_PASSWORD`). They also
 require a maintainer-owned package ID, real Supabase client env, and matching

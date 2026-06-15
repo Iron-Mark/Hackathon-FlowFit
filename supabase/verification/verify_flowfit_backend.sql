@@ -148,6 +148,13 @@ expected_indexes(index_name) as (
     ('idx_heart_rate_user_id'),
     ('idx_account_deletion_requests_one_pending')
 ),
+expected_constraints(table_name, constraint_name) as (
+  values
+    (
+      'workout_sessions',
+      'workout_sessions_type_specific_fields_valid'
+    )
+),
 missing_tables as (
   select e.table_name
   from expected_tables e
@@ -240,6 +247,19 @@ missing_indexes as (
     from pg_indexes i
     where i.schemaname = 'public'
       and i.indexname = e.index_name
+  )
+),
+missing_constraints as (
+  select e.table_name, e.constraint_name
+  from expected_constraints e
+  where not exists (
+    select 1
+    from pg_constraint con
+    join pg_class c on c.oid = con.conrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public'
+      and c.relname = e.table_name
+      and con.conname = e.constraint_name
   )
 ),
 missing_extension_usage as (
@@ -340,6 +360,15 @@ flowfit_backend_verification as (
       else 'missing: ' || string_agg(index_name, ', ' order by index_name)
     end
   from missing_indexes
+  union all
+  select
+    'required check constraints',
+    case when count(*) = 0 then 'pass' else 'fail' end,
+    case
+      when count(*) = 0 then 'expected check constraints exist'
+      else 'missing: ' || string_agg(table_name || ':' || constraint_name, ', ' order by table_name, constraint_name)
+    end
+  from missing_constraints
   union all
   select
     'extensions schema usage',

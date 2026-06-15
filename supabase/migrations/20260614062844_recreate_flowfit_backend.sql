@@ -602,6 +602,63 @@ set
     else mode
   end;
 
+insert into public.flowfit_recovery_quarantine (
+  source_table,
+  reason,
+  row_data
+)
+select
+  'workout_sessions',
+  'invalid type-specific workout fields',
+  to_jsonb(session_row)
+from public.workout_sessions as session_row
+where (session_row.workout_type not in ('running', 'walking', 'resistance'))
+   or (
+        session_row.workout_type = 'running'
+        and (
+          session_row.goal_type is null
+          or session_row.goal_type not in ('distance', 'duration')
+        )
+      )
+   or (
+        session_row.workout_type = 'resistance'
+        and (
+          session_row.workout_subtype is null
+          or session_row.workout_subtype not in ('upper', 'lower')
+        )
+      )
+   or (
+        session_row.workout_type = 'walking'
+        and (
+          session_row.mode is null
+          or session_row.mode not in ('free', 'mission')
+        )
+      );
+
+delete from public.workout_sessions
+where workout_type not in ('running', 'walking', 'resistance')
+   or (
+        workout_type = 'running'
+        and (
+          goal_type is null
+          or goal_type not in ('distance', 'duration')
+        )
+      )
+   or (
+        workout_type = 'resistance'
+        and (
+          workout_subtype is null
+          or workout_subtype not in ('upper', 'lower')
+        )
+      )
+   or (
+        workout_type = 'walking'
+        and (
+          mode is null
+          or mode not in ('free', 'mission')
+        )
+      );
+
 alter table public.workout_sessions
   alter column id set default extensions.gen_random_uuid(),
   alter column id set not null,
@@ -679,6 +736,31 @@ begin
       add constraint workout_sessions_status_valid
       check (status in ('active', 'paused', 'completed', 'cancelled'))
       not valid;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'workout_sessions_type_specific_fields_valid'
+      and conrelid = 'public.workout_sessions'::regclass
+  ) then
+    alter table public.workout_sessions
+      add constraint workout_sessions_type_specific_fields_valid
+      check (
+        (
+          workout_type = 'running'
+          and goal_type is not null
+          and goal_type in ('distance', 'duration')
+        )
+        or (
+          workout_type = 'walking'
+          and coalesce(mode, 'free') in ('free', 'mission')
+        )
+        or (
+          workout_type = 'resistance'
+          and workout_subtype is not null
+          and workout_subtype in ('upper', 'lower')
+        )
+      ) not valid;
   end if;
 
   if not exists (

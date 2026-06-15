@@ -92,8 +92,8 @@ You can put the same values in ignored `.env.release` by copying
 `.env.release.example`, then pass `-EnvFile .env.release` to
 `scripts\release_readiness_audit.ps1` or `scripts\store_release_build.ps1`.
 
-Optional local fallback: copy `lib/secrets.dart.example` to `lib/secrets.dart`
-and fill the values:
+Optional local script fallback: copy `lib/secrets.dart.example` to
+`lib/secrets.dart` and fill the values:
 
 ```dart
 class SupabaseConfig {
@@ -105,7 +105,10 @@ class SupabaseConfig {
 }
 ```
 
-`lib/secrets.dart` is gitignored. Never put service-role or secret keys in Flutter.
+`lib/secrets.dart` is gitignored. Direct phone runs should use
+`scripts\run_phone.bat` / `scripts\run_phone.ps1`, which pass the fallback
+values to Flutter as `--dart-define` inputs. Never put service-role or secret
+keys in Flutter.
 
 Current FlowFit resolves `supabase_flutter` 2.10.x, where the initialize
 parameter is still named `anonKey`. The app passes the publishable key through
@@ -137,6 +140,8 @@ It creates or repairs:
 - explicit `extensions` schema usage for UUID defaults
 - cleanup of legacy policies and stale grants before canonical policies/grants
   are recreated
+- quarantine and check constraints for workout enum fields parsed by the app:
+  running `goal_type`, walking `mode`, and resistance `workout_subtype`
 
 If this recovery migration is ever applied to a partially populated development
 project, rows that cannot satisfy the repaired required columns are copied to

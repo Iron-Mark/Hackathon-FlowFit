@@ -6,4 +6,4 @@ echo.
 echo Device: 22101320G (6ece264d)
 echo Entry: lib/main.dart
 echo.
-flutter run -d 6ece264d -t lib/main.dart
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0run_phone.ps1" -Device 6ece264d

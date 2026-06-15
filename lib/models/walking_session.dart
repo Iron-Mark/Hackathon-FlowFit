@@ -169,9 +169,7 @@ class WalkingSession extends WorkoutSession {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       startTime: DateTime.parse(json['start_time'] as String),
-      mode: json['mode'] != null
-          ? WalkingMode.values.byName(json['mode'] as String)
-          : WalkingMode.free,
+      mode: _walkingModeFromJson(json['mode']),
       targetDuration: json['target_duration'] as int?,
       currentDistance: (json['current_distance'] as num?)?.toDouble() ?? 0.0,
       steps: json['steps'] as int? ?? 0,
@@ -200,4 +198,15 @@ class WalkingSession extends WorkoutSession {
       status: WorkoutStatus.values.byName(json['status'] as String),
     );
   }
+}
+
+WalkingMode _walkingModeFromJson(Object? value) {
+  if (value is String) {
+    for (final mode in WalkingMode.values) {
+      if (mode.name == value) {
+        return mode;
+      }
+    }
+  }
+  return WalkingMode.free;
 }

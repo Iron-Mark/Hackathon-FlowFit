@@ -3,7 +3,7 @@
 A comprehensive health and fitness tracking application for Wear OS (Galaxy Watch) with companion phone app support. Built with Flutter and integrated with Samsung Health Sensor SDK.
 
 flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dart
-flutter run -d 6ece264d -t lib/main.dart
+scripts\run_phone.bat
 
 
 
@@ -67,7 +67,7 @@ FlowFit is a dual-platform fitness app that runs on:
 - **Model**: Android Phone (22101320G)
 - **Device ID**: `6ece264d`
 - **Purpose**: Companion app for data visualization
-- **Run Command**: `flutter run -d 6ece264d -t lib/main.dart`
+- **Run Command**: `scripts\run_phone.bat`
 
 ## 🚀 Quick Start
 
@@ -96,8 +96,9 @@ FlowFit is a dual-platform fitness app that runs on:
 
 2. **Configure Supabase**
    - Preferred: pass `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` with
-     `--dart-define` or use `scripts\store_release_build.ps1`, which does
-     that for production builds.
+     `--dart-define`. For local phone runs, `scripts\run_phone.bat` reads those
+     values from the environment or ignored `lib/secrets.dart` and passes them
+     to Flutter.
    - Optional local fallback: copy `lib/secrets.dart.example` to
      `lib/secrets.dart` for scripts that read the ignored fallback file.
    - Do not put service-role or secret keys in the Flutter app
@@ -299,7 +300,7 @@ flowfit/
 # Clean and rebuild
 flutter clean
 flutter pub get
-flutter run -d <device-id>
+pwsh -NoProfile -File scripts\run_phone.ps1 -Device <device-id>
 ```
 
 **"JVM-target compatibility detected"**
@@ -436,7 +437,7 @@ scripts\run_phone.bat
 flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dart
 
 # Phone (22101320G)
-flutter run -d 6ece264d -t lib/main.dart
+scripts\run_phone.bat
 ```
 
 > ⚠️ **Important**: Always use `-t lib/main_wear.dart` for watch to get Wear OS UI, not phone UI!
