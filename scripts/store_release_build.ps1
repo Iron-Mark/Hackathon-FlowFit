@@ -490,6 +490,27 @@ function Assert-Email {
     }
 }
 
+function Assert-SupportEmailReleaseReadiness {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SupportEmail
+    )
+
+    Assert-Email 'FLOWFIT_SUPPORT_EMAIL' $SupportEmail
+
+    $normalized = $SupportEmail.Trim().ToLowerInvariant()
+    if ($normalized -eq 'support@flowfit.com') {
+        throw 'FLOWFIT_SUPPORT_EMAIL must be a verified deliverable support/privacy inbox. support@flowfit.com is the reserved source replacement token; configure a maintainer-owned inbox before release.'
+    }
+
+    $verified = $SupportEmailVerified -or (
+        [Environment]::GetEnvironmentVariable('FLOWFIT_SUPPORT_EMAIL_VERIFIED') -eq 'true'
+    )
+    if (-not $verified) {
+        throw 'FLOWFIT_SUPPORT_EMAIL_VERIFIED=true or -SupportEmailVerified is required after confirming the configured support inbox can receive external mail.'
+    }
+}
+
 function Assert-SupabaseClientValues {
     param(
         [Parameter(Mandatory = $true)]
@@ -809,7 +830,7 @@ function Invoke-AndroidReleaseBuild {
 
     Assert-ProductionValue 'ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID' $applicationId
     Assert-ProductionValue 'ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME' $authScheme
-    Assert-Email 'FLOWFIT_SUPPORT_EMAIL' $supportEmail
+    Assert-SupportEmailReleaseReadiness -SupportEmail $supportEmail
     $publicWebBaseUrl = Resolve-PublicWebBaseUrl -PublicWebBaseUrl $publicWebBaseUrl
     Assert-AndroidSigning
 
@@ -840,7 +861,7 @@ function Invoke-IosReleaseBuild {
 
     $supportEmail = Get-RequiredEnv 'FLOWFIT_SUPPORT_EMAIL' 'App Store support and privacy contact'
     $publicWebBaseUrl = Get-RequiredEnv 'FLOWFIT_PUBLIC_WEB_BASE_URL' 'in-app website and public compliance URL'
-    Assert-Email 'FLOWFIT_SUPPORT_EMAIL' $supportEmail
+    Assert-SupportEmailReleaseReadiness -SupportEmail $supportEmail
     $publicWebBaseUrl = Resolve-PublicWebBaseUrl -PublicWebBaseUrl $publicWebBaseUrl
 
     $iosConfigPath = 'ios/Flutter/FlowFit.xcconfig'
@@ -905,7 +926,7 @@ function Invoke-WebReleaseBuild {
     $supportEmail = Get-RequiredEnv 'FLOWFIT_SUPPORT_EMAIL' 'public web support and privacy contact'
     $publicWebBaseUrl = Get-RequiredEnv 'FLOWFIT_PUBLIC_WEB_BASE_URL' 'public privacy/account-deletion URLs'
 
-    Assert-Email 'FLOWFIT_SUPPORT_EMAIL' $supportEmail
+    Assert-SupportEmailReleaseReadiness -SupportEmail $supportEmail
     $script:resolvedWebReleaseConfig = Resolve-WebReleaseConfig -PublicWebBaseUrl $publicWebBaseUrl
     $publicWebBaseUrl = $script:resolvedWebReleaseConfig.PublicWebBaseUrl
     $webBaseHref = $script:resolvedWebReleaseConfig.WebBaseHref

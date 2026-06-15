@@ -999,7 +999,7 @@ storeFile=upload-keystore.jks
     final env = Map<String, String>.from(Platform.environment)
       ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] =
           'https://iron-mark.github.io/Hackathon-FlowFit/'
-      ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@flowfit.com'
+      ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
       ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
       ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
       ..['SUPABASE_PUBLISHABLE_KEY'] = publishableKey;
@@ -1033,6 +1033,26 @@ storeFile=upload-keystore.jks
       '${blocked.stdout}\n${blocked.stderr}',
       contains('SupportEmailVerified must be passed before setting true'),
     );
+
+    final defaultInboxEnv = Map<String, String>.from(env)
+      ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@flowfit.com';
+    final defaultInbox = Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      'scripts/configure_github_release_variables.ps1',
+      '-Repo',
+      'Iron-Mark/Hackathon-FlowFit',
+      '-DryRun',
+      '-SupportEmailVerified',
+    ], environment: defaultInboxEnv);
+
+    expect(defaultInbox.exitCode, isNot(0));
+    final defaultInboxOutput = '${defaultInbox.stdout}\n${defaultInbox.stderr}'
+        .replaceAll(RegExp(r'\x1B\[[0-9;]*m'), '')
+        .replaceAll(RegExp(r'\s+'), ' ');
+    expect(defaultInboxOutput, contains('support@flowfit.com'));
+    expect(defaultInboxOutput, contains('reserved'));
+    expect(defaultInboxOutput, contains('source replacement token'));
   });
 
   test('Supabase MCP helper validates project scope and release posture', () {
@@ -1666,6 +1686,14 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(pagesWorkflow, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
     expect(
       pagesWorkflow,
+      contains(r'support_email="${FLOWFIT_SUPPORT_EMAIL,,}"'),
+    );
+    expect(
+      pagesWorkflow,
+      contains(r'"${support_email}" != "support@flowfit.com"'),
+    );
+    expect(
+      pagesWorkflow,
       isNot(contains("vars.FLOWFIT_SUPPORT_EMAIL || 'support@flowfit.com'")),
     );
     expect(
@@ -1677,6 +1705,10 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       contains(
         'Set FLOWFIT_SUPPORT_EMAIL_VERIFIED=true only after the configured support inbox is receiving mail.',
       ),
+    );
+    expect(
+      pagesWorkflow,
+      contains('support@flowfit.com is the reserved source replacement token'),
     );
     expect(pagesWorkflow, contains('flowfit-github-pages-verification'));
     expect(pagesWorkflow, contains('/Hackathon-FlowFit/'));
@@ -1991,6 +2023,52 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(storeOutput, contains('sb_publishable_'));
   });
 
+  test('store release wrapper requires verified production support inbox', () {
+    final baseEnv = Map<String, String>.from(Platform.environment)
+      ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+      ..['SUPABASE_PUBLISHABLE_KEY'] =
+          'sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
+      ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] =
+          'https://iron-mark.github.io/Hackathon-FlowFit'
+      ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
+      ..remove('FLOWFIT_SUPPORT_EMAIL_VERIFIED');
+
+    ProcessResult runStore(Map<String, String> env) {
+      return Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/store_release_build.ps1',
+        '-Target',
+        'Web',
+        '-AllowDirty',
+        '-SkipFlutterPubGet',
+        '-SkipValidation',
+      ], environment: env);
+    }
+
+    final unverified = runStore(baseEnv);
+    expect(unverified.exitCode, isNot(0));
+    final unverifiedOutput = '${unverified.stdout}\n${unverified.stderr}'
+        .replaceAll(RegExp(r'\x1B\[[0-9;]*m'), '')
+        .replaceAll(RegExp(r'\s+'), ' ');
+    expect(
+      unverifiedOutput,
+      contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED=true or -SupportEmailVerified'),
+    );
+
+    final defaultInboxEnv = Map<String, String>.from(baseEnv)
+      ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@flowfit.com'
+      ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true';
+    final defaultInbox = runStore(defaultInboxEnv);
+    expect(defaultInbox.exitCode, isNot(0));
+    final defaultInboxOutput = '${defaultInbox.stdout}\n${defaultInbox.stderr}'
+        .replaceAll(RegExp(r'\x1B\[[0-9;]*m'), '')
+        .replaceAll(RegExp(r'\s+'), ' ');
+    expect(defaultInboxOutput, contains('support@flowfit.com'));
+    expect(defaultInboxOutput, contains('reserved'));
+    expect(defaultInboxOutput, contains('source replacement token'));
+  });
+
   test('store release native manifests exclude development auth schemes', () {
     expect(androidMainManifest, contains(r'${flowfitAuthScheme}'));
     expect(androidMainManifest, isNot(contains(r'${flowfitDevAuthScheme}')));
@@ -2016,6 +2094,19 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(supportInboxVerifier, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
     expect(supportInboxVerifier, contains('Resolve-MxEvidence'));
     expect(supportInboxVerifier, contains('Null MX'));
+    expect(storeReleaseBuild, contains('Assert-SupportEmailReleaseReadiness'));
+    expect(
+      storeReleaseBuild,
+      contains('support@flowfit.com is the reserved source replacement token'),
+    );
+    expect(
+      configureLocalRelease,
+      isNot(
+        contains(
+          'support@flowfit.com is the reserved source replacement token',
+        ),
+      ),
+    );
     expect(
       supportInboxVerifier,
       contains('manual-inbound-confirmation-required'),
@@ -2071,6 +2162,31 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       contains('Production wrapper builds set `FLOWFIT_PUBLIC_WEB_BASE_URL`'),
     );
     expect(scriptsReadme, contains('in-app help/legal links'));
+    expect(
+      scriptsReadme,
+      contains(r"$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'"),
+    );
+    expect(
+      scriptsReadme,
+      contains(
+        'scripts/store_release_build.ps1 -Target Web -SupportEmailVerified',
+      ),
+    );
+    expect(scriptsReadme, contains('wrapper rejects `support@flowfit.com`'));
+    expect(
+      releaseReadinessRunbook,
+      contains(r"$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'"),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains(
+        'scripts/store_release_build.ps1 -Target Web -SupportEmailVerified',
+      ),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('The wrapper rejects `support@flowfit.com`'),
+    );
     expect(storeSubmissionChecklist, contains('verify_support_inbox.ps1'));
     expect(storeReleaseBuild, contains('valid support email address'));
     expect(webDeploymentVerifier, contains('valid support email address'));

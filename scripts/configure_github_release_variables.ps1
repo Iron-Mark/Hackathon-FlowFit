@@ -119,6 +119,14 @@ function Assert-Email {
     }
 }
 
+function Assert-ProductionSupportEmail {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value.Trim().ToLowerInvariant() -eq 'support@flowfit.com') {
+        throw 'FLOWFIT_SUPPORT_EMAIL must be a verified deliverable support/privacy inbox. support@flowfit.com is the reserved source replacement token; configure a maintainer-owned inbox before release.'
+    }
+}
+
 function Assert-SupabaseUrl {
     param([Parameter(Mandatory = $true)][string]$Value)
 
@@ -212,6 +220,7 @@ if (-not [string]::IsNullOrWhiteSpace($webBaseHref)) {
     Assert-WebBaseHref -Value $webBaseHref
 }
 Assert-Email -Name 'FLOWFIT_SUPPORT_EMAIL' -Value $supportEmail
+Assert-ProductionSupportEmail -Value $supportEmail
 Assert-SupabaseUrl -Value $supabaseUrl
 Assert-SupabasePublishableKey -Value $supabasePublishableKey
 

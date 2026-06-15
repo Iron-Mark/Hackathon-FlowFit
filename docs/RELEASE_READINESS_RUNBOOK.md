@@ -117,6 +117,7 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1
 ```powershell
 $authScheme = 'com.oldstlabs.flowfit'
 $env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 ```
 
@@ -129,7 +130,7 @@ com.oldstlabs.flowfit://auth-callback
 5. Build the Play Store artifact:
 
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android -SupportEmailVerified
 ```
 
 The production wrapper always validates Supabase client config and
@@ -148,6 +149,7 @@ material:
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
 $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
 $env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
 $env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
@@ -155,7 +157,7 @@ $env:FLOWFIT_ANDROID_KEYSTORE_BASE64 = 'REPLACE_WITH_BASE64_ENCODED_UPLOAD_KEYST
 $env:FLOWFIT_ANDROID_KEYSTORE_PASSWORD = 'REPLACE_WITH_UPLOAD_KEYSTORE_PASSWORD'
 $env:FLOWFIT_ANDROID_KEY_ALIAS = 'upload'
 $env:FLOWFIT_ANDROID_KEY_PASSWORD = 'REPLACE_WITH_UPLOAD_KEY_PASSWORD'
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android -SupportEmailVerified
 ```
 
 Direct `flutter build appbundle` still requires ignored `android/key.properties`
@@ -233,7 +235,7 @@ validation before building:
 
 ```bash
 flutter pub get
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS -SupportEmailVerified
 ```
 
 Before archive/upload:
@@ -281,8 +283,9 @@ Build:
 
 ```powershell
 $env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SupportEmailVerified
 ```
 
 Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the final deployed URL before building,
@@ -309,7 +312,7 @@ records both the directory and the zip in `build/store-release-artifacts.json`.
 Optional Wasm release artifact:
 
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
 ```
 
 Optional local Wasm compile-smoke without production artifact packaging:
@@ -327,7 +330,8 @@ After deployment, use `https://<your-web-host>/privacy.html` and
 `https://<your-web-host>/account-deletion.html` in Play Console and App Store
 Connect. The store release build wrapper requires `FLOWFIT_SUPPORT_EMAIL` and
 replaces `support@flowfit.com` in the built public pages with that value; keep
-the source default unless the default inbox is wrong for every environment.
+the source default only as a replacement token. Production store/web builds
+reject `support@flowfit.com` until a verified deliverable inbox replaces it.
 The release audit, preflight, and store wrapper also verify that the public
 account deletion page keeps an email request link, account-and-associated-data
 wording, no-reinstall wording, and the in-app
@@ -579,7 +583,7 @@ pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke
 pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeWasmSmoke
 
 # Optional Flutter web Wasm production artifact wrapper:
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
 
 # Production artifact wrapper after external config is complete.
 # Run -Target All on macOS for Android, iOS, and web. On Windows, run
@@ -587,9 +591,9 @@ pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -SupportEmailVerified
 
 # Or load production inputs from the ignored release env file:
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -EnvFile .env.release
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -EnvFile .env.release -SupportEmailVerified
 
-# Use -SupportEmailVerified only after the configured/default support inbox is
+# Use -SupportEmailVerified only after the configured support inbox is
 # owned by the maintainer and can receive privacy or account deletion requests.
 
 # Manual commands:
@@ -679,6 +683,8 @@ deliverable inbox as a Dart define. App help/legal screens also read
 `FLOWFIT_PUBLIC_WEB_BASE_URL`; production Android/iOS/Web release builds should
 pass the same deployed HTTPS base URL so in-app contact links match the public
 compliance pages.
+The wrapper rejects `support@flowfit.com` for production artifacts because it is
+the reserved source replacement token.
 For production handoff, prefer `scripts/store_release_build.ps1`; it also
 writes `build/store-release-artifacts.json` for the generated AAB/web outputs,
 including `build/release/flowfit-web-release.zip` for static web hosting.

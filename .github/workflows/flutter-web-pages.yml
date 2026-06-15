@@ -54,8 +54,10 @@ jobs:
         run: |
           set -euo pipefail
 
+          support_email="${FLOWFIT_SUPPORT_EMAIL,,}"
           if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&
                 -n "${FLOWFIT_SUPPORT_EMAIL}" &&
+                "${support_email}" != "support@flowfit.com" &&
                 -n "${SUPABASE_URL}" &&
                 "${SUPABASE_PUBLISHABLE_KEY}" == sb_publishable_* ]]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
@@ -113,6 +115,10 @@ jobs:
           fi
           if [[ -z "${FLOWFIT_SUPPORT_EMAIL}" ]]; then
             echo "FLOWFIT_SUPPORT_EMAIL repo variable is required and must point to a verified deliverable inbox." >&2
+            exit 1
+          fi
+          if [[ "${FLOWFIT_SUPPORT_EMAIL,,}" == "support@flowfit.com" ]]; then
+            echo "support@flowfit.com is the reserved source replacement token and is not a verified production inbox." >&2
             exit 1
           fi
           if [[ -z "${SUPABASE_URL}" ]]; then

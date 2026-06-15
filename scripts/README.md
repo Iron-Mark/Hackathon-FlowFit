@@ -489,7 +489,7 @@ Apple Developer account on macOS, then set:
 $env:FLOWFIT_IOS_EXPORT_OPTIONS_PLIST = 'ios/ExportOptions.plist'
 ```
 
-before running `scripts\store_release_build.ps1 -Target iOS`.
+before running `scripts\store_release_build.ps1 -Target iOS -SupportEmailVerified`.
 
 ---
 
@@ -502,6 +502,8 @@ analyzer, Flutter tests, and Android release lint before producing artifacts.
 **Required environment values**:
 ```powershell
 $env:FLOWFIT_SUPPORT_EMAIL = 'REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'
+# Set only after that inbox is maintainer-owned and receiving external mail.
+$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
 # Optional when the deployed Flutter web app is served from a subpath.
 # The wrapper derives this from FLOWFIT_PUBLIC_WEB_BASE_URL when omitted.
@@ -530,7 +532,7 @@ The iOS target reads production bundle/auth values from
 
 **Build Android, iOS, and web artifacts**:
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -SupportEmailVerified
 ```
 
 Run `-Target All` on macOS for the complete Play Store, App Store, and web
@@ -539,17 +541,17 @@ archive/export is not available from the Windows Flutter toolchain.
 
 **Build only iOS for App Store/TestFlight**:
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS -SupportEmailVerified
 ```
 
 **Build only Flutter web**:
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SupportEmailVerified
 ```
 
 **Build only Flutter web with WebAssembly output**:
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
 ```
 
 **Run the strict audit before building**:
@@ -561,7 +563,7 @@ pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudi
 ```powershell
 Copy-Item .env.release.example .env.release
 # Fill .env.release locally, then:
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -EnvFile .env.release
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -EnvFile .env.release -SupportEmailVerified
 ```
 
 The Android target requires ignored `android/key.properties` and the referenced
@@ -601,8 +603,10 @@ replace every `your-owned-domain.com`, `PROJECT_REF`, and
 `REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY` example before running the production
 wrapper. Production URLs must use a real HTTPS origin, not `.example`,
 `.invalid`, `.test`, localhost, or an IP-loopback host.
-Pass `-SupportEmailVerified` only after the configured/default support inbox is
-owned by the maintainer and usable for privacy/account deletion contact.
+Pass `-SupportEmailVerified` only after the configured support inbox is owned by
+the maintainer and usable for privacy/account deletion contact. The production
+wrapper rejects `support@flowfit.com`; it is the reserved source replacement
+token.
 When `-RunStrictAudit` is used, the wrapper also writes
 `build/store-release-readiness-audit.json` and includes it in the artifact
 manifest after the strict audit passes.
@@ -632,9 +636,10 @@ For local smoke testing only, run a local static server for `build/web` and add
 ### GitHub Pages deployment workflow
 
 `.github/workflows/flutter-web-pages.yml` builds the production Flutter web
-artifact with `scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet`,
-uploads `build/web` to GitHub Pages, deploys it, and verifies the deployed
-site with `scripts/verify_web_deployment.ps1`. It uploads the JSON verification
+artifact with `scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet`
+after the deploy-ready gate confirms `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`,
+uploads `build/web` to GitHub Pages, deploys it, and verifies the deployed site
+with `scripts/verify_web_deployment.ps1`. It uploads the JSON verification
 evidence as `flowfit-github-pages-verification`.
 
 The workflow has a `deploy-ready` job. Pushes to `main` skip the production
