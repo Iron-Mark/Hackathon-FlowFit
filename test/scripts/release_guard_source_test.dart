@@ -1527,11 +1527,19 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(ciWorkflow, isNot(contains('Verify web deployment smoke')));
   });
 
-  test('ci installs Android SDK command-line tools before sdkmanager use', () {
+  test('ci installs Android SDK packages explicitly after setup-android', () {
     expect(ciWorkflow, contains('android-actions/setup-android@v4'));
+    expect(ciWorkflow, contains('packages: ""'));
+    expect(
+      ciWorkflow,
+      contains(
+        'sdkmanager "platform-tools" "platforms;android-36" '
+        '"build-tools;36.1.0" "ndk;28.0.13004108"',
+      ),
+    );
     expect(
       ciWorkflow.indexOf('android-actions/setup-android@v4'),
-      lessThan(ciWorkflow.indexOf('sdkmanager "platforms;android-36"')),
+      lessThan(ciWorkflow.indexOf('sdkmanager "platform-tools"')),
     );
   });
 
