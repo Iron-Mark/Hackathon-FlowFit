@@ -12,6 +12,7 @@ void main() {
   late String releaseStatusSnapshot;
   late String createAndroidUploadKeystore;
   late String supportInboxVerifier;
+  late String storeMetadataVerifier;
   late String createIosExportOptions;
   late String scriptsReadme;
   late String gitignore;
@@ -28,6 +29,7 @@ void main() {
   late String storeSubmissionChecklist;
   late String releaseReadinessRunbook;
   late String supabaseRecoveryRunbook;
+  late String docsIndex;
   late String ciWorkflow;
   late String pagesWorkflow;
   late String copilotInstructions;
@@ -54,6 +56,9 @@ void main() {
     ).readAsStringSync();
     supportInboxVerifier = File(
       'scripts/verify_support_inbox.ps1',
+    ).readAsStringSync();
+    storeMetadataVerifier = File(
+      'scripts/verify_store_metadata.ps1',
     ).readAsStringSync();
     createIosExportOptions = File(
       'scripts/create_ios_export_options.ps1',
@@ -89,6 +94,7 @@ void main() {
     supabaseRecoveryRunbook = File(
       'docs/SUPABASE_RECOVERY_RUNBOOK.md',
     ).readAsStringSync();
+    docsIndex = File('docs/INDEX.md').readAsStringSync();
     ciWorkflow = File('.github/workflows/flutter-ci.yml').readAsStringSync();
     final pagesWorkflowFile = File('.github/workflows/flutter-web-pages.yml');
     pagesWorkflow = pagesWorkflowFile.existsSync()
@@ -492,6 +498,134 @@ void main() {
       expect(automaticPlist, isNot(contains('provisioningProfiles')));
     } finally {
       for (final file in [manualOut, automaticOut, missingProfileOut]) {
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
+      }
+    }
+  });
+
+  test('store metadata verifier covers listing copy and store assets', () {
+    expect(
+      storeMetadataVerifier,
+      contains('STORE_METADATA_VERIFICATION_WRITTEN'),
+    );
+    expect(storeMetadataVerifier, contains('STORE_METADATA_DRAFT.md'));
+    expect(storeMetadataVerifier, contains('PRIVACY_DATA_MAP.md'));
+    expect(storeMetadataVerifier, contains('STORE_SUBMISSION_CHECKLIST.md'));
+    expect(storeMetadataVerifier, contains('Short Description'));
+    expect(storeMetadataVerifier, contains('Full Description'));
+    expect(storeMetadataVerifier, contains('Screenshot Shot List'));
+    expect(storeMetadataVerifier, contains('Review Evidence Checklist'));
+    expect(storeMetadataVerifier, contains('Get-PngDimensions'));
+    expect(storeMetadataVerifier, contains('ios-marketing'));
+    expect(storeMetadataVerifier, contains('Icon-maskable-512.png'));
+    expect(storeMetadataVerifier, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
+    expect(storeMetadataVerifier, contains('PublicWebBaseUrl'));
+    expect(storeMetadataVerifier, contains('ConvertTo-NormalizedSearchText'));
+    expect(storeMetadataVerifier, contains('GetLeftPart'));
+    expect(storeMetadataVerifier, contains('AbsolutePath'));
+    expect(storeMetadataVerifier, contains('Query'));
+    expect(storeMetadataVerifier, contains('Fragment'));
+    expect(storeMetadataVerifier, contains('Strict'));
+    expect(releasePreflight, contains('verify_store_metadata.ps1'));
+    expect(
+      releasePreflight,
+      contains('Invoke-CheckedCommandWithAllowedExitCodes'),
+    );
+    expect(releasePreflight, contains('@(0, 2)'));
+    expect(scriptsReadme, contains('verify_store_metadata.ps1'));
+    expect(releaseReadinessRunbook, contains('verify_store_metadata.ps1'));
+    expect(storeSubmissionChecklist, contains('verify_store_metadata.ps1'));
+    expect(
+      storeSubmissionChecklist,
+      contains('store-metadata-verification.json'),
+    );
+    expect(docsIndex, contains('verify_store_metadata.ps1'));
+  });
+
+  test('store metadata verifier records advisory and strict evidence', () {
+    final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
+    final advisoryOut = File('build/store-metadata-advisory-$unique.json');
+    final strictOut = File('build/store-metadata-strict-$unique.json');
+    const publicWebBaseUrl = 'https://release.flowfit.example/';
+    const unsafePublicWebBaseUrl =
+        'https://release.flowfit.example/app?debug=value#frag';
+
+    try {
+      final advisory = Process.runSync(
+        'pwsh',
+        [
+          '-NoProfile',
+          '-File',
+          'scripts/verify_store_metadata.ps1',
+          '-OutFile',
+          advisoryOut.path,
+        ],
+        environment: {'FLOWFIT_PUBLIC_WEB_BASE_URL': publicWebBaseUrl},
+      );
+      expect(
+        advisory.exitCode,
+        anyOf(0, 2),
+        reason: '${advisory.stdout}\n${advisory.stderr}',
+      );
+      expect(advisory.stdout, contains('STORE_METADATA_VERIFICATION_WRITTEN'));
+      final advisoryJson =
+          jsonDecode(advisoryOut.readAsStringSync()) as Map<String, dynamic>;
+      expect(
+        advisoryJson['publicWebBaseUrl'],
+        'https://release.flowfit.example',
+      );
+      final advisorySummary = advisoryJson['summary'] as Map<String, dynamic>;
+      expect(advisorySummary['fail'], 0);
+      final advisoryWarnCount = advisorySummary['warn'] as int;
+      if (advisory.exitCode == 2) {
+        expect(advisoryWarnCount, greaterThanOrEqualTo(1));
+      } else {
+        expect(advisoryWarnCount, 0);
+      }
+      final advisoryResults = advisoryJson['results'] as List<dynamic>;
+      expect(
+        advisoryResults.any(
+          (result) =>
+              (result as Map<String, dynamic>)['name'] ==
+              'Android launcher icon',
+        ),
+        isTrue,
+      );
+      expect(
+        advisoryResults.any(
+          (result) =>
+              (result as Map<String, dynamic>)['name'] == 'iOS marketing icon',
+        ),
+        isTrue,
+      );
+
+      final strict = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_store_metadata.ps1',
+        '-Strict',
+        '-PublicWebBaseUrl',
+        unsafePublicWebBaseUrl,
+        '-OutFile',
+        strictOut.path,
+      ]);
+      expect(strict.exitCode, 1, reason: '${strict.stdout}\n${strict.stderr}');
+      expect(strict.stdout, contains('STORE_METADATA_VERIFICATION_WRITTEN'));
+      final strictJson =
+          jsonDecode(strictOut.readAsStringSync()) as Map<String, dynamic>;
+      expect(strictJson['publicWebBaseUrl'], 'https://release.flowfit.example');
+      final strictEvidence = strictOut.readAsStringSync();
+      expect(strictEvidence, isNot(contains('debug=value')));
+      expect(strictEvidence, isNot(contains('/app?')));
+      expect(strictEvidence, isNot(contains('#frag')));
+      expect(
+        ((strictJson['summary'] as Map<String, dynamic>)['fail'] as int),
+        greaterThanOrEqualTo(1),
+      );
+    } finally {
+      for (final file in [advisoryOut, strictOut]) {
         if (file.existsSync()) {
           file.deleteSync();
         }

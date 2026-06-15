@@ -1,6 +1,6 @@
 # FlowFit Store Metadata Draft
 
-Last updated: 2026-06-14
+Last updated: 2026-06-15
 
 This is a draft handoff pack for Google Play, App Store, and Flutter web
 release work. Replace placeholders only after the production Supabase project,
@@ -22,8 +22,7 @@ package/bundle IDs, support inbox, and deployed web URLs are final.
 
 ## Short Description
 
-FlowFit helps you track workouts, wellness goals, and heart-rate trends with a
-friendly companion experience across phone and Wear OS.
+Track workouts, wellness goals, heart-rate trends, and Buddy progress.
 
 ## Full Description
 
@@ -39,7 +38,8 @@ used only for the features you choose to enable.
 
 FlowFit includes account controls, an in-app privacy policy, and an account
 deletion request flow. Public privacy and account-deletion pages are included
-with the Flutter web build for store review and user access.
+with the Flutter web build for store review, account deletion access, and user
+access.
 
 ## App Review Notes
 
@@ -101,6 +101,9 @@ credentials, debug labels, staging project refs, or private user data.
       `flutter-web-release-zip` manifest entry.
 - [ ] `build/store-release-readiness-audit.json` is archived with the store
       handoff evidence after strict audit passes.
+- [ ] `build/store-metadata-verification.json` is archived after
+      `scripts/verify_store_metadata.ps1 -Strict` passes with final public web
+      URLs and support inbox values.
 - [ ] `build/store-release-artifacts.json` is archived with artifact paths,
       SHA-256 hashes, byte sizes, git/toolchain metadata, and release inputs.
 - [ ] On Windows, Android and web targets pass separately; iOS IPA generation is

@@ -240,7 +240,36 @@ private release evidence.
 
 ---
 
-### 7. verify_supabase_backend.ps1
+### 7. verify_store_metadata.ps1
+**Purpose**: Create non-secret store listing and asset evidence for Google Play,
+App Store/TestFlight, and Flutter web handoff.
+
+**Advisory draft check**:
+```powershell
+pwsh -NoProfile -File scripts\verify_store_metadata.ps1
+```
+
+Advisory mode writes `build/store-metadata-verification.json` and exits `2`
+when only finalization warnings remain, such as placeholder deployed web URLs
+or draft listing statuses.
+
+**Strict final metadata check**:
+```powershell
+pwsh -NoProfile -File scripts\verify_store_metadata.ps1 `
+  -Strict `
+  -PublicWebBaseUrl 'https://your-production-host.example' `
+  -SupportEmail 'support@flowfit.com'
+```
+
+The helper validates required store metadata sections, Play/App Store text
+lengths, reviewer-facing privacy/account-deletion wording, privacy data map
+coverage, checklist coverage, Android/iOS/web icon dimensions, support email
+shape, and final deployed privacy/account-deletion URLs. Strict mode treats
+draft placeholders as failures.
+
+---
+
+### 8. verify_supabase_backend.ps1
 **Purpose**: Validate and optionally run the read-only Supabase backend
 verification SQL after the canonical migration has been applied.
 
@@ -273,7 +302,7 @@ or `--db-url`. The SQL returns one row per backend check; every row should have
 
 ---
 
-### 8. configure_supabase_mcp.ps1
+### 9. configure_supabase_mcp.ps1
 **Purpose**: Validate and write project-scoped Supabase MCP config without
 storing tokens, service-role keys, or database passwords in the repo.
 
@@ -305,7 +334,7 @@ prompted.
 
 ---
 
-### 9. configure_github_release_variables.ps1
+### 10. configure_github_release_variables.ps1
 **Purpose**: Validate and set GitHub repository variables used by strict audit
 and the GitHub Pages deployment workflow after the maintainer has real Supabase
 client values and a verified support inbox.
@@ -344,7 +373,7 @@ required so the production web deploy cannot be enabled by accident.
 
 ---
 
-### 10. create_android_upload_keystore.ps1
+### 11. create_android_upload_keystore.ps1
 **Purpose**: Create private Android Play upload signing material for local
 release builds and CI secret handoff without printing generated passwords.
 
@@ -368,7 +397,7 @@ that helper is intentionally limited to public repository variables.
 
 ---
 
-### 11. create_ios_export_options.ps1
+### 12. create_ios_export_options.ps1
 **Purpose**: Create an ignored App Store/TestFlight export-options plist for
 `flutter build ipa` when the macOS release host needs explicit Xcode export
 settings.
@@ -403,7 +432,7 @@ before running `scripts\store_release_build.ps1 -Target iOS`.
 
 ---
 
-### 12. store_release_build.ps1
+### 13. store_release_build.ps1
 **Purpose**: Production artifact build wrapper for store/web handoff. It fails
 early when the git working tree is dirty, required production environment
 values, signing files, or public web URLs are missing. By default it also runs
@@ -517,7 +546,7 @@ manifest after the strict audit passes.
 
 ---
 
-### 13. verify_web_deployment.ps1
+### 14. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -564,7 +593,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 14. configure_local_release.ps1
+### 15. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it

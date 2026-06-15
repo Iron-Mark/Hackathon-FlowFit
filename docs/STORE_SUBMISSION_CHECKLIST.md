@@ -84,6 +84,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Upload screenshots, feature graphic, app icon, short description, and
       full description.
 - [ ] Review and finalize listing copy from `docs/STORE_METADATA_DRAFT.md`.
+- [ ] Run `pwsh -NoProfile -File scripts/verify_store_metadata.ps1 -Strict`
+      with the final web origin/support inbox and archive
+      `build/store-metadata-verification.json`.
 - [ ] Validate that the uploaded AAB is signed with the upload key, not the
       debug release-smoke key.
 
@@ -120,6 +123,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       promotional text, description, keywords, support URL, and marketing URL.
 - [ ] Review and finalize App Review notes from
       `docs/STORE_METADATA_DRAFT.md`.
+- [ ] Confirm `build/store-metadata-verification.json` has no failures after
+      final metadata, icon assets, support inbox, and public web URLs are set.
 
 ## Flutter Web
 
@@ -162,6 +167,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Decide whether JS or Wasm is the release target. Current repo is JS-ready
       by default, and Wasm compile-smoke passes locally after the dependency
       updates.
+- [ ] Archive `build/store-metadata-verification.json` with web/store handoff
+      evidence so listing text, icon dimensions, and public URLs match the
+      deployed release.
 
 ## Current Local Gate
 

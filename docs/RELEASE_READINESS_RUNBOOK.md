@@ -425,7 +425,25 @@ Minimum completion criteria before release:
 Use `docs/PRIVACY_DATA_MAP.md` to complete Play Data safety and App Store
 privacy labels. Use `docs/STORE_SUBMISSION_CHECKLIST.md` to track the public
 privacy-policy URL, public account-deletion URL, in-app deletion request flow,
-and store listing assets.
+and store listing assets. Use `scripts/verify_store_metadata.ps1` to create
+non-secret metadata/icon evidence before store handoff:
+
+```powershell
+pwsh -NoProfile -File scripts/verify_store_metadata.ps1 `
+  -OutFile build/store-metadata-verification.json
+```
+
+Advisory mode exits `2` while only draft/finalization warnings remain. Before
+submission, rerun strict mode with the deployed web origin and final support
+inbox:
+
+```powershell
+pwsh -NoProfile -File scripts/verify_store_metadata.ps1 `
+  -Strict `
+  -PublicWebBaseUrl 'https://your-production-host.example' `
+  -SupportEmail 'support@flowfit.com' `
+  -OutFile build/store-metadata-verification.json
+```
 
 The in-app Delete Account screen requires the account password, then calls
 `request_account_deletion()`. The canonical migration exposes that RPC as
@@ -461,6 +479,10 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailV
 
 # Non-secret release status snapshot for PR/store handoff:
 pwsh -NoProfile -File scripts/release_status_snapshot.ps1 -Repo Iron-Mark/Hackathon-FlowFit -OutFile build/release-status-snapshot.md
+
+# Store listing and icon evidence; advisory mode may exit 2 while draft URLs
+# remain:
+pwsh -NoProfile -File scripts/verify_store_metadata.ps1 -OutFile build/store-metadata-verification.json
 
 # Same strict audit using the ignored release env file:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -EnvFile .env.release -OutFile build/store-release-readiness-audit.json

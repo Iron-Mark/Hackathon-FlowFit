@@ -211,6 +211,8 @@ Build and deployment scripts:
   store readiness audit
 - **verify_support_inbox.ps1** - Non-secret support inbox verification
   evidence for store/web release handoff
+- **verify_store_metadata.ps1** - Store listing, privacy-map, checklist, and
+  icon-asset evidence for Play/App Store/web handoff
 - **create_android_upload_keystore.ps1** - Ignored Android upload signing
   material generator and private CI secret handoff
 - **create_ios_export_options.ps1** - Ignored App Store/TestFlight
@@ -247,7 +249,7 @@ Build and deployment scripts:
 - **Implementation Docs:** 9 files
 - **Feature Docs:** 21 files
 - **Root Docs:** 11 files
-- **Scripts:** 21 files
+- **Scripts:** 22 files
 
 ---
 

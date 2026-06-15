@@ -31,6 +31,24 @@ function Invoke-CheckedCommand {
     }
 }
 
+function Invoke-CheckedCommandWithAllowedExitCodes {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Label,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Command,
+        [Parameter(Mandatory = $true)]
+        [int[]]$AllowedExitCodes
+    )
+
+    Write-Host ""
+    Write-Host "==> $Label"
+    & $Command[0] @($Command[1..($Command.Length - 1)])
+    if ($AllowedExitCodes -notcontains $LASTEXITCODE) {
+        throw "$Label failed with exit code $LASTEXITCODE"
+    }
+}
+
 function Assert-WebCompliancePages {
     $pages = @(
         @{
@@ -155,6 +173,8 @@ Push-Location $repoRoot
 try {
     $releaseReadinessAuditScript = Join-Path $repoRoot 'scripts/release_readiness_audit.ps1'
     Invoke-CheckedCommand 'Release readiness audit, advisory mode' @('pwsh', '-NoProfile', '-File', $releaseReadinessAuditScript)
+    $storeMetadataVerifierScript = Join-Path $repoRoot 'scripts/verify_store_metadata.ps1'
+    Invoke-CheckedCommandWithAllowedExitCodes 'Store metadata verification, advisory mode' @('pwsh', '-NoProfile', '-File', $storeMetadataVerifierScript) @(0, 2)
 
     Invoke-CheckedCommand 'Flutter dependencies' @('flutter', 'pub', 'get')
     Assert-ReleaseSourceSafety
