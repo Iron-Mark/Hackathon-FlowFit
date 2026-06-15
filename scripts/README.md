@@ -178,7 +178,39 @@ does not print Supabase keys.
 
 ---
 
-### 6. configure_github_release_variables.ps1
+### 6. configure_supabase_mcp.ps1
+**Purpose**: Validate and write project-scoped Supabase MCP config without
+storing tokens, service-role keys, or database passwords in the repo.
+
+**Recovery write-capable config**:
+```powershell
+pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 `
+  -ProjectRef '<new-flowfit-dev-ref>'
+```
+
+**Dry run without writing `.mcp.json`**:
+```powershell
+pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 `
+  -ProjectRef '<new-flowfit-dev-ref>' `
+  -DryRun
+```
+
+**Release read-only config after migrations and advisors**:
+```powershell
+pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 `
+  -ProjectRef '<new-flowfit-dev-ref>' `
+  -ReleaseReadOnly
+```
+
+The helper writes
+`https://mcp.supabase.com/mcp?project_ref=<ref>&features=database,docs,debugging,development`
+and appends `read_only=true` only when `-ReleaseReadOnly` is passed. After
+writing `.mcp.json`, reload Codex and complete the Supabase MCP OAuth flow when
+prompted.
+
+---
+
+### 7. configure_github_release_variables.ps1
 **Purpose**: Validate and set GitHub repository variables used by strict audit
 and the GitHub Pages deployment workflow after the maintainer has real Supabase
 client values and a verified support inbox.
@@ -217,7 +249,7 @@ required so the production web deploy cannot be enabled by accident.
 
 ---
 
-### 7. store_release_build.ps1
+### 8. store_release_build.ps1
 **Purpose**: Production artifact build wrapper for store/web handoff. It fails
 early when the git working tree is dirty, required production environment
 values, signing files, or public web URLs are missing. By default it also runs
@@ -331,7 +363,7 @@ manifest after the strict audit passes.
 
 ---
 
-### 8. verify_web_deployment.ps1
+### 9. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -378,7 +410,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 9. configure_local_release.ps1
+### 10. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it

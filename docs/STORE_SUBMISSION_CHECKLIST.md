@@ -15,6 +15,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `read_only=true` after migrations/advisors are done, and
       `pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict`
       no longer reports the MCP project-scope or release read-only blockers.
+      Prefer the helper instead of hand-editing:
+      `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>' -ReleaseReadOnly`.
 - [ ] Supabase advisors have no unresolved high-risk security/performance
       findings.
 - [ ] Production Supabase client values are supplied through `SUPABASE_URL` and

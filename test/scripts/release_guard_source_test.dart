@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -12,9 +13,11 @@ void main() {
   late String supabaseConfig;
   late String releaseEnvExample;
   late String configureLocalRelease;
+  late String configureSupabaseMcp;
   late String webDeploymentVerifier;
   late String storeSubmissionChecklist;
   late String releaseReadinessRunbook;
+  late String supabaseRecoveryRunbook;
   late String ciWorkflow;
   late String pagesWorkflow;
   late String copilotInstructions;
@@ -39,6 +42,9 @@ void main() {
     configureLocalRelease = File(
       'scripts/configure_local_release.ps1',
     ).readAsStringSync();
+    configureSupabaseMcp = File(
+      'scripts/configure_supabase_mcp.ps1',
+    ).readAsStringSync();
     webDeploymentVerifier = File(
       'scripts/verify_web_deployment.ps1',
     ).readAsStringSync();
@@ -47,6 +53,9 @@ void main() {
     ).readAsStringSync();
     releaseReadinessRunbook = File(
       'docs/RELEASE_READINESS_RUNBOOK.md',
+    ).readAsStringSync();
+    supabaseRecoveryRunbook = File(
+      'docs/SUPABASE_RECOVERY_RUNBOOK.md',
     ).readAsStringSync();
     ciWorkflow = File('.github/workflows/flutter-ci.yml').readAsStringSync();
     final pagesWorkflowFile = File('.github/workflows/flutter-web-pages.yml');
@@ -299,6 +308,120 @@ void main() {
       '${blocked.stdout}\n${blocked.stderr}',
       contains('SupportEmailVerified must be passed before setting true'),
     );
+  });
+
+  test('Supabase MCP helper validates project scope and release posture', () {
+    for (final needle in [
+      'project_ref',
+      'features=database,docs,debugging,development',
+      'read_only=true',
+      'REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF',
+      'dnasghxxqwibwqnljvxr',
+      'SUPABASE_MCP_CONFIG_DRY_RUN_OK',
+      'SUPABASE_MCP_CONFIG_WRITTEN_OK',
+      'OAuth',
+    ]) {
+      expect(configureSupabaseMcp, contains(needle));
+    }
+
+    expect(configureSupabaseMcp, isNot(contains('SUPABASE_ACCESS_TOKEN')));
+    expect(configureSupabaseMcp, isNot(contains('Authorization')));
+    expect(scriptsReadme, contains('configure_supabase_mcp.ps1'));
+    expect(supabaseRecoveryRunbook, contains('configure_supabase_mcp.ps1'));
+    expect(releaseReadinessRunbook, contains('configure_supabase_mcp.ps1'));
+    expect(storeSubmissionChecklist, contains('configure_supabase_mcp.ps1'));
+  });
+
+  test('Supabase MCP helper dry-run keeps target config untouched', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_mcp_helper_dry_run_',
+    );
+    try {
+      final mcpFile = File('${tempDir.path}${Platform.pathSeparator}.mcp.json');
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/configure_supabase_mcp.ps1',
+        '-ProjectRef',
+        'abcdefghijklmnopqrst',
+        '-McpConfigPath',
+        mcpFile.path,
+        '-DryRun',
+      ]);
+
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      expect(result.stdout, contains('SUPABASE_MCP_CONFIG_DRY_RUN_OK'));
+      expect(
+        result.stdout,
+        contains(
+          'https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnopqrst&features=database,docs,debugging,development',
+        ),
+      );
+      expect(result.stdout, isNot(contains('read_only=true')));
+      expect(mcpFile.existsSync(), isFalse);
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('Supabase MCP helper writes release read-only config JSON', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_mcp_helper_write_',
+    );
+    try {
+      final mcpFile = File('${tempDir.path}${Platform.pathSeparator}.mcp.json');
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/configure_supabase_mcp.ps1',
+        '-ProjectRef',
+        'abcdefghijklmnopqrst',
+        '-McpConfigPath',
+        mcpFile.path,
+        '-ReleaseReadOnly',
+      ]);
+
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      expect(result.stdout, contains('SUPABASE_MCP_CONFIG_WRITTEN_OK'));
+
+      final json = jsonDecode(mcpFile.readAsStringSync()) as Map;
+      final mcpServers = json['mcpServers'] as Map;
+      final supabase = mcpServers['supabase'] as Map;
+      expect(supabase['type'], 'http');
+      expect(
+        supabase['url'],
+        'https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnopqrst&features=database,docs,debugging,development&read_only=true',
+      );
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('Supabase MCP helper rejects placeholder and retired project refs', () {
+    for (final invalidRef in [
+      'REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF',
+      'dnasghxxqwibwqnljvxr',
+      'https://abcdefghijklmnopqrst.supabase.co',
+    ]) {
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/configure_supabase_mcp.ps1',
+        '-ProjectRef',
+        invalidRef,
+        '-DryRun',
+      ]);
+
+      expect(
+        result.exitCode,
+        isNot(0),
+        reason: '$invalidRef should be rejected',
+      );
+      expect(
+        '${result.stdout}\n${result.stderr}',
+        contains('Supabase project ref'),
+      );
+    }
   });
 
   test('legacy Kiro specs do not pin retired Supabase credentials', () {

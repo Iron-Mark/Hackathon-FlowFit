@@ -351,12 +351,15 @@ Use `docs/SUPABASE_RECOVERY_RUNBOOK.md`.
 Minimum completion criteria before release:
 
 - New `flowfit-dev` or production Supabase project exists.
-- `.mcp.json` contains the real project ref and Codex has been reloaded.
+- `.mcp.json` contains the real project ref and Codex has been reloaded. Prefer
+  the guarded helper:
+  `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>'`.
 - Supabase MCP OAuth is complete.
 - Canonical migration has been applied.
 - Advisors have no unresolved high-risk security/performance findings.
 - After migrations/advisors are complete, `.mcp.json` includes
-  `read_only=true` for release verification.
+  `read_only=true` for release verification. Use:
+  `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>' -ReleaseReadOnly`.
 - App signup/login/onboarding/workout smoke flows have been tested against the
   live project.
 

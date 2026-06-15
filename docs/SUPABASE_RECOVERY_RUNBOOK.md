@@ -18,7 +18,21 @@ Do not use the old project ref `dnasghxxqwibwqnljvxr` for this recovery.
 
 ## 2. Enable Project MCP
 
-Open `.mcp.json` and replace `REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF` with the new project ref.
+Use the helper to write project-scoped `.mcp.json` without storing any
+Supabase tokens or keys:
+
+```powershell
+pwsh -NoProfile -File scripts\configure_supabase_mcp.ps1 `
+  -ProjectRef '<new-flowfit-dev-ref>'
+```
+
+For a preview that does not touch `.mcp.json`:
+
+```powershell
+pwsh -NoProfile -File scripts\configure_supabase_mcp.ps1 `
+  -ProjectRef '<new-flowfit-dev-ref>' `
+  -DryRun
+```
 
 Expected URL shape:
 
@@ -38,13 +52,22 @@ Notes:
 - Keep this read-write for development migrations. Do not add `read_only=true`
   until the recovery migration and advisor fixes are complete.
 - Do not store Supabase personal access tokens, service-role keys, or database passwords in the repo.
-- After editing `.mcp.json`, reload or restart Codex so the project-scoped Supabase MCP appears.
+- After writing `.mcp.json`, reload or restart Codex so the project-scoped Supabase MCP appears.
 - Complete the Supabase OAuth flow when Codex asks for MCP authentication.
 - Advisory audit mode defaults to recovery MCP posture and expects write access:
   `pwsh -NoProfile -File scripts/release_readiness_audit.ps1`.
 - Strict release audit mode defaults to release MCP posture and expects
   `read_only=true` after migrations/advisors are done:
   `pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict`.
+
+After migrations and advisors are complete, switch the config to release
+verification posture:
+
+```powershell
+pwsh -NoProfile -File scripts\configure_supabase_mcp.ps1 `
+  -ProjectRef '<new-flowfit-dev-ref>' `
+  -ReleaseReadOnly
+```
 
 ## 3. Restore Local Flutter Credentials
 
