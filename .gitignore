@@ -54,6 +54,7 @@ flutter_*.log
 lib/secrets.dart
 .env.release
 .env.release.local
+.env.release.android-signing
 android/app/src/main/res/values/secrets.xml
 android/key.properties
 android/*.jks

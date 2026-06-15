@@ -65,7 +65,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `android/key.properties` plus the referenced keystore, or CI/release env
       secrets `FLOWFIT_ANDROID_KEYSTORE_BASE64`,
       `FLOWFIT_ANDROID_KEYSTORE_PASSWORD`, `FLOWFIT_ANDROID_KEY_ALIAS`, and
-      `FLOWFIT_ANDROID_KEY_PASSWORD`.
+      `FLOWFIT_ANDROID_KEY_PASSWORD`. For a new local upload key, run
+      `pwsh -NoProfile -File scripts/create_android_upload_keystore.ps1` and
+      back up the ignored generated files privately before uploading an AAB.
 - [ ] Add production auth schemes to Supabase redirect URLs.
 - [ ] Build upload artifact:
       `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android`.

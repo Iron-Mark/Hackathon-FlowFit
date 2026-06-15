@@ -314,7 +314,31 @@ required so the production web deploy cannot be enabled by accident.
 
 ---
 
-### 9. store_release_build.ps1
+### 9. create_android_upload_keystore.ps1
+**Purpose**: Create private Android Play upload signing material for local
+release builds and CI secret handoff without printing generated passwords.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts\create_android_upload_keystore.ps1
+```
+
+By default, this creates ignored `android/upload-keystore.jks`,
+`android/key.properties`, and `.env.release.android-signing`. The env handoff
+file contains `FLOWFIT_ANDROID_KEYSTORE_BASE64`,
+`FLOWFIT_ANDROID_KEYSTORE_PASSWORD`, `FLOWFIT_ANDROID_KEY_ALIAS`,
+`FLOWFIT_ANDROID_KEY_PASSWORD`, and `FLOWFIT_ANDROID_KEYSTORE_FILE_NAME` for
+copying into private GitHub repository secrets or a private password manager.
+
+The script refuses to overwrite existing keystore, `key.properties`, or env
+handoff files. Back up the generated files privately before uploading a Play
+Store artifact; losing the upload key can block future app updates. Do not use
+`scripts\configure_github_release_variables.ps1` for signing values because
+that helper is intentionally limited to public repository variables.
+
+---
+
+### 10. store_release_build.ps1
 **Purpose**: Production artifact build wrapper for store/web handoff. It fails
 early when the git working tree is dirty, required production environment
 values, signing files, or public web URLs are missing. By default it also runs
@@ -428,7 +452,7 @@ manifest after the strict audit passes.
 
 ---
 
-### 10. verify_web_deployment.ps1
+### 11. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -475,7 +499,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 11. configure_local_release.ps1
+### 12. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it

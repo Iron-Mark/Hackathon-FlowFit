@@ -78,6 +78,13 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1 `
      materializes ignored signing files for the build and removes them before
      exit when it created them. If `FLOWFIT_ANDROID_KEYSTORE_FILE_NAME`
      points to an existing file, the wrapper fails instead of overwriting it.
+   - To create a new local upload key and CI handoff file without printing
+     passwords, run
+     `pwsh -NoProfile -File scripts/create_android_upload_keystore.ps1`. This
+     writes ignored `android/upload-keystore.jks`,
+     `android/key.properties`, and `.env.release.android-signing`. Back them up
+     in a private password manager before uploading an AAB; losing the upload
+     key can block future Play Store updates.
 2. Set production package/auth values in `android/gradle.properties`:
 
 ```properties

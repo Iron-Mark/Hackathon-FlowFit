@@ -10,7 +10,9 @@ void main() {
   late String storeReleaseBuild;
   late String readinessAudit;
   late String releaseStatusSnapshot;
+  late String createAndroidUploadKeystore;
   late String scriptsReadme;
+  late String gitignore;
   late String supabaseConfig;
   late String releaseEnvExample;
   late String configureLocalRelease;
@@ -45,7 +47,11 @@ void main() {
     releaseStatusSnapshot = File(
       'scripts/release_status_snapshot.ps1',
     ).readAsStringSync();
+    createAndroidUploadKeystore = File(
+      'scripts/create_android_upload_keystore.ps1',
+    ).readAsStringSync();
     scriptsReadme = File('scripts/README.md').readAsStringSync();
+    gitignore = File('.gitignore').readAsStringSync();
     supabaseConfig = File('supabase/config.toml').readAsStringSync();
     releaseEnvExample = File('.env.release.example').readAsStringSync();
     configureLocalRelease = File(
@@ -305,6 +311,45 @@ void main() {
         contains('Remove-GeneratedAndroidSigningFiles'),
       );
       expect(readinessAudit, contains('FLOWFIT_ANDROID_KEYSTORE_BASE64'));
+    },
+  );
+
+  test(
+    'Android upload keystore generator writes only ignored private outputs',
+    () {
+      expect(createAndroidUploadKeystore, contains('keytool'));
+      expect(createAndroidUploadKeystore, contains('New-RandomPassword'));
+      expect(
+        createAndroidUploadKeystore,
+        contains('System.Security.Cryptography.RandomNumberGenerator'),
+      );
+      expect(
+        createAndroidUploadKeystore,
+        contains('FLOWFIT_ANDROID_KEYSTORE_BASE64'),
+      );
+      expect(
+        createAndroidUploadKeystore,
+        contains('ANDROID_UPLOAD_KEYSTORE_CREATED'),
+      );
+      expect(createAndroidUploadKeystore, contains('will not be overwritten'));
+      expect(
+        createAndroidUploadKeystore,
+        isNot(contains(r'Write-Host $storePassword')),
+      );
+      expect(
+        createAndroidUploadKeystore,
+        isNot(contains(r'Write-Host $keyPassword')),
+      );
+      expect(scriptsReadme, contains('create_android_upload_keystore.ps1'));
+      expect(
+        releaseReadinessRunbook,
+        contains('create_android_upload_keystore.ps1'),
+      );
+      expect(
+        storeSubmissionChecklist,
+        contains('create_android_upload_keystore.ps1'),
+      );
+      expect(gitignore, contains('.env.release.android-signing'));
     },
   );
 
