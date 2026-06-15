@@ -664,24 +664,104 @@ void main() {
     expect(supabaseConfig, contains('minimum_password_length = 8'));
   });
 
-  test('store docs disclose release background location surface', () {
+  test('store docs and manifests keep location foreground-only', () {
     final privacyDataMap = File('docs/PRIVACY_DATA_MAP.md').readAsStringSync();
     final storeMetadata = File(
       'docs/STORE_METADATA_DRAFT.md',
     ).readAsStringSync();
+    final storeChecklist = File(
+      'docs/STORE_SUBMISSION_CHECKLIST.md',
+    ).readAsStringSync();
+    final mapMissionsUserFlow = File(
+      'docs/MAP_MISSIONS_USER_FLOW.md',
+    ).readAsStringSync();
+    final mapFeatureGuide = File(
+      'docs/MAP_FEATURE_GUIDE.md',
+    ).readAsStringSync();
+    final geofenceService = File(
+      'lib/features/wellness/services/geofence_service.dart',
+    ).readAsStringSync();
+    final pubspec = File('pubspec.yaml').readAsStringSync();
 
     expect(
       privacyDataMap,
-      contains('Release builds request background location'),
+      contains('Release builds are foreground-location only'),
     );
     expect(
       privacyDataMap,
-      isNot(contains('Confirm whether background location is required')),
+      isNot(contains('Release builds request background location')),
     );
     expect(
       storeMetadata,
-      contains('background location/geofence features are enabled'),
+      contains('foreground location for wellness missions'),
     );
+    expect(
+      mapMissionsUserFlow,
+      contains('Closed-app mission tracking stays future work'),
+    );
+    expect(
+      mapMissionsUserFlow,
+      isNot(contains('Required for mission tracking when app is closed')),
+    );
+    expect(mapFeatureGuide, contains('Foreground Tracking'));
+    expect(
+      mapFeatureGuide,
+      isNot(contains('Monitors location even when app is closed')),
+    );
+    expect(mapFeatureGuide, isNot(contains('Uses native geofencing APIs')));
+    expect(storeChecklist, contains('foreground-only wellness routes'));
+    expect(androidMainManifest, isNot(contains('ACCESS_BACKGROUND_LOCATION')));
+    expect(androidMainManifest, isNot(contains('NativeGeofence')));
+    expect(iosInfoPlist, isNot(contains('UIBackgroundModes')));
+    expect(iosInfoPlist, isNot(contains('NSLocationAlways')));
+    expect(pubspec, isNot(contains('native_geofence')));
+    expect(geofenceService, isNot(contains('GeofenceNative.register')));
+  });
+
+  test('wellness UI discloses location and backend sync accurately', () {
+    final wellnessOnboarding = File(
+      'lib/screens/wellness/wellness_onboarding_screen.dart',
+    ).readAsStringSync();
+    final wellnessSettings = File(
+      'lib/screens/wellness/wellness_settings_screen.dart',
+    ).readAsStringSync();
+    final wellnessMap = File(
+      'lib/widgets/wellness/wellness_map_widget.dart',
+    ).readAsStringSync();
+
+    expect(wellnessOnboarding, contains('foreground geofence'));
+    expect(wellnessOnboarding, contains('Supabase'));
+    expect(wellnessSettings, contains('Supabase'));
+    expect(wellnessMap, contains('_showLocationPermissionDisclosure'));
+    expect(
+      wellnessMap.indexOf('_prepareLocationAccess'),
+      lessThan(wellnessMap.indexOf('_getUserLocation();')),
+    );
+    expect(
+      '$wellnessOnboarding\n$wellnessSettings',
+      isNot(contains('No data is sent to external servers')),
+    );
+    expect(
+      '$wellnessOnboarding\n$wellnessSettings',
+      isNot(contains('Nothing is sent to external servers')),
+    );
+  });
+
+  test('active settings screen exposes account deletion route', () {
+    final activeSettings = File(
+      'lib/screens/profile/settings/settings_screen.dart',
+    ).readAsStringSync();
+    final legacySettings = File(
+      'lib/screens/profile/settings_screen.dart',
+    ).readAsStringSync();
+
+    for (final source in [activeSettings, legacySettings]) {
+      expect(source, contains('Delete Account'));
+      expect(
+        source,
+        contains("Navigator.pushNamed(context, '/delete-account')"),
+      );
+    }
   });
 }
 

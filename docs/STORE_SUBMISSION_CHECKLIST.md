@@ -39,9 +39,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       maintainer/legal-reviewed copy.
 - [ ] `support@flowfit.com` has been replaced or verified as the production
       support/privacy inbox in public pages and in-app copy.
-- [ ] Background location is disclosed as enabled for release builds because
-      Android requests `ACCESS_BACKGROUND_LOCATION` and iOS declares background
-      location mode.
+- [ ] Location disclosures describe foreground-only wellness routes, walking
+      paths, and geofence missions; release manifests must not request
+      background location until native background geofencing is implemented.
 - [ ] Debug-only routes/screens are hidden or removed from production builds.
 - [ ] Legacy debug aliases such as `/trackertest` are not reachable from
       production UI; use production route names such as `/activity-classifier`.
@@ -68,7 +68,7 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
   - [ ] Privacy Policy URL.
   - [ ] Data safety form from `docs/PRIVACY_DATA_MAP.md`.
   - [ ] Account deletion URL.
-  - [ ] Health/location/background permission disclosures.
+  - [ ] Health and foreground-location permission disclosures.
   - [ ] Content rating questionnaire.
   - [ ] Target audience and ads declaration.
 - [ ] Upload screenshots, feature graphic, app icon, short description, and

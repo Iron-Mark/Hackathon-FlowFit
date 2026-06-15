@@ -54,39 +54,11 @@ Notes:
 - This implementation is foreground-only; background geofencing requires platform-specific work and is out-of-scope for this initial iteration.
  - Provided to be an accessible starting point for the Mission Engine described in the feature request.
 
-Native Geofence Plugin (`native_geofence`)
------------------------------------------
-We use the `native_geofence` plugin to support background geofence events and persistent geofence registration.
-
-Quick setup
-1. Add the package and run `flutter pub get` — it's included in `pubspec.yaml` as `native_geofence: ^1.2.0`.
-2. Android: Ensure `ACCESS_BACKGROUND_LOCATION` and `ACCESS_FINE_LOCATION` are declared and follow Android 12+ background location guidelines.
-3. iOS: Ensure the relevant `NSLocationAlwaysUsageDescription` is declared if you plan to handle geofence events when the app is terminated.
-
-Usage example (plugin pattern):
-
-```dart
-// Initialize the plugin first
-await NativeGeofenceManager.instance.initialize();
-
-// Example geofence
-final zone1 = Geofence(
-  id: 'zone1',
-  location: Location(latitude: 40.75798, longitude: -73.98554),
-  radiusMeters: 500,
-  triggers: {GeofenceEvent.enter, GeofenceEvent.exit, GeofenceEvent.dwell},
-);
-
-// Dart top-level callback must be an @pragma('vm:entry-point') function
-@pragma('vm:entry-point')
-Future<void> geofenceTriggered(dynamic params) async {
-  debugPrint('Geofence triggered with params: $params');
-}
-
-// Register the geofence with the plugin
-await NativeGeofenceManager.instance.createGeofence(zone1, geofenceTriggered);
-```
-
-Notes:
-- Background / terminated event behavior requires correct OS permissions and configuration.
-- Keep your callback minimal; promote to a foreground service for heavy work (Android only).
+Foreground Location Scope
+-------------------------
+Release builds currently use foreground location only. `GeofenceService`
+updates mission state from the active `geolocator` position stream while the
+app is open, and Android/iOS release manifests intentionally do not request
+background location. Do not add background-geofence claims to store copy until
+native Android/iOS registration and event delivery are implemented and tested on
+real devices.

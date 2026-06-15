@@ -719,6 +719,20 @@ function Test-AndroidReleaseConfig {
         Add-Warn 'Android release auth schemes' 'No debug-only development auth scheme manifest was found.' -StrictFailure $false
     }
 
+    if ($null -ne $mainManifest -and $mainManifest.Contains('ACCESS_BACKGROUND_LOCATION')) {
+        Add-Fail 'Android foreground location surface' 'Release manifest must not request ACCESS_BACKGROUND_LOCATION until native background geofencing is implemented and tested.'
+    } elseif ($null -ne $mainManifest -and $mainManifest.Contains('ACCESS_FINE_LOCATION') -and $mainManifest.Contains('ACCESS_COARSE_LOCATION')) {
+        Add-Pass 'Android foreground location surface' 'Release manifest declares foreground location without background location.'
+    } else {
+        Add-Fail 'Android foreground location surface' 'Release manifest must declare foreground fine/coarse location for maps and missions.'
+    }
+
+    if ($null -ne $mainManifest -and $mainManifest.Contains('NativeGeofence')) {
+        Add-Fail 'Android native geofence surface' 'Release manifest still registers native_geofence background components.'
+    } else {
+        Add-Pass 'Android native geofence surface' 'Release manifest does not register unused native_geofence background components.'
+    }
+
     $keyPropertiesPath = 'android/key.properties'
     $keyProperties = Read-Properties $keyPropertiesPath
     if ($keyProperties.Count -eq 0) {
@@ -796,6 +810,17 @@ function Test-IosReleaseConfig {
         Add-Pass 'iOS auth URL schemes' 'Info.plist registers only the production iOS auth scheme.'
     } else {
         Add-Fail 'iOS auth URL schemes' 'Info.plist must register the production auth scheme and exclude development schemes from release artifacts.'
+    }
+
+    if (
+        $null -ne $infoPlist -and
+        $infoPlist.Contains('NSLocationWhenInUseUsageDescription') -and
+        -not $infoPlist.Contains('NSLocationAlways') -and
+        -not $infoPlist.Contains('UIBackgroundModes')
+    ) {
+        Add-Pass 'iOS foreground location surface' 'Info.plist declares only when-in-use location for release.'
+    } else {
+        Add-Fail 'iOS foreground location surface' 'Info.plist must avoid Always/background location until native background geofencing is implemented and tested.'
     }
 
     $releaseScript = Read-RepoText 'scripts/store_release_build.ps1'
@@ -888,6 +913,17 @@ function Test-WebAndStoreConfig {
         Add-Pass 'Public account deletion request path' 'Deletion page has email request, associated-data, no-reinstall, and in-app path wording.'
     } else {
         Add-Fail 'Public account deletion request path' "Deletion page is missing: $($missingDeletionTerms -join ', ')."
+    }
+
+    $activeSettings = Read-RepoText 'lib/screens/profile/settings/settings_screen.dart'
+    if (
+        $null -ne $activeSettings -and
+        $activeSettings.Contains('Delete Account') -and
+        $activeSettings.Contains("Navigator.pushNamed(context, '/delete-account')")
+    ) {
+        Add-Pass 'In-app account deletion path' 'Active settings screen exposes Profile > Settings > Delete Account.'
+    } else {
+        Add-Fail 'In-app account deletion path' 'Active settings screen must expose a Delete Account row that navigates to /delete-account.'
     }
 
     if ($null -ne $privacy -and $privacy.Contains('account and associated app data') -and $privacy.Contains('account-deletion.html')) {

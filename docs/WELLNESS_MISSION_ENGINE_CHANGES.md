@@ -3,7 +3,7 @@
 Summary
 -------
 - Purpose: Implement a maps-based "Mission Engine" for three mission types: Target, Sanctuary, and Safety Net. Provides geofencing, simple mission lifecycle, local notifications, and a `flutter_map` (OpenStreetMap) UI.
-- High-level design: Lightweight, feature-first clean architecture with domain, data, services, platform, and presentation layers; default to an in-memory repository for persistence; optional native background geofence scaffolding.
+- High-level design: Lightweight, feature-first clean architecture with domain, data, services, and presentation layers; default to an in-memory repository for persistence; current release behavior is foreground-only.
 
 Files Added
 -----------
@@ -16,9 +16,6 @@ Files Added
 - lib/features/wellness/services/geofence_service.dart
   - Monitors device Location using `geolocator` (or optional position stream override), detects enter/exit, SafetyNet outside alerts, Target accumulation, triggers local notifications, and emits `GeofenceEvent`s.
   - Exposes an `events` stream for UI or other feature integration.
-
-- lib/features/wellness/platform/geofence_native.dart
-  - Minimal method/event channel wrapper (MethodChannel + EventChannel) to register/unregister native geofences and receive native events where available.
 
 - lib/features/wellness/services/notification_service.dart
   - Wrapper around `flutter_local_notifications` plugin with safe initialization and showNotification call used from the geofence service.
@@ -45,9 +42,9 @@ Files Changed (Non-feature)
   - Added `coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")` to the `dependencies {}` block.
   - Why: `flutter_local_notifications` (or other plugin) required usage of newer Java APIs and the AAR metadata check failed; enabling desugaring addresses the AAR metadata issue.
 
-- native geofence plugin integration (non-feature change)
-  - Created `lib/features/wellness/platform/native_geofence_wrapper.dart` as a wrapper to `native_geofence` plugin for Android & iOS usage.
-  - Updated `lib/features/wellness/platform/geofence_native.dart` to prefer the plugin wrapper for registration/unregistration and capture plugin events as a fallback to the custom method channel bridge.
+- Native geofence plugin integration was removed during release hardening.
+  The store-ready release surface is foreground-only until native background
+  registration and event delivery are implemented and tested.
 
 Other Observations & Repository Impact
 -------------------------------------
@@ -64,7 +61,8 @@ Design & Runtime Notes
 
 - Events: `GeofenceEvent` contains `missionId`, `type`, `position`, and an optional `value` (e.g., progress). `GeofenceEventType`s: entered, exited, targetReached, outsideAlert.
 
-- Native Bridge: `GeofenceNative` is a minimal adapter; register/unregister method channel messages are handled on the Flutter side and forwarded to native code when available.
+- Native bridge: no native background geofence adapter is active in release
+  code. `GeofenceService` emits events from the foreground position stream.
 
 - JSON schema for `GeofenceMission` (fields used in code & serialization):
   - id: String
@@ -102,15 +100,19 @@ Notes for future developers and LLM prompts
   - Implement a repository using your persistence of choice (Supabase local mapping, sqlite via `sqflite`, or Hive). Map to/from `GeofenceMission` JSON.
   - Replace instantiation in `maps_page_wrapper.dart` with the persisted repository provider.
   - Persist the `isActive` flag and `status` if you want to resume state across restarts.
-  - Continue to register active missions with `GeofenceNative.register` for background processing.
+  - Do not register active missions for background processing until a real
+    native Android/iOS implementation exists and the release manifests request
+    the matching permissions.
 
 - Testing:
   - The test uses a `positionStreamOverride` to feed custom Position objects into the `GeofenceService`. Keep this pattern for deterministic unit testing.
-  - Add tests for: `activateMission`, `deactivateMission`, `enter/exit behavior`, native event handling, and notifications (which may need mocking in tests).
+  - Add tests for: `activateMission`, `deactivateMission`, `enter/exit behavior`, and notifications (which may need mocking in tests).
 
 - Platform notes:
   - Android: `isCoreLibraryDesugaringEnabled` and `coreLibraryDesugaring` dependency added to support `flutter_local_notifications` plugin AAR compatibility.
-  - Native background geofence: Currently only a SCaffold (MethodChannel & EventChannel). Implement native logic in Android `MainActivity` / `HealthTrackingManager` or a background service to register geofence with the OS.
+  - Native background geofence: not active in the release surface. Implement
+    native Android/iOS registration and real-device tests before reintroducing
+    background permissions.
   - iOS: you may need `UserNotifications` permission logic and configure `DarwinInitializationSettings` in `notification_service.dart`.
 
 Commit notes

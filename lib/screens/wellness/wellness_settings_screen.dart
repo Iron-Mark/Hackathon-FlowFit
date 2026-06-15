@@ -123,7 +123,7 @@ class _WellnessSettingsScreenState
                   icon: Icons.lock_outline,
                   title: 'Data Privacy',
                   subtitle:
-                      'All biometric data is processed on your device only',
+                      'Live wellness state is processed on device; saved records can sync to Supabase',
                   color: Colors.green,
                 ),
                 _buildActionTile(
@@ -191,8 +191,8 @@ class _WellnessSettingsScreenState
                         _buildDataItem('Usage timestamps'),
                         const SizedBox(height: 12),
                         Text(
-                          '✓ Data stays private on your device\n'
-                          '✓ No data is sent to external servers\n'
+                          '✓ Live wellness state is calculated on your device\n'
+                          '✓ Saved account, workout, and heart-rate records can sync to Supabase over HTTPS\n'
                           '✓ You can delete your data anytime',
                           style: TextStyle(
                             fontFamily: 'GeneralSans',

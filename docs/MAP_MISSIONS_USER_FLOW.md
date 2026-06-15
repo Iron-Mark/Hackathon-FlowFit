@@ -168,10 +168,10 @@ Speed: 1.4 m/s (walking)
 - **Target Reached**: "[Mission Name] - 500m completed! 🎉"
 - **Outside Alert**: "[Mission Name] - You're 250m outside the safe zone ⚠️"
 
-#### Background Tracking:
-- Missions continue tracking even when app is closed
-- Uses native geofencing APIs (battery efficient)
-- Local notifications alert user of events
+#### Foreground Tracking:
+- Missions track progress while the app is open and location access is active
+- Native background geofencing is not part of the release build yet
+- Closed-app mission tracking stays future work until native background delivery is implemented and tested
 
 ---
 
@@ -232,19 +232,19 @@ Morning Routine:
 
 ### Location Permissions:
 - **When In Use**: Required for map display and mission creation
-- **Always/Background**: Required for mission tracking when app is closed
+- **Always/Background**: Not requested in release builds; closed-app mission tracking is unavailable until native background geofencing is implemented and tested.
 
 ### Permission Flow:
-1. First map open → Request "When In Use"
-2. First mission activation → Request "Always" (if not granted)
-3. User can manage in Settings
+1. First map open shows the FlowFit location rationale.
+2. Continuing requests foreground "When In Use" location.
+3. User can manage the permission in Settings.
 
 ### Android Specific:
-- Android 10+: Background location requires separate permission
+- Release builds use foreground fine/coarse location only.
 - Android 12+: Approximate vs Precise location options
 
 ### iOS Specific:
-- "Allow While Using App" vs "Allow Always"
+- "Allow While Using App"
 - User can change in Settings → Privacy → Location
 
 ---
@@ -277,7 +277,7 @@ Morning Routine:
 ### Mission not triggering?
 - Ensure mission is activated (green indicator)
 - Check radius isn't too small
-- Verify background location permission granted
+- Keep FlowFit open; release geofence missions are foreground-only
 - Check battery saver isn't blocking location
 
 ### Distance not tracking?
@@ -286,7 +286,7 @@ Morning Routine:
 - Verify mission is active
 
 ### Battery draining?
-- Missions use native geofencing (efficient)
+- Missions use foreground location updates while FlowFit is open
 - Deactivate missions when not needed
 - Reduce number of active missions
 - Check other apps using location
@@ -313,12 +313,12 @@ Morning Routine:
 ### Current Implementation:
 - In-memory storage (missions lost on app restart)
 - Foreground location tracking
-- Basic geofencing via `native_geofence` plugin
+- Basic geofencing from the active location stream
 - OpenStreetMap tiles (no API key needed)
 
 ### Production Readiness Checklist:
 - [ ] Replace in-memory repo with persistent storage
-- [ ] Implement proper background location handling
+- [ ] Implement native background geofencing before requesting background location
 - [ ] Add mission data sync (cloud backup)
 - [ ] Implement proper error handling
 - [ ] Add analytics tracking

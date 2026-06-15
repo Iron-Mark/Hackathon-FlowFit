@@ -139,6 +139,16 @@ class SettingsScreen extends StatelessWidget {
                       Navigator.pushNamed(context, '/unit-settings');
                     },
                   ),
+                  _buildDivider(theme),
+                  _buildSettingItem(
+                    context,
+                    'Delete Account',
+                    'Delete your account and associated app data',
+                    SolarIconsOutline.trashBinMinimalistic,
+                    onTap: () {
+                      Navigator.pushNamed(context, '/delete-account');
+                    },
+                  ),
                 ],
               ),
             ),

@@ -151,8 +151,8 @@ Dashboard → Track Tab → Map Missions Button → Map Missions
 
 ### Permissions:
 - **When In Use**: Granted on first map open
-- **Always/Background**: Requested when activating first mission
-- **Handled by**: `geolocator` and `native_geofence` plugins
+- **Always/Background**: Not requested in release builds
+- **Handled by**: `geolocator` while the app is open
 
 ---
 
@@ -166,8 +166,9 @@ Dashboard → Track Tab → Map Missions Button → Map Missions
    - Or sync to Supabase backend
 
 2. **Background Location**
-   - Properly handle Android 10+ background location
-   - Add permission request flow
+   - Implement native Android/iOS background geofencing before requesting
+     background location
+   - Add staged permission request flow
    - Test battery impact
 
 3. **Tutorial Persistence**
@@ -283,7 +284,6 @@ docs/
 - `flutter_map`: Map display
 - `latlong2`: Coordinate handling
 - `geolocator`: GPS location
-- `native_geofence`: Background geofencing
 - `flutter_local_notifications`: Mission alerts
 
 ### No API Keys Required:
@@ -311,9 +311,9 @@ docs/
 - Implement persistent storage for production
 
 **Background tracking not working?**
-- Need to implement background location handling
-- Request "Always" permission
-- Test on physical device (not emulator)
+- Expected in current release builds; map missions are foreground-only
+- Keep FlowFit open while testing mission progress
+- Implement native background geofencing before requesting "Always" permission
 
 ---
 

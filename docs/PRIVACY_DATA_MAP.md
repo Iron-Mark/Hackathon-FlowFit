@@ -38,7 +38,7 @@ Sources:
 | Workout data | Workout type, duration, distance, steps, pace, calories, route/session metadata | Workout screens | Workout tracking and history | Supabase `workout_sessions`, local cache | Health and fitness / app activity |
 | Heart-rate data | BPM, IBI values, timestamps, sensor status | Samsung Health Sensor API / watch bridge | Heart-rate display, wellness state, activity classification | Supabase `heart_rate`, local SQLite/cache | Health and fitness, sensitive health data |
 | Activity and motion data | Step counts, accelerometer/rotation-derived activity classification, active minutes | Device sensors/plugins | Activity tracking and workout detection | Local cache and derived session records | Health and fitness / device sensor data |
-| Location data | Current location, background geofence hits, route/path points | Geolocator/native geofence | Wellness missions, calming routes, walking/running maps | Local state and workout/mission records | Location; background use needs prominent disclosure/consent |
+| Location data | Current location, foreground geofence hits, route/path points | Geolocator/flutter_map | Wellness missions, calming routes, walking/running maps while the app is open | Local state and workout/mission records | Location; prompt needs clear in-app purpose text |
 | Camera/photo data | Live camera frames or selected images for YOLO/debug/share features | Camera and image picker | User-triggered detection and share-card/profile features | Processed locally unless user saves/shares | Photos/videos and camera access; disclose if stored or uploaded |
 | Notifications | Notification permission/preference and local alerts | App settings/permission prompt | Geofence and wellness reminders | Local preferences and profile flags | App info / device permissions |
 | Diagnostics/logs | Error messages, build/runtime logs in development | App runtime and developer tools | Debugging and reliability | Local logs unless connected to a backend later | Declare only if collected/transmitted in production |
@@ -49,7 +49,7 @@ Sources:
 | --- | --- | --- |
 | Supabase | Auth, database, API transport | Stores account, profile, Buddy, workout, and heart-rate records configured by FlowFit. |
 | Samsung Health Sensor API | Wear OS heart-rate sensor access | Reads heart-rate sensor data on supported Samsung devices after permission. |
-| Geolocator/native_geofence/flutter_map | Location and map/geofence features | Accesses foreground/background location for wellness missions and routes. |
+| Geolocator/flutter_map | Location and map/geofence features | Accesses foreground location for wellness missions and routes while the app is open. |
 | Camera/image_picker/ultralytics_yolo/tflite_flutter | User-triggered camera/image inference | Processes camera frames/images for detection/classification features. |
 | flutter_local_notifications | Local alerts | Uses device notification permission for reminders; no remote push is configured in this repo. |
 
@@ -81,11 +81,11 @@ privacy labels.
 
 ## Disclosure Requirements to Resolve Before Store Review
 
-- Release builds request background location: Android declares
-  `ACCESS_BACKGROUND_LOCATION` and native geofence components, while iOS
-  declares `UIBackgroundModes` location. Keep prominent in-app disclosure before
-  requesting permission and describe background geofence/mission usage in Play
-  Data safety and App Store privacy forms.
+- Release builds are foreground-location only: Android declares fine/coarse
+  location without `ACCESS_BACKGROUND_LOCATION`, and iOS declares only
+  when-in-use location without `UIBackgroundModes` location. Keep prominent
+  in-app purpose text before requesting permission and do not claim background
+  geofence progress until native background registration is implemented.
 - Confirm whether camera/photo features are user-facing in production or debug
   only. Remove or hide debug-only routes before release if they are not intended
   for store users.

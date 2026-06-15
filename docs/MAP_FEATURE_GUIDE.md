@@ -120,10 +120,10 @@ Alert: If user exits the zone
 ## Technical Features
 
 - **No API Keys Required**: Uses OpenStreetMap (free)
-- **Background Tracking**: Monitors location even when app is closed
-- **Local Notifications**: Alerts for mission events
-- **Privacy First**: Data stored locally (can be synced to cloud optionally)
-- **Battery Efficient**: Uses native geofencing APIs
+- **Foreground Tracking**: Monitors mission progress while the app is open
+- **Mission Alerts**: Shows in-app status for mission events
+- **Backend Sync**: Saved wellness records can sync to Supabase when configured
+- **Battery Scoped**: Release builds avoid closed-app location tracking until native background geofencing is implemented and tested
 
 ## Sample Mission: "Neighborhood Walk"
 
@@ -171,7 +171,8 @@ Your friend likely added this because:
 If keeping this feature:
 1. Replace the sample mission with user's actual location
 2. Add persistent storage (currently in-memory only)
-3. Implement background location permissions properly
+3. Implement native background geofencing before adding background location
+   permissions
 4. Add mission templates for quick setup
 5. Create onboarding tutorial explaining the feature
 

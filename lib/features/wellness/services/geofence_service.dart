@@ -4,8 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import '../domain/geofence_mission.dart';
 import 'notification_service.dart';
 import '../data/geofence_repository.dart';
-import '../platform/geofence_native.dart';
-import '../platform/native_geofence_wrapper.dart' as ngw;
 
 enum GeofenceEventType { entered, exited, targetReached, outsideAlert }
 
@@ -28,7 +26,6 @@ class GeofenceService extends ChangeNotifier {
   final StreamController<String> _focusRequestController =
       StreamController.broadcast();
   StreamSubscription<Position>? _positionSub;
-  StreamSubscription<dynamic>? _nativeSub;
   final Stream<Position>? _positionStreamOverride;
   final StreamController<GeofenceEvent> _eventController =
       StreamController.broadcast();
@@ -74,95 +71,6 @@ class GeofenceService extends ChangeNotifier {
             .listen((pos) async {
               await _handlePosition(pos);
             });
-
-    // Listen to native geofence events if available (method channel)
-    _nativeSub ??= GeofenceNative.events.listen((dynamic event) {
-      try {
-        final map = Map<String, dynamic>.from(event);
-        final id = map['missionId'] as String? ?? '';
-        final type = map['type'] as String? ?? '';
-        final lat = (map['lat'] as num?)?.toDouble();
-        final lon = (map['lon'] as num?)?.toDouble();
-        if (type == 'entered') {
-          _eventController.add(
-            GeofenceEvent(
-              missionId: id,
-              type: GeofenceEventType.entered,
-              position: Position(
-                latitude: lat ?? 0.0,
-                longitude: lon ?? 0.0,
-                timestamp: DateTime.now(),
-                accuracy: 0.0,
-                altitude: 0.0,
-                heading: 0.0,
-                speed: 0.0,
-                speedAccuracy: 0.0,
-                headingAccuracy: 0.0,
-                altitudeAccuracy: 0.0,
-              ),
-            ),
-          );
-        }
-      } catch (_) {}
-    }, onError: (_) {});
-
-    // Initialize native geofence plugin and register currently active missions with native bridge for background monitoring
-    try {
-      await ngw.NativeGeofenceWrapper.initialize();
-    } catch (_) {}
-    final missions = await repository.getAll();
-    for (final m in missions.where((m) => m.isActive)) {
-      GeofenceNative.register(m);
-    }
-
-    // Subscribe to native_geofence plugin events (if available)
-    try {
-      GeofenceNative.nativeGeofenceEvents.listen((Map<String, dynamic> e) {
-        try {
-          final id = e['missionId'] as String? ?? '';
-          final typeStr = e['type']?.toString().toLowerCase() ?? '';
-          final lat = (e['lat'] as num?)?.toDouble();
-          final lon = (e['lon'] as num?)?.toDouble();
-          final pos = Position(
-            latitude: lat ?? 0.0,
-            longitude: lon ?? 0.0,
-            timestamp: DateTime.now(),
-            accuracy: 0.0,
-            altitude: 0.0,
-            heading: 0.0,
-            speed: 0.0,
-            speedAccuracy: 0.0,
-            headingAccuracy: 0.0,
-            altitudeAccuracy: 0.0,
-          );
-          if (typeStr.contains('enter')) {
-            _eventController.add(
-              GeofenceEvent(
-                missionId: id,
-                type: GeofenceEventType.entered,
-                position: pos,
-              ),
-            );
-          } else if (typeStr.contains('exit')) {
-            _eventController.add(
-              GeofenceEvent(
-                missionId: id,
-                type: GeofenceEventType.exited,
-                position: pos,
-              ),
-            );
-          } else if (typeStr.contains('dwell')) {
-            _eventController.add(
-              GeofenceEvent(
-                missionId: id,
-                type: GeofenceEventType.targetReached,
-                position: pos,
-              ),
-            );
-          }
-        } catch (_) {}
-      }, onError: (_) {});
-    } catch (_) {}
   }
 
   Future<void> stopMonitoring() async {
@@ -179,11 +87,6 @@ class GeofenceService extends ChangeNotifier {
     _cumulativeDistanceForMission[id] = 0.0;
     _lastPositionForMission.remove(id);
     notifyListeners();
-    // register native geofence for background monitoring (best-effort)
-    final m = repository.getById(id);
-    if (m != null) {
-      GeofenceNative.register(m);
-    }
   }
 
   Future<void> deactivateMission(String id) async {
@@ -193,8 +96,6 @@ class GeofenceService extends ChangeNotifier {
     _cumulativeDistanceForMission.remove(id);
     _lastPositionForMission.remove(id);
     notifyListeners();
-    // unregister native geofence
-    GeofenceNative.unregister(id);
   }
 
   /// Called to request the UI to open focus for a mission (by id).
@@ -307,7 +208,6 @@ class GeofenceService extends ChangeNotifier {
   @override
   void dispose() {
     _positionSub?.cancel();
-    _nativeSub?.cancel();
     _eventController.close();
     _focusRequestController.close();
     super.dispose();

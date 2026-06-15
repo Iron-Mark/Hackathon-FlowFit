@@ -21,6 +21,7 @@ On your first visit, you'll see a 3-step onboarding:
 
 **Step 3: Setup**
 - Grant body sensors permission
+- Grant location permission for routes and geofence missions
 - Verify watch connection
 - Tap "Get Started"
 
@@ -50,6 +51,8 @@ When stress is detected:
 
 When you tap "Show Routes":
 - Map displays 3 walking routes near you
+- FlowFit asks before requesting location permission; foreground geofence
+  mission progress uses location while the app is open.
 - Routes are scored based on:
   - Green space (parks, gardens)
   - Low traffic areas
@@ -100,7 +103,9 @@ Access settings by tapping the ⚙️ icon in the app bar.
   - 2 hours
 
 ### Privacy
-- **Data Privacy**: All data processed on-device only
+- **Data Privacy**: Live wellness state is calculated on-device; saved
+  account, workout, heart-rate, and mission records can sync to Supabase over
+  HTTPS
 - **Clear Wellness History**: Delete all stored data
 - **Privacy Policy**: Learn about data protection
 
@@ -111,12 +116,13 @@ Access settings by tapping the ⚙️ icon in the app bar.
 ### What We Collect
 - Heart rate measurements
 - Movement/activity data
+- Location for routes, walking paths, and geofence missions
 - Wellness state transitions
 - Usage timestamps
 
 ### Your Privacy
-✓ All data stays on your device  
-✓ No data sent to external servers  
+✓ Live wellness state is calculated on your device
+✓ Saved records can sync to Supabase over HTTPS
 ✓ You can delete your data anytime  
 ✓ No personal information shared  
 
@@ -206,10 +212,13 @@ A: Battery impact is minimal (< 5% per hour). The app uses efficient buffering.
 A: Currently, a Samsung Galaxy Watch is required for heart rate monitoring.
 
 **Q: Is my data shared with anyone?**  
-A: No. All data is processed on your device only. Nothing is sent to external servers.
+A: FlowFit calculates live wellness state on your device. Account, workout,
+heart-rate, and mission records can sync to Supabase over HTTPS for app
+features and account recovery.
 
 **Q: Can I export my wellness data?**  
-A: Currently, data is stored locally. Cloud sync is planned for future updates.
+A: Export is not implemented yet. You can request account and associated app
+data deletion from the in-app Delete Account screen or public deletion page.
 
 **Q: How accurate is stress detection?**  
 A: The algorithm uses validated thresholds (HR > 100 BPM + low motion). Accuracy improves over time as you use the feature.

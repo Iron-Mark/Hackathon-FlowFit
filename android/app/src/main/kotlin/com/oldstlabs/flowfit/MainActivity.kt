@@ -182,42 +182,6 @@ class MainActivity: FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-                // Geofence method and event channels for native background integration
-                MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.flowfit.geofence/native").setMethodCallHandler { call, result ->
-                    when (call.method) {
-                        "registerGeofence" -> {
-                            // Arguments: id, latitude, longitude, radius
-                            val id = call.argument<String>("id")
-                            val lat = call.argument<Double>("lat")
-                            val lon = call.argument<Double>("lon")
-                            val radius = call.argument<Double>("radius")
-                            // TODO: Register platform geofence — stubbed for now
-                            Log.i(TAG, "Geofence register called: $id @ $lat,$lon ($radius m)")
-                            result.success(true)
-                        }
-                        "unregisterGeofence" -> {
-                            val id = call.argument<String>("id")
-                            // TODO: unregister platform geofence — stubbed
-                            Log.i(TAG, "Geofence unregister called: $id")
-                            result.success(true)
-                        }
-                        else -> result.notImplemented()
-                    }
-                }
-
-                EventChannel(flutterEngine.dartExecutor.binaryMessenger, "com.flowfit.geofence/events").setStreamHandler(
-                    object : EventChannel.StreamHandler {
-                        override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
-                            // Store event sink to send geofence enter/exit notifications from native side
-                            // TODO: wire with actual geofence manager
-                            Log.i(TAG, "Geofence event sink registered")
-                        }
-
-                        override fun onCancel(arguments: Any?) {
-                            Log.i(TAG, "Geofence event sink cancelled")
-                        }
-                    }
-                )
         
         // Samsung Health Sensor method channel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->

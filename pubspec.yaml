@@ -54,7 +54,6 @@ dependencies:
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
   flutter_local_notifications: ^19.5.0 # Local notifications for geofence alerts
-  native_geofence: ^1.2.0
   flutter_map_location_marker: ^10.1.0
 
   # Unified Workout Flow dependencies

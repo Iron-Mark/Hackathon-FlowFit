@@ -52,10 +52,10 @@ with the Flutter web build for store review and user access.
   `request_account_deletion()` and records a pending admin queue row for
   Supabase Auth user deletion.
 - Health data: heart-rate features require supported hardware and permissions.
-- Location data: background location/geofence features are enabled in the
-  release permission surface for wellness missions and route progress. They
-  require user permission, prominent in-app disclosure, and store privacy-form
-  disclosure.
+- Location data: release builds use foreground location for wellness missions,
+  calming route suggestions, and route/path progress while the app is open. Do
+  not claim background location or background geofence progress until native
+  background registration is implemented.
 - Debug routes: release builds hide the current debug/demo routes.
 
 ## Screenshot Shot List

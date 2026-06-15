@@ -258,7 +258,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Get real-time suggestions for calming walks when stress is detected, and automatic workout tracking when you exercise',
+            'Get real-time suggestions for calming walks when stress is detected, plus foreground geofence mission progress and automatic workout tracking when you exercise',
             style: TextStyle(
               fontFamily: 'GeneralSans',
               fontSize: 16,
@@ -317,7 +317,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'All biometric data is processed on your device only. Nothing is sent to external servers.',
+            'Live wellness state is calculated on your device. Account, workout, heart-rate, and mission records can sync to Supabase over HTTPS and are protected by app access controls.',
             style: TextStyle(
               fontFamily: 'GeneralSans',
               fontSize: 16,
@@ -351,7 +351,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
                 const Divider(height: 32),
                 _buildSetupItem(
                   icon: Icons.sensors,
-                  title: 'Body Sensors Permission',
+                  title: 'Body Sensors and Location',
                   status: _hasPermissions ? 'Granted' : 'Required',
                   isSuccess: _hasPermissions,
                 ),
@@ -362,7 +362,7 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
             const SizedBox(height: 16),
             Text(
               _isWatchConnected
-                  ? 'Please grant body sensors permission to continue'
+                  ? 'Please grant body sensors and location permission to continue'
                   : 'Please connect your Samsung Galaxy Watch to continue',
               style: TextStyle(
                 fontFamily: 'GeneralSans',

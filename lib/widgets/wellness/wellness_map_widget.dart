@@ -34,8 +34,11 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
   @override
   void initState() {
     super.initState();
-    _getUserLocation();
-    _startGPSTracking();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initializeLocationAccess();
+      }
+    });
   }
 
   @override
@@ -57,19 +60,75 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
     }
   }
 
-  Future<void> _getUserLocation() async {
+  Future<void> _initializeLocationAccess() async {
+    final prepared = await _prepareLocationAccess();
+    if (!prepared || !mounted) return;
+
+    final locationLoaded = await _getUserLocation();
+    if (!locationLoaded || !mounted) return;
+
+    await _startGPSTracking();
+  }
+
+  Future<bool> _prepareLocationAccess() async {
+    final hasPermission = await _gpsService.hasLocationPermission();
+    if (hasPermission) {
+      return true;
+    }
+
+    final shouldRequest = await _showLocationPermissionDisclosure();
+    if (!shouldRequest || !mounted) {
+      _showLocationAccessError();
+      return false;
+    }
+
+    final granted = await _gpsService.requestLocationPermission();
+    if (!granted) {
+      _showLocationAccessError();
+    }
+    return granted;
+  }
+
+  Future<bool> _showLocationPermissionDisclosure() async {
+    if (!mounted) return false;
+
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Use Location for Wellness Missions?'),
+            content: const Text(
+              'FlowFit uses your location to show nearby calming routes, record '
+              'walking paths, and update geofence mission progress while the '
+              'app is open. You can change this in device settings anytime.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Not Now'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  void _showLocationAccessError() {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingLocation = false;
+      _locationError =
+          'Location access is needed for wellness routes, walking paths, and geofence missions.';
+    });
+  }
+
+  Future<bool> _getUserLocation() async {
     try {
       debugPrint('📍 WellnessMap: Requesting location...');
-
-      // Check and request permissions
-      final hasPermission = await _gpsService.hasLocationPermission();
-      if (!hasPermission) {
-        debugPrint('⚠️ WellnessMap: No location permission, requesting...');
-        final granted = await _gpsService.requestLocationPermission();
-        if (!granted) {
-          throw Exception('Location permission denied');
-        }
-      }
 
       // Get current location (this will wait for actual GPS fix)
       final location = await _gpsService.getCurrentLocation();
@@ -88,6 +147,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
         // Center map on user location
         _mapController.move(_userLocation!, 15.0);
       }
+      return true;
     } catch (e) {
       debugPrint('❌ WellnessMap: Location error: $e');
       // Keep loading state and show error - don't use fake location
@@ -98,6 +158,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
               'Unable to get your location. Please enable GPS and try again.';
         });
       }
+      return false;
     }
   }
 
@@ -222,7 +283,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
                     _isLoadingLocation = true;
                     _locationError = null;
                   });
-                  _getUserLocation();
+                  _initializeLocationAccess();
                 },
                 child: const Text('Retry'),
               ),
