@@ -161,6 +161,21 @@ Write a JSON evidence artifact for release handoff:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
 ```
 
+When the release web values live in GitHub repository variables, audit them
+directly without copying values into local files:
+```powershell
+pwsh -NoProfile -File scripts/release_readiness_audit.ps1 `
+  -Strict `
+  -GitHubRepo Iron-Mark/Hackathon-FlowFit `
+  -OutFile build/store-release-readiness-audit.json
+```
+
+The GitHub-variable import is allowlisted to release client/config values:
+`FLOWFIT_PUBLIC_WEB_BASE_URL`, `FLOWFIT_WEB_BASE_HREF`,
+`FLOWFIT_SUPPORT_EMAIL`, `FLOWFIT_SUPPORT_EMAIL_VERIFIED`, `SUPABASE_URL`, and
+`SUPABASE_PUBLISHABLE_KEY`. The audit reports how many values were imported but
+does not print Supabase keys.
+
 ---
 
 ### 6. store_release_build.ps1

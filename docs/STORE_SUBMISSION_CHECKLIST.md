@@ -124,6 +124,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       run `.github/workflows/flutter-web-pages.yml`.
       Use `https://iron-mark.github.io/Hackathon-FlowFit` as the default project
       site unless a custom domain is configured.
+- [ ] If web release values are stored as repository variables, run
+      `pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit`
+      before dispatching the Pages workflow so the same configured values are
+      checked by the release audit.
 - [ ] If the web host serves from a subpath, confirm the wrapper-derived
       Flutter base href matches the path, or set `FLOWFIT_WEB_BASE_HREF` before
       building.

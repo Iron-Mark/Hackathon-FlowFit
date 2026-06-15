@@ -5,6 +5,8 @@ param(
     [ValidateSet('Auto', 'Recovery', 'Release')]
     [string]$McpMode = 'Auto',
     [string]$McpConfigPath = '.mcp.json',
+    [string]$GitHubRepo = '',
+    [string]$GitHubVariablesPath = '',
     [string]$OutFile = ''
 )
 
@@ -142,6 +144,76 @@ function Import-ReleaseEnvFile {
             $value = $value.Substring(1, $value.Length - 2)
         }
         [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+    }
+}
+
+function Import-GitHubReleaseVariables {
+    if (
+        [string]::IsNullOrWhiteSpace($GitHubRepo) -and
+        [string]::IsNullOrWhiteSpace($GitHubVariablesPath)
+    ) {
+        return
+    }
+
+    $jsonText = ''
+    if (-not [string]::IsNullOrWhiteSpace($GitHubVariablesPath)) {
+        $jsonText = Read-AuditText $GitHubVariablesPath
+        if ($null -eq $jsonText) {
+            Add-Fail 'GitHub release variables' "Missing GitHub variables evidence file: $GitHubVariablesPath."
+            return
+        }
+    } else {
+        if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+            Add-Fail 'GitHub release variables' 'GitHub CLI is required when -GitHubRepo is used.'
+            return
+        }
+
+        $ghResult = & gh variable list --repo $GitHubRepo --json name,value 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Add-Fail 'GitHub release variables' 'Unable to read GitHub repository variables with gh.'
+            return
+        }
+        $jsonText = ($ghResult | Out-String).Trim()
+    }
+
+    try {
+        $variables = @($jsonText | ConvertFrom-Json)
+    } catch {
+        Add-Fail 'GitHub release variables' 'GitHub variables evidence is not valid JSON.'
+        return
+    }
+
+    $allowedNames = @(
+        'FLOWFIT_PUBLIC_WEB_BASE_URL',
+        'FLOWFIT_WEB_BASE_HREF',
+        'FLOWFIT_SUPPORT_EMAIL',
+        'FLOWFIT_SUPPORT_EMAIL_VERIFIED',
+        'SUPABASE_URL',
+        'SUPABASE_PUBLISHABLE_KEY'
+    )
+    $importedCount = 0
+
+    foreach ($variable in $variables) {
+        $name = [string]$variable.name
+        $value = [string]$variable.value
+        if (-not $allowedNames.Contains($name)) {
+            continue
+        }
+        if ([string]::IsNullOrWhiteSpace($value)) {
+            continue
+        }
+        if (-not [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+            continue
+        }
+
+        [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+        $importedCount++
+    }
+
+    if ($importedCount -gt 0) {
+        Add-Pass 'GitHub release variables' "Imported $importedCount allowed repository variable value(s) for this audit without printing them."
+    } else {
+        Add-Warn 'GitHub release variables' 'No allowed GitHub repository variables were available to import.' -StrictFailure $false
     }
 }
 
@@ -994,6 +1066,7 @@ function Test-Tooling {
 Push-Location $repoRoot
 try {
     Import-ReleaseEnvFile -Path $EnvFile
+    Import-GitHubReleaseVariables
     $supportEmailVerifiedForAudit = $SupportEmailVerified -or (
         [Environment]::GetEnvironmentVariable('FLOWFIT_SUPPORT_EMAIL_VERIFIED') -eq 'true'
     )

@@ -535,6 +535,80 @@ void main() {
     );
   });
 
+  test('strict audit can use GitHub repository variable evidence', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_github_variables_audit_',
+    );
+    try {
+      final variablesFile = File(
+        '${tempDir.path}${Platform.pathSeparator}github-vars.json',
+      );
+      variablesFile.writeAsStringSync('''
+[
+  {
+    "name": "FLOWFIT_PUBLIC_WEB_BASE_URL",
+    "value": "https://iron-mark.github.io/Hackathon-FlowFit/"
+  },
+  {
+    "name": "FLOWFIT_SUPPORT_EMAIL",
+    "value": "support@flowfit.com"
+  },
+  {
+    "name": "FLOWFIT_SUPPORT_EMAIL_VERIFIED",
+    "value": "true"
+  },
+  {
+    "name": "SUPABASE_URL",
+    "value": "https://abcdefghijklmnop.supabase.co"
+  },
+  {
+    "name": "SUPABASE_PUBLISHABLE_KEY",
+    "value": "sb_publishable_abcdefghijklmnopqrstuvwxyz123456"
+  }
+]
+''');
+
+      final mcpFile = File('${tempDir.path}${Platform.pathSeparator}.mcp.json');
+      mcpFile.writeAsStringSync(
+        '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true"}}}',
+      );
+
+      final env = Map<String, String>.from(Platform.environment)
+        ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = ''
+        ..['FLOWFIT_SUPPORT_EMAIL'] = ''
+        ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = ''
+        ..['SUPABASE_URL'] = ''
+        ..['SUPABASE_PUBLISHABLE_KEY'] = ''
+        ..['FLOWFIT_ANDROID_KEYSTORE_BASE64'] = 'ZmFrZS1rZXlzdG9yZQ=='
+        ..['FLOWFIT_ANDROID_KEYSTORE_PASSWORD'] = 'store-password'
+        ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
+        ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
+
+      final audit = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/release_readiness_audit.ps1',
+        '-Strict',
+        '-GitHubVariablesPath',
+        variablesFile.path,
+        '-McpConfigPath',
+        mcpFile.path,
+      ], environment: env);
+
+      expect(audit.exitCode, 0, reason: '${audit.stdout}\n${audit.stderr}');
+      expect(
+        '${audit.stdout}\n${audit.stderr}',
+        contains('GitHub release variables'),
+      );
+      expect(
+        '${audit.stdout}\n${audit.stderr}',
+        isNot(contains('sb_publishable_abcdefghijklmnopqrstuvwxyz123456')),
+      );
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
   test('recovery audit rejects read-only Supabase MCP config', () {
     final audit = _runAuditWithMcpConfig(
       'https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true',
