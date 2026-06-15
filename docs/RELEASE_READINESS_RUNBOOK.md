@@ -186,6 +186,22 @@ export FLOWFIT_SUPPORT_EMAIL=support@flowfit.com
 export FLOWFIT_IOS_EXPORT_OPTIONS_PLIST=$HOME/export_options.plist
 ```
 
+   To create the ignored repo-local export-options plist for manual signing,
+   run:
+
+```powershell
+pwsh -NoProfile -File scripts/create_ios_export_options.ps1 `
+  -TeamId ABCDE12345 `
+  -ProvisioningProfileName 'FlowFit App Store'
+```
+
+   The helper reads `FLOWFIT_IOS_BUNDLE_IDENTIFIER` from
+   `ios/Flutter/FlowFit.xcconfig`, writes ignored `ios/ExportOptions.plist`,
+   and does not create certificates, provisioning profiles, App Store Connect
+   API keys, or keychain entries. Configure those in Xcode/Apple Developer
+   first, then set `FLOWFIT_IOS_EXPORT_OPTIONS_PLIST=ios/ExportOptions.plist`
+   on the macOS release host.
+
 3. Add the production scheme to Supabase redirect URLs:
 
 ```text
@@ -210,6 +226,9 @@ Before archive/upload:
   project reads that value through `PRODUCT_BUNDLE_IDENTIFIER`.
 - Assign an Apple Developer team.
 - Configure signing certificates and provisioning profiles.
+- If explicit export settings are needed, create ignored
+  `ios/ExportOptions.plist` with `scripts/create_ios_export_options.ps1` and
+  set `FLOWFIT_IOS_EXPORT_OPTIONS_PLIST`.
 - Review App Store privacy labels for location, motion/activity, camera,
   photos, health/heart-rate-related data, account data, and diagnostics.
 

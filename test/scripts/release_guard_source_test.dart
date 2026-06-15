@@ -12,6 +12,7 @@ void main() {
   late String releaseStatusSnapshot;
   late String createAndroidUploadKeystore;
   late String supportInboxVerifier;
+  late String createIosExportOptions;
   late String scriptsReadme;
   late String gitignore;
   late String supabaseConfig;
@@ -53,6 +54,9 @@ void main() {
     ).readAsStringSync();
     supportInboxVerifier = File(
       'scripts/verify_support_inbox.ps1',
+    ).readAsStringSync();
+    createIosExportOptions = File(
+      'scripts/create_ios_export_options.ps1',
     ).readAsStringSync();
     scriptsReadme = File('scripts/README.md').readAsStringSync();
     gitignore = File('.gitignore').readAsStringSync();
@@ -376,6 +380,124 @@ void main() {
       expect(result.stdout, contains('ANDROID_SIGNING_ENV_FIXTURE_OK'));
     },
   );
+
+  test('iOS export-options helper creates ignored Xcode plist input', () {
+    expect(
+      createIosExportOptions,
+      contains('IOS_EXPORT_OPTIONS_PLIST_WRITTEN'),
+    );
+    expect(
+      createIosExportOptions,
+      contains('FLOWFIT_IOS_EXPORT_OPTIONS_PLIST'),
+    );
+    expect(createIosExportOptions, contains('ios/Flutter/FlowFit.xcconfig'));
+    expect(createIosExportOptions, contains('FLOWFIT_IOS_BUNDLE_IDENTIFIER'));
+    expect(createIosExportOptions, contains('app-store-connect'));
+    expect(createIosExportOptions, contains('ProvisioningProfileName'));
+    expect(createIosExportOptions, contains('will not be overwritten'));
+    expect(createIosExportOptions, isNot(contains('AuthKey_')));
+    expect(createIosExportOptions, isNot(contains('.p12')));
+    expect(scriptsReadme, contains('create_ios_export_options.ps1'));
+    expect(releaseReadinessRunbook, contains('create_ios_export_options.ps1'));
+    expect(storeSubmissionChecklist, contains('create_ios_export_options.ps1'));
+    expect(releaseEnvExample, contains('FLOWFIT_IOS_EXPORT_OPTIONS_PLIST'));
+    expect(gitignore, contains('ios/ExportOptions.plist'));
+    expect(gitignore, contains('ios/export_options*.plist'));
+  });
+
+  test('iOS export-options helper writes manual and automatic plists', () {
+    final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
+    final manualOut = File('build/ios-export-options-manual-$unique.plist');
+    final automaticOut = File(
+      'build/ios-export-options-automatic-$unique.plist',
+    );
+    final missingProfileOut = File(
+      'build/ios-export-options-missing-profile-$unique.plist',
+    );
+
+    try {
+      final missingProfile = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/create_ios_export_options.ps1',
+        '-TeamId',
+        'ABCDE12345',
+        '-OutFile',
+        missingProfileOut.path,
+      ]);
+      expect(missingProfile.exitCode, isNot(0));
+      expect(
+        '${missingProfile.stdout}\n${missingProfile.stderr}',
+        contains('ProvisioningProfileName'),
+      );
+      expect(missingProfileOut.existsSync(), isFalse);
+
+      final manual = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/create_ios_export_options.ps1',
+        '-TeamId',
+        'ABCDE12345',
+        '-ProvisioningProfileName',
+        'FlowFit App Store',
+        '-OutFile',
+        manualOut.path,
+      ]);
+      expect(manual.exitCode, 0, reason: '${manual.stdout}\n${manual.stderr}');
+      expect(manual.stdout, contains('IOS_EXPORT_OPTIONS_PLIST_WRITTEN'));
+      expect(manual.stdout, isNot(contains('FlowFit App Store')));
+      final manualPlist = manualOut.readAsStringSync();
+      expect(manualPlist, contains('<string>app-store-connect</string>'));
+      expect(manualPlist, contains('<string>manual</string>'));
+      expect(manualPlist, contains('<string>ABCDE12345</string>'));
+      expect(manualPlist, contains('<key>com.oldstlabs.flowfit</key>'));
+      expect(manualPlist, contains('<string>FlowFit App Store</string>'));
+      expect(manualPlist, contains('<string>Apple Distribution</string>'));
+
+      final overwrite = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/create_ios_export_options.ps1',
+        '-TeamId',
+        'ABCDE12345',
+        '-ProvisioningProfileName',
+        'FlowFit App Store',
+        '-OutFile',
+        manualOut.path,
+      ]);
+      expect(overwrite.exitCode, isNot(0));
+      expect(
+        '${overwrite.stdout}\n${overwrite.stderr}',
+        contains('will not be overwritten'),
+      );
+
+      final automatic = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/create_ios_export_options.ps1',
+        '-TeamId',
+        'ABCDE12345',
+        '-SigningStyle',
+        'automatic',
+        '-OutFile',
+        automaticOut.path,
+      ]);
+      expect(
+        automatic.exitCode,
+        0,
+        reason: '${automatic.stdout}\n${automatic.stderr}',
+      );
+      final automaticPlist = automaticOut.readAsStringSync();
+      expect(automaticPlist, contains('<string>automatic</string>'));
+      expect(automaticPlist, isNot(contains('provisioningProfiles')));
+    } finally {
+      for (final file in [manualOut, automaticOut, missingProfileOut]) {
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
+      }
+    }
+  });
 
   test('release env template lists required store inputs', () {
     for (final name in [

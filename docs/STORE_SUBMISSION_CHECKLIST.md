@@ -93,6 +93,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Set `FLOWFIT_IOS_BUNDLE_IDENTIFIER` in `ios/Flutter/FlowFit.xcconfig`.
 - [ ] Set `FLOWFIT_SUPPORT_EMAIL` and optional
       `FLOWFIT_IOS_EXPORT_OPTIONS_PLIST` on the macOS build host.
+      If Xcode export needs explicit options, create ignored
+      `ios/ExportOptions.plist` with
+      `pwsh -NoProfile -File scripts/create_ios_export_options.ps1 -TeamId <TEAMID> -ProvisioningProfileName '<profile name>'`.
 - [ ] Add production auth schemes to Supabase redirect URLs.
 - [ ] Assign Apple Developer team and signing profiles in Xcode.
 - [ ] Build signed archive/IPA:

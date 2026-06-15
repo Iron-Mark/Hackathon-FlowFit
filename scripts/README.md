@@ -368,7 +368,42 @@ that helper is intentionally limited to public repository variables.
 
 ---
 
-### 11. store_release_build.ps1
+### 11. create_ios_export_options.ps1
+**Purpose**: Create an ignored App Store/TestFlight export-options plist for
+`flutter build ipa` when the macOS release host needs explicit Xcode export
+settings.
+
+**Manual signing profile**:
+```powershell
+pwsh -NoProfile -File scripts\create_ios_export_options.ps1 `
+  -TeamId ABCDE12345 `
+  -ProvisioningProfileName 'FlowFit App Store'
+```
+
+By default, this writes ignored `ios/ExportOptions.plist`, reads the bundle ID
+from `ios/Flutter/FlowFit.xcconfig`, uses `method=app-store-connect`, and
+refuses to overwrite an existing plist unless `-Force` is passed.
+
+**Automatic signing export options**:
+```powershell
+pwsh -NoProfile -File scripts\create_ios_export_options.ps1 `
+  -TeamId ABCDE12345 `
+  -SigningStyle automatic
+```
+
+The helper does not create certificates, provisioning profiles, App Store
+Connect API keys, or keychain entries. Configure those through Xcode and the
+Apple Developer account on macOS, then set:
+
+```powershell
+$env:FLOWFIT_IOS_EXPORT_OPTIONS_PLIST = 'ios/ExportOptions.plist'
+```
+
+before running `scripts\store_release_build.ps1 -Target iOS`.
+
+---
+
+### 12. store_release_build.ps1
 **Purpose**: Production artifact build wrapper for store/web handoff. It fails
 early when the git working tree is dirty, required production environment
 values, signing files, or public web URLs are missing. By default it also runs
@@ -482,7 +517,7 @@ manifest after the strict audit passes.
 
 ---
 
-### 12. verify_web_deployment.ps1
+### 13. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -529,7 +564,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 13. configure_local_release.ps1
+### 14. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it
