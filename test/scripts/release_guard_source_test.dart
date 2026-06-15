@@ -441,6 +441,15 @@ void main() {
 
   test('GitHub Pages workflow publishes production web artifacts', () {
     expect(pagesWorkflow, contains('name: Flutter Web Pages'));
+    expect(pagesWorkflow, contains('deploy-ready:'));
+    expect(
+      pagesWorkflow,
+      contains('if: needs.deploy-ready.outputs.ready == \'true\''),
+    );
+    expect(
+      pagesWorkflow,
+      contains('production web deploy variables are not configured'),
+    );
     expect(pagesWorkflow, contains('actions/configure-pages@v5'));
     expect(pagesWorkflow, contains('actions/upload-pages-artifact@v3'));
     expect(pagesWorkflow, contains('actions/deploy-pages@v4'));

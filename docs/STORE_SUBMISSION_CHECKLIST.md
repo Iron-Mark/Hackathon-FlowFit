@@ -124,6 +124,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       run `.github/workflows/flutter-web-pages.yml`.
       Use `https://iron-mark.github.io/Hackathon-FlowFit` as the default project
       site unless a custom domain is configured.
+      Until those variables are complete, the Pages workflow's `deploy-ready`
+      job skips deployment instead of failing the merge-to-main workflow.
 - [ ] If web release values are stored as repository variables, run
       `pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit`
       before dispatching the Pages workflow so the same configured values are

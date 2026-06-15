@@ -27,8 +27,36 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  deploy-ready:
+    name: Check web deploy readiness
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Check production web deploy variables
+        id: check
+        shell: bash
+        env:
+          FLOWFIT_SUPPORT_EMAIL_VERIFIED: ${{ vars.FLOWFIT_SUPPORT_EMAIL_VERIFIED }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&
+                -n "${SUPABASE_URL}" &&
+                "${SUPABASE_PUBLISHABLE_KEY}" == sb_publishable_* ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::Skipping GitHub Pages deployment because production web deploy variables are not configured."
+
   deploy:
     name: Build and Deploy Flutter Web
+    needs: deploy-ready
+    if: needs.deploy-ready.outputs.ready == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     environment:

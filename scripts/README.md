@@ -320,6 +320,10 @@ uploads `build/web` to GitHub Pages, deploys it, and verifies the deployed
 site with `scripts/verify_web_deployment.ps1`. It uploads the JSON verification
 evidence as `flowfit-github-pages-verification`.
 
+The workflow has a `deploy-ready` job. Pushes to `main` skip the production
+Pages deployment with a notice until Supabase variables and verified support
+inbox status are configured. Manual dispatch uses the same gate.
+
 Configure repository variables before dispatching it:
 
 - `FLOWFIT_PUBLIC_WEB_BASE_URL`, for example
