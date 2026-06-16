@@ -630,7 +630,32 @@ manifest after the strict audit passes.
 
 ---
 
-### 15. render_supabase_email_templates.ps1
+### 15. verify_store_artifacts.ps1
+**Purpose**: Re-verify `build/store-release-artifacts.json` after a production
+artifact build. It checks every manifest artifact path, kind, SHA-256 digest,
+byte size, file count, clean git evidence, release input shape, optional strict
+audit evidence, and optional web backend selection.
+
+```powershell
+pwsh -NoProfile -File scripts/verify_store_artifacts.ps1 `
+  -Strict `
+  -RequireArtifact flutter-web-build,flutter-web-release-zip `
+  -RequireWebBackend javascript `
+  -RequireStrictAudit `
+  -RequireCurrentCommit
+```
+
+Use `-RequireArtifact android-play-store-aab` for Play Store AAB handoff,
+`-RequireArtifact ios-app-store-ipa` for App Store/TestFlight handoff, and
+`-RequireWebBackend wasm` when the deployed web release was built with
+`-WebWasm`. The script writes
+`build/store-release-artifact-verification.json`; archive it with the artifact
+manifest, metadata verification, web deployment verification, and store upload
+evidence.
+
+---
+
+### 16. render_supabase_email_templates.ps1
 **Purpose**: Render dashboard-ready Supabase Auth email templates after the
 support/privacy inbox is verified. Source templates keep
 `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` so repo files never pin an
@@ -652,7 +677,7 @@ still contain the replacement token or reserved source inbox.
 
 ---
 
-### 16. verify_web_deployment.ps1
+### 17. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 

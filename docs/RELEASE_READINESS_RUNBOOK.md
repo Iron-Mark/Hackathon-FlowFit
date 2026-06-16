@@ -669,6 +669,11 @@ is used and includes it in `build/store-release-artifacts.json` after the strict
 audit passes. The artifact manifest also records each output's path, kind,
 SHA-256 digest, byte size, file count, git commit/dirty state, selected
 toolchain versions, non-secret release inputs, and strict-audit summary.
+After the wrapper finishes, run
+`pwsh -NoProfile -File scripts/verify_store_artifacts.ps1 -Strict -RequireStrictAudit -RequireCurrentCommit`
+with the expected `-RequireArtifact` values for the target being handed off. The
+verifier re-hashes each listed artifact and writes
+`build/store-release-artifact-verification.json` for archive evidence.
 It fails on uncommitted changes unless `-AllowDirty` is supplied, and it runs
 analyzer, Flutter tests, and Android release lint unless `-SkipValidation` is
 supplied with separate fresh evidence for the same commit.
@@ -711,6 +716,9 @@ the reserved source replacement token.
 For production handoff, prefer `scripts/store_release_build.ps1`; it also
 writes `build/store-release-artifacts.json` for the generated AAB/web outputs,
 including `build/release/flowfit-web-release.zip` for static web hosting.
+Archive `build/store-release-artifact-verification.json` after
+`scripts/verify_store_artifacts.ps1` confirms artifact hashes, sizes, git
+evidence, release inputs, and strict-audit status for the same commit.
 The production wrapper rejects smoke/example IDs and reserved `.example`,
 `.invalid`, `.test`, localhost, or IP-loopback web hosts even when signing files
 are present.

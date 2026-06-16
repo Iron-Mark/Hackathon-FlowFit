@@ -215,6 +215,8 @@ Build and deployment scripts:
   evidence for store/web release handoff
 - **verify_store_metadata.ps1** - Store listing, privacy-map, checklist, and
   icon-asset evidence for Play/App Store/web handoff
+- **verify_store_artifacts.ps1** - Re-hash and validate
+  `build/store-release-artifacts.json` outputs before store/web handoff
 - **create_android_upload_keystore.ps1** - Ignored Android upload signing
   material generator and private CI secret handoff
 - **export_android_signing_env.ps1** - Ignored private Android signing secret

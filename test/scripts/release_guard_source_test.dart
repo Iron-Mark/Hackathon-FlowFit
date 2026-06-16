@@ -15,6 +15,7 @@ void main() {
   late String supportInboxVerifier;
   late String renderSupabaseEmailTemplates;
   late String storeMetadataVerifier;
+  late String storeArtifactVerifier;
   late String createIosExportOptions;
   late String scriptsReadme;
   late String gitignore;
@@ -77,6 +78,9 @@ void main() {
     ).readAsStringSync();
     storeMetadataVerifier = File(
       'scripts/verify_store_metadata.ps1',
+    ).readAsStringSync();
+    storeArtifactVerifier = File(
+      'scripts/verify_store_artifacts.ps1',
     ).readAsStringSync();
     createIosExportOptions = File(
       'scripts/create_ios_export_options.ps1',
@@ -776,6 +780,29 @@ storeFile=upload-keystore.jks
     expect(docsIndex, contains('verify_store_metadata.ps1'));
   });
 
+  test('store artifact verifier validates release manifest evidence', () {
+    expect(
+      storeArtifactVerifier,
+      contains('STORE_ARTIFACT_VERIFICATION_WRITTEN'),
+    );
+    expect(storeArtifactVerifier, contains('store-release-artifacts.json'));
+    expect(
+      storeArtifactVerifier,
+      contains('store-release-artifact-verification.json'),
+    );
+    expect(storeArtifactVerifier, contains('Get-DirectoryDigest'));
+    expect(storeArtifactVerifier, contains('Get-FileHash'));
+    expect(storeArtifactVerifier, contains('RequireArtifact'));
+    expect(storeArtifactVerifier, contains('RequireStrictAudit'));
+    expect(storeArtifactVerifier, contains('RequireCurrentCommit'));
+    expect(storeArtifactVerifier, contains('releaseInputs.webBuildBackend'));
+    expect(storeArtifactVerifier, contains('support@flowfit.com'));
+    expect(scriptsReadme, contains('verify_store_artifacts.ps1'));
+    expect(releaseReadinessRunbook, contains('verify_store_artifacts.ps1'));
+    expect(storeSubmissionChecklist, contains('verify_store_artifacts.ps1'));
+    expect(docsIndex, contains('verify_store_artifacts.ps1'));
+  });
+
   test('iOS privacy manifest is wired and guarded for App Store review', () {
     expect(iosPbxproj, contains('PrivacyInfo.xcprivacy in Resources'));
     expect(iosPbxproj, contains('path = PrivacyInfo.xcprivacy'));
@@ -1034,6 +1061,147 @@ storeFile=upload-keystore.jks
         if (file.existsSync()) {
           file.deleteSync();
         }
+      }
+    }
+  });
+
+  test('store artifact verifier detects manifest and artifact drift', () {
+    final unique = '${DateTime.now().microsecondsSinceEpoch}_$pid';
+    final fixtureDir = Directory('build/store-artifact-verifier-$unique');
+    final artifact = File('${fixtureDir.path}/flowfit-web-release.zip');
+    final manifest = File('${fixtureDir.path}/store-release-artifacts.json');
+    final verification = File(
+      '${fixtureDir.path}/store-release-artifact-verification.json',
+    );
+    final driftVerification = File(
+      '${fixtureDir.path}/store-release-artifact-drift-verification.json',
+    );
+
+    try {
+      fixtureDir.createSync(recursive: true);
+      artifact.writeAsStringSync('release artifact bytes');
+
+      final hash = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-Command',
+        r'& { param($Path) (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash.ToLowerInvariant() }',
+        artifact.path,
+      ]);
+      expect(hash.exitCode, 0, reason: '${hash.stdout}\n${hash.stderr}');
+
+      final head = Process.runSync('git', ['rev-parse', 'HEAD']);
+      expect(head.exitCode, 0, reason: '${head.stdout}\n${head.stderr}');
+
+      final artifactPath = artifact.path.replaceAll(r'\', '/');
+      manifest.writeAsStringSync(
+        jsonEncode({
+          'generatedAt': '2026-06-15T00:00:00.0000000Z',
+          'target': 'Web',
+          'strictAudit': {
+            'ran': true,
+            'path': 'build/store-release-readiness-audit.json',
+            'summary': {'pass': 64, 'warn': 0, 'fail': 0},
+          },
+          'git': {
+            'branch': 'supabase/recovery-setup',
+            'commit': (head.stdout as String).trim(),
+            'dirty': false,
+            'changedFileCount': 0,
+            'allowDirtyOverride': false,
+            'uncommittedStatus': <String>[],
+          },
+          'toolchain': {'flutter': 'fixture', 'dart': 'fixture'},
+          'releaseInputs': {
+            'supportEmail': 'support@release.flowfit.app',
+            'publicWebBaseUrl': 'https://iron-mark.github.io/Hackathon-FlowFit',
+            'supabaseUrl': 'https://abcdefghijklmnop.supabase.co',
+            'supabaseConfigSource': 'environment',
+            'androidApplicationId': 'com.oldstlabs.flowfit',
+            'androidAuthScheme': 'com.oldstlabs.flowfit',
+            'iosBundleIdentifier': 'com.oldstlabs.flowfit',
+            'webBuildBackend': 'javascript',
+            'webBaseHref': '/Hackathon-FlowFit/',
+          },
+          'artifacts': [
+            {
+              'name': 'flutter-web-release-zip',
+              'kind': 'file',
+              'path': artifactPath,
+              'url': 'https://iron-mark.github.io/Hackathon-FlowFit',
+              'sha256': (hash.stdout as String).trim(),
+              'sizeBytes': artifact.lengthSync(),
+              'fileCount': 1,
+            },
+          ],
+        }),
+      );
+
+      final verified = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_store_artifacts.ps1',
+        '-ManifestPath',
+        manifest.path,
+        '-OutFile',
+        verification.path,
+        '-Strict',
+        '-RequireArtifact',
+        'flutter-web-release-zip',
+        '-RequireWebBackend',
+        'javascript',
+        '-RequireStrictAudit',
+        '-RequireCurrentCommit',
+      ]);
+      expect(
+        verified.exitCode,
+        0,
+        reason: '${verified.stdout}\n${verified.stderr}',
+      );
+      expect(verified.stdout, contains('STORE_ARTIFACT_VERIFICATION_WRITTEN'));
+      final verifiedJson =
+          jsonDecode(verification.readAsStringSync()) as Map<String, dynamic>;
+      expect((verifiedJson['summary'] as Map<String, dynamic>)['fail'], 0);
+      final results = verifiedJson['results'] as List<dynamic>;
+      expect(
+        results.any(
+          (result) =>
+              (result as Map<String, dynamic>)['name'] == 'Required artifact' &&
+              result['level'] == 'PASS',
+        ),
+        isTrue,
+      );
+
+      artifact.writeAsStringSync('corrupted release artifact bytes');
+      final drift = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_store_artifacts.ps1',
+        '-ManifestPath',
+        manifest.path,
+        '-OutFile',
+        driftVerification.path,
+        '-Strict',
+        '-RequireArtifact',
+        'flutter-web-release-zip',
+      ]);
+      expect(drift.exitCode, 1);
+      final driftJson =
+          jsonDecode(driftVerification.readAsStringSync())
+              as Map<String, dynamic>;
+      final driftResults = driftJson['results'] as List<dynamic>;
+      expect(
+        driftResults.any(
+          (result) =>
+              (result as Map<String, dynamic>)['name'] ==
+                  'Artifact: flutter-web-release-zip' &&
+              result['level'] == 'FAIL' &&
+              (result['detail'] as String).contains('sha256'),
+        ),
+        isTrue,
+      );
+    } finally {
+      if (fixtureDir.existsSync()) {
+        fixtureDir.deleteSync(recursive: true);
       }
     }
   });

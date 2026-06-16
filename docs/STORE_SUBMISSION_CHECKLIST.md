@@ -96,6 +96,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Add production auth schemes to Supabase redirect URLs.
 - [ ] Build upload artifact:
       `pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Android -SupportEmailVerified`.
+- [ ] Run
+      `pwsh -NoProfile -File scripts/verify_store_artifacts.ps1 -Strict -RequireArtifact android-play-store-aab -RequireStrictAudit -RequireCurrentCommit`
+      and archive `build/store-release-artifact-verification.json` with the AAB
+      handoff.
 - [ ] Complete App content:
   - [ ] Privacy Policy URL.
   - [ ] Data safety form from `docs/PRIVACY_DATA_MAP.md`.
@@ -133,6 +137,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Archive `build/store-release-artifacts.json` with each store/web handoff;
       confirm artifact SHA-256, byte size, git commit, strict-audit summary,
       and non-secret release inputs match the uploaded package.
+- [ ] Run
+      `pwsh -NoProfile -File scripts/verify_store_artifacts.ps1 -Strict -RequireArtifact ios-app-store-ipa -RequireStrictAudit -RequireCurrentCommit`
+      and archive `build/store-release-artifact-verification.json` with the IPA
+      handoff.
 - [ ] Confirm the production wrapper ran from a clean git tree without
       `-AllowDirty`, or document the emergency override in the release notes.
 - [ ] Confirm analyzer, Flutter tests, and Android release lint ran through the
@@ -188,6 +196,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Confirm `build/store-release-artifacts.json` records
       `releaseInputs.webBuildBackend` as `javascript` or `wasm`, matching the
       deployed web artifact.
+- [ ] Run
+      `pwsh -NoProfile -File scripts/verify_store_artifacts.ps1 -Strict -RequireArtifact flutter-web-build,flutter-web-release-zip -RequireWebBackend javascript -RequireStrictAudit -RequireCurrentCommit`
+      or use `-RequireWebBackend wasm` for a WebAssembly release, then archive
+      `build/store-release-artifact-verification.json`.
 - [ ] Confirm `/privacy.html` and `/account-deletion.html` load on the deployed
       origin.
 - [ ] Run `scripts/verify_web_deployment.ps1` against the deployed HTTPS

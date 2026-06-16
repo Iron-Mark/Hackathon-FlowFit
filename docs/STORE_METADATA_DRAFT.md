@@ -107,6 +107,9 @@ credentials, debug labels, staging project refs, or private user data.
       passes with final public web URLs and support inbox values.
 - [ ] `build/store-release-artifacts.json` is archived with artifact paths,
       SHA-256 hashes, byte sizes, git/toolchain metadata, and release inputs.
+- [ ] `build/store-release-artifact-verification.json` is archived after
+      `scripts/verify_store_artifacts.ps1` re-hashes the generated AAB, IPA, or
+      web release artifacts for the same commit.
 - [ ] On Windows, Android and web targets pass separately; iOS IPA generation is
       deferred to the macOS/Xcode build host.
 - [ ] GitHub CI passes on the release branch.
