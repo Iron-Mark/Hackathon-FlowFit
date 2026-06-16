@@ -1,6 +1,6 @@
 param(
     [string]$Repo = 'Iron-Mark/Hackathon-FlowFit',
-    [int]$PullRequest = 9,
+    [int]$PullRequest = 0,
     [string]$OutFile = 'build/release-status-snapshot.md',
     [switch]$SkipRemote,
     [switch]$SkipStrictAudit
@@ -109,6 +109,62 @@ function ConvertTo-SafeRemoteUrl {
     return $trimmed
 }
 
+function Add-RepositoryVariableReadiness {
+    param(
+        [System.Collections.Generic.List[string]]$Lines,
+        [AllowNull()]
+        [object[]]$Variables
+    )
+
+    $requiredNames = @(
+        'FLOWFIT_PUBLIC_WEB_BASE_URL',
+        'FLOWFIT_SUPPORT_EMAIL',
+        'FLOWFIT_SUPPORT_EMAIL_VERIFIED',
+        'SUPABASE_URL',
+        'SUPABASE_PUBLISHABLE_KEY'
+    )
+    $optionalNames = @(
+        'FLOWFIT_WEB_BASE_HREF'
+    )
+
+    $variablesByName = @{}
+    foreach ($variable in @($Variables)) {
+        $name = [string]$variable.name
+        if ([string]::IsNullOrWhiteSpace($name)) {
+            continue
+        }
+        $variablesByName[$name] = $variable
+    }
+
+    foreach ($name in $requiredNames) {
+        if ($variablesByName.ContainsKey($name)) {
+            $updatedAt = [string]$variablesByName[$name].updatedAt
+            if ([string]::IsNullOrWhiteSpace($updatedAt)) {
+                $updatedAt = 'unknown'
+            }
+            Add-Line $Lines ('- `{0}`: present, updated `{1}`' -f $name, $updatedAt)
+        } else {
+            Add-Line $Lines ('- `{0}`: missing' -f $name)
+        }
+    }
+
+    foreach ($name in $optionalNames) {
+        if ($variablesByName.ContainsKey($name)) {
+            $updatedAt = [string]$variablesByName[$name].updatedAt
+            if ([string]::IsNullOrWhiteSpace($updatedAt)) {
+                $updatedAt = 'unknown'
+            }
+            Add-Line $Lines ('- `{0}`: optional override present, updated `{1}`' -f $name, $updatedAt)
+        } else {
+            Add-Line $Lines ('- `{0}`: optional override not set' -f $name)
+        }
+    }
+
+    $knownNames = @($requiredNames + $optionalNames)
+    $extraCount = @($variablesByName.Keys | Where-Object { $knownNames -notcontains $_ }).Count
+    Add-Line $Lines ('- Additional repository variables: `{0}`' -f $extraCount)
+}
+
 Push-Location $repoRoot
 try {
     $lines = New-Object System.Collections.Generic.List[string]
@@ -163,15 +219,27 @@ try {
         if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
             Add-Line $lines '- GitHub CLI is not available.'
         } else {
-            $pr = Invoke-NativeCapture -FilePath 'gh' -Arguments @(
+            $prArgs = @(
                 'pr',
                 'view',
-                [string]$PullRequest,
                 '--repo',
                 $Repo,
                 '--json',
                 'headRefOid,mergeStateStatus,isDraft,url,statusCheckRollup'
             )
+            if ($PullRequest -gt 0) {
+                $prArgs = @(
+                    'pr',
+                    'view',
+                    [string]$PullRequest,
+                    '--repo',
+                    $Repo,
+                    '--json',
+                    'headRefOid,mergeStateStatus,isDraft,url,statusCheckRollup'
+                )
+            }
+
+            $pr = Invoke-NativeCapture -FilePath 'gh' -Arguments $prArgs
             if ($pr.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($pr.Output)) {
                 $prJson = $pr.Output | ConvertFrom-Json
                 Add-Line $lines "- PR: $($prJson.url)"
@@ -185,7 +253,11 @@ try {
                     Add-Line $lines "- $($check.workflowName) / $($check.name): $($check.status) $($check.conclusion)"
                 }
             } else {
-                Add-Line $lines "- PR status unavailable: $($pr.Output)"
+                if ($PullRequest -gt 0) {
+                    Add-Line $lines "- PR #$PullRequest status unavailable: $($pr.Output)"
+                } else {
+                    Add-Line $lines "- Current branch PR status unavailable: $($pr.Output)"
+                }
             }
 
             $variables = Invoke-NativeCapture -FilePath 'gh' -Arguments @(
@@ -197,11 +269,14 @@ try {
                 'name,updatedAt'
             )
             Add-Line $lines ''
-            Add-Line $lines '### Repository Variables'
+            Add-Line $lines '### Repository Release Variables'
             Add-Line $lines ''
             if ($variables.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($variables.Output)) {
-                foreach ($variable in @($variables.Output | ConvertFrom-Json)) {
-                    Add-Line $lines ('- `{0}` updated `{1}`' -f $variable.name, $variable.updatedAt)
+                try {
+                    $variableObjects = @($variables.Output | ConvertFrom-Json)
+                    Add-RepositoryVariableReadiness -Lines $lines -Variables $variableObjects
+                } catch {
+                    Add-Line $lines '- Repository variables output was not valid JSON.'
                 }
             } else {
                 Add-Line $lines '- Repository variables unavailable.'

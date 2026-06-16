@@ -7,6 +7,34 @@ import '../core/exceptions/buddy_exceptions.dart';
 import '../services/buddy_offline_storage.dart';
 import 'buddy_offline_storage_provider.dart';
 
+Map<String, dynamic> buildBuddyUserProfileUpsertPayload({
+  required String userId,
+  String? nickname,
+  List<String>? wellnessGoals,
+  bool? notificationsEnabled,
+}) {
+  final payload = <String, dynamic>{
+    'user_id': userId,
+    'is_kids_mode': true,
+    'survey_completed': true,
+  };
+
+  final trimmedNickname = nickname?.trim();
+  if (trimmedNickname != null && trimmedNickname.isNotEmpty) {
+    payload['nickname'] = trimmedNickname;
+  }
+
+  if (wellnessGoals != null && wellnessGoals.isNotEmpty) {
+    payload['wellness_goals'] = wellnessGoals;
+  }
+
+  if (notificationsEnabled != null) {
+    payload['notifications_enabled'] = notificationsEnabled;
+  }
+
+  return payload;
+}
+
 /// Notifier for managing Buddy onboarding flow state
 ///
 /// This notifier handles the temporary state during the onboarding process,
@@ -340,12 +368,21 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
     try {
       final pendingProfile = await storage.loadPendingBuddyProfile();
       if (pendingProfile == null) return;
+      final savedState = await storage.loadOnboardingState();
+      final onboardingState = savedState ?? state;
 
       // Try to save to Supabase
       await _saveBuddyProfile(pendingProfile);
+      await _updateUserProfile(
+        pendingProfile.userId,
+        onboardingState.userNickname ?? onboardingState.userName,
+        wellnessGoals: onboardingState.selectedGoals,
+        notificationsEnabled: onboardingState.notificationsGranted,
+      );
 
-      // Success! Clear pending profile
+      // Success! Clear pending profile and replayed onboarding state.
       await storage.clearPendingBuddyProfile();
+      await storage.clearOnboardingState();
     } catch (e) {
       // Sync failed - will retry later
       throw BuddyNetworkException(
@@ -370,30 +407,17 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
     List<String>? wellnessGoals,
     bool? notificationsEnabled,
   }) async {
-    final updates = <String, dynamic>{};
-
-    if (nickname != null && nickname.isNotEmpty) {
-      updates['nickname'] = nickname;
-    }
-
-    // Whale onboarding is specifically for kids (7-12)
-    // Users reach this flow by selecting "7-12" on age gate screen
-    updates['is_kids_mode'] = true;
-
-    if (wellnessGoals != null && wellnessGoals.isNotEmpty) {
-      updates['wellness_goals'] = wellnessGoals;
-    }
-
-    if (notificationsEnabled != null) {
-      updates['notifications_enabled'] = notificationsEnabled;
-    }
-
-    if (updates.isNotEmpty) {
-      await _client.from('user_profiles').upsert({
-        'user_id': userId,
-        ...updates,
-      }, onConflict: 'user_id');
-    }
+    await _client
+        .from('user_profiles')
+        .upsert(
+          buildBuddyUserProfileUpsertPayload(
+            userId: userId,
+            nickname: nickname,
+            wellnessGoals: wellnessGoals,
+            notificationsEnabled: notificationsEnabled,
+          ),
+          onConflict: 'user_id',
+        );
   }
 
   /// Reset the onboarding state

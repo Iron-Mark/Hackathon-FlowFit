@@ -118,6 +118,31 @@ void main() {
     }
   });
 
+  test('migration backfills Buddy-completed profiles through survey gate', () {
+    expect(
+      migration,
+      contains('buddy-completed profile gate backfill'),
+      reason:
+          'Recovered projects can already have buddy_profiles rows from the '
+          'older Buddy flow; those users must pass the returning-user gate.',
+    );
+    expect(
+      migration,
+      contains('survey_completed = true'),
+      reason: 'Buddy-completed rows should mark the app survey gate complete.',
+    );
+    expect(
+      migration,
+      matches(
+        RegExp(
+          r'from public\.buddy_profiles as buddy\s+where buddy\.user_id = public\.user_profiles\.user_id',
+          multiLine: true,
+          caseSensitive: false,
+        ),
+      ),
+    );
+  });
+
   test('recovery migration quarantines invalid rows before cleanup deletes', () {
     expect(
       migration,

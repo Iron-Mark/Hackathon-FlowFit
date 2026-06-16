@@ -101,6 +101,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     env:
       FLOWFIT_PUBLIC_WEB_BASE_URL: ${{ vars.FLOWFIT_PUBLIC_WEB_BASE_URL }}
+      FLOWFIT_WEB_BASE_HREF: ${{ vars.FLOWFIT_WEB_BASE_HREF }}
       FLOWFIT_SUPPORT_EMAIL: ${{ vars.FLOWFIT_SUPPORT_EMAIL }}
       FLOWFIT_SUPPORT_EMAIL_VERIFIED: ${{ vars.FLOWFIT_SUPPORT_EMAIL_VERIFIED }}
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}

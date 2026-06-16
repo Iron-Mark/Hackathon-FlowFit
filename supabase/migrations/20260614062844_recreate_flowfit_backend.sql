@@ -436,6 +436,37 @@ create trigger update_buddy_profiles_updated_at
   for each row
   execute function public.update_updated_at_column();
 
+-- buddy-completed profile gate backfill: older Buddy onboarding writes could
+-- leave returning users blocked because user_profiles.survey_completed stayed
+-- false or the profile gate row was never created.
+insert into public.user_profiles (
+  user_id,
+  is_kids_mode,
+  survey_completed
+)
+select
+  buddy.user_id,
+  true,
+  true
+from public.buddy_profiles as buddy
+where not exists (
+  select 1
+  from public.user_profiles as profile
+  where profile.user_id = buddy.user_id
+)
+on conflict (user_id) do nothing;
+
+update public.user_profiles
+set
+  is_kids_mode = true,
+  survey_completed = true
+where survey_completed = false
+  and exists (
+    select 1
+    from public.buddy_profiles as buddy
+    where buddy.user_id = public.user_profiles.user_id
+  );
+
 -- ---------------------------------------------------------------------------
 -- workout_sessions
 -- ---------------------------------------------------------------------------

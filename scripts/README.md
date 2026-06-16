@@ -182,12 +182,14 @@ Write a JSON evidence artifact for release handoff:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
 ```
 
-When `build/support-inbox-verification.json` exists, the audit reads it by
-default. In advisory mode, DNS failures such as Null MX are warnings so local
-preflight can continue through code and build checks. In strict mode, the same
-evidence keeps the support inbox gate failing even if `-SupportEmailVerified`
-is passed. Use `-SupportInboxEvidencePath ''` only for isolated script tests
-that intentionally ignore local evidence.
+The strict audit requires confirmed support inbox evidence at
+`build/support-inbox-verification.json` before accepting
+`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. In advisory
+mode, DNS failures such as Null MX are warnings so local preflight can continue
+through code and build checks. In strict mode, missing evidence or failed DNS /
+inbound evidence keeps the support inbox gate failing. Use
+`-SupportInboxEvidencePath ''` only for isolated script tests that intentionally
+ignore local evidence.
 
 When the release web values live in GitHub repository variables, audit them
 directly without copying values into local files:
@@ -222,20 +224,23 @@ does not print Supabase keys.
 
 ### Release status snapshot: release_status_snapshot.ps1
 **Purpose**: Write a non-secret markdown handoff snapshot that combines local
-git state, strict audit output, PR/check status, GitHub repository variable
-names, and GitHub Pages status.
+git state, strict audit output, PR/check status, required GitHub release
+variable presence, and GitHub Pages status.
 
 **Usage**:
 ```powershell
 pwsh -NoProfile -File scripts/release_status_snapshot.ps1 `
   -Repo Iron-Mark/Hackathon-FlowFit `
+  -PullRequest 9 `
   -OutFile build/release-status-snapshot.md
 ```
 
 Use `-SkipRemote` for offline local snapshots and `-SkipStrictAudit` when you
-only need git/PR/Page state. The helper lists repository variable names and
-update timestamps only; it does not print Supabase publishable keys or signing
-values.
+only need git/PR/Page state. Omit `-PullRequest` to let GitHub CLI detect the
+current branch PR, or pass it explicitly for a fixed handoff. The helper reports
+whether required release variables are present, whether the optional
+`FLOWFIT_WEB_BASE_HREF` override is set, plus update timestamps only; it does
+not print Supabase publishable keys or signing values.
 
 ---
 
@@ -724,6 +729,8 @@ Configure repository variables before dispatching it:
 
 - `FLOWFIT_PUBLIC_WEB_BASE_URL`, for example
   `https://iron-mark.github.io/Hackathon-FlowFit`.
+- Optional `FLOWFIT_WEB_BASE_HREF`, for example `/Hackathon-FlowFit/`, when the
+  web host path cannot be derived from `FLOWFIT_PUBLIC_WEB_BASE_URL`.
 - `SUPABASE_URL`.
 - `SUPABASE_PUBLISHABLE_KEY`.
 - `FLOWFIT_SUPPORT_EMAIL`, set to the verified deliverable support/privacy

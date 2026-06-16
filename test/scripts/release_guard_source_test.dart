@@ -275,6 +275,22 @@ void main() {
     expect(releaseStatusSnapshot, contains('gh'));
     expect(releaseStatusSnapshot, contains('variable'));
     expect(releaseStatusSnapshot, contains('name,updatedAt'));
+    expect(releaseStatusSnapshot, contains('Add-RepositoryVariableReadiness'));
+    expect(releaseStatusSnapshot, contains('[int]\$PullRequest = 0'));
+    expect(releaseStatusSnapshot, contains('if (\$PullRequest -gt 0)'));
+    expect(
+      releaseStatusSnapshot,
+      contains('Current branch PR status unavailable'),
+    );
+    expect(releaseStatusSnapshot, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
+    expect(releaseStatusSnapshot, contains('FLOWFIT_WEB_BASE_HREF'));
+    expect(releaseStatusSnapshot, contains('optional override present'));
+    expect(releaseStatusSnapshot, contains('optional override not set'));
+    expect(releaseStatusSnapshot, contains('FLOWFIT_SUPPORT_EMAIL'));
+    expect(releaseStatusSnapshot, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
+    expect(releaseStatusSnapshot, contains('SUPABASE_URL'));
+    expect(releaseStatusSnapshot, contains('SUPABASE_PUBLISHABLE_KEY'));
+    expect(releaseStatusSnapshot, contains('Additional repository variables'));
     expect(releaseStatusSnapshot, isNot(contains('name,value')));
     expect(releaseStatusSnapshot, contains('ConvertTo-SafeRemoteUrl'));
     expect(releaseStatusSnapshot, contains(r'$uri.UserInfo'));
@@ -284,6 +300,7 @@ void main() {
     expect(releaseStatusSnapshot, contains('SkipStrictAudit'));
     expect(releaseStatusSnapshot, contains('RELEASE_STATUS_SNAPSHOT_WRITTEN'));
     expect(scriptsReadme, contains('release_status_snapshot.ps1'));
+    expect(scriptsReadme, contains('-PullRequest'));
     expect(releaseReadinessRunbook, contains('release_status_snapshot.ps1'));
 
     final tempDir = Directory.systemTemp.createTempSync(
@@ -896,7 +913,7 @@ storeFile=upload-keystore.jks
   },
   {
     "name": "FLOWFIT_SUPPORT_EMAIL",
-    "value": "support@flowfit.com"
+    "value": "support@release.flowfit.app"
   },
   {
     "name": "SUPABASE_PUBLISHABLE_KEY",
@@ -998,7 +1015,11 @@ storeFile=upload-keystore.jks
         '-OutFile',
         githubVariablesOut.path,
       ]);
-      expect(githubVariables.exitCode, 1);
+      expect(
+        githubVariables.exitCode,
+        0,
+        reason: '${githubVariables.stdout}\n${githubVariables.stderr}',
+      );
       final githubVariablesJson =
           jsonDecode(githubVariablesOut.readAsStringSync())
               as Map<String, dynamic>;
@@ -1977,6 +1998,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(pagesWorkflow, contains('-Target Web'));
     expect(pagesWorkflow, contains('-SkipFlutterPubGet'));
     expect(pagesWorkflow, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
+    expect(pagesWorkflow, contains('FLOWFIT_WEB_BASE_HREF'));
     expect(
       pagesWorkflow,
       contains(
@@ -1989,10 +2011,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     );
     expect(pagesWorkflow, contains('SUPABASE_URL'));
     expect(pagesWorkflow, contains('SUPABASE_PUBLISHABLE_KEY'));
-    expect(
-      pagesWorkflow,
-      contains(r'^https://[a-z0-9-]+\.supabase\.co$'),
-    );
+    expect(pagesWorkflow, contains(r'^https://[a-z0-9-]+\.supabase\.co$'));
     expect(pagesWorkflow, contains('dnasghxxqwibwqnljvxr'));
     expect(
       pagesWorkflow,
@@ -2147,7 +2166,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
   },
   {
     "name": "FLOWFIT_SUPPORT_EMAIL",
-    "value": "support@flowfit.com"
+    "value": "support@release.flowfit.app"
   },
   {
     "name": "FLOWFIT_SUPPORT_EMAIL_VERIFIED",
@@ -2168,6 +2187,20 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       mcpFile.writeAsStringSync(
         '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true"}}}',
       );
+      final supportEvidence = File(
+        '${tempDir.path}${Platform.pathSeparator}support-evidence.json',
+      );
+      supportEvidence.writeAsStringSync('''
+{
+  "supportEmail": "support@release.flowfit.app",
+  "confirmedInbound": true,
+  "dnsMx": {
+    "checked": true,
+    "status": "pass",
+    "detail": "MX records found."
+  }
+}
+''');
 
       final env = Map<String, String>.from(Platform.environment)
         ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = ''
@@ -2190,7 +2223,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
         '-McpConfigPath',
         mcpFile.path,
         '-SupportInboxEvidencePath',
-        '',
+        supportEvidence.path,
       ], environment: env);
 
       expect(audit.exitCode, 0, reason: '${audit.stdout}\n${audit.stderr}');
@@ -2303,6 +2336,56 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
         contains('[FAIL] Production support inbox'),
       );
       expect('${audit.stdout}\n${audit.stderr}', contains('Null MX'));
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('strict audit requires confirmed support inbox evidence', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_missing_support_evidence_audit_',
+    );
+    try {
+      final releaseMcpFile = File(
+        '${tempDir.path}${Platform.pathSeparator}.mcp.release.json',
+      );
+      releaseMcpFile.writeAsStringSync(
+        '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true"}}}',
+      );
+
+      final env = Map<String, String>.from(Platform.environment)
+        ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = 'https://flowfit.app'
+        ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
+        ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
+        ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+        ..['SUPABASE_PUBLISHABLE_KEY'] =
+            'sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
+        ..['FLOWFIT_ANDROID_KEYSTORE_BASE64'] = 'ZmFrZS1rZXlzdG9yZQ=='
+        ..['FLOWFIT_ANDROID_KEYSTORE_PASSWORD'] = 'store-password'
+        ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
+        ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
+
+      final audit = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/release_readiness_audit.ps1',
+        '-Strict',
+        '-SupportEmailVerified',
+        '-McpConfigPath',
+        releaseMcpFile.path,
+        '-SupportInboxEvidencePath',
+        '${tempDir.path}${Platform.pathSeparator}missing-support-evidence.json',
+      ], environment: env);
+
+      expect(audit.exitCode, isNot(0));
+      expect(
+        '${audit.stdout}\n${audit.stderr}',
+        contains('[FAIL] Production support inbox'),
+      );
+      expect(
+        '${audit.stdout}\n${audit.stderr}',
+        contains('requires confirmed support inbox evidence'),
+      );
     } finally {
       tempDir.deleteSync(recursive: true);
     }
@@ -3377,9 +3460,24 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
     mcpFile.writeAsStringSync(
       '{"mcpServers":{"supabase":{"type":"http","url":"$url"}}}',
     );
+    final supportEvidence = File(
+      '${tempDir.path}${Platform.pathSeparator}support-evidence.json',
+    );
+    supportEvidence.writeAsStringSync('''
+{
+  "supportEmail": "support@release.flowfit.app",
+  "confirmedInbound": true,
+  "dnsMx": {
+    "checked": true,
+    "status": "pass",
+    "detail": "MX records found."
+  }
+}
+''');
 
     final env = Map<String, String>.from(Platform.environment)
       ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = 'https://flowfit.app'
+      ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
       ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
       ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
       ..['SUPABASE_PUBLISHABLE_KEY'] =
@@ -3392,7 +3490,7 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
       '-McpConfigPath',
       mcpFile.path,
       '-SupportInboxEvidencePath',
-      '',
+      if (strict) supportEvidence.path else '',
       if (strict) '-Strict',
       if (strict) '-SupportEmailVerified',
     ], environment: env);

@@ -1130,6 +1130,10 @@ function Test-WebAndStoreConfig {
         Add-Fail 'Production support inbox' 'Strict release audit requires FLOWFIT_SUPPORT_EMAIL to be set to a verified deliverable support/privacy inbox; the source default is only a local replacement token.'
     }
 
+    if ($Strict -and $hasConfiguredSupportEmail -and $expectedSupportEmail -eq $defaultSupportEmail) {
+        Add-Fail 'Production support inbox' 'Strict release audit requires FLOWFIT_SUPPORT_EMAIL to be a verified deliverable inbox; support@flowfit.com is the reserved source replacement token.'
+    }
+
     if ($null -eq $privacy) {
         Add-Fail 'Public privacy page' 'Missing web/privacy.html.'
     } elseif ($privacy.Contains('<title>FlowFit Privacy Policy</title>')) {
@@ -1222,6 +1226,16 @@ function Test-WebAndStoreConfig {
     }
 
     $supportEvidence = Get-SupportInboxEvidence
+    if ($Strict -and $supportEmailVerifiedForAudit -and $null -eq $supportEvidence) {
+        $evidenceLocation = if ([string]::IsNullOrWhiteSpace($SupportInboxEvidencePath)) {
+            'a non-empty -SupportInboxEvidencePath'
+        } else {
+            $SupportInboxEvidencePath
+        }
+        Add-SupportInboxEvidenceIssue "Strict release audit requires confirmed support inbox evidence at $evidenceLocation before accepting FLOWFIT_SUPPORT_EMAIL_VERIFIED=true or -SupportEmailVerified."
+        return
+    }
+
     if ($null -ne $supportEvidence) {
         $evidenceEmail = [string]$supportEvidence.supportEmail
         if (

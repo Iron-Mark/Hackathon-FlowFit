@@ -382,11 +382,12 @@ variable or store-build commands. DNS MX status is recorded in the JSON summary
 when local DNS tooling is available, but it is not a substitute for the received
 external test email.
 
-`scripts/release_readiness_audit.ps1` reads
-`build/support-inbox-verification.json` by default when it exists. If that file
-records DNS failure, including Null MX, advisory audit reports the support inbox
-as a warning so local preflight can continue, while strict audit keeps the gate
-failing even when `-SupportEmailVerified` is passed.
+`scripts/release_readiness_audit.ps1` requires
+`build/support-inbox-verification.json` in strict mode before accepting
+`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. If that file
+is missing or records DNS failure, including Null MX, advisory audit reports the
+support inbox as a warning so local preflight can continue, while strict audit
+keeps the gate failing.
 
 ### GitHub Pages Deployment
 
@@ -400,6 +401,8 @@ Configure these repository variables before running it:
 
 - `FLOWFIT_PUBLIC_WEB_BASE_URL`, for example
   `https://iron-mark.github.io/Hackathon-FlowFit`. The workflow does not provide a fallback public URL; set the repository variable before enabling deployment.
+- Optional `FLOWFIT_WEB_BASE_HREF`, for example `/Hackathon-FlowFit/`, when the
+  deployed path cannot be derived from the public web base URL.
 - `SUPABASE_URL` for the release Supabase project.
 - `SUPABASE_PUBLISHABLE_KEY` for the release Supabase project.
 - `FLOWFIT_SUPPORT_EMAIL` for the deliverable production support/privacy
@@ -580,8 +583,10 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict
 # Strict audit with JSON evidence for release handoff:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
 
-# Non-secret release status snapshot for PR/store handoff:
-pwsh -NoProfile -File scripts/release_status_snapshot.ps1 -Repo Iron-Mark/Hackathon-FlowFit -OutFile build/release-status-snapshot.md
+# Non-secret release status snapshot for PR/store handoff; includes required
+# GitHub release variable presence without printing values. Omit -PullRequest
+# to let gh detect the current branch PR:
+pwsh -NoProfile -File scripts/release_status_snapshot.ps1 -Repo Iron-Mark/Hackathon-FlowFit -PullRequest 9 -OutFile build/release-status-snapshot.md
 
 # Store listing and icon evidence; advisory mode may exit 2 while draft URLs
 # remain:
