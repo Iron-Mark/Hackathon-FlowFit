@@ -1991,6 +1991,28 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(pagesWorkflow, contains('SUPABASE_PUBLISHABLE_KEY'));
     expect(
       pagesWorkflow,
+      contains(r'^https://[a-z0-9-]+\.supabase\.co$'),
+    );
+    expect(pagesWorkflow, contains('dnasghxxqwibwqnljvxr'));
+    expect(
+      pagesWorkflow,
+      contains('SUPABASE_URL must be a valid Supabase Project URL.'),
+    );
+    expect(
+      pagesWorkflow,
+      contains(
+        'SUPABASE_URL must not be a placeholder or retired FlowFit project URL.',
+      ),
+    );
+    expect(pagesWorkflow, contains('publishable_key='));
+    expect(
+      pagesWorkflow,
+      contains(
+        'SUPABASE_PUBLISHABLE_KEY is missing, placeholder-shaped, or not a publishable client key.',
+      ),
+    );
+    expect(
+      pagesWorkflow,
       contains('FLOWFIT_SUPPORT_EMAIL: \${{ vars.FLOWFIT_SUPPORT_EMAIL }}'),
     );
     expect(pagesWorkflow, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));

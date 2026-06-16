@@ -452,7 +452,9 @@ Supabase keys.
 The workflow has a `deploy-ready` job. It skips production GitHub Pages
 deployment with a notice instead of failing pushes to `main` or manual
 dispatches until the public web URL, Supabase variables, and verified
-support-inbox flag are configured.
+support-inbox flag are configured. The gate validates the Supabase URL shape,
+rejects the retired FlowFit project ref and placeholders, and allows only
+publishable client keys before publishing can run.
 
 The workflow also runs a readiness-only check on pull requests and pushes to
 `supabase/**` recovery branches. Those branch/PR runs can prove whether the

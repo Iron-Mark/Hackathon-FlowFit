@@ -57,6 +57,8 @@ jobs:
 
           support_email="${FLOWFIT_SUPPORT_EMAIL,,}"
           public_web_base_url="${FLOWFIT_PUBLIC_WEB_BASE_URL,,}"
+          supabase_url="${SUPABASE_URL,,}"
+          publishable_key="${SUPABASE_PUBLISHABLE_KEY,,}"
           if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&
                 -n "${FLOWFIT_PUBLIC_WEB_BASE_URL}" &&
                 "${FLOWFIT_PUBLIC_WEB_BASE_URL}" == https://* &&
@@ -68,8 +70,17 @@ jobs:
                 "${FLOWFIT_PUBLIC_WEB_BASE_URL}" != *"#"* &&
                 -n "${FLOWFIT_SUPPORT_EMAIL}" &&
                 "${support_email}" != "support@flowfit.com" &&
-                -n "${SUPABASE_URL}" &&
-                "${SUPABASE_PUBLISHABLE_KEY}" == sb_publishable_* ]]; then
+                "${supabase_url}" =~ ^https://[a-z0-9-]+\.supabase\.co$ &&
+                "${supabase_url}" != *dnasghxxqwibwqnljvxr* &&
+                "${supabase_url}" != *project_ref* &&
+                "${supabase_url}" != *replace_with* &&
+                "${supabase_url}" != *placeholder* &&
+                "${SUPABASE_PUBLISHABLE_KEY}" == sb_publishable_* &&
+                "${publishable_key}" != *...* &&
+                "${publishable_key}" != *replace_with* &&
+                "${publishable_key}" != *your_* &&
+                "${publishable_key}" != *sb_secret* &&
+                "${publishable_key}" != *service_role* ]]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -145,12 +156,30 @@ jobs:
             echo "SUPABASE_URL repo variable is required." >&2
             exit 1
           fi
+          supabase_url="${SUPABASE_URL,,}"
+          if ! [[ "${supabase_url}" =~ ^https://[a-z0-9-]+\.supabase\.co$ ]]; then
+            echo "SUPABASE_URL must be a valid Supabase Project URL." >&2
+            exit 1
+          fi
+          if [[ "${supabase_url}" == *dnasghxxqwibwqnljvxr* ||
+                "${supabase_url}" == *project_ref* ||
+                "${supabase_url}" == *replace_with* ||
+                "${supabase_url}" == *placeholder* ]]; then
+            echo "SUPABASE_URL must not be a placeholder or retired FlowFit project URL." >&2
+            exit 1
+          fi
           if [[ -z "${SUPABASE_PUBLISHABLE_KEY}" ]]; then
             echo "SUPABASE_PUBLISHABLE_KEY repo variable is required." >&2
             exit 1
           fi
-          if [[ "${SUPABASE_PUBLISHABLE_KEY}" != sb_publishable_* ]]; then
-            echo "SUPABASE_PUBLISHABLE_KEY must be a Supabase publishable key, not a service-role or secret key." >&2
+          publishable_key="${SUPABASE_PUBLISHABLE_KEY,,}"
+          if [[ "${SUPABASE_PUBLISHABLE_KEY}" != sb_publishable_* ||
+                "${publishable_key}" == *...* ||
+                "${publishable_key}" == *replace_with* ||
+                "${publishable_key}" == *your_* ||
+                "${publishable_key}" == *sb_secret* ||
+                "${publishable_key}" == *service_role* ]]; then
+            echo "SUPABASE_PUBLISHABLE_KEY is missing, placeholder-shaped, or not a publishable client key." >&2
             exit 1
           fi
 

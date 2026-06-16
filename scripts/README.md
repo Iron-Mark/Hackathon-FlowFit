@@ -708,10 +708,11 @@ For local smoke testing only, run a local static server for `build/web` and add
 `.github/workflows/flutter-web-pages.yml` builds the production Flutter web
 artifact with `scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet`
 after the deploy-ready gate confirms the explicit public web URL, Supabase
-client variables, and `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. It uploads
-`build/web` to GitHub Pages, deploys it, and verifies the deployed site with
-`scripts/verify_web_deployment.ps1`. It uploads the JSON verification evidence
-as `flowfit-github-pages-verification`.
+client variables, and `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. The gate validates
+the Supabase URL shape, rejects the retired FlowFit project ref and placeholders,
+and allows only publishable client keys. It uploads `build/web` to GitHub Pages,
+deploys it, and verifies the deployed site with `scripts/verify_web_deployment.ps1`.
+It uploads the JSON verification evidence as `flowfit-github-pages-verification`.
 
 The workflow has a `deploy-ready` job. Pushes to `main` skip the production
 Pages deployment with a notice until the public web URL, Supabase variables,
