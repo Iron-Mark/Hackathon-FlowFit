@@ -797,6 +797,12 @@ storeFile=upload-keystore.jks
     expect(storeArtifactVerifier, contains('RequireCurrentCommit'));
     expect(storeArtifactVerifier, contains('releaseInputs.webBuildBackend'));
     expect(storeArtifactVerifier, contains('support@flowfit.com'));
+    expect(
+      releasePreflight,
+      contains('Store artifact manifest verification, advisory mode'),
+    );
+    expect(releasePreflight, contains('build/store-release-artifacts.json'));
+    expect(releasePreflight, contains('scripts/verify_store_artifacts.ps1'));
     expect(scriptsReadme, contains('verify_store_artifacts.ps1'));
     expect(releaseReadinessRunbook, contains('verify_store_artifacts.ps1'));
     expect(storeSubmissionChecklist, contains('verify_store_artifacts.ps1'));

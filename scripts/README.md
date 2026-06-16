@@ -89,6 +89,12 @@ Wear OS, and optional release App Bundle smoke checks.
 pwsh -NoProfile -File scripts/release_preflight.ps1
 ```
 
+If `build/store-release-artifacts.json` already exists from a previous
+production wrapper run, preflight verifies the manifest before smoke builds run
+and writes `build/store-release-artifact-verification.json`. Treat this as a
+stale-artifact guard. For final handoff, rerun the production wrapper and then
+run `verify_store_artifacts.ps1 -Strict` with the expected required artifacts.
+
 **Optional release smoke build**:
 ```powershell
 pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke

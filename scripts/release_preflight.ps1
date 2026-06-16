@@ -163,6 +163,26 @@ function Assert-ReleaseSourceSafety {
     }
 }
 
+function Invoke-OptionalStoreArtifactVerification {
+    $storeArtifactManifest = Join-Path $repoRoot 'build/store-release-artifacts.json'
+
+    Write-Host ""
+    Write-Host "==> Store artifact manifest verification, advisory mode"
+
+    if (-not (Test-Path -LiteralPath $storeArtifactManifest)) {
+        Write-Host "Skipping because build/store-release-artifacts.json is not present."
+        return
+    }
+
+    $storeArtifactVerifierScript = Join-Path $repoRoot 'scripts/verify_store_artifacts.ps1'
+    Invoke-CheckedCommandWithAllowedExitCodes 'Store artifact manifest verification' @(
+        'pwsh',
+        '-NoProfile',
+        '-File',
+        $storeArtifactVerifierScript
+    ) @(0, 2)
+}
+
 function Remove-IgnoredGeneratedAndroidRegistrant {
     $generatedRegistrant = Join-Path $repoRoot 'android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java'
     if (Test-Path $generatedRegistrant) {
@@ -176,6 +196,7 @@ try {
     Invoke-CheckedCommand 'Release readiness audit, advisory mode' @('pwsh', '-NoProfile', '-File', $releaseReadinessAuditScript)
     $storeMetadataVerifierScript = Join-Path $repoRoot 'scripts/verify_store_metadata.ps1'
     Invoke-CheckedCommandWithAllowedExitCodes 'Store metadata verification, advisory mode' @('pwsh', '-NoProfile', '-File', $storeMetadataVerifierScript) @(0, 2)
+    Invoke-OptionalStoreArtifactVerification
 
     Invoke-CheckedCommand 'Flutter dependencies' @('flutter', 'pub', 'get')
     Assert-ReleaseSourceSafety

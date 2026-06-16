@@ -662,6 +662,11 @@ production Android/iOS IDs, deployed web base URL, and verified support inbox.
 If local `build/support-inbox-verification.json` records a failed DNS or inbound
 mail check, preflight reports it as advisory evidence and still runs build
 checks; strict audit remains the release blocker.
+If `build/store-release-artifacts.json` is present, preflight also verifies the
+manifest before smoke builds can rewrite `build/web`. This catches stale
+artifact hashes, missing files, dirty-manifest evidence, and malformed release
+inputs early. For final handoff, rerun the production wrapper and then rerun the
+strict artifact verifier after the final artifacts are created.
 When `-OutFile` is provided, the audit writes JSON evidence with pass/warn/fail
 counts and non-secret result details. The production wrapper writes
 `build/store-release-readiness-audit.json` automatically when `-RunStrictAudit`
