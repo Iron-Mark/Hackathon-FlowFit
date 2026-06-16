@@ -398,8 +398,8 @@ URL and uploads `flowfit-github-pages-verification` evidence.
 
 Configure these repository variables before running it:
 
-- `FLOWFIT_PUBLIC_WEB_BASE_URL`, defaulting in the workflow to
-  `https://iron-mark.github.io/Hackathon-FlowFit` when the variable is absent.
+- `FLOWFIT_PUBLIC_WEB_BASE_URL`, for example
+  `https://iron-mark.github.io/Hackathon-FlowFit`. The workflow does not provide a fallback public URL; set the repository variable before enabling deployment.
 - `SUPABASE_URL` for the release Supabase project.
 - `SUPABASE_PUBLISHABLE_KEY` for the release Supabase project.
 - `FLOWFIT_SUPPORT_EMAIL` for the deliverable production support/privacy
@@ -449,10 +449,10 @@ try {
 The audit reports the imported repository-variable count but does not print
 Supabase keys.
 
-The workflow has a `deploy-ready` job. Until the Supabase variables and
-verified support-inbox flag are configured, it skips production GitHub Pages
+The workflow has a `deploy-ready` job. It skips production GitHub Pages
 deployment with a notice instead of failing pushes to `main` or manual
-dispatches.
+dispatches until the public web URL, Supabase variables, and verified
+support-inbox flag are configured.
 
 The workflow also runs a readiness-only check on pull requests and pushes to
 `supabase/**` recovery branches. Those branch/PR runs can prove whether the

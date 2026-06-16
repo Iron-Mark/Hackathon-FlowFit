@@ -47,6 +47,7 @@ jobs:
         id: check
         shell: bash
         env:
+          FLOWFIT_PUBLIC_WEB_BASE_URL: ${{ vars.FLOWFIT_PUBLIC_WEB_BASE_URL }}
           FLOWFIT_SUPPORT_EMAIL_VERIFIED: ${{ vars.FLOWFIT_SUPPORT_EMAIL_VERIFIED }}
           FLOWFIT_SUPPORT_EMAIL: ${{ vars.FLOWFIT_SUPPORT_EMAIL }}
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
@@ -55,7 +56,16 @@ jobs:
           set -euo pipefail
 
           support_email="${FLOWFIT_SUPPORT_EMAIL,,}"
+          public_web_base_url="${FLOWFIT_PUBLIC_WEB_BASE_URL,,}"
           if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&
+                -n "${FLOWFIT_PUBLIC_WEB_BASE_URL}" &&
+                "${FLOWFIT_PUBLIC_WEB_BASE_URL}" == https://* &&
+                "${public_web_base_url}" != *localhost* &&
+                "${public_web_base_url}" != *".example"* &&
+                "${public_web_base_url}" != *".invalid"* &&
+                "${public_web_base_url}" != *".test"* &&
+                "${FLOWFIT_PUBLIC_WEB_BASE_URL}" != *"?"* &&
+                "${FLOWFIT_PUBLIC_WEB_BASE_URL}" != *"#"* &&
                 -n "${FLOWFIT_SUPPORT_EMAIL}" &&
                 "${support_email}" != "support@flowfit.com" &&
                 -n "${SUPABASE_URL}" &&
@@ -79,7 +89,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     env:
-      FLOWFIT_PUBLIC_WEB_BASE_URL: ${{ vars.FLOWFIT_PUBLIC_WEB_BASE_URL || 'https://iron-mark.github.io/Hackathon-FlowFit/' }}
+      FLOWFIT_PUBLIC_WEB_BASE_URL: ${{ vars.FLOWFIT_PUBLIC_WEB_BASE_URL }}
       FLOWFIT_SUPPORT_EMAIL: ${{ vars.FLOWFIT_SUPPORT_EMAIL }}
       FLOWFIT_SUPPORT_EMAIL_VERIFIED: ${{ vars.FLOWFIT_SUPPORT_EMAIL_VERIFIED }}
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
@@ -107,6 +117,16 @@ jobs:
           fi
           if [[ "${FLOWFIT_PUBLIC_WEB_BASE_URL}" != https://* ]]; then
             echo "FLOWFIT_PUBLIC_WEB_BASE_URL must be an HTTPS URL." >&2
+            exit 1
+          fi
+          public_web_base_url="${FLOWFIT_PUBLIC_WEB_BASE_URL,,}"
+          if [[ "${public_web_base_url}" == *localhost* ||
+                "${public_web_base_url}" == *".example"* ||
+                "${public_web_base_url}" == *".invalid"* ||
+                "${public_web_base_url}" == *".test"* ||
+                "${FLOWFIT_PUBLIC_WEB_BASE_URL}" == *"?"* ||
+                "${FLOWFIT_PUBLIC_WEB_BASE_URL}" == *"#"* ]]; then
+            echo "FLOWFIT_PUBLIC_WEB_BASE_URL must be a deployed production HTTPS URL without query strings or fragments." >&2
             exit 1
           fi
           if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" != "true" ]]; then

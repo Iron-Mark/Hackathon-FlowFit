@@ -1977,6 +1977,16 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(pagesWorkflow, contains('-Target Web'));
     expect(pagesWorkflow, contains('-SkipFlutterPubGet'));
     expect(pagesWorkflow, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
+    expect(
+      pagesWorkflow,
+      contains(
+        'FLOWFIT_PUBLIC_WEB_BASE_URL must be a deployed production HTTPS URL without query strings or fragments.',
+      ),
+    );
+    expect(
+      pagesWorkflow,
+      isNot(contains("vars.FLOWFIT_PUBLIC_WEB_BASE_URL ||")),
+    );
     expect(pagesWorkflow, contains('SUPABASE_URL'));
     expect(pagesWorkflow, contains('SUPABASE_PUBLISHABLE_KEY'));
     expect(
@@ -1997,6 +2007,14 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       isNot(contains("vars.FLOWFIT_SUPPORT_EMAIL || 'support@flowfit.com'")),
     );
     expect(
+      releaseReadinessRunbook,
+      isNot(contains('defaulting in the workflow')),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('does not provide a fallback public URL'),
+    );
+    expect(
       pagesWorkflow,
       contains('FLOWFIT_SUPPORT_EMAIL repo variable is required'),
     );
@@ -2011,7 +2029,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       contains('support@flowfit.com is the reserved source replacement token'),
     );
     expect(pagesWorkflow, contains('flowfit-github-pages-verification'));
-    expect(pagesWorkflow, contains('/Hackathon-FlowFit/'));
+    expect(releaseReadinessRunbook, contains('/Hackathon-FlowFit'));
   });
 
   test('agent guidance matches maintained fork backend and native package', () {
