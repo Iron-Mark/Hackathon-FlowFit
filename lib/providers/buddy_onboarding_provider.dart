@@ -257,7 +257,7 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
 
         if (!hasNetwork) {
           // Save locally for offline mode
-          await _saveOffline(buddyProfile, userId);
+          await _saveOffline(buddyProfile);
           state = state.copyWith(isComplete: true);
           return;
         }
@@ -320,7 +320,8 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
 
     // All retries failed - try to save offline
     try {
-      await _saveOffline(buddyProfile, userId);
+      await _saveOffline(buddyProfile);
+      state = state.copyWith(isComplete: true);
       throw BuddySaveException(
         'Failed to save online after $maxRetries attempts',
         userFriendlyMessage:
@@ -343,7 +344,7 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
   }
 
   /// Save buddy profile and state offline for later sync
-  Future<void> _saveOffline(BuddyProfile profile, String userId) async {
+  Future<void> _saveOffline(BuddyProfile profile) async {
     final storage = _offlineStorage;
     if (storage == null) {
       throw BuddySaveException(
@@ -358,7 +359,7 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
   }
 
   /// Sync pending buddy profile from offline storage
-  Future<void> syncPendingProfile() async {
+  Future<void> syncPendingProfile({String? expectedUserId}) async {
     final storage = _offlineStorage;
     if (storage == null) return;
 
@@ -368,6 +369,9 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
     try {
       final pendingProfile = await storage.loadPendingBuddyProfile();
       if (pendingProfile == null) return;
+      if (expectedUserId != null && pendingProfile.userId != expectedUserId) {
+        return;
+      }
       final savedState = await storage.loadOnboardingState();
       final onboardingState = savedState ?? state;
 

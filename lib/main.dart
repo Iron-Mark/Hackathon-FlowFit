@@ -16,6 +16,7 @@ import 'core/config/supabase_runtime_config.dart';
 import 'providers/wellness_state_provider.dart';
 import 'theme/app_theme.dart';
 import 'utils/deep_link_handler.dart';
+import 'widgets/buddy_pending_sync_listener.dart';
 import 'screens/loading_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/welcome_screen.dart';
@@ -113,144 +114,152 @@ class FlowFitPhoneApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<HeartBpmAdapter>(create: (_) => HeartBpmAdapter()),
-        // Phone data listener used to receive watch heart rate via Wearable data layer
-        Provider<PhoneDataListener>(create: (_) => PhoneDataListener()),
-        Provider<TFLiteActivityClassifier>(
-          create: (_) => TFLiteActivityClassifier(),
-        ),
+    return BuddyPendingSyncListener(
+      child: MultiProvider(
+        providers: [
+          Provider<HeartBpmAdapter>(create: (_) => HeartBpmAdapter()),
+          // Phone data listener used to receive watch heart rate via Wearable data layer
+          Provider<PhoneDataListener>(create: (_) => PhoneDataListener()),
+          Provider<TFLiteActivityClassifier>(
+            create: (_) => TFLiteActivityClassifier(),
+          ),
 
-        // Data layer
-        ProxyProvider<TFLiteActivityClassifier, ActivityClassifierRepository>(
-          create: (context) => TFLiteActivityRepository(
-            context.read<TFLiteActivityClassifier>(),
+          // Data layer
+          ProxyProvider<TFLiteActivityClassifier, ActivityClassifierRepository>(
+            create: (context) => TFLiteActivityRepository(
+              context.read<TFLiteActivityClassifier>(),
+            ),
+            update: (_, classifier, __) => TFLiteActivityRepository(classifier),
           ),
-          update: (_, classifier, __) => TFLiteActivityRepository(classifier),
-        ),
-        // Domain layer (use ActivityClassifierRepository abstract type)
-        ProxyProvider<ActivityClassifierRepository, ClassifyActivityUseCase>(
-          create: (context) => ClassifyActivityUseCase(
-            context.read<ActivityClassifierRepository>(),
+          // Domain layer (use ActivityClassifierRepository abstract type)
+          ProxyProvider<ActivityClassifierRepository, ClassifyActivityUseCase>(
+            create: (context) => ClassifyActivityUseCase(
+              context.read<ActivityClassifierRepository>(),
+            ),
+            update: (_, repository, __) => ClassifyActivityUseCase(repository),
           ),
-          update: (_, repository, __) => ClassifyActivityUseCase(repository),
-        ),
 
-        // Presentation layer
-        ChangeNotifierProxyProvider<
-          ClassifyActivityUseCase,
-          ActivityClassifierViewModel
-        >(
-          create: (context) => ActivityClassifierViewModel(
-            context.read<ClassifyActivityUseCase>(),
+          // Presentation layer
+          ChangeNotifierProxyProvider<
+            ClassifyActivityUseCase,
+            ActivityClassifierViewModel
+          >(
+            create: (context) => ActivityClassifierViewModel(
+              context.read<ClassifyActivityUseCase>(),
+            ),
+            update: (_, useCase, __) => ActivityClassifierViewModel(useCase),
           ),
-          update: (_, useCase, __) => ActivityClassifierViewModel(useCase),
-        ),
-      ],
-      child: MaterialApp(
-        // Add navigator key for deep link handling
-        navigatorKey: DeepLinkHandler.navigatorKey,
-        // Wrap the app's child with a debug overlay (Floating debug menu)
-        builder: (context, child) => Stack(
-          children: [
-            if (child != null) child,
-            // Show the debug route menu only in debug builds.
-            // const DebugRouteMenu(),
-          ],
-        ),
-        title: 'FlowFit',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        routes: {
-          // Only include '/' route in non-debug mode to avoid conflict with 'home'
-          '/': (context) => const SplashScreen(),
-          '/loading': (context) => const LoadingScreen(),
-          '/welcome': (context) => const WelcomeScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/signup': (context) => const SignUpScreen(),
-          '/email_verification': (context) => const EmailVerificationScreen(),
-          // Survey flow (4 steps)
-          '/survey_intro': (context) => const SurveyIntroScreen(), // Step 0
-          '/survey_basic_info': (context) =>
-              const SurveyBasicInfoScreen(), // Step 1
-          '/survey_body_measurements': (context) =>
-              const SurveyBodyMeasurementsScreen(), // Step 2
-          '/survey_activity_goals': (context) =>
-              const SurveyActivityGoalsScreen(), // Step 3
-          '/survey_daily_targets': (context) =>
-              const SurveyDailyTargetsScreen(), // Step 4
-          '/onboarding1': (context) => const OnboardingScreen(),
-          '/dashboard': (context) => const DashboardScreen(),
-          '/activity-classifier': (context) => const TrackerPage(),
-          '/mission': (context) => const MapsPageWrapper(),
-          '/home': (context) => const PhoneHomePage(),
-          '/phone_heart_rate': (context) => const PhoneHeartRateScreen(),
-          '/privacy-policy': (context) => const PrivacyPolicyScreen(),
-          '/settings': (context) => const SettingsScreen(),
-          '/notification-settings': (context) =>
-              const NotificationSettingsScreen(),
-          '/app-integration': (context) => const AppIntegrationScreen(),
-          '/language-settings': (context) => const LanguageSettingsScreen(),
-          '/unit-settings': (context) => const UnitSettingsScreen(),
-          '/terms-of-service': (context) => const TermsOfServiceScreen(),
-          '/help-support': (context) => const HelpSupportScreen(),
-          '/change-password': (context) => const ChangePasswordScreen(),
-          '/delete-account': (context) => const DeleteAccountScreen(),
-          '/weight-goals': (context) => const WeightGoalsScreen(),
-          '/fitness-goals': (context) => const FitnessGoalsScreen(),
-          '/nutrition-goals': (context) => const NutritionGoalsScreen(),
-          '/about-us': (context) => const AboutUsScreen(),
-          // Workout flow routes
-          '/workout/select-type': (context) =>
-              const WorkoutTypeSelectionScreen(),
-          '/workout/running/setup': (context) => const RunningSetupScreen(),
-          '/workout/running/active': (context) => const ActiveRunningScreen(),
-          '/workout/running/summary': (context) => const RunningSummaryScreen(),
-          '/workout/running/share': (context) {
-            final args =
-                ModalRoute.of(context)?.settings.arguments
-                    as Map<String, dynamic>?;
-            final session = args?['session'];
-            return ShareAchievementScreen(session: session);
+        ],
+        child: MaterialApp(
+          // Add navigator key for deep link handling
+          navigatorKey: DeepLinkHandler.navigatorKey,
+          // Wrap the app's child with a debug overlay (Floating debug menu)
+          builder: (context, child) => Stack(
+            children: [
+              if (child != null) child,
+              // Show the debug route menu only in debug builds.
+              // const DebugRouteMenu(),
+            ],
+          ),
+          title: 'FlowFit',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: ThemeMode.system,
+          routes: {
+            // Only include '/' route in non-debug mode to avoid conflict with 'home'
+            '/': (context) => const SplashScreen(),
+            '/loading': (context) => const LoadingScreen(),
+            '/welcome': (context) => const WelcomeScreen(),
+            '/login': (context) => const LoginScreen(),
+            '/signup': (context) => const SignUpScreen(),
+            '/email_verification': (context) => const EmailVerificationScreen(),
+            // Survey flow (4 steps)
+            '/survey_intro': (context) => const SurveyIntroScreen(), // Step 0
+            '/survey_basic_info': (context) =>
+                const SurveyBasicInfoScreen(), // Step 1
+            '/survey_body_measurements': (context) =>
+                const SurveyBodyMeasurementsScreen(), // Step 2
+            '/survey_activity_goals': (context) =>
+                const SurveyActivityGoalsScreen(), // Step 3
+            '/survey_daily_targets': (context) =>
+                const SurveyDailyTargetsScreen(), // Step 4
+            '/onboarding1': (context) => const OnboardingScreen(),
+            '/dashboard': (context) => const DashboardScreen(),
+            '/activity-classifier': (context) => const TrackerPage(),
+            '/mission': (context) => const MapsPageWrapper(),
+            '/home': (context) => const PhoneHomePage(),
+            '/phone_heart_rate': (context) => const PhoneHeartRateScreen(),
+            '/privacy-policy': (context) => const PrivacyPolicyScreen(),
+            '/settings': (context) => const SettingsScreen(),
+            '/notification-settings': (context) =>
+                const NotificationSettingsScreen(),
+            '/app-integration': (context) => const AppIntegrationScreen(),
+            '/language-settings': (context) => const LanguageSettingsScreen(),
+            '/unit-settings': (context) => const UnitSettingsScreen(),
+            '/terms-of-service': (context) => const TermsOfServiceScreen(),
+            '/help-support': (context) => const HelpSupportScreen(),
+            '/change-password': (context) => const ChangePasswordScreen(),
+            '/delete-account': (context) => const DeleteAccountScreen(),
+            '/weight-goals': (context) => const WeightGoalsScreen(),
+            '/fitness-goals': (context) => const FitnessGoalsScreen(),
+            '/nutrition-goals': (context) => const NutritionGoalsScreen(),
+            '/about-us': (context) => const AboutUsScreen(),
+            // Workout flow routes
+            '/workout/select-type': (context) =>
+                const WorkoutTypeSelectionScreen(),
+            '/workout/running/setup': (context) => const RunningSetupScreen(),
+            '/workout/running/active': (context) => const ActiveRunningScreen(),
+            '/workout/running/summary': (context) =>
+                const RunningSummaryScreen(),
+            '/workout/running/share': (context) {
+              final args =
+                  ModalRoute.of(context)?.settings.arguments
+                      as Map<String, dynamic>?;
+              final session = args?['session'];
+              return ShareAchievementScreen(session: session);
+            },
+            '/workout/walking/options': (context) =>
+                const WalkingOptionsScreen(),
+            '/workout/walking/mission': (context) =>
+                const MissionCreationScreen(missionType: MissionType.target),
+            '/workout/walking/active': (context) => const ActiveWalkingScreen(),
+            '/workout/walking/summary': (context) =>
+                const WalkingSummaryScreen(),
+            '/workout/resistance/select-split': (context) =>
+                const SplitSelectionScreen(),
+            '/workout/resistance/active': (context) =>
+                const ActiveResistanceScreen(),
+            '/workout/resistance/summary': (context) =>
+                const ResistanceSummaryScreen(),
+            '/wellness-tracker': (context) => const WellnessTrackerPage(),
+            '/wellness-onboarding': (context) =>
+                const WellnessOnboardingScreen(),
+            '/wellness-settings': (context) => const WellnessSettingsScreen(),
+            // Buddy onboarding flow (8-screen whale-themed for kids)
+            '/buddy-welcome': (context) => const BuddyWelcomeScreen(),
+            '/buddy-intro': (context) => const BuddyIntroScreen(),
+            '/buddy-hatch': (context) => const BuddyHatchScreen(),
+            '/buddy-color-selection': (context) =>
+                const BuddyColorSelectionScreen(),
+            '/buddy-naming': (context) => const BuddyNamingScreen(),
+            '/goal-selection': (context) => const GoalSelectionScreen(),
+            '/notification-permission': (context) =>
+                const NotificationPermissionScreen(),
+            '/buddy-ready': (context) => const BuddyReadyScreen(),
+            '/buddy_profile_setup': (context) =>
+                const BuddyProfileSetupScreen(),
+            '/buddy-completion': (context) => const BuddyCompletionScreen(),
+            // Buddy customization
+            '/buddy-customization': (context) =>
+                const BuddyCustomizationScreen(),
+            if (kDebugMode) ...{
+              '/font-demo': (context) => const FontDemoScreen(),
+              '/trackertest': (context) => const TrackerPage(),
+              '/yolo-debug': (context) => const YoloDebugScreen(),
+            },
           },
-          '/workout/walking/options': (context) => const WalkingOptionsScreen(),
-          '/workout/walking/mission': (context) =>
-              const MissionCreationScreen(missionType: MissionType.target),
-          '/workout/walking/active': (context) => const ActiveWalkingScreen(),
-          '/workout/walking/summary': (context) => const WalkingSummaryScreen(),
-          '/workout/resistance/select-split': (context) =>
-              const SplitSelectionScreen(),
-          '/workout/resistance/active': (context) =>
-              const ActiveResistanceScreen(),
-          '/workout/resistance/summary': (context) =>
-              const ResistanceSummaryScreen(),
-          '/wellness-tracker': (context) => const WellnessTrackerPage(),
-          '/wellness-onboarding': (context) => const WellnessOnboardingScreen(),
-          '/wellness-settings': (context) => const WellnessSettingsScreen(),
-          // Buddy onboarding flow (8-screen whale-themed for kids)
-          '/buddy-welcome': (context) => const BuddyWelcomeScreen(),
-          '/buddy-intro': (context) => const BuddyIntroScreen(),
-          '/buddy-hatch': (context) => const BuddyHatchScreen(),
-          '/buddy-color-selection': (context) =>
-              const BuddyColorSelectionScreen(),
-          '/buddy-naming': (context) => const BuddyNamingScreen(),
-          '/goal-selection': (context) => const GoalSelectionScreen(),
-          '/notification-permission': (context) =>
-              const NotificationPermissionScreen(),
-          '/buddy-ready': (context) => const BuddyReadyScreen(),
-          '/buddy_profile_setup': (context) => const BuddyProfileSetupScreen(),
-          '/buddy-completion': (context) => const BuddyCompletionScreen(),
-          // Buddy customization
-          '/buddy-customization': (context) => const BuddyCustomizationScreen(),
-          if (kDebugMode) ...{
-            '/font-demo': (context) => const FontDemoScreen(),
-            '/trackertest': (context) => const TrackerPage(),
-            '/yolo-debug': (context) => const YoloDebugScreen(),
-          },
-        },
+        ),
       ),
     );
   }

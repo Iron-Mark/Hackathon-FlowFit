@@ -12,6 +12,15 @@ expected_tables(table_name) as (
     ('account_deletion_requests'),
     ('flowfit_recovery_quarantine')
 ),
+expected_id_constraints(table_name, column_name) as (
+  values
+    ('user_profiles', 'id'),
+    ('buddy_profiles', 'id'),
+    ('workout_sessions', 'id'),
+    ('heart_rate', 'id'),
+    ('account_deletion_requests', 'id'),
+    ('flowfit_recovery_quarantine', 'id')
+),
 expected_columns(table_name, column_name) as (
   values
     ('user_profiles', 'id'),
@@ -145,6 +154,7 @@ expected_indexes(index_name) as (
     ('user_profiles_user_id_unique'),
     ('buddy_profiles_user_id_unique'),
     ('idx_workout_sessions_user_id'),
+    ('idx_workout_sessions_user_start_time_desc'),
     ('idx_heart_rate_user_id'),
     ('idx_account_deletion_requests_one_pending')
 ),
@@ -171,6 +181,36 @@ missing_columns as (
    and c.table_name = e.table_name
    and c.column_name = e.column_name
   where c.column_name is null
+),
+missing_id_constraints as (
+  select e.table_name, e.column_name
+  from expected_id_constraints e
+  where not exists (
+    select 1
+    from pg_constraint con
+    join pg_class c on c.oid = con.conrelid
+    join pg_namespace n on n.oid = c.relnamespace
+    join pg_attribute a
+      on a.attrelid = c.oid
+     and a.attname = e.column_name
+     and not a.attisdropped
+    where n.nspname = 'public'
+      and c.relname = e.table_name
+      and con.contype in ('p', 'u')
+      and con.conkey = array[a.attnum]::smallint[]
+  )
+),
+missing_id_not_null as (
+  select e.table_name, e.column_name
+  from expected_id_constraints e
+  where not exists (
+    select 1
+    from information_schema.columns c
+    where c.table_schema = 'public'
+      and c.table_name = e.table_name
+      and c.column_name = e.column_name
+      and c.is_nullable = 'NO'
+  )
 ),
 missing_rls as (
   select e.table_name
@@ -297,6 +337,24 @@ flowfit_backend_verification as (
       else 'missing: ' || string_agg(table_name || '.' || column_name, ', ' order by table_name, column_name)
     end
   from missing_columns
+  union all
+  select
+    'id uniqueness constraints',
+    case when count(*) = 0 then 'pass' else 'fail' end,
+    case
+      when count(*) = 0 then 'every managed id column is primary-keyed or unique'
+      else 'missing: ' || string_agg(table_name || '.' || column_name, ', ' order by table_name)
+    end
+  from missing_id_constraints
+  union all
+  select
+    'id not-null constraints',
+    case when count(*) = 0 then 'pass' else 'fail' end,
+    case
+      when count(*) = 0 then 'every managed id column is not nullable'
+      else 'missing: ' || string_agg(table_name || '.' || column_name, ', ' order by table_name)
+    end
+  from missing_id_not_null
   union all
   select
     'row level security enabled',

@@ -47,7 +47,7 @@ class BuddyOfflineStorage {
     if (timestamp != null) {
       final savedTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
       final age = DateTime.now().difference(savedTime);
-      if (age.inHours > 24) {
+      if (age.inHours > 24 && !await hasPendingBuddyProfile()) {
         // Data is stale, clear it
         await clearOnboardingState();
         return null;

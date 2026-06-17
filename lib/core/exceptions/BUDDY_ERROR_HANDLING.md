@@ -88,7 +88,8 @@ Provides local persistence using SharedPreferences.
 
 - Saves onboarding state locally as user progresses
 - Stores pending Buddy profiles for later sync
-- Automatically clears stale data (>24 hours old)
+- Automatically clears stale incomplete progress (>24 hours old)
+- Retains completed pending onboarding data until the Buddy profile syncs
 - Handles corrupted data gracefully
 
 **Methods:**
@@ -111,7 +112,7 @@ Provides local persistence using SharedPreferences.
    - Show success message: "Your Buddy is saved! We'll sync when you're back online."
    - Navigate to dashboard
 4. When online:
-   - Call `syncPendingProfile()` to upload saved data
+   - App startup or app resume calls `syncPendingProfile()` for the signed-in user
    - Clear local storage on success
 
 ## Retry Logic
@@ -361,6 +362,6 @@ expect(
 
 1. **Analytics**: Track error rates and types
 2. **Crash Reporting**: Integrate with Sentry or Firebase Crashlytics
-3. **Background Sync**: Automatically sync when network becomes available
+3. **Connectivity Events**: Add a dedicated connectivity listener in addition to the current startup/resume sync
 4. **Conflict Resolution**: Handle cases where local and remote data differ
 5. **Rate Limiting**: Prevent excessive retry attempts

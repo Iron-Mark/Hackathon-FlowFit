@@ -734,6 +734,8 @@ create index if not exists idx_workout_sessions_user_id
   on public.workout_sessions(user_id);
 create index if not exists idx_workout_sessions_start_time
   on public.workout_sessions(start_time desc);
+create index if not exists idx_workout_sessions_user_start_time_desc
+  on public.workout_sessions(user_id, start_time desc);
 create index if not exists idx_workout_sessions_workout_type
   on public.workout_sessions(workout_type);
 create index if not exists idx_workout_sessions_status
@@ -1061,6 +1063,84 @@ create trigger update_account_deletion_requests_updated_at
   before update on public.account_deletion_requests
   for each row
   execute function public.update_updated_at_column();
+
+-- Ensure canonical id identity constraints are present after any legacy repair.
+-- Some older project states used user_id as their only identity; keep those
+-- constraints, but also guarantee the app-facing id column is unique.
+do $$
+declare
+  managed_table text;
+  id_attnum smallint;
+begin
+  foreach managed_table in array array[
+    'flowfit_recovery_quarantine',
+    'user_profiles',
+    'buddy_profiles',
+    'workout_sessions',
+    'heart_rate',
+    'account_deletion_requests'
+  ]
+  loop
+    execute format(
+      'update public.%I set id = extensions.gen_random_uuid() where id is null',
+      managed_table
+    );
+
+    execute format(
+      $flowfit_sql$
+        with duplicate_ids as (
+          select
+            ctid,
+            row_number() over (partition by id order by ctid) as duplicate_rank
+          from public.%1$I
+        )
+        update public.%1$I as target
+           set id = extensions.gen_random_uuid()
+          from duplicate_ids
+         where target.ctid = duplicate_ids.ctid
+           and duplicate_ids.duplicate_rank > 1
+      $flowfit_sql$,
+      managed_table
+    );
+
+    select a.attnum
+      into id_attnum
+      from pg_attribute a
+      join pg_class c on c.oid = a.attrelid
+      join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public'
+       and c.relname = managed_table
+       and a.attname = 'id'
+       and not a.attisdropped;
+
+    if id_attnum is null then
+      raise exception 'public.% does not have an id column', managed_table;
+    end if;
+
+    execute format(
+      'alter table public.%I alter column id set not null',
+      managed_table
+    );
+
+    if not exists (
+      select 1
+        from pg_constraint con
+        join pg_class c on c.oid = con.conrelid
+        join pg_namespace n on n.oid = c.relnamespace
+       where n.nspname = 'public'
+         and c.relname = managed_table
+         and con.contype in ('p', 'u')
+         and con.conkey = array[id_attnum]::smallint[]
+    ) then
+      execute format(
+        'alter table public.%I add constraint %I unique (id)',
+        managed_table,
+        managed_table || '_id_unique'
+      );
+    end if;
+  end loop;
+end;
+$$;
 
 create or replace function public.request_account_deletion()
 returns jsonb

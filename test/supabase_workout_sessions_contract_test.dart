@@ -5,12 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const migrationPath =
       'supabase/migrations/20260614062844_recreate_flowfit_backend.sql';
+  const verificationPath = 'supabase/verification/verify_flowfit_backend.sql';
 
   late String migration;
+  late String verificationSql;
   late Set<String> workoutSessionColumns;
 
   setUpAll(() {
     migration = File(migrationPath).readAsStringSync();
+    verificationSql = File(verificationPath).readAsStringSync();
     workoutSessionColumns = _workoutSessionColumns(migration);
   });
 
@@ -116,6 +119,57 @@ void main() {
     ]) {
       expect(migration, contains(fragment));
     }
+  });
+
+  test('repair migration protects canonical id identity constraints', () {
+    expect(migration, contains('Ensure canonical id identity constraints'));
+    expect(migration, contains("managed_table || '_id_unique'"));
+    expect(
+      migration,
+      contains('alter table public.%I add constraint %I unique (id)'),
+    );
+    expect(
+      migration,
+      contains('alter table public.%I alter column id set not null'),
+    );
+    expect(verificationSql, contains('expected_id_constraints'));
+    expect(verificationSql, contains('missing_id_constraints'));
+    expect(verificationSql, contains('missing_id_not_null'));
+    expect(verificationSql, contains('id uniqueness constraints'));
+    expect(verificationSql, contains('id not-null constraints'));
+
+    for (final table in [
+      'flowfit_recovery_quarantine',
+      'user_profiles',
+      'buddy_profiles',
+      'workout_sessions',
+      'heart_rate',
+      'account_deletion_requests',
+    ]) {
+      expect(migration, contains(table));
+      expect(
+        verificationSql,
+        contains("('$table', 'id')"),
+        reason: '$verificationPath should prove public.$table has a unique id.',
+      );
+    }
+  });
+
+  test('workout history queries have a user-scoped time index', () {
+    expect(
+      migration,
+      contains('idx_workout_sessions_user_start_time_desc'),
+      reason:
+          'Workout history reads filter by user_id and order/range by start_time.',
+    );
+    expect(
+      migration,
+      contains('on public.workout_sessions(user_id, start_time desc)'),
+    );
+    expect(
+      verificationSql,
+      contains('idx_workout_sessions_user_start_time_desc'),
+    );
   });
 
   test('migration backfills Buddy-completed profiles through survey gate', () {
