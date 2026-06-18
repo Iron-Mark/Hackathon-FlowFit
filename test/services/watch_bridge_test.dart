@@ -580,10 +580,25 @@ void main() {
 
     group('heartRateStream', () {
       const eventChannel = EventChannel('com.flowfit.watch/heartrate');
+      const syncChannel = MethodChannel('com.flowfit.watch/sync');
+
+      setUp(() {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(syncChannel, (
+              MethodCall methodCall,
+            ) async {
+              if (methodCall.method == 'checkPhoneConnection') {
+                return false;
+              }
+              return null;
+            });
+      });
 
       tearDown(() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockStreamHandler(eventChannel, null);
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(syncChannel, null);
       });
 
       test('emits HeartRateData when data is received', () async {

@@ -79,8 +79,13 @@ void main() {
     );
     expect(
       migrationSource,
-      contains(
-        "coalesce(current_setting('app.flowfit_account_deletion_rpc', true), '') = '1'",
+      anyOf(
+        contains(
+          "coalesce(current_setting('app.flowfit_account_deletion_rpc', true), '') = '1'",
+        ),
+        contains(
+          "coalesce((select current_setting('app.flowfit_account_deletion_rpc', true)), '') = '1'",
+        ),
       ),
     );
     expect(
