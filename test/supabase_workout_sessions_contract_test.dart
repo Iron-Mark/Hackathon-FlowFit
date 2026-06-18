@@ -12,8 +12,10 @@ void main() {
   late Set<String> workoutSessionColumns;
 
   setUpAll(() {
-    migration = File(migrationPath).readAsStringSync();
-    verificationSql = File(verificationPath).readAsStringSync();
+    migration = File(migrationPath).readAsStringSync().replaceAll('\r\n', '\n');
+    verificationSql = File(
+      verificationPath,
+    ).readAsStringSync().replaceAll('\r\n', '\n');
     workoutSessionColumns = _workoutSessionColumns(migration);
   });
 

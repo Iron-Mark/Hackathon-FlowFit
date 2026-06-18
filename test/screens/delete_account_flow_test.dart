@@ -12,7 +12,7 @@ void main() {
     ).readAsStringSync();
     migrationSource = File(
       'supabase/migrations/20260614062844_recreate_flowfit_backend.sql',
-    ).readAsStringSync();
+    ).readAsStringSync().replaceAll('\r\n', '\n');
   });
 
   test('delete account screen submits the Supabase deletion request RPC', () {
