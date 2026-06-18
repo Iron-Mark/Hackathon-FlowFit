@@ -302,7 +302,12 @@ function Invoke-ReleaseValidation {
 
     if ($Target -eq 'Android' -or $Target -eq 'All') {
         Remove-IgnoredGeneratedAndroidRegistrant
-        Invoke-CheckedCommand 'Android release lint' @((Get-GradleExecutable), ':app:lintRelease')
+        Push-Location (Join-Path $repoRoot 'android')
+        try {
+            Invoke-CheckedCommand 'Android release lint' @((Get-GradleExecutable), ':app:lintRelease')
+        } finally {
+            Pop-Location
+        }
     }
 }
 

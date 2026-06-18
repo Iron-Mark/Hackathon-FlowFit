@@ -1745,6 +1745,12 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     );
   });
 
+  test('store release wrapper runs Android release lint from Android project', () {
+    expect(storeReleaseBuild, contains("Push-Location (Join-Path \$repoRoot 'android')"));
+    expect(storeReleaseBuild, contains('Pop-Location'));
+    expect(storeReleaseBuild, contains("Invoke-CheckedCommand 'Android release lint'"));
+  });
+
   test('release preflight invokes audit through portable script path', () {
     expect(releasePreflight, contains('Join-Path \$repoRoot'));
     expect(releasePreflight, contains('scripts/release_readiness_audit.ps1'));
