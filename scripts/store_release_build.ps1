@@ -304,7 +304,11 @@ function Invoke-ReleaseValidation {
         Remove-IgnoredGeneratedAndroidRegistrant
         Push-Location (Join-Path $repoRoot 'android')
         try {
-            Invoke-CheckedCommand 'Android release lint' @((Get-GradleExecutable), ':app:lintRelease')
+            Invoke-CheckedCommand 'Android release lint' @(
+                (Get-GradleExecutable),
+                ':app:lintRelease',
+                '-Pandroid.enableJetifier=false'
+            )
         } finally {
             Pop-Location
         }

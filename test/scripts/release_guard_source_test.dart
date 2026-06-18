@@ -1749,6 +1749,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(storeReleaseBuild, contains("Push-Location (Join-Path \$repoRoot 'android')"));
     expect(storeReleaseBuild, contains('Pop-Location'));
     expect(storeReleaseBuild, contains("Invoke-CheckedCommand 'Android release lint'"));
+    expect(storeReleaseBuild, contains("'-Pandroid.enableJetifier=false'"));
   });
 
   test('release preflight invokes audit through portable script path', () {
@@ -2547,6 +2548,25 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(androidDebugManifest, contains(r'${flowfitDevAuthScheme}'));
     expect(iosInfoPlist, contains(r'$(FLOWFIT_IOS_BUNDLE_IDENTIFIER)'));
     expect(iosInfoPlist, isNot(contains(r'$(FLOWFIT_IOS_DEV_AUTH_SCHEME)')));
+  });
+
+  test('Android release auth deep link is not marked as an HTTPS app link', () {
+    expect(androidMainManifest, contains(r'android:scheme="${flowfitAuthScheme}"'));
+    expect(androidMainManifest, contains('android:host="auth-callback"'));
+    expect(androidMainManifest, isNot(contains('android:autoVerify="true"')));
+  });
+
+  test('Wear OS shared library is compile-only for Android lint compatibility', () {
+    expect(
+      gradleBuild,
+      contains('compileOnly("com.google.android.wearable:wearable:2.9.0")'),
+    );
+    expect(
+      gradleBuild,
+      isNot(
+        contains('implementation("com.google.android.wearable:wearable:2.9.0")'),
+      ),
+    );
   });
 
   test('support inbox readiness follows configured support email', () {

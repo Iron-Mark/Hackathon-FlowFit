@@ -198,9 +198,8 @@ dependencies {
     // Wear OS libraries
     implementation("androidx.wear:wear:1.3.0")
     implementation("com.google.android.support:wearable:2.9.0")
-    // Include the Wearable runtime dependency at runtime so classes (e.g. WearableActivityController)
-    // are present when plugins such as wearable_rotary or wear access them at runtime.
-    implementation("com.google.android.wearable:wearable:2.9.0")
+    // The shared Wearable library is provided by Wear OS devices and should not be bundled.
+    compileOnly("com.google.android.wearable:wearable:2.9.0")
     
     // Wearable Data Layer API for watch-phone communication
     implementation("com.google.android.gms:play-services-wearable:18.1.0")
