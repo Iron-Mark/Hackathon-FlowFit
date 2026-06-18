@@ -9,7 +9,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).ProviderPath
 
 function Resolve-VerificationSqlPath {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -70,28 +70,46 @@ if (-not (Get-Command npx -ErrorAction SilentlyContinue)) {
     throw 'npx is required to run supabase@latest. Install Node.js/npm or run the SQL through Supabase MCP execute_sql or the dashboard SQL editor.'
 }
 
-$args = @(
+$cliSqlFile = $resolvedSqlFile
+try {
+    $relativeSqlFile = [System.IO.Path]::GetRelativePath($repoRoot, $resolvedSqlFile)
+    if (
+        -not $relativeSqlFile.StartsWith('..') -and
+        -not [System.IO.Path]::IsPathRooted($relativeSqlFile)
+    ) {
+        $cliSqlFile = $relativeSqlFile -replace '\\', '/'
+    }
+} catch {
+    $cliSqlFile = $resolvedSqlFile
+}
+
+$commandArgs = @(
     '-y',
     'supabase@latest',
     'db',
     'query',
     '--file',
-    $resolvedSqlFile,
+    $cliSqlFile,
     '--output',
     $Output
 )
 
 if ($Linked) {
-    $args += '--linked'
+    $commandArgs += '--linked'
 } elseif ($Local) {
-    $args += '--local'
+    $commandArgs += '--local'
 } else {
-    $args += @('--db-url', $DbUrl)
+    $commandArgs += @('--db-url', $DbUrl)
 }
 
-& npx @args
-if ($LASTEXITCODE -ne 0) {
-    throw 'Supabase backend verification query failed.'
+Push-Location $repoRoot
+try {
+    & npx @commandArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Supabase backend verification query failed.'
+    }
+} finally {
+    Pop-Location
 }
 
 Write-Host 'SUPABASE_BACKEND_VERIFICATION_RUN_OK'
