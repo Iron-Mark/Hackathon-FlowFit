@@ -2,7 +2,7 @@
   "mcpServers": {
     "supabase": {
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF&features=database,docs,debugging,development"
+      "url": "https://mcp.supabase.com/mcp?project_ref=xhmkghwijqpvnbpeeckg&features=database,docs,debugging,development&read_only=true"
     }
   }
 }

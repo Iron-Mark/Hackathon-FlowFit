@@ -615,9 +615,13 @@ function Test-SupabaseMigration {
     }
     Assert-RequiredText 'Helper function execute revoke' $path $content 'revoke all on function public.update_updated_at_column()' 'Migration revokes direct execute access on trigger helper function.'
     Assert-RequiredText 'Deletion queue retention' $path $content 'drop constraint if exists account_deletion_requests_user_id_fkey' 'Deletion request queue is not cascaded away when an auth user is later deleted.'
+    $hasDeletionRpcGate = (
+        $content.Contains("coalesce(current_setting('app.flowfit_account_deletion_rpc', true), '') = '1'") -or
+        $content.Contains("coalesce((select current_setting('app.flowfit_account_deletion_rpc', true)), '') = '1'")
+    )
     if (
         $content.Contains("set_config('app.flowfit_account_deletion_rpc', '1', true)") -and
-        $content.Contains("coalesce(current_setting('app.flowfit_account_deletion_rpc', true), '') = '1'") -and
+        $hasDeletionRpcGate -and
         $content.Contains('Deletion RPC can create own pending account deletion requests')
     ) {
         Add-Pass 'Deletion queue RPC insert gate' 'Account deletion queue inserts require the request_account_deletion RPC transaction flag.'

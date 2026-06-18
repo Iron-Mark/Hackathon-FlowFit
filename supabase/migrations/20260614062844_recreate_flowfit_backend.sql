@@ -1239,7 +1239,8 @@ begin
         'buddy_profiles',
         'workout_sessions',
         'heart_rate',
-        'account_deletion_requests'
+        'account_deletion_requests',
+        'flowfit_recovery_quarantine'
       ])
   loop
     execute format(
@@ -1257,6 +1258,13 @@ create policy "Users can view own profile"
   for select
   to authenticated
   using ((select auth.uid()) = user_id);
+
+create policy "No client access to recovery quarantine"
+  on public.flowfit_recovery_quarantine
+  for all
+  to public
+  using (false)
+  with check (false);
 
 create policy "Users can insert own profile"
   on public.user_profiles
@@ -1403,7 +1411,7 @@ create policy "Deletion RPC can create own pending account deletion requests"
     and status = 'pending'
     and processed_at is null
     and processor_notes is null
-    and coalesce(current_setting('app.flowfit_account_deletion_rpc', true), '') = '1'
+    and coalesce((select current_setting('app.flowfit_account_deletion_rpc', true)), '') = '1'
   );
 
 alter default privileges for role postgres in schema public
