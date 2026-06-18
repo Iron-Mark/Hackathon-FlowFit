@@ -408,7 +408,7 @@ function Test-McpConfig {
             Add-Warn 'Supabase MCP release read-only' 'Strict release MCP posture should add read_only=true after migrations and advisors are complete.'
         }
     } elseif ($hasReadOnly) {
-        Add-Fail 'Supabase MCP recovery write access' 'Recovery MCP config is read-only; migrations need development write access.'
+        Add-Warn 'Supabase MCP recovery write access' 'MCP config is read-only. Use writable MCP only while actively applying recovery migrations.' -StrictFailure $false
     } else {
         Add-Pass 'Supabase MCP recovery write access' 'MCP URL does not force read_only=true.'
     }

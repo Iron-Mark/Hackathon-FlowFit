@@ -2391,15 +2391,15 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     }
   });
 
-  test('recovery audit rejects read-only Supabase MCP config', () {
+  test('advisory audit warns on read-only Supabase MCP config', () {
     final audit = _runAuditWithMcpConfig(
       'https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true',
     );
 
-    expect(audit.exitCode, isNot(0));
+    expect(audit.exitCode, 0);
     expect(
       '${audit.stdout}\n${audit.stderr}',
-      contains('[FAIL] Supabase MCP recovery write access'),
+      contains('[WARN] Supabase MCP recovery write access'),
     );
   });
 
