@@ -931,7 +931,10 @@ storeFile=upload-keystore.jks
           '-OutFile',
           advisoryOut.path,
         ],
-        environment: {'FLOWFIT_PUBLIC_WEB_BASE_URL': publicWebBaseUrl},
+        environment: {
+          'FLOWFIT_PUBLIC_WEB_BASE_URL': publicWebBaseUrl,
+          'FLOWFIT_SUPPORT_EMAIL_VERIFIED': 'false',
+        },
       );
       expect(
         advisory.exitCode,
@@ -1005,16 +1008,24 @@ storeFile=upload-keystore.jks
           );
       expect(reservedSupportFinding['level'], 'FAIL');
 
-      final githubVariables = Process.runSync('pwsh', [
-        '-NoProfile',
-        '-File',
-        'scripts/verify_store_metadata.ps1',
-        '-Strict',
-        '-GitHubVariablesPath',
-        githubVariablesFile.path,
-        '-OutFile',
-        githubVariablesOut.path,
-      ]);
+      final githubVariables = Process.runSync(
+        'pwsh',
+        [
+          '-NoProfile',
+          '-File',
+          'scripts/verify_store_metadata.ps1',
+          '-Strict',
+          '-GitHubVariablesPath',
+          githubVariablesFile.path,
+          '-OutFile',
+          githubVariablesOut.path,
+        ],
+        environment: {
+          'FLOWFIT_PUBLIC_WEB_BASE_URL': '',
+          'FLOWFIT_SUPPORT_EMAIL': '',
+          'FLOWFIT_SUPPORT_EMAIL_VERIFIED': 'false',
+        },
+      );
       expect(
         githubVariables.exitCode,
         0,
@@ -2486,7 +2497,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] =
           'https://iron-mark.github.io/Hackathon-FlowFit'
       ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
-      ..remove('FLOWFIT_SUPPORT_EMAIL_VERIFIED');
+      ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'false';
 
     ProcessResult runStore(Map<String, String> env) {
       return Process.runSync('pwsh', [
@@ -2945,7 +2956,7 @@ function Resolve-DnsName {
 
     final baseEnv = Map<String, String>.from(Platform.environment)
       ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
-      ..remove('FLOWFIT_SUPPORT_EMAIL_VERIFIED');
+      ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'false';
 
     try {
       final unverified = runRenderer([], baseEnv);
