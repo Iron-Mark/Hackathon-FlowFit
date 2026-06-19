@@ -94,6 +94,12 @@ Technical implementation details and verification:
   - Third-party SDK data considerations
   - Account deletion, retention, and disclosure notes
 
+### Maintenance
+- **maintenance/CODEBASE_CLEANUP_AUDIT_2026-06-19.md**
+  - Current docs clutter, dependency freshness, and DRY/refactor findings
+  - Safe cleanup applied during the maintained-fork release cycle
+  - Recommended cleanup and dependency-upgrade order
+
 ### AI Classification
 - **AI_DETECTION_COMPLETE_IMPLEMENTATION.md**
   - Complete AI detection implementation guide
@@ -256,6 +262,7 @@ Build and deployment scripts:
 2. Issues: `docs/TROUBLESHOOTING.md`
 3. Implementation: `docs/implementation/`
 4. Features: `docs/features/`
+5. Maintenance: `docs/maintenance/`
 
 ### For Verification:
 1. AI Working: `docs/implementation/AI_LIVE_CLASSIFICATION_CONFIRMED.md`
@@ -266,11 +273,11 @@ Build and deployment scripts:
 
 ## 📊 Documentation Statistics
 
-- **Total Documents:** 134 files
+- **Markdown Documents:** 200 files
+- **Active Markdown Documents:** 188 files outside `docs/archive`
+- **Archived Markdown Documents:** 12 files
 - **Presentation Docs:** 3 files
-- **Implementation Docs:** 9 files
-- **Feature Docs:** 21 files
-- **Root Docs:** 11 files
+- **Maintenance Docs:** 1 file
 - **Scripts:** 23 files
 
 ---
@@ -324,5 +331,5 @@ flowfit/
 
 ---
 
-**Last Updated:** June 14, 2026
+**Last Updated:** June 19, 2026
 **Maintained By:** Development Team

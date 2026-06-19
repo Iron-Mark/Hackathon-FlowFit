@@ -49,6 +49,7 @@ app.*.map.json
 nul
 *.log
 flutter_*.log
+flutter_*.png
 
 # Secrets (if not already ignored)
 lib/secrets.dart
