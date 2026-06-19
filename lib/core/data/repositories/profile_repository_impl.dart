@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../exceptions/profile_exceptions.dart';
+import '../../config/supabase_tables.dart';
 import '../../utils/logger.dart';
 
 /// Implementation of ProfileRepository with local and backend storage
@@ -158,7 +159,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       _logger.debug('Fetching backend profile for user: $userId');
 
       final response = await _supabase
-          .from('user_profiles')
+          .from(SupabaseTables.userProfiles)
           .select()
           .eq('user_id', userId)
           .maybeSingle()
@@ -251,7 +252,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       }
 
       await _supabase
-          .from('user_profiles')
+          .from(SupabaseTables.userProfiles)
           .upsert(profile.toSupabaseJson(), onConflict: 'user_id')
           .timeout(
             const Duration(seconds: 10),

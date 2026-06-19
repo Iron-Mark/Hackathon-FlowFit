@@ -81,8 +81,8 @@ FlowFit now has a fully functional clean architecture with Riverpod state manage
 - `docs/ARCHITECTURE_DIAGRAM.md` - Visual diagrams
 - `docs/MIGRATION_TO_CLEAN_ARCHITECTURE.md` - Migration guide
 - `docs/CLEAN_ARCHITECTURE_SETUP_COMPLETE.md` - Setup details
-- `lib/core/providers/PROVIDER_REFERENCE.md` - Quick reference
-- `lib/core/README.md` - Core folder guide
+- `docs/code/lib/core/providers/PROVIDER_REFERENCE.md` - Quick reference
+- `docs/code/lib/core/README.md` - Core folder guide
 
 ## Available Providers
 

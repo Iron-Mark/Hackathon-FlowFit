@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/exceptions/auth_exceptions.dart' as domain_exceptions;
 import '../../domain/repositories/i_profile_repository.dart';
+import '../../core/config/supabase_tables.dart';
 import '../models/user_profile_model.dart';
 import '../../core/utils/error_logger.dart';
 
@@ -10,7 +11,7 @@ import '../../core/utils/error_logger.dart';
 /// Handles profile CRUD operations with retry logic for reliability.
 class ProfileRepository implements IProfileRepository {
   final SupabaseClient _client;
-  static const String _tableName = 'user_profiles';
+  static const String _tableName = SupabaseTables.userProfiles;
   static const int _maxRetries = 3;
 
   ProfileRepository(this._client);

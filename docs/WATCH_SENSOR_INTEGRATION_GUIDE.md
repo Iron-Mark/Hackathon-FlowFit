@@ -255,9 +255,9 @@ This implementation satisfies the following requirements:
 
 ## 📚 Related Documentation
 
-- [Activity AI Watch Integration](ACTIVITY_AI_WATCH_INTEGRATION.md)
+- [Activity AI Watch Integration](implementation/ACTIVITY_AI_WATCH_INTEGRATION.md)
 - [TensorFlow Model Data Requirements](TFLITE_MODEL_DATA_REQUIREMENTS.md)
-- [IBI Data Collection Guide](docs/IBI_DATA_COLLECTION_GUIDE.md)
+- [IBI Data Collection Guide](IBI_DATA_COLLECTION_GUIDE.md)
 - [Sensor Data Flow Debug](DEBUG_SENSOR_DATA_FLOW.md)
 
 ## 🎯 Summary

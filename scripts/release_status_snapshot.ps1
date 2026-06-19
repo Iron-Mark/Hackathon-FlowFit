@@ -219,14 +219,6 @@ try {
         if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
             Add-Line $lines '- GitHub CLI is not available.'
         } else {
-            $prArgs = @(
-                'pr',
-                'view',
-                '--repo',
-                $Repo,
-                '--json',
-                'headRefOid,mergeStateStatus,isDraft,url,statusCheckRollup'
-            )
             if ($PullRequest -gt 0) {
                 $prArgs = @(
                     'pr',
@@ -237,24 +229,57 @@ try {
                     '--json',
                     'headRefOid,mergeStateStatus,isDraft,url,statusCheckRollup'
                 )
-            }
-
-            $pr = Invoke-NativeCapture -FilePath 'gh' -Arguments $prArgs
-            if ($pr.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($pr.Output)) {
-                $prJson = $pr.Output | ConvertFrom-Json
-                Add-Line $lines "- PR: $($prJson.url)"
-                Add-Line $lines ('- PR draft: `{0}`' -f $prJson.isDraft)
-                Add-Line $lines ('- PR merge state: `{0}`' -f $prJson.mergeStateStatus)
-                Add-Line $lines ('- PR head: `{0}`' -f $prJson.headRefOid)
-                Add-Line $lines ''
-                Add-Line $lines '### PR Checks'
-                Add-Line $lines ''
-                foreach ($check in @($prJson.statusCheckRollup)) {
-                    Add-Line $lines "- $($check.workflowName) / $($check.name): $($check.status) $($check.conclusion)"
-                }
-            } else {
-                if ($PullRequest -gt 0) {
+                $pr = Invoke-NativeCapture -FilePath 'gh' -Arguments $prArgs
+                if ($pr.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($pr.Output)) {
+                    $prJson = $pr.Output | ConvertFrom-Json
+                    Add-Line $lines "- PR: $($prJson.url)"
+                    Add-Line $lines ('- PR draft: `{0}`' -f $prJson.isDraft)
+                    Add-Line $lines ('- PR merge state: `{0}`' -f $prJson.mergeStateStatus)
+                    Add-Line $lines ('- PR head: `{0}`' -f $prJson.headRefOid)
+                    Add-Line $lines ''
+                    Add-Line $lines '### PR Checks'
+                    Add-Line $lines ''
+                    foreach ($check in @($prJson.statusCheckRollup)) {
+                        Add-Line $lines "- $($check.workflowName) / $($check.name): $($check.status) $($check.conclusion)"
+                    }
+                } else {
                     Add-Line $lines "- PR #$PullRequest status unavailable: $($pr.Output)"
+                }
+            } elseif ([string]::IsNullOrWhiteSpace($branch)) {
+                Add-Line $lines '- Current branch PR status unavailable: local branch name is empty.'
+            } else {
+                $prArgs = @(
+                    'pr',
+                    'list',
+                    '--repo',
+                    $Repo,
+                    '--head',
+                    $branch,
+                    '--state',
+                    'open',
+                    '--limit',
+                    '1',
+                    '--json',
+                    'headRefOid,mergeStateStatus,isDraft,url,statusCheckRollup'
+                )
+                $pr = Invoke-NativeCapture -FilePath 'gh' -Arguments $prArgs
+                if ($pr.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($pr.Output)) {
+                    $prMatches = @($pr.Output | ConvertFrom-Json)
+                    if ($prMatches.Count -eq 0) {
+                        Add-Line $lines ('- Current branch has no open PR: `{0}`.' -f $branch)
+                    } else {
+                        $prJson = $prMatches[0]
+                        Add-Line $lines "- PR: $($prJson.url)"
+                        Add-Line $lines ('- PR draft: `{0}`' -f $prJson.isDraft)
+                        Add-Line $lines ('- PR merge state: `{0}`' -f $prJson.mergeStateStatus)
+                        Add-Line $lines ('- PR head: `{0}`' -f $prJson.headRefOid)
+                        Add-Line $lines ''
+                        Add-Line $lines '### PR Checks'
+                        Add-Line $lines ''
+                        foreach ($check in @($prJson.statusCheckRollup)) {
+                            Add-Line $lines "- $($check.workflowName) / $($check.name): $($check.status) $($check.conclusion)"
+                        }
+                    }
                 } else {
                     Add-Line $lines "- Current branch PR status unavailable: $($pr.Output)"
                 }

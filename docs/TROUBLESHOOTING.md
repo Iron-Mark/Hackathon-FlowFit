@@ -68,4 +68,4 @@ debug-signed release App Bundle smoke build.
 - Supabase recovery: `docs/SUPABASE_RECOVERY_RUNBOOK.md`
 - Release readiness: `docs/RELEASE_READINESS_RUNBOOK.md`
 - Store checklist: `docs/STORE_SUBMISSION_CHECKLIST.md`
-- Manual testing: `test/integration/MANUAL_TESTING_GUIDE.md`
+- Manual testing: `docs/testing/integration/MANUAL_TESTING_GUIDE.md`

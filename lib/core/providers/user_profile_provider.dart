@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config/supabase_tables.dart';
 import '../domain/entities/user_profile.dart';
 
 /// User Profile Provider
@@ -13,7 +14,7 @@ final userProfileProvider = FutureProvider.family<UserProfile?, String>((
 
   try {
     final response = await supabase
-        .from('user_profiles')
+        .from(SupabaseTables.userProfiles)
         .select()
         .eq('user_id', userId)
         .maybeSingle();
@@ -46,7 +47,7 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
     try {
       final supabase = Supabase.instance.client;
       final response = await supabase
-          .from('user_profiles')
+          .from(SupabaseTables.userProfiles)
           .select()
           .eq('user_id', userId)
           .maybeSingle();
@@ -74,7 +75,7 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
     try {
       final supabase = Supabase.instance.client;
       await supabase
-          .from('user_profiles')
+          .from(SupabaseTables.userProfiles)
           .update({
             'nickname': nickname,
             'updated_at': DateTime.now().toIso8601String(),
@@ -101,7 +102,7 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
     try {
       final supabase = Supabase.instance.client;
       await supabase
-          .from('user_profiles')
+          .from(SupabaseTables.userProfiles)
           .update({
             'is_kids_mode': isKidsMode,
             'updated_at': DateTime.now().toIso8601String(),
@@ -143,7 +144,7 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
 
       final supabase = Supabase.instance.client;
       await supabase
-          .from('user_profiles')
+          .from(SupabaseTables.userProfiles)
           .update(updates)
           .eq('user_id', userId);
 
@@ -219,7 +220,7 @@ class UserProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
 
       final supabase = Supabase.instance.client;
       await supabase
-          .from('user_profiles')
+          .from(SupabaseTables.userProfiles)
           .update(updates)
           .eq('user_id', userId);
 

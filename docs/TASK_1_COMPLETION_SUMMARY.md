@@ -78,8 +78,8 @@ All required dependencies are present in `pubspec.yaml`:
 
 ### 5. Created Documentation
 
-- ✅ `lib/ARCHITECTURE.md` - Comprehensive architecture documentation
-- ✅ `lib/core/SETUP_COMPLETE.md` - Setup completion checklist
+- ✅ `docs/code/lib/ARCHITECTURE.md` - Comprehensive architecture documentation
+- ✅ `docs/code/lib/core/SETUP_COMPLETE.md` - Setup completion checklist
 - ✅ This summary document
 
 ## Requirements Satisfied
@@ -103,8 +103,8 @@ This task satisfies the following requirements from the specification:
 - `lib/core/providers/example_provider.g.dart` - Generated provider code (auto-generated)
 
 ### Documentation Files
-- `lib/ARCHITECTURE.md` - Architecture documentation
-- `lib/core/SETUP_COMPLETE.md` - Setup completion document
+- `docs/code/lib/ARCHITECTURE.md` - Architecture documentation
+- `docs/code/lib/core/SETUP_COMPLETE.md` - Setup completion document
 - `TASK_1_COMPLETION_SUMMARY.md` - This file
 
 ### Directory Structure Files

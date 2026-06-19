@@ -294,9 +294,9 @@ Debug builds may add `${flowfitDevAuthScheme}` from
 ## 📚 Related Documentation
 
 - [Supabase Auth Documentation](https://supabase.com/docs/guides/auth)
-- [Email Templates Guide](../supabase/email_templates/EMAIL_SETUP_GUIDE.md)
-- [Quick Setup](../supabase/email_templates/QUICK_SETUP.md)
-- [Survey Flow](./SURVEY_FLOW.md)
+- [Email Templates Guide](supabase/email_templates/EMAIL_SETUP_GUIDE.md)
+- [Quick Setup](supabase/email_templates/QUICK_SETUP.md)
+- [Survey Flow](SURVEY_FLOW_GUIDE.md)
 
 ## 🎨 UI/UX Considerations
 

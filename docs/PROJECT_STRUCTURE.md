@@ -22,7 +22,7 @@ flowfit/
 All project documentation is organized in the `docs/` folder:
 
 ### Quick Start & Setup
-- `QUICK_START.md` - 5-minute quick start guide
+- `docs/QUICK_START.md` - 5-minute quick start guide
 - `SAMSUNG_HEALTH_SETUP_GUIDE.md` - Complete Samsung Health integration
 - `IMPLEMENTATION_CHECKLIST.md` - Step-by-step testing guide
 
@@ -40,7 +40,7 @@ All project documentation is organized in the `docs/` folder:
 - `WEAR_OS_IMPROVEMENTS.md` - Wear OS optimizations
 - `SAMSUNG_HEALTH_IMPLEMENTATION_SUMMARY.md` - Implementation summary
 
-**See [docs/README.md](docs/README.md) for complete documentation index.**
+**See [docs/README.md](README.md) for complete documentation index.**
 
 ## 🔧 Scripts (`scripts/`)
 
@@ -50,7 +50,7 @@ Build and deployment automation scripts:
 - `run_watch.bat` - Quick run on Galaxy Watch (6ece264d)
 - `run_phone.bat` - Quick run on Android Phone
 
-**See [scripts/README.md](scripts/README.md) for usage instructions.**
+**See [docs/scripts/README.md](scripts/README.md) for usage instructions.**
 
 ## 📱 Source Code (`lib/`)
 
@@ -118,14 +118,14 @@ scripts\run_phone.bat
 ```
 
 **Read documentation**
-- Start with [README.md](README.md)
-- Then see [docs/README.md](docs/README.md)
+- Start with [README.md](../README.md)
+- Then see [docs/README.md](README.md)
 
 **Fix installation issues**
-- See [docs/INSTALLATION_TROUBLESHOOTING.md](docs/INSTALLATION_TROUBLESHOOTING.md)
+- See [docs/INSTALLATION_TROUBLESHOOTING.md](INSTALLATION_TROUBLESHOOTING.md)
 
 **Understand the architecture**
-- See [docs/HEART_RATE_DATA_FLOW.md](docs/HEART_RATE_DATA_FLOW.md)
+- See [docs/HEART_RATE_DATA_FLOW.md](HEART_RATE_DATA_FLOW.md)
 
 ## 📝 File Organization Rules
 
@@ -137,7 +137,7 @@ scripts\run_phone.bat
 ### Scripts
 - ✅ All `.bat` files go in `scripts/`
 - ✅ Keep scripts simple and well-commented
-- ✅ Update `scripts/README.md` when adding new scripts
+- ✅ Update `docs/scripts/README.md` when adding new scripts
 
 ### Source Code
 - ✅ Follow Flutter project structure
@@ -195,10 +195,10 @@ flutter pub upgrade
 
 ## 🔗 Related Files
 
-- [README.md](README.md) - Main project documentation
-- [docs/README.md](docs/README.md) - Documentation index
-- [scripts/README.md](scripts/README.md) - Scripts documentation
-- [pubspec.yaml](pubspec.yaml) - Flutter dependencies
+- [README.md](../README.md) - Main project documentation
+- [docs/README.md](README.md) - Documentation index
+- [docs/scripts/README.md](scripts/README.md) - Scripts documentation
+- [pubspec.yaml](../pubspec.yaml) - Flutter dependencies
 
 ## 💡 Tips
 

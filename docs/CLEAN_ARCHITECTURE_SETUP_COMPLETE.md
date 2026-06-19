@@ -187,7 +187,7 @@ All documentation is available in the `docs/` folder:
 1. **CLEAN_ARCHITECTURE_GUIDE.md** - Complete guide with examples
 2. **ARCHITECTURE_DIAGRAM.md** - Visual diagrams of the architecture
 3. **MIGRATION_TO_CLEAN_ARCHITECTURE.md** - How to migrate existing screens
-4. **lib/core/providers/PROVIDER_REFERENCE.md** - Quick reference cheat sheet
+4. **docs/code/lib/core/providers/PROVIDER_REFERENCE.md** - Quick reference cheat sheet
 
 ## Architecture Diagram
 

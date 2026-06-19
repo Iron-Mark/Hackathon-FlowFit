@@ -78,8 +78,8 @@ scripts\run_phone.bat
 
 ### Learn More
 
-1. **[Quick Start Guide](docs/QUICK_START.md)** - Detailed 5-minute guide
-2. **[Samsung Health Setup](docs/SAMSUNG_HEALTH_SETUP_GUIDE.md)** - Complete integration guide
+1. **[Quick Start Guide](QUICK_START.md)** - Detailed 5-minute guide
+2. **[Samsung Health Setup](SAMSUNG_HEALTH_SETUP_GUIDE.md)** - Complete integration guide
 3. **[Project Structure](PROJECT_STRUCTURE.md)** - Understand the codebase
 
 ### Common Tasks
@@ -108,13 +108,13 @@ flutter pub get
 ### Troubleshooting
 
 **Installation fails?**
-→ See [Installation Troubleshooting](docs/INSTALLATION_TROUBLESHOOTING.md)
+→ See [Installation Troubleshooting](INSTALLATION_TROUBLESHOOTING.md)
 
 **Build errors?**
-→ See [Build Fixes Applied](docs/BUILD_FIXES_APPLIED.md)
+→ See [Build Fixes Applied](BUILD_FIXES_APPLIED.md)
 
 **Need help?**
-→ Check [Documentation Index](docs/README.md)
+→ Check [Documentation Index](README.md)
 
 ## 🗂️ Project Organization
 
@@ -227,11 +227,11 @@ scripts\build_and_install.bat
 
 ### Essential Reading
 1. [README.md](README.md) - Project overview
-2. [docs/QUICK_START.md](docs/QUICK_START.md) - Quick start guide
+2. [docs/QUICK_START.md](QUICK_START.md) - Quick start guide
 3. [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - Project structure
 
 ### Full Documentation
-See [docs/README.md](docs/README.md) for complete documentation index.
+See [docs/README.md](README.md) for complete documentation index.
 
 ## 🤝 Contributing
 
@@ -262,4 +262,4 @@ Remember to approve the installation on your watch!
 
 ---
 
-**Need help?** Check the [documentation](docs/README.md) or open an issue.
+**Need help?** Check the [documentation](README.md) or open an issue.

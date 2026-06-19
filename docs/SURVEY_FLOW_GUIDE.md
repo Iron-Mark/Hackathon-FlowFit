@@ -362,5 +362,5 @@ Target = TDEE + goal_adjustment
 
 For questions or issues with the survey flow implementation, refer to:
 - Main app documentation: `README.md`
-- Architecture guide: `lib/ARCHITECTURE.md`
+- Architecture guide: `docs/code/lib/ARCHITECTURE.md`
 - Dashboard navigation: `DASHBOARD_NAVIGATION_FLOW.md`

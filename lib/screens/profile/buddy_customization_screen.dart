@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/buddy_character_widget.dart';
 import '../../widgets/buddy_idle_animation.dart';
 import '../../widgets/buddy_error_widget.dart';
+import '../../core/config/supabase_tables.dart';
 import '../../utils/buddy_colors.dart';
 import '../../providers/buddy_profile_provider.dart';
 
@@ -735,7 +736,7 @@ class _BuddyCustomizationScreenState
       final newXP = (newLevel - 1) * 100;
 
       await supabase
-          .from('buddy_profiles')
+          .from(SupabaseTables.buddyProfiles)
           .update({
             'level': newLevel,
             'xp': newXP,
@@ -789,7 +790,7 @@ class _BuddyCustomizationScreenState
       // Add accessories and background to accessories JSON
       if (_selectedAccessory != null || _selectedBackground != null) {
         final currentProfile = await supabase
-            .from('buddy_profiles')
+            .from(SupabaseTables.buddyProfiles)
             .select('accessories')
             .eq('user_id', userId)
             .maybeSingle();
@@ -811,7 +812,7 @@ class _BuddyCustomizationScreenState
 
       // Save to database
       await supabase
-          .from('buddy_profiles')
+          .from(SupabaseTables.buddyProfiles)
           .update(updates)
           .eq('user_id', userId);
 

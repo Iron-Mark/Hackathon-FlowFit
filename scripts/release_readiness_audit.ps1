@@ -89,6 +89,125 @@ function Read-AuditText {
     return Read-RepoText $Path
 }
 
+function Test-RenderedSupabaseEmailTemplates {
+    $manifestPath = 'build/supabase-email-templates/manifest.json'
+    $manifestFullPath = Get-RepoPath $manifestPath
+    if (-not (Test-Path -LiteralPath $manifestFullPath)) {
+        return [pscustomobject]@{
+            Valid = $false
+            Detail = "Missing rendered template manifest: $manifestPath."
+        }
+    }
+
+    try {
+        $manifest = Get-Content -Raw -LiteralPath $manifestFullPath | ConvertFrom-Json
+    } catch {
+        return [pscustomobject]@{
+            Valid = $false
+            Detail = "Rendered template manifest is not valid JSON: $manifestPath."
+        }
+    }
+
+    $expectedSupportEmail = [Environment]::GetEnvironmentVariable('FLOWFIT_SUPPORT_EMAIL')
+    if ([string]::IsNullOrWhiteSpace($expectedSupportEmail)) {
+        return [pscustomobject]@{
+            Valid = $false
+            Detail = 'FLOWFIT_SUPPORT_EMAIL is required to validate rendered Supabase email templates.'
+        }
+    }
+
+    $expectedSupportEmail = $expectedSupportEmail.Trim()
+    $manifestSupportEmail = [string]$manifest.supportEmail
+    if ($manifestSupportEmail.Trim() -ne $expectedSupportEmail) {
+        return [pscustomobject]@{
+            Valid = $false
+            Detail = "Rendered template manifest is for $manifestSupportEmail, but this audit expects $expectedSupportEmail."
+        }
+    }
+
+    $templates = @($manifest.templates)
+    if ($templates.Count -eq 0) {
+        return [pscustomobject]@{
+            Valid = $false
+            Detail = 'Rendered template manifest does not list any template outputs.'
+        }
+    }
+
+    $requiredOutputs = @(
+        'build/supabase-email-templates/confirm_signup.html',
+        'build/supabase-email-templates/confirm_signup.txt'
+    )
+    $outputsByPath = @{}
+    foreach ($template in $templates) {
+        $output = ([string]$template.output).Replace('\', '/')
+        if (-not [string]::IsNullOrWhiteSpace($output)) {
+            $outputsByPath[$output] = $template
+        }
+    }
+
+    foreach ($requiredOutput in $requiredOutputs) {
+        if (-not $outputsByPath.ContainsKey($requiredOutput)) {
+            return [pscustomobject]@{
+                Valid = $false
+                Detail = "Rendered template manifest is missing $requiredOutput."
+            }
+        }
+
+        $entry = $outputsByPath[$requiredOutput]
+        $outputFullPath = Get-RepoPath $requiredOutput
+        if (-not (Test-Path -LiteralPath $outputFullPath)) {
+            return [pscustomobject]@{
+                Valid = $false
+                Detail = "Rendered template output is missing: $requiredOutput."
+            }
+        }
+
+        $content = Get-Content -Raw -LiteralPath $outputFullPath
+        $missingTokens = @()
+        foreach ($token in @($expectedSupportEmail, '{{ .ConfirmationURL }}', '{{ .SiteURL }}')) {
+            if (-not $content.Contains($token)) {
+                $missingTokens += $token
+            }
+        }
+        if ($missingTokens.Count -gt 0) {
+            return [pscustomobject]@{
+                Valid = $false
+                Detail = "Rendered template $requiredOutput is missing required token(s): $($missingTokens -join ', ')."
+            }
+        }
+
+        foreach ($forbidden in @('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL', 'support@flowfit.com')) {
+            if ($content.Contains($forbidden)) {
+                return [pscustomobject]@{
+                    Valid = $false
+                    Detail = "Rendered template $requiredOutput still contains $forbidden."
+                }
+            }
+        }
+
+        $expectedHash = [string]$entry.sha256
+        if ([string]::IsNullOrWhiteSpace($expectedHash) -or $expectedHash -notmatch '^[a-fA-F0-9]{64}$') {
+            return [pscustomobject]@{
+                Valid = $false
+                Detail = "Rendered template manifest has an invalid sha256 for $requiredOutput."
+            }
+        }
+
+        $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $outputFullPath).Hash.ToLowerInvariant()
+        if ($actualHash -ne $expectedHash.ToLowerInvariant()) {
+            return [pscustomobject]@{
+                Valid = $false
+                Detail = "Rendered template hash mismatch for $requiredOutput."
+            }
+        }
+    }
+
+    return [pscustomobject]@{
+        Valid = $true
+        Detail = "Rendered Supabase email templates are dashboard-ready in $manifestPath."
+    }
+}
+
 function Read-Properties {
     param([string]$Path)
 
@@ -804,7 +923,12 @@ function Test-SupabaseConfig {
     if ($templateIssues.Count -gt 0) {
         Add-Fail 'Supabase email templates' "Supabase auth email templates have release-blocking placeholders: $($templateIssues -join '; ')."
     } elseif ($templateReplacementTokens.Count -gt 0) {
-        Add-Warn 'Supabase email templates' "Render dashboard-ready templates with scripts/render_supabase_email_templates.ps1 after the support inbox is verified, then copy them to Supabase Auth Email Templates. Source files still contain REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL: $($templateReplacementTokens -join ', ')." -StrictFailure $false
+        $renderedTemplates = Test-RenderedSupabaseEmailTemplates
+        if ($renderedTemplates.Valid) {
+            Add-Pass 'Supabase email templates' "$($renderedTemplates.Detail) Copy them to Supabase Auth Email Templates. Source files stay tokenized for local regeneration: $($templateReplacementTokens -join ', ')."
+        } else {
+            Add-Warn 'Supabase email templates' "Render dashboard-ready templates with scripts/render_supabase_email_templates.ps1 after the support inbox is verified, then copy them to Supabase Auth Email Templates. Source files still contain REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL: $($templateReplacementTokens -join ', '). $($renderedTemplates.Detail)" -StrictFailure $false
+        }
     } elseif ($templatesUseSiteUrl) {
         Add-Pass 'Supabase email templates' 'Supabase auth email templates use {{ .SiteURL }} for public compliance links and no known placeholder support inbox.'
     } else {

@@ -177,7 +177,7 @@ flutter analyze
 ```
 
 ### Installation Errors
-See [docs/INSTALLATION_TROUBLESHOOTING.md](docs/INSTALLATION_TROUBLESHOOTING.md)
+See [docs/INSTALLATION_TROUBLESHOOTING.md](INSTALLATION_TROUBLESHOOTING.md)
 
 ### Runtime Errors
 ```bash
@@ -213,4 +213,4 @@ Remember to approve the installation on your watch!
 
 ---
 
-**For detailed build fixes, see**: [docs/BUILD_FIXES_APPLIED.md](docs/BUILD_FIXES_APPLIED.md)
+**For detailed build fixes, see**: [docs/BUILD_FIXES_APPLIED.md](BUILD_FIXES_APPLIED.md)

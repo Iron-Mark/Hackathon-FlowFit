@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/config/supabase_tables.dart';
 import '../presentation/providers/providers.dart';
 import '../domain/entities/auth_state.dart';
 
@@ -93,7 +94,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           try {
             final supabase = Supabase.instance.client;
             final buddyResponse = await supabase
-                .from('buddy_profiles')
+                .from(SupabaseTables.buddyProfiles)
                 .select()
                 .eq('user_id', userId)
                 .maybeSingle();

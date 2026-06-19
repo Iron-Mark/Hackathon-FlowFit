@@ -13,7 +13,7 @@ flowfit/
 ├── HEART_RATE_DATA_FLOW.md
 ├── IMPLEMENTATION_CHECKLIST.md
 ├── INSTALLATION_TROUBLESHOOTING.md
-├── QUICK_START.md
+├── docs/QUICK_START.md
 ├── SAMSUNG_HEALTH_IMPLEMENTATION_SUMMARY.md
 ├── SAMSUNG_HEALTH_SETUP_GUIDE.md
 ├── VGV_IMPROVEMENTS.md
@@ -63,7 +63,7 @@ Moved 11 documentation files:
 - ✅ HEART_RATE_DATA_FLOW.md
 - ✅ IMPLEMENTATION_CHECKLIST.md
 - ✅ INSTALLATION_TROUBLESHOOTING.md
-- ✅ QUICK_START.md
+- ✅ docs/QUICK_START.md
 - ✅ SAMSUNG_HEALTH_IMPLEMENTATION_SUMMARY.md
 - ✅ SAMSUNG_HEALTH_SETUP_GUIDE.md
 - ✅ VGV_IMPROVEMENTS.md
@@ -79,9 +79,9 @@ Moved 3 batch files:
 
 ### New Files Created
 - ✅ `docs/README.md` - Documentation index
-- ✅ `scripts/README.md` - Scripts documentation
-- ✅ `PROJECT_STRUCTURE.md` - Project structure guide
-- ✅ `FOLDER_REORGANIZATION.md` - This file
+- ✅ `docs/scripts/README.md` - Scripts documentation
+- ✅ `docs/PROJECT_STRUCTURE.md` - Project structure guide
+- ✅ `docs/FOLDER_REORGANIZATION.md` - This file
 
 ### Updated Files
 - ✅ `README.md` - Updated all documentation links
@@ -117,8 +117,8 @@ Moved 3 batch files:
 All documentation links have been updated:
 
 ### In README.md
-- Changed: `[QUICK_START.md](QUICK_START.md)`
-- To: `[QUICK_START.md](docs/QUICK_START.md)`
+- Root-level links point into `docs/`.
+- Docs-internal links use paths relative to the current file.
 
 ### In Other Docs
 - All internal links updated
@@ -168,7 +168,7 @@ docs\SAMSUNG_HEALTH_SETUP_GUIDE.md
 
 **New Scripts**:
 1. Create file in `scripts/` folder
-2. Add entry to `scripts/README.md`
+2. Add entry to `docs/scripts/README.md`
 3. Make sure paths are relative to root
 
 ## ✅ Verification
@@ -226,8 +226,8 @@ The project now has a clean, professional structure that is:
 
 ## 🔗 Quick Links
 
-- [Main README](README.md)
-- [Documentation Index](docs/README.md)
+- [Main README](../README.md)
+- [Documentation Index](README.md)
 - [Scripts Documentation](scripts/README.md)
 - [Project Structure Guide](PROJECT_STRUCTURE.md)
 

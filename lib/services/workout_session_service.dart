@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/config/supabase_tables.dart';
 import '../models/workout_session.dart';
 import '../models/running_session.dart';
 import '../models/walking_session.dart';
@@ -12,7 +13,7 @@ class WorkoutSessionService {
   Future<String> createSession(WorkoutSession session) async {
     final data = session.toJson();
     final response = await _client
-        .from('workout_sessions')
+        .from(SupabaseTables.workoutSessions)
         .insert(data)
         .select('id')
         .single();
@@ -23,7 +24,7 @@ class WorkoutSessionService {
   /// Gets a workout session by ID
   Future<WorkoutSession?> getSession(String sessionId) async {
     final response = await _client
-        .from('workout_sessions')
+        .from(SupabaseTables.workoutSessions)
         .select()
         .eq('id', sessionId)
         .maybeSingle();
@@ -36,13 +37,16 @@ class WorkoutSessionService {
   /// Updates an existing workout session
   Future<void> updateSession(WorkoutSession session) async {
     final data = session.toJson();
-    await _client.from('workout_sessions').update(data).eq('id', session.id);
+    await _client
+        .from(SupabaseTables.workoutSessions)
+        .update(data)
+        .eq('id', session.id);
   }
 
   /// Saves a workout session (creates if new, updates if exists)
   Future<void> saveSession(WorkoutSession session) async {
     final data = session.toJson();
-    await _client.from('workout_sessions').upsert(data);
+    await _client.from(SupabaseTables.workoutSessions).upsert(data);
   }
 
   /// Lists recent workout sessions for the current user
@@ -56,7 +60,7 @@ class WorkoutSessionService {
     }
 
     var query = _client
-        .from('workout_sessions')
+        .from(SupabaseTables.workoutSessions)
         .select()
         .eq('user_id', user.id);
 
@@ -75,7 +79,10 @@ class WorkoutSessionService {
 
   /// Deletes a workout session
   Future<void> deleteSession(String sessionId) async {
-    await _client.from('workout_sessions').delete().eq('id', sessionId);
+    await _client
+        .from(SupabaseTables.workoutSessions)
+        .delete()
+        .eq('id', sessionId);
   }
 
   /// Gets workout sessions for a specific date range
@@ -89,7 +96,7 @@ class WorkoutSessionService {
     }
 
     final response = await _client
-        .from('workout_sessions')
+        .from(SupabaseTables.workoutSessions)
         .select()
         .eq('user_id', user.id)
         .gte('start_time', startDate.toIso8601String())

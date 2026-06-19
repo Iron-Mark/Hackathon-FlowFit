@@ -250,7 +250,7 @@ All 4 survey screens now have consistent:
 3. ✅ `supabase/FIX_RLS_POLICY.sql`
    - Created quick fix script
 
-4. ✅ `supabase/QUICK_FIX_RLS.md`
+4. ✅ `docs/supabase/QUICK_FIX_RLS.md`
    - Created step-by-step fix guide
 
 ---
@@ -260,7 +260,7 @@ All 4 survey screens now have consistent:
 1. **Run Database Fix** (2 minutes)
    - Open Supabase Dashboard
    - Go to SQL Editor
-   - Run script from `supabase/QUICK_FIX_RLS.md`
+   - Run script from `docs/supabase/QUICK_FIX_RLS.md`
    - Reload schema cache
 
 2. **Test Complete Flow** (5 minutes)
@@ -295,9 +295,9 @@ All 4 survey screens now have consistent:
 ## Support
 
 If you still have issues:
-1. Check `TROUBLESHOOTING.md`
-2. Check `supabase/QUICK_FIX_RLS.md`
-3. Check `supabase/SETUP_DATABASE.md`
+1. Check `docs/TROUBLESHOOTING.md`
+2. Check `docs/supabase/QUICK_FIX_RLS.md`
+3. Check `docs/supabase/SETUP_DATABASE.md`
 4. Verify Supabase credentials in `lib/secrets.dart`
 5. Check Flutter logs for detailed errors
 

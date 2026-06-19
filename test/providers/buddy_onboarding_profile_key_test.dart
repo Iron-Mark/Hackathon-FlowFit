@@ -14,7 +14,7 @@ void main() {
   });
 
   test('Buddy onboarding upserts user_profiles by auth user_id', () {
-    expect(source, contains(".from('user_profiles')"));
+    expect(source, contains('.from(SupabaseTables.userProfiles)'));
     expect(source, contains('.upsert('));
     expect(source, contains("'user_id': userId"));
     expect(source, contains("onConflict: 'user_id'"));
@@ -23,12 +23,15 @@ void main() {
   });
 
   test('Buddy onboarding saves buddy_profiles idempotently by user_id', () {
-    expect(source, contains(".from('buddy_profiles')"));
+    expect(source, contains('.from(SupabaseTables.buddyProfiles)'));
     expect(
       source,
       contains(".upsert(profile.toJson(), onConflict: 'user_id')"),
     );
-    expect(source, isNot(contains(".from('buddy_profiles').insert")));
+    expect(
+      source,
+      isNot(contains('.from(SupabaseTables.buddyProfiles).insert')),
+    );
   });
 
   test('Buddy onboarding user profile payload completes the survey gate', () {

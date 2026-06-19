@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/config/supabase_tables.dart';
 import '../models/buddy_profile.dart';
 
 /// Buddy Profile Provider
@@ -13,7 +14,7 @@ final buddyProfileProvider = FutureProvider.family<BuddyProfile?, String>((
 
   try {
     final response = await supabase
-        .from('buddy_profiles')
+        .from(SupabaseTables.buddyProfiles)
         .select()
         .eq('user_id', userId)
         .maybeSingle();
@@ -46,7 +47,7 @@ class BuddyProfileNotifier extends StateNotifier<AsyncValue<BuddyProfile?>> {
     try {
       final supabase = Supabase.instance.client;
       final response = await supabase
-          .from('buddy_profiles')
+          .from(SupabaseTables.buddyProfiles)
           .select()
           .eq('user_id', userId)
           .maybeSingle();
@@ -71,7 +72,7 @@ class BuddyProfileNotifier extends StateNotifier<AsyncValue<BuddyProfile?>> {
     try {
       final supabase = Supabase.instance.client;
       await supabase
-          .from('buddy_profiles')
+          .from(SupabaseTables.buddyProfiles)
           .update({
             'color': color,
             'updated_at': DateTime.now().toIso8601String(),
@@ -98,7 +99,7 @@ class BuddyProfileNotifier extends StateNotifier<AsyncValue<BuddyProfile?>> {
 
       final supabase = Supabase.instance.client;
       await supabase
-          .from('buddy_profiles')
+          .from(SupabaseTables.buddyProfiles)
           .update({
             'xp': newXP,
             'level': newLevel,

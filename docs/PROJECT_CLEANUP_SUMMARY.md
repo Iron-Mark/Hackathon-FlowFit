@@ -95,7 +95,7 @@ When adding new documentation:
 1. Create files in `docs/` folder
 2. Add entry to `docs/INDEX.md`
 3. Update README.md if it's a major document
-4. Use relative links: `[Link](docs/FILE.md)`
+4. Use relative paths for links, for example `docs/FILE.md`
 
 ## 🎯 Result
 

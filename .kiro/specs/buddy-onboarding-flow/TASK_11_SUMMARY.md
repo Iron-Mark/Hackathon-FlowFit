@@ -44,7 +44,7 @@
 2. `lib/services/buddy_offline_storage.dart`
 3. `lib/providers/buddy_offline_storage_provider.dart`
 4. `lib/widgets/buddy_error_widget.dart`
-5. `lib/core/exceptions/BUDDY_ERROR_HANDLING.md`
+5. `docs/code/lib/core/exceptions/BUDDY_ERROR_HANDLING.md`
 
 ## Files Modified
 

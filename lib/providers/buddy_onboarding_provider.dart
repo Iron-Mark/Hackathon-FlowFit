@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import '../core/config/supabase_tables.dart';
 import '../models/buddy_onboarding_state.dart';
 import '../models/buddy_profile.dart';
 import '../core/exceptions/buddy_exceptions.dart';
@@ -201,7 +202,7 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
   Future<bool> _isNetworkAvailable() async {
     try {
       // Try a simple query to check connectivity
-      await _client.from('buddy_profiles').select('id').limit(1);
+      await _client.from(SupabaseTables.buddyProfiles).select('id').limit(1);
       return true;
     } catch (e) {
       return false;
@@ -400,7 +401,7 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
   /// Save Buddy profile to Supabase
   Future<void> _saveBuddyProfile(BuddyProfile profile) async {
     await _client
-        .from('buddy_profiles')
+        .from(SupabaseTables.buddyProfiles)
         .upsert(profile.toJson(), onConflict: 'user_id');
   }
 
@@ -412,7 +413,7 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
     bool? notificationsEnabled,
   }) async {
     await _client
-        .from('user_profiles')
+        .from(SupabaseTables.userProfiles)
         .upsert(
           buildBuddyUserProfileUpsertPayload(
             userId: userId,

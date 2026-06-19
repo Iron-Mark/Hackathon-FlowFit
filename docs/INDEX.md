@@ -11,8 +11,8 @@ All documentation has been organized into logical folders for easy navigation.
 Essential documentation that should be easily accessible:
 
 - **README.md** - Main project overview and setup instructions
-- **QUICK_START.md** - Quick start guide for developers
-- **TROUBLESHOOTING.md** - Common issues and solutions
+- **docs/QUICK_START.md** - Quick start guide for developers
+- **docs/TROUBLESHOOTING.md** - Common issues and solutions
 
 ---
 
@@ -236,8 +236,8 @@ Build and deployment scripts:
 3. Quick facts: `docs/presentation/WEAR_OS_INTEGRATION_SUMMARY.md`
 
 ### For Development:
-1. Setup: `README.md` and `QUICK_START.md`
-2. Issues: `TROUBLESHOOTING.md`
+1. Setup: `README.md` and `docs/QUICK_START.md`
+2. Issues: `docs/TROUBLESHOOTING.md`
 3. Implementation: `docs/implementation/`
 4. Features: `docs/features/`
 
@@ -272,7 +272,7 @@ Build and deployment scripts:
 - **Presenting:** `docs/presentation/`
 - **Building:** `scripts/`
 - **Understanding:** `docs/features/`
-- **Debugging:** `TROUBLESHOOTING.md` or `docs/implementation/`
+- **Debugging:** `docs/TROUBLESHOOTING.md` or `docs/implementation/`
 
 ---
 
@@ -286,8 +286,8 @@ Build and deployment scripts:
 ```
 flowfit/
 ├── README.md                    # Main readme
-├── QUICK_START.md              # Quick start guide
-├── TROUBLESHOOTING.md          # Troubleshooting
+├── docs/QUICK_START.md              # Quick start guide
+├── docs/TROUBLESHOOTING.md          # Troubleshooting
 ├── docs/
 │   ├── INDEX.md                # This file
 │   ├── presentation/           # For judges/stakeholders
@@ -301,10 +301,10 @@ flowfit/
 ## 🚀 Getting Started
 
 1. **New to the project?** Start with `README.md`
-2. **Want to run it?** Check `QUICK_START.md`
+2. **Want to run it?** Check `docs/QUICK_START.md`
 3. **Preparing presentation?** Go to `docs/presentation/`
 4. **Need to verify AI?** See `docs/implementation/AI_LIVE_CLASSIFICATION_CONFIRMED.md`
-5. **Having issues?** Check `TROUBLESHOOTING.md`
+5. **Having issues?** Check `docs/TROUBLESHOOTING.md`
 
 ---
 

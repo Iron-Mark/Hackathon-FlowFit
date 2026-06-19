@@ -85,7 +85,7 @@ void main() {
     createIosExportOptions = File(
       'scripts/create_ios_export_options.ps1',
     ).readAsStringSync();
-    scriptsReadme = File('scripts/README.md').readAsStringSync();
+    scriptsReadme = File('docs/scripts/README.md').readAsStringSync();
     gitignore = File('.gitignore').readAsStringSync();
     supabaseConfig = File('supabase/config.toml').readAsStringSync();
     supabaseConfirmSignupHtml = File(
@@ -95,10 +95,10 @@ void main() {
       'supabase/email_templates/confirm_signup.txt',
     ).readAsStringSync();
     supabaseEmailSetupGuide = File(
-      'supabase/email_templates/EMAIL_SETUP_GUIDE.md',
+      'docs/supabase/email_templates/EMAIL_SETUP_GUIDE.md',
     ).readAsStringSync();
     supabaseEmailQuickSetup = File(
-      'supabase/email_templates/QUICK_SETUP.md',
+      'docs/supabase/email_templates/QUICK_SETUP.md',
     ).readAsStringSync();
     releaseEnvExample = File('.env.release.example').readAsStringSync();
     configureLocalRelease = File(
@@ -278,10 +278,9 @@ void main() {
     expect(releaseStatusSnapshot, contains('Add-RepositoryVariableReadiness'));
     expect(releaseStatusSnapshot, contains('[int]\$PullRequest = 0'));
     expect(releaseStatusSnapshot, contains('if (\$PullRequest -gt 0)'));
-    expect(
-      releaseStatusSnapshot,
-      contains('Current branch PR status unavailable'),
-    );
+    expect(releaseStatusSnapshot, contains('Current branch has no open PR'));
+    expect(releaseStatusSnapshot, contains("'list'"));
+    expect(releaseStatusSnapshot, contains("'--head'"));
     expect(releaseStatusSnapshot, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(releaseStatusSnapshot, contains('FLOWFIT_WEB_BASE_HREF'));
     expect(releaseStatusSnapshot, contains('optional override present'));
@@ -327,6 +326,97 @@ void main() {
       expect(snapshot, contains('Strict audit skipped'));
       expect(snapshot, contains('Remote checks skipped'));
       expect(snapshot, isNot(contains('SUPABASE_PUBLISHABLE_KEY=')));
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('release status snapshot handles a branch with no PR quietly', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_release_snapshot_no_pr_',
+    );
+    try {
+      final repoDir = Directory('${tempDir.path}${Platform.pathSeparator}repo')
+        ..createSync();
+      final scriptsDir = Directory(
+        '${repoDir.path}${Platform.pathSeparator}scripts',
+      )..createSync();
+      final snapshotScript = File(
+        '${scriptsDir.path}${Platform.pathSeparator}release_status_snapshot.ps1',
+      );
+      File('scripts/release_status_snapshot.ps1').copySync(snapshotScript.path);
+
+      final ghShim = File(
+        '${tempDir.path}${Platform.pathSeparator}gh${Platform.isWindows ? '.cmd' : ''}',
+      );
+      if (Platform.isWindows) {
+        ghShim.writeAsStringSync('''
+@echo off
+if "%1"=="pr" if "%2"=="list" (
+  echo []
+  exit /b 0
+)
+echo gh unsupported
+exit /b 1
+''');
+      } else {
+        ghShim.writeAsStringSync(r'''
+#!/usr/bin/env sh
+if [ "$1" = "pr" ] && [ "$2" = "list" ]; then
+  echo '[]'
+  exit 0
+fi
+echo 'gh unsupported'
+exit 1
+''');
+        Process.runSync('chmod', ['+x', ghShim.path]);
+      }
+
+      final init = Process.runSync('git', [
+        'init',
+        '-b',
+        'main',
+      ], workingDirectory: repoDir.path);
+      expect(init.exitCode, 0, reason: '${init.stdout}\n${init.stderr}');
+
+      final addRemote = Process.runSync('git', [
+        'remote',
+        'add',
+        'origin',
+        'https://github.com/Iron-Mark/Hackathon-FlowFit.git',
+      ], workingDirectory: repoDir.path);
+      expect(
+        addRemote.exitCode,
+        0,
+        reason: '${addRemote.stdout}\n${addRemote.stderr}',
+      );
+
+      final outFile = File(
+        '${tempDir.path}${Platform.pathSeparator}snapshot.md',
+      );
+      final pathListSeparator = Platform.isWindows ? ';' : ':';
+      final env = Map<String, String>.from(Platform.environment)
+        ..['PATH'] =
+            '${tempDir.path}$pathListSeparator${Platform.environment['PATH'] ?? ''}';
+      final result = Process.runSync(
+        'pwsh',
+        [
+          '-NoProfile',
+          '-File',
+          snapshotScript.path,
+          '-SkipStrictAudit',
+          '-OutFile',
+          outFile.path,
+        ],
+        workingDirectory: repoDir.path,
+        environment: env,
+      );
+
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+      final snapshot = outFile.readAsStringSync();
+      expect(snapshot, contains('Current branch has no open PR: `main`'));
+      expect(snapshot, isNot(contains('Current branch PR status unavailable')));
+      expect(snapshot, isNot(contains('Usage:  gh pr view')));
     } finally {
       tempDir.deleteSync(recursive: true);
     }
@@ -1283,6 +1373,30 @@ storeFile=upload-keystore.jks
     expect(releaseEnvExample, isNot(contains('dnasghxxqwibwqnljvxr')));
   });
 
+  test('project markdown docs are centralized under docs', () {
+    final allowedRootDocs = <String>{'AGENTS.md', 'README.md'};
+    final trackedFiles = Process.runSync('git', ['ls-files']);
+    expect(
+      trackedFiles.exitCode,
+      0,
+      reason: '${trackedFiles.stdout}\n${trackedFiles.stderr}',
+    );
+
+    final misplacedDocs = LineSplitter.split(trackedFiles.stdout as String)
+        .where((path) => path.toLowerCase().endsWith('.md'))
+        .where(
+          (path) =>
+              !path.startsWith('.github/') &&
+              !path.startsWith('.kiro/') &&
+              !path.startsWith('docs/') &&
+              !allowedRootDocs.contains(path),
+        )
+        .toList();
+    misplacedDocs.sort();
+
+    expect(misplacedDocs, isEmpty);
+  });
+
   test('GitHub release variable helper validates and redacts values', () {
     final helper = File(
       'scripts/configure_github_release_variables.ps1',
@@ -1745,12 +1859,21 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     );
   });
 
-  test('store release wrapper runs Android release lint from Android project', () {
-    expect(storeReleaseBuild, contains("Push-Location (Join-Path \$repoRoot 'android')"));
-    expect(storeReleaseBuild, contains('Pop-Location'));
-    expect(storeReleaseBuild, contains("Invoke-CheckedCommand 'Android release lint'"));
-    expect(storeReleaseBuild, contains("'-Pandroid.enableJetifier=false'"));
-  });
+  test(
+    'store release wrapper runs Android release lint from Android project',
+    () {
+      expect(
+        storeReleaseBuild,
+        contains("Push-Location (Join-Path \$repoRoot 'android')"),
+      );
+      expect(storeReleaseBuild, contains('Pop-Location'));
+      expect(
+        storeReleaseBuild,
+        contains("Invoke-CheckedCommand 'Android release lint'"),
+      );
+      expect(storeReleaseBuild, contains("'-Pandroid.enableJetifier=false'"));
+    },
+  );
 
   test('release preflight invokes audit through portable script path', () {
     expect(releasePreflight, contains('Join-Path \$repoRoot'));
@@ -2551,23 +2674,31 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
   });
 
   test('Android release auth deep link is not marked as an HTTPS app link', () {
-    expect(androidMainManifest, contains(r'android:scheme="${flowfitAuthScheme}"'));
+    expect(
+      androidMainManifest,
+      contains(r'android:scheme="${flowfitAuthScheme}"'),
+    );
     expect(androidMainManifest, contains('android:host="auth-callback"'));
     expect(androidMainManifest, isNot(contains('android:autoVerify="true"')));
   });
 
-  test('Wear OS shared library is compile-only for Android lint compatibility', () {
-    expect(
-      gradleBuild,
-      contains('compileOnly("com.google.android.wearable:wearable:2.9.0")'),
-    );
-    expect(
-      gradleBuild,
-      isNot(
-        contains('implementation("com.google.android.wearable:wearable:2.9.0")'),
-      ),
-    );
-  });
+  test(
+    'Wear OS shared library is compile-only for Android lint compatibility',
+    () {
+      expect(
+        gradleBuild,
+        contains('compileOnly("com.google.android.wearable:wearable:2.9.0")'),
+      );
+      expect(
+        gradleBuild,
+        isNot(
+          contains(
+            'implementation("com.google.android.wearable:wearable:2.9.0")',
+          ),
+        ),
+      );
+    },
+  );
 
   test('support inbox readiness follows configured support email', () {
     expect(readinessAudit, contains('FLOWFIT_SUPPORT_EMAIL'));
@@ -2914,6 +3045,12 @@ function Resolve-DnsName {
       expect(readinessAudit, contains('REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL'));
       expect(readinessAudit, contains('Supabase email templates'));
       expect(readinessAudit, contains('render_supabase_email_templates.ps1'));
+      expect(
+        readinessAudit,
+        contains('build/supabase-email-templates/manifest.json'),
+      );
+      expect(readinessAudit, contains('Get-FileHash -Algorithm SHA256'));
+      expect(readinessAudit, contains('Rendered Supabase email templates'));
       expect(renderSupabaseEmailTemplates, contains('FLOWFIT_SUPPORT_EMAIL'));
       expect(
         renderSupabaseEmailTemplates,

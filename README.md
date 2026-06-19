@@ -128,7 +128,7 @@ FlowFit is a dual-platform fitness app that runs on:
 
 The app uses Samsung Health Sensor SDK for real-time heart rate monitoring. See detailed setup guides:
 
-- **[QUICK_START.md](docs/QUICK_START.md)** - 5-minute quick start
+- **[docs/QUICK_START.md](docs/QUICK_START.md)** - 5-minute quick start
 - **[SAMSUNG_HEALTH_SETUP_GUIDE.md](docs/SAMSUNG_HEALTH_SETUP_GUIDE.md)** - Complete setup guide
 - **[IMPLEMENTATION_CHECKLIST.md](docs/IMPLEMENTATION_CHECKLIST.md)** - Testing checklist
 
@@ -343,7 +343,7 @@ pwsh -NoProfile -File scripts\run_phone.ps1 -Device <device-id>
 **📖 [Complete Documentation Index](docs/INDEX.md)** - Full list of all documentation
 
 ### 🚀 Quick Links
-- **[QUICK_START.md](QUICK_START.md)** - ⭐ **Start here!** Quick guide to run and test the app
+- **[docs/QUICK_START.md](docs/QUICK_START.md)** - ⭐ **Start here!** Quick guide to run and test the app
 - **[NAVIGATION_GUIDE.md](docs/NAVIGATION_GUIDE.md)** - 🗺️ **How to access heart rate monitoring UI**
 - **[GETTING_STARTED.md](docs/GETTING_STARTED.md)** - Initial setup guide
 - **[WATCH_TO_PHONE_COMPLETE_FLOW.md](docs/WATCH_TO_PHONE_COMPLETE_FLOW.md)** - Live data flow from watch to phone

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../core/config/supabase_tables.dart';
 
 /// Service for managing Supabase backend operations
 class SupabaseService {
@@ -6,7 +7,7 @@ class SupabaseService {
 
   /// Save heart rate data to Supabase
   Future<void> saveHeartRateData(Map<String, dynamic> data) async {
-    await _client.from('heart_rate').insert(data);
+    await _client.from(SupabaseTables.heartRate).insert(data);
   }
 
   /// Get heart rate data for a date range
@@ -15,7 +16,7 @@ class SupabaseService {
     required DateTime endDate,
   }) async {
     final response = await _client
-        .from('heart_rate')
+        .from(SupabaseTables.heartRate)
         .select()
         .gte('timestamp', startDate.millisecondsSinceEpoch)
         .lte('timestamp', endDate.millisecondsSinceEpoch)
@@ -24,4 +25,5 @@ class SupabaseService {
     return List<Map<String, dynamic>>.from(response);
   }
 }
+
 // Restored SupabaseService implementation; supabase_flutter dependency used.
