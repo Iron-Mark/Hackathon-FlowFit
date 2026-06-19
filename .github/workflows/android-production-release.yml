@@ -1,0 +1,187 @@
+name: Android Production Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      support_inbox_evidence_note:
+        description: "Date/source of the external test email received by the configured support inbox."
+        required: true
+        type: string
+      release_label:
+        description: "Optional label for this Play Store handoff artifact."
+        required: false
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID: ${{ vars.FLOWFIT_ANDROID_APPLICATION_ID || 'com.oldstlabs.flowfit' }}
+  ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME: ${{ vars.FLOWFIT_AUTH_SCHEME || 'com.oldstlabs.flowfit' }}
+  FLOWFIT_PUBLIC_WEB_BASE_URL: ${{ vars.FLOWFIT_PUBLIC_WEB_BASE_URL }}
+  FLOWFIT_SUPPORT_EMAIL: ${{ vars.FLOWFIT_SUPPORT_EMAIL }}
+  FLOWFIT_SUPPORT_EMAIL_VERIFIED: ${{ vars.FLOWFIT_SUPPORT_EMAIL_VERIFIED }}
+  SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+  SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+  FLOWFIT_ANDROID_KEYSTORE_BASE64: ${{ secrets.FLOWFIT_ANDROID_KEYSTORE_BASE64 }}
+  FLOWFIT_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FLOWFIT_ANDROID_KEYSTORE_PASSWORD }}
+  FLOWFIT_ANDROID_KEY_ALIAS: ${{ secrets.FLOWFIT_ANDROID_KEY_ALIAS }}
+  FLOWFIT_ANDROID_KEY_PASSWORD: ${{ secrets.FLOWFIT_ANDROID_KEY_PASSWORD }}
+  SUPPORT_INBOX_EVIDENCE_NOTE: ${{ inputs.support_inbox_evidence_note }}
+  RELEASE_LABEL: ${{ inputs.release_label }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-production-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Verified Android AAB
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: play-store-release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Free CI disk space
+        shell: bash
+        run: |
+          set -euo pipefail
+          df -h
+          sudo rm -rf \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/local/share/boost \
+            /usr/share/dotnet
+          df -h
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: ""
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0" "ndk;28.0.13004108"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.41.9"
+          cache: true
+
+      - name: Validate release inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_env=(
+            ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID
+            ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME
+            FLOWFIT_PUBLIC_WEB_BASE_URL
+            FLOWFIT_SUPPORT_EMAIL
+            FLOWFIT_SUPPORT_EMAIL_VERIFIED
+            SUPABASE_URL
+            SUPABASE_PUBLISHABLE_KEY
+            FLOWFIT_ANDROID_KEYSTORE_BASE64
+            FLOWFIT_ANDROID_KEYSTORE_PASSWORD
+            FLOWFIT_ANDROID_KEY_ALIAS
+            FLOWFIT_ANDROID_KEY_PASSWORD
+            SUPPORT_INBOX_EVIDENCE_NOTE
+          )
+
+          missing=()
+          for name in "${required_env[@]}"; do
+            if [[ -z "${!name:-}" ]]; then
+              missing+=("$name")
+            fi
+          done
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required release inputs: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+          if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" != "true" ]]; then
+            echo "FLOWFIT_SUPPORT_EMAIL_VERIFIED must be true after inbound support email verification." >&2
+            exit 1
+          fi
+          if [[ "${FLOWFIT_SUPPORT_EMAIL,,}" == "support@flowfit.com" ]]; then
+            echo "support@flowfit.com is the reserved source replacement token, not a release inbox." >&2
+            exit 1
+          fi
+          if [[ "${FLOWFIT_PUBLIC_WEB_BASE_URL}" != https://* ]]; then
+            echo "FLOWFIT_PUBLIC_WEB_BASE_URL must be the deployed HTTPS compliance-page base URL." >&2
+            exit 1
+          fi
+          if ! [[ "${SUPABASE_URL,,}" =~ ^https://[a-z0-9-]+\.supabase\.co$ ]]; then
+            echo "SUPABASE_URL must be a Supabase project URL." >&2
+            exit 1
+          fi
+          if [[ "${SUPABASE_PUBLISHABLE_KEY}" != sb_publishable_* ]]; then
+            echo "SUPABASE_PUBLISHABLE_KEY must be a publishable client key." >&2
+            exit 1
+          fi
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Write support inbox evidence
+        shell: pwsh
+        run: >
+          pwsh -NoProfile -File scripts/verify_support_inbox.ps1
+          -SupportEmail "$env:FLOWFIT_SUPPORT_EMAIL"
+          -ConfirmedInbound
+          -EvidenceNote "$env:SUPPORT_INBOX_EVIDENCE_NOTE"
+          -OutFile build/support-inbox-verification.json
+
+      - name: Render Supabase email templates
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/render_supabase_email_templates.ps1 -SupportEmailVerified
+
+      - name: Build signed Android Play Store AAB
+        shell: pwsh
+        run: >
+          pwsh -NoProfile -File scripts/store_release_build.ps1
+          -Target Android
+          -RunStrictAudit
+          -SupportEmailVerified
+          -SkipFlutterPubGet
+
+      - name: Verify release artifacts
+        shell: pwsh
+        run: >
+          pwsh -NoProfile -File scripts/verify_store_artifacts.ps1
+          -Strict
+          -RequireArtifact android-play-store-aab
+          -RequireStrictAudit
+          -RequireCurrentCommit
+
+      - name: Upload Play Store release handoff
+        uses: actions/upload-artifact@v7
+        with:
+          name: flowfit-android-play-store-release-${{ github.sha }}
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/store-release-artifacts.json
+            build/store-release-artifact-verification.json
+            build/store-release-readiness-audit.json
+            build/support-inbox-verification.json
+            build/supabase-email-templates/manifest.json
+            build/supabase-email-templates/confirm_signup.html
+            build/supabase-email-templates/confirm_signup.txt
+          if-no-files-found: error
+          retention-days: 30

@@ -69,6 +69,10 @@ Technical implementation details and verification:
   - Play Store release notes, listing copy, QA evidence, and real-device
     internal testing checklist
 
+- **release/PLAY_STORE_SUBMISSION_CHECKLIST_2026-06-19.md**
+  - Final Play Console setup, protected release workflow inputs, listing copy,
+    store assets, and internal testing result template
+
 - **release/GITHUB_ACTIONS_CI_AUDIT_2026-06-19.md**
   - Remote workflow status, automatic CI gate coverage, intentional CI limits,
     and future protected release-workflow recommendation

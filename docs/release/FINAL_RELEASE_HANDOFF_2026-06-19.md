@@ -113,6 +113,14 @@ Remote CI verification:
 11. Promote only after the real-device smoke passes against the intended
     Supabase project.
 
+For a fresh signed AAB from CI, use the protected manual workflow
+`.github/workflows/android-production-release.yml`. Configure the
+`play-store-release` environment with reviewer approval, release variables, and
+Android signing secrets first. The workflow uploads an artifact named
+`flowfit-android-play-store-release-<commit-sha>` containing the AAB, release
+manifest, strict audit evidence, artifact verification evidence, support inbox
+evidence, and rendered Supabase email templates.
+
 ## Supabase Store Checklist
 
 Before public rollout:

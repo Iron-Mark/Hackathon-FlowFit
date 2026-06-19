@@ -64,8 +64,15 @@ compile gates used before the checkpoint push:
 - Web deployment verification: covered in Pages workflow when production
   repository variables are configured.
 
-No workflow patch was required for this audit because both workflows are active
-and passing on the exact pushed release commit.
+No patch was needed for the standard push/PR CI gates because both workflows are
+active and passing on the exact pushed release commit. A separate manual
+production workflow now exists for signed Play Store handoff builds:
+
+- `.github/workflows/android-production-release.yml`
+
+That workflow is intentionally `workflow_dispatch` only and uses the
+`play-store-release` GitHub Environment so repository maintainers can add
+reviewer approval and environment-scoped signing secrets.
 
 ## Intentional CI Limits
 
@@ -82,14 +89,14 @@ These are not failures:
 - CI does not build iOS IPA because GitHub-hosted Ubuntu lacks macOS/Xcode
   signing.
 
-## Recommended Future Hardening
+## Protected Production Workflow
 
-When release secrets are ready, add a protected manual workflow for production
-artifact rebuilds. It should run only by manual dispatch or on protected tags,
-use GitHub environments, and require reviewer approval before exposing signing
-secrets.
+When release secrets are ready, run the protected manual workflow instead of
+rebuilding Play Store artifacts on every push. It should remain manual-only or
+protected-tag-only because it touches signing material and release backend
+inputs.
 
-Suggested gates for that future protected workflow:
+The workflow runs these gates:
 
 ```powershell
 pwsh -NoProfile -File scripts\release_readiness_audit.ps1 `
@@ -109,5 +116,5 @@ pwsh -NoProfile -File scripts\verify_store_artifacts.ps1 `
   -RequireCurrentCommit
 ```
 
-Do not add this as an unprotected push workflow. It would expose signing and
-release backend inputs to every normal CI run.
+Do not convert this into an unprotected push workflow. It would expose signing
+and release backend inputs to every normal CI run.
