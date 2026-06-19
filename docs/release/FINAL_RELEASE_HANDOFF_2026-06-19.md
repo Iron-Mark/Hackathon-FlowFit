@@ -89,8 +89,9 @@ Remote CI verification:
 
 | Workflow | Result | Commit | Run |
 | --- | --- | --- | --- |
-| Flutter CI | Success | `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413453> |
-| Flutter Web Pages | Success | `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413448> |
+| Flutter CI for the AAB artifact commit | Success | `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413453> |
+| Flutter Web Pages for the latest web-relevant commit | Success | `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413448> |
+| Flutter CI for the protected-release-workflow docs commit | Success | `a28f5c507f5b6c73928902e0d527f602a52ef877` | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27815624424> |
 
 ## Google Play Store Steps
 

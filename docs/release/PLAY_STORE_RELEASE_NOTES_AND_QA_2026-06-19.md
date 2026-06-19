@@ -78,6 +78,7 @@ access.
 | Artifact verification | Passed | `12 pass, 0 warn, 0 fail` |
 | Flutter CI | Passed | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413453> |
 | Flutter Web Pages | Passed | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413448> |
+| Protected release workflow docs CI | Passed | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27815624424> |
 
 Artifact hash:
 

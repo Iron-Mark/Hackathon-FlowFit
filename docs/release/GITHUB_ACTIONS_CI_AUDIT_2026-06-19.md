@@ -8,12 +8,13 @@ are active:
 - `Flutter CI`
 - `Flutter Web Pages`
 
-Latest runs on commit `f8321f9f29d49b9d6b0686ffb96e496ef8c37208`:
+Current standard CI evidence:
 
 | Workflow | Result | URL |
 | --- | --- | --- |
-| Flutter CI | Success | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413453> |
-| Flutter Web Pages | Success | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413448> |
+| Flutter CI on latest release-docs/workflow commit `a28f5c507f5b6c73928902e0d527f602a52ef877` | Success | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27815624424> |
+| Flutter CI on AAB artifact commit `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` | Success | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413453> |
+| Flutter Web Pages on latest web-relevant commit `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` | Success | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413448> |
 
 ## Current Automatic Gates
 
@@ -66,7 +67,8 @@ compile gates used before the checkpoint push:
 
 No patch was needed for the standard push/PR CI gates because both workflows are
 active and passing on the exact pushed release commit. A separate manual
-production workflow now exists for signed Play Store handoff builds:
+production workflow named `Android Production Release` now exists for signed
+Play Store handoff builds:
 
 - `.github/workflows/android-production-release.yml`
 

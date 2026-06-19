@@ -8,7 +8,7 @@ Use this checklist after the release handoff in
 | Field | Value |
 | --- | --- |
 | Source commit | `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` |
-| Last pushed handoff commit before this checklist | `b5991ce23a037067c4293425b6e521ac4ae62891` |
+| Release workflow/checklist docs | Tracked on `main`; use `git log -1 -- docs/release .github/workflows/android-production-release.yml` for the latest docs commit |
 | Android package ID | `com.oldstlabs.flowfit` |
 | AAB path | `build/app/outputs/bundle/release/app-release.aab` |
 | AAB SHA-256 | `e62358e4f3251e540e6742ccf4380ce2e276634a8f72287fb5832849fd3b1f10` |
