@@ -61,6 +61,18 @@ Technical implementation details and verification:
   - Flutter web build and hosting notes
   - Local verification command list
 
+- **release/FINAL_RELEASE_HANDOFF_2026-06-19.md**
+  - Current Android Play Store candidate artifact path, SHA-256 hash, size,
+    source commit, strict audit result, and store handoff steps
+
+- **release/PLAY_STORE_RELEASE_NOTES_AND_QA_2026-06-19.md**
+  - Play Store release notes, listing copy, QA evidence, and real-device
+    internal testing checklist
+
+- **release/GITHUB_ACTIONS_CI_AUDIT_2026-06-19.md**
+  - Remote workflow status, automatic CI gate coverage, intentional CI limits,
+    and future protected release-workflow recommendation
+
 - **STORE_SUBMISSION_CHECKLIST.md**
   - Play Store, App Store, and Flutter web submission checklist
   - Privacy/account deletion URL requirements
