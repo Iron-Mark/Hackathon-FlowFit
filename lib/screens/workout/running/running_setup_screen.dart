@@ -5,9 +5,7 @@ import '../../../models/running_session.dart';
 import '../../../providers/running_session_provider.dart';
 import '../../../providers/workout_flow_provider.dart';
 
-/// Running setup screen - placeholder
-/// TODO: Implement full running setup with goal selection, sliders, map preview
-/// Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6
+/// Running setup screen with goal selection and target controls.
 class RunningSetupScreen extends ConsumerStatefulWidget {
   const RunningSetupScreen({super.key});
 
@@ -78,7 +76,7 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
         title: const Text('Running Setup'),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -210,7 +208,7 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 32),
 
               // Start button
               SizedBox(

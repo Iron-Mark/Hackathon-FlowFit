@@ -32,8 +32,7 @@ Complete authentication flow with loading screen, welcome screen, login, and sig
 **File:** `lib/screens/auth/login_screen.dart`
 - Email and password fields with validation
 - Password visibility toggle
-- "Forgot Password?" link (placeholder)
-- "Continue with Google" button (placeholder)
+- "Forgot Password?" link
 - Link to signup screen
 - Form validation:
   - Email format check
@@ -48,7 +47,6 @@ Complete authentication flow with loading screen, welcome screen, login, and sig
   - At least one uppercase letter
   - At least one number
 - Terms and Conditions checkbox (required)
-- "Continue with Google" button (placeholder)
 - Link to login screen
 - Loading state during registration
 
@@ -58,8 +56,8 @@ Complete authentication flow with loading screen, welcome screen, login, and sig
 Loading Screen (3s)
     ↓
 Welcome Screen
-    ├─→ Sign Up → Sign Up Screen → Home
-    └─→ Login → Login Screen → Home
+    ├─→ Sign Up → Sign Up Screen → Supabase Auth → Age Gate/Survey
+    └─→ Login → Login Screen → Supabase Auth → Dashboard/Age Gate
 ```
 
 ## Routes Configuration
@@ -87,14 +85,10 @@ routes: {
 - Password visibility toggles
 - Terms acceptance checkbox
 
-### ⏳ TODO (Backend Integration)
-- Actual authentication API calls
-- Google Sign In integration
-- Forgot password functionality
-- Email verification
-- Session management
-- Secure token storage
-- User profile management
+### ⏳ TODO (Future Enhancements)
+- Real Google/Apple OAuth provider flows
+- Biometric authentication
+- Remember me controls
 
 ## Usage
 
@@ -108,7 +102,7 @@ flutter run
 2. Welcome screen appears
 3. Click "Get Started" to go to signup
 4. Or click "I Already Have an Account" to go to login
-5. Fill in forms (currently bypasses backend, goes straight to home)
+5. Fill in forms and verify Supabase Auth handles signup/login
 
 ### Customizing Theme
 Edit `lib/theme/app_theme.dart` to modify:

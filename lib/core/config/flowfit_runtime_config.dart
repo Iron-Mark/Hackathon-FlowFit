@@ -14,7 +14,7 @@ class FlowFitRuntimeConfig {
 
   static const String supportEmail = String.fromEnvironment(
     'FLOWFIT_SUPPORT_EMAIL',
-    defaultValue: 'support@flowfit.com',
+    defaultValue: 'marksiazon.dev@gmail.com',
   );
 
   static const String publicWebBaseUrl = String.fromEnvironment(

@@ -1,4 +1,4 @@
-# Wear OS Heart Rate Monitor - Implementation Plan
+# Wear OS Heart Rate Monitor - Implementation Status
 
 ## 🎯 Overview
 This plan updates your FlowFit Wear OS app to have a streamlined heart rate monitoring interface with direct phone sync capability, following Wear OS best practices.
@@ -22,7 +22,7 @@ Modern Wear OS heart rate screen with:
 - Start/Stop monitoring button
 - Real-time heart rate updates
 - Animated heart icon (pulses with heartbeat)
-- Send to phone functionality (placeholder)
+- Send to phone functionality through the watch sync bridge
 - Ambient mode (low-power display)
 - Status messages
 
@@ -47,7 +47,7 @@ flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dar
 4. Opens full heart rate monitoring screen
 5. Tap "Start" to begin monitoring
 6. See real-time BPM updates
-7. Tap "Send" to send data to phone (placeholder)
+7. Tap "Send" to send the current reading to the paired phone
 8. Tap "Stop" to end monitoring
 
 ## 📱 UI Specifications
@@ -82,7 +82,7 @@ flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dar
         ↓
 [Wear UI Display] → [Send Button Pressed]
         ↓
-[WatchToPhoneSync Service] (TODO)
+[WatchToPhoneSync / WatchBridge Service]
         ↓
 [Wearable Data Layer API]
         ↓
@@ -103,28 +103,18 @@ flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dar
 - [x] Integrate with WatchBridgeService
 - [x] Add navigation from dashboard
 
-### 🔄 In Progress (Phase 2)
+### 🔄 In Progress (Device Verification)
 - [ ] Verify WatchBridgeService heart rate streaming works on device
-- [ ] Add haptic feedback on button press
-- [ ] Test on physical Galaxy Watch
+- [ ] Verify watch-to-phone sync on paired physical devices
+- [ ] Verify phone-side listener receives single readings and batches
+- [ ] Verify saved phone data reaches local database/Supabase when backend env is available
 
-### ⏳ TODO (Phase 3)
-- [ ] Create `WatchToPhoneSync` service using MessageClient
-- [ ] Implement data serialization (JSON format)
-- [ ] Add retry logic for failed transfers
-- [ ] Create connection status checker
-
-### ⏳ TODO (Phase 4)
-- [ ] Update `DataListenerService` in Android/Kotlin (phone side)
-- [ ] Parse incoming heart rate messages
-- [ ] Display notification on phone when data received
-- [ ] Save to local database + Supabase
-
-### ⏳ TODO (Phase 5)
-- [ ] Add loading states and animations
-- [ ] Implement battery optimization
-- [ ] Add settings screen
-- [ ] Test end-to-end on physical devices
+### ✅ Completed (Sync Plumbing)
+- [x] Add `WatchToPhoneSync` / `WatchBridgeService` MessageClient bridge
+- [x] Serialize heart-rate readings and sensor batches as JSON
+- [x] Add native Android `WatchToPhoneSyncManager`
+- [x] Add native phone `PhoneDataListenerService`
+- [x] Add retry/error handling in the Wear UI
 - [ ] Add haptic feedback
 
 ## 🎯 Example Usage Flow
@@ -149,12 +139,13 @@ flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dar
 
 5. **User taps "Send to Phone" button**
    - Button shows loading spinner
-   - Data packaged and sent (TODO: implement)
+   - Data packaged and sent through the watch sync bridge
    - Success message "Sent ✓"
 
-6. **Phone receives data** (TODO)
-   - Notification appears
-   - Data saved to Supabase
+6. **Phone receives data**
+   - Phone data listener receives the reading from the paired watch
+   - Data is available to the app for local display/sync
+   - Supabase persistence requires the configured backend env
    - Watch shows "Synced ✓"
 
 ## 📱 Ambient Mode Behavior
@@ -203,16 +194,15 @@ Already configured in AndroidManifest.xml:
 4. Tap "Start" and test monitoring
 5. Check if BPM updates appear
 
-### Short Term (Phase 2-3)
+### Short Term
 1. Test on physical device
-2. Implement WatchToPhoneSync service
-3. Add Wearable Data Layer API integration
+2. Verify paired-phone receipt for single readings and batches
+3. Verify Supabase persistence after backend env is configured
 
-### Long Term (Phase 4-5)
-1. Complete phone-side receiver
-2. Add Supabase sync
-3. Polish UI and animations
-4. Battery optimization
+### Long Term
+1. Polish UI and animations
+2. Battery optimization
+3. Add more device-matrix coverage
 
 ## 🎉 What You Have Now
 
@@ -220,7 +210,7 @@ Already configured in AndroidManifest.xml:
 ✅ **Real-time monitoring** - Connects to Samsung Health SDK
 ✅ **Ambient mode** - Battery-efficient display
 ✅ **Pulse animation** - Visual feedback during monitoring
-✅ **Send button** - Ready for phone sync (needs implementation)
+✅ **Send button** - Sends the current heart-rate reading to the paired phone through the watch sync bridge
 ✅ **Status indicators** - Connection and monitoring state
 ✅ **Adaptive layout** - Works on round and square watches
 
@@ -239,5 +229,5 @@ adb -s adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp logcat | findstr "FlowFit"
 
 ---
 
-**Status**: Phase 1 Complete ✅
-**Next**: Test on physical watch and implement phone sync
+**Status**: Local sync plumbing implemented ✅
+**Next**: Test on a paired physical watch and phone

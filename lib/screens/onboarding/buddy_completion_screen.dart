@@ -8,6 +8,12 @@ import '../../providers/buddy_onboarding_provider.dart';
 import '../../utils/buddy_colors.dart';
 import '../../core/exceptions/buddy_exceptions.dart';
 
+typedef BuddyOnboardingCompletionAction =
+    Future<void> Function({
+      required WidgetRef ref,
+      required BuildContext context,
+    });
+
 /// Buddy Completion Screen
 ///
 /// Celebrates the completion of Buddy onboarding with an
@@ -15,7 +21,9 @@ import '../../core/exceptions/buddy_exceptions.dart';
 ///
 /// Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 8.3
 class BuddyCompletionScreen extends ConsumerStatefulWidget {
-  const BuddyCompletionScreen({super.key});
+  const BuddyCompletionScreen({super.key, this.completeOnboarding});
+
+  final BuddyOnboardingCompletionAction? completeOnboarding;
 
   @override
   ConsumerState<BuddyCompletionScreen> createState() =>
@@ -24,28 +32,19 @@ class BuddyCompletionScreen extends ConsumerStatefulWidget {
 
 class _BuddyCompletionScreenState extends ConsumerState<BuddyCompletionScreen> {
   bool _isLoading = false;
+  bool _isErrorDialogShowing = false;
 
   Future<void> _handleStartMission() async {
+    if (_isLoading) return;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Complete onboarding and save to Supabase
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
-
-      if (userId == null) {
-        throw BuddyAuthException(
-          'User not authenticated',
-          userFriendlyMessage:
-              'Oops! You need to be logged in to create your Buddy.',
-        );
-      }
-
-      await ref
-          .read(buddyOnboardingProvider.notifier)
-          .completeOnboarding(userId);
+      final completeOnboarding =
+          widget.completeOnboarding ?? _completeSupabaseOnboarding;
+      await completeOnboarding(ref: ref, context: context);
 
       if (mounted) {
         // Navigate to dashboard
@@ -108,8 +107,31 @@ class _BuddyCompletionScreenState extends ConsumerState<BuddyCompletionScreen> {
     }
   }
 
-  void _showErrorDialog(String message, {required bool canRetry}) {
-    showDialog(
+  Future<void> _completeSupabaseOnboarding({
+    required WidgetRef ref,
+    required BuildContext context,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+
+    if (userId == null) {
+      throw BuddyAuthException(
+        'User not authenticated',
+        userFriendlyMessage:
+            'Oops! You need to be logged in to create your Buddy.',
+      );
+    }
+
+    await ref.read(buddyOnboardingProvider.notifier).completeOnboarding(userId);
+  }
+
+  Future<void> _showErrorDialog(
+    String message, {
+    required bool canRetry,
+  }) async {
+    if (_isErrorDialogShowing || !mounted) return;
+
+    _isErrorDialogShowing = true;
+    await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Oops!'),
@@ -119,6 +141,7 @@ class _BuddyCompletionScreenState extends ConsumerState<BuddyCompletionScreen> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                _isErrorDialogShowing = false;
                 _handleStartMission();
               },
               child: const Text('Try Again'),
@@ -130,6 +153,7 @@ class _BuddyCompletionScreenState extends ConsumerState<BuddyCompletionScreen> {
         ],
       ),
     );
+    _isErrorDialogShowing = false;
   }
 
   void _showSuccessSnackBar(String message) {

@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/deep_link_handler.dart';
+
+typedef ChangePasswordAction =
+    Future<void> Function({
+      required String currentPassword,
+      required String newPassword,
+    });
 
 class ChangePasswordScreen extends StatefulWidget {
-  const ChangePasswordScreen({super.key});
+  const ChangePasswordScreen({super.key, ChangePasswordAction? changePassword})
+    : _changePassword = changePassword;
+
+  final ChangePasswordAction? _changePassword;
 
   @override
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
@@ -32,25 +43,79 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password changed successfully'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
+      try {
+        final changePassword =
+            widget._changePassword ?? _changeSupabasePassword;
+        await changePassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
         );
 
-        // Go back to profile
-        Navigator.pop(context);
+        if (mounted) {
+          setState(() => _isLoading = false);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password changed successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          Navigator.pop(context);
+        }
+      } catch (error) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_changePasswordErrorMessage(error)),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
       }
     }
+  }
+
+  Future<void> _changeSupabasePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    final email = user?.email;
+    if (user == null || email == null || email.trim().isEmpty) {
+      throw const AuthException(
+        'You must be signed in with an email account to change your password.',
+      );
+    }
+
+    DeepLinkHandler.beginInternalAuthFlow();
+    try {
+      final response = await client.auth.signInWithPassword(
+        email: email,
+        password: currentPassword,
+      );
+      if (response.user?.id != user.id) {
+        throw const AuthException(
+          'Reauthentication did not match the current account.',
+        );
+      }
+
+      await client.auth.updateUser(UserAttributes(password: newPassword));
+    } finally {
+      DeepLinkHandler.endInternalAuthFlow();
+    }
+  }
+
+  String _changePasswordErrorMessage(Object error) {
+    if (error is AuthException) {
+      return 'Please confirm your current password and try again.';
+    }
+
+    return 'Could not change password. Check your connection and try again.';
   }
 
   @override
@@ -212,6 +277,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     }
                     if (value.length < 8) {
                       return 'Password must be at least 8 characters';
+                    }
+                    if (value == _currentPasswordController.text) {
+                      return 'New password must be different';
                     }
                     return null;
                   },

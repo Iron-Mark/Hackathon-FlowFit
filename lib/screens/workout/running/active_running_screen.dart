@@ -226,6 +226,59 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
     );
   }
 
+  void _showWorkoutMenu(dynamic session) {
+    final isPaused = session.status == WorkoutStatus.paused;
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(
+                  isPaused
+                      ? SolarIconsBold.playCircle
+                      : SolarIconsBold.pauseCircle,
+                ),
+                title: Text(isPaused ? 'Resume workout' : 'Pause workout'),
+                onTap: () async {
+                  Navigator.of(context).pop();
+
+                  final notifier = ref.read(runningSessionProvider.notifier);
+                  if (isPaused) {
+                    await notifier.resumeSession();
+                  } else {
+                    notifier.pauseSession();
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(SolarIconsBold.cpu),
+                title: const Text('Open AI tracker'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(this.context).pushNamed('/activity-classifier');
+                },
+              ),
+              ListTile(
+                leading: const Icon(SolarIconsOutline.flag, color: Colors.red),
+                title: const Text('End workout'),
+                textColor: Colors.red,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showEndWorkoutDialog();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -372,7 +425,7 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
 
           // Menu button
           IconButton(
-            onPressed: () {},
+            onPressed: () => _showWorkoutMenu(session),
             icon: const Icon(SolarIconsOutline.menuDots, color: Colors.white),
             style: IconButton.styleFrom(
               backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -474,31 +527,36 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
         children: [
           // Primary metrics row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildLargeMetric(
-                'Distance',
-                _formatDistance(session.currentDistance),
-                'km',
-                SolarIconsBold.routing2, // Road/path icon (more intuitive)
-                const Color(0xFF3B82F6),
+              Expanded(
+                child: _buildLargeMetric(
+                  'Distance',
+                  _formatDistance(session.currentDistance),
+                  'km',
+                  SolarIconsBold.routing2, // Road/path icon (more intuitive)
+                  const Color(0xFF3B82F6),
+                ),
               ),
               Container(width: 1, height: 60, color: Colors.grey[300]),
-              _buildLargeMetric(
-                'Time',
-                _formatTime(session.durationSeconds),
-                '',
-                SolarIconsBold.clockCircle, // Clock = time (universal)
-                const Color(0xFFFF9800),
+              Expanded(
+                child: _buildLargeMetric(
+                  'Time',
+                  _formatTime(session.durationSeconds),
+                  '',
+                  SolarIconsBold.clockCircle, // Clock = time (universal)
+                  const Color(0xFFFF9800),
+                ),
               ),
               Container(width: 1, height: 60, color: Colors.grey[300]),
-              _buildLargeMetric(
-                'Speed',
-                _formatPace(session.avgPace),
-                '/km',
-                SolarIconsBold
-                    .speedometerMiddle, // Speedometer = speed (intuitive)
-                const Color(0xFF4CAF50),
+              Expanded(
+                child: _buildLargeMetric(
+                  'Speed',
+                  _formatPace(session.avgPace),
+                  '/km',
+                  SolarIconsBold
+                      .speedometerMiddle, // Speedometer = speed (intuitive)
+                  const Color(0xFF4CAF50),
+                ),
               ),
             ],
           ),
@@ -623,32 +681,35 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
           child: Icon(icon, size: 28, color: color),
         ),
         const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-                height: 1.0,
-              ),
-            ),
-            if (unit.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(left: 4, bottom: 6),
-                child: Text(
-                  unit,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w600,
-                  ),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                  height: 1.0,
                 ),
               ),
-          ],
+              if (unit.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, bottom: 6),
+                  child: Text(
+                    unit,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
         const SizedBox(height: 6),
         Text(

@@ -11,11 +11,21 @@ class AddMissionDialog extends StatefulWidget {
 }
 
 class _AddMissionDialogState extends State<AddMissionDialog> {
-  String _title = '';
-  String? _description;
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _targetDistanceController =
+      TextEditingController();
   MissionType _type = MissionType.sanctuary;
   double _radius = 50.0;
   double? _targetDistance;
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _targetDistanceController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,19 +36,20 @@ class _AddMissionDialogState extends State<AddMissionDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
+              controller: _titleController,
               decoration: const InputDecoration(labelText: 'Title'),
-              onChanged: (v) => setState(() => _title = v),
             ),
             TextField(
+              controller: _descriptionController,
               decoration: const InputDecoration(labelText: 'Description'),
-              onChanged: (v) => setState(() => _description = v),
             ),
             DropdownButton<MissionType>(
               value: _type,
               items: MissionType.values
                   .map((t) => DropdownMenuItem(value: t, child: Text(t.name)))
                   .toList(),
-              onChanged: (v) => setState(() => _type = v ?? MissionType.sanctuary),
+              onChanged: (v) =>
+                  setState(() => _type = v ?? MissionType.sanctuary),
             ),
             Row(
               children: [
@@ -56,30 +67,43 @@ class _AddMissionDialogState extends State<AddMissionDialog> {
             ),
             if (_type == MissionType.target)
               TextField(
-                decoration: const InputDecoration(labelText: 'Target distance (m)'),
+                controller: _targetDistanceController,
+                decoration: const InputDecoration(
+                  labelText: 'Target distance (m)',
+                ),
                 keyboardType: TextInputType.number,
-                onChanged: (v) => setState(() => _targetDistance = double.tryParse(v)),
+                onChanged: (v) =>
+                    setState(() => _targetDistance = double.tryParse(v)),
               ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
         TextButton(
-            onPressed: () {
-              final id = DateTime.now().millisecondsSinceEpoch.toString();
-              final mission = GeofenceMission(
-                id: id,
-                title: _title.isEmpty ? 'Mission $id' : _title,
-                description: _description,
-                center: LatLngSimple(widget.latLng.latitude, widget.latLng.longitude),
-                radiusMeters: _radius,
-                type: _type,
-                targetDistanceMeters: _targetDistance,
-              );
-              Navigator.of(context).pop(mission);
-            },
-            child: const Text('Add')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            final id = DateTime.now().millisecondsSinceEpoch.toString();
+            final title = _titleController.text.trim();
+            final description = _descriptionController.text.trim();
+            final mission = GeofenceMission(
+              id: id,
+              title: title.isEmpty ? 'Mission $id' : title,
+              description: description.isEmpty ? null : description,
+              center: LatLngSimple(
+                widget.latLng.latitude,
+                widget.latLng.longitude,
+              ),
+              radiusMeters: _radius,
+              type: _type,
+              targetDistanceMeters: _targetDistance,
+            );
+            Navigator.of(context).pop(mission);
+          },
+          child: const Text('Add'),
+        ),
       ],
     );
   }

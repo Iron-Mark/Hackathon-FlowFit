@@ -18,10 +18,9 @@ The integration tests verify the complete user experience for:
    - Session persistence across app restarts
    - Invalid credentials handling
 
-3. **Social Sign-In Shortcuts** (Requirements 6.1, 6.2, 6.3)
-   - Google Sign-In button navigation
-   - Apple Sign-In button navigation
-   - Verification that no auth session is created
+3. **Social OAuth Availability** (Requirements 6.1, 6.2, 6.3)
+   - Google/Apple shortcuts are hidden until real OAuth is implemented
+   - No social button can bypass Supabase Auth or create a fake dashboard session
 
 ## Running the Tests
 
@@ -142,19 +141,13 @@ While automated tests cover most scenarios, some aspects require manual verifica
   5. Reopen app
   6. Verify Welcome screen shows (session cleared)
 
-### Social Sign-In Manual Tests
+### Social OAuth Manual Tests
 
-- [ ] **Google Sign-In Button**
+- [ ] **Social Auth Hidden**
   1. Navigate to Login screen
-  2. Tap "Sign in with Google"
-  3. Verify immediate navigation to Dashboard
-  4. Verify no auth session created (check Supabase)
-
-- [ ] **Apple Sign-In Button**
-  1. Navigate to Login screen
-  2. Tap "Sign in with Apple"
-  3. Verify immediate navigation to Dashboard
-  4. Verify no auth session created
+  2. Verify "Sign in with Google" is not shown
+  3. Verify "Sign in with Apple" is not shown
+  4. Verify Dashboard is reachable only after real email/password login or a restored session
 
 ### Survey Flow Manual Tests
 

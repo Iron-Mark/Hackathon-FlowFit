@@ -23,6 +23,76 @@ and verification pass.
 No Dart behavior, migration SQL, workflows, or release scripts were changed in
 this pass.
 
+## App Cleanup Applied Later On 2026-06-19
+
+A follow-up app-behavior cleanup pass removed several reachable stale surfaces:
+
+- Removed the unused `lib/shared/navigation/app_router.dart` because FlowFit
+  uses the `MaterialApp.routes` table in `lib/main.dart`.
+- Removed the unused legacy dashboard tab files under `lib/screens/dashboard/`
+  and the retired `lib/screens/track/random_workout_screen.dart`.
+- Removed the direct `go_router` dependency after converting the remaining
+  `context.go(...)` calls to Navigator-compatible behavior.
+- Replaced the Track tab's retired random camera workout action with the
+  maintained `/activity-classifier` route.
+- Replaced synthetic OpenRouteService POIs with a real `/pois` request and an
+  empty fallback when the API is unavailable.
+- Replaced fake Buddy profile fallback data with a level-1 onboarding preview
+  and explicit Buddy setup navigation.
+- Replaced the Profile weight chart placeholder with a compact local trend
+  widget.
+- Added generic `WorkoutSession.fromJson` dispatch for running, walking, and
+  resistance sessions.
+- Kept web activity classification functional by using a deterministic
+  heuristic fallback when native TFLite is unavailable.
+- Changed dashboard mood fallbacks so missing or unavailable heart-rate data
+  does not invent stress/calm minutes.
+- Replaced the default wellness `SharedPreferences` provider failure with an
+  explicit override-contract `StateError`.
+- Added a visible startup configuration screen so web/mobile builds launched
+  without real Supabase dart defines no longer fail as a blank Flutter canvas.
+- Wired the Home water and meal quick actions into the active Health tab so
+  they update hydration or open the Add Food dialog instead of dead-end copy.
+- Removed stale dashboard navigation docs and the duplicate quick-start copy
+  that still described retired tab shells.
+- Added local persistence for Weight, Fitness, and Nutrition goal screens so
+  their Save buttons reload saved user choices instead of only showing a
+  transient success message.
+- Added local persistence for Language, Units, and Notification settings.
+  Individual unit rows now open selectable pickers instead of only displaying
+  passive values.
+- Replaced the Change Password screen's fake delayed success path with
+  Supabase email/password reauthentication plus `auth.updateUser` password
+  update, with local widget coverage for success, auth failure, and reused
+  password validation.
+- Replaced the Wellness onboarding timed success path with a real setup
+  readiness check for body sensor permission, location permission, and Samsung
+  Galaxy Watch connection.
+- Removed the unused duplicate `lib/screens/profile/settings_screen.dart`; the
+  maintained settings hub is `lib/screens/profile/settings/settings_screen.dart`.
+- Made the reachable `/phone_heart_rate` route start the phone watch-data
+  listener itself, with a visible retry state when listener startup fails.
+
+Verification for the follow-up pass:
+
+```powershell
+dart analyze --format=machine
+flutter analyze
+flutter test --reporter compact
+flutter build web --release --no-pub
+flutter build web --release --no-pub --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...
+flutter build apk --debug --no-pub
+flutter build apk --debug -t lib\main_wear.dart --no-pub
+git diff --check
+```
+
+Result: local static checks and targeted startup tests passed. The unconfigured
+web smoke now renders `build\web-smoke-unconfigured.png`, and the configured
+web smoke renders `build\web-smoke-configured.png` plus route-click evidence
+for `#/signup` and `#/login`. The latest full `flutter test` run reported
+884 passing tests and 1 skipped test after the profile-goal, profile settings,
+Change Password, and Wellness onboarding passes.
+
 ## Repository Inventory
 
 Current source scan:
@@ -106,10 +176,9 @@ Discontinued packages:
 - `build_resolvers` transitive dependency at `2.5.4`
 - `build_runner_core` transitive dependency at `9.1.2`
 
-Direct dependencies with notable upgrade pressure:
+Direct dependencies with notable upgrade pressure at initial audit time:
 
 - `supabase_flutter` `2.10.3` to `2.15.0`
-- `go_router` `13.2.5` to `17.3.0`
 - `flutter_riverpod` `2.6.1` to `3.x`
 - `riverpod_annotation` `2.6.1` to `4.x`
 - `permission_handler` `11.4.0` to `12.x`
@@ -132,12 +201,12 @@ Recommended dependency order:
    generated APIs and provider annotations may need code edits.
 5. Upgrade platform plugins in a dedicated branch because Android/iOS manifest
    permissions and runtime prompts can shift.
-6. Upgrade `go_router` separately because route guards and redirect semantics
-   are user-flow critical.
-7. Upgrade camera and YOLO dependencies last because they affect native
+6. Upgrade camera and YOLO dependencies last because they affect native
    capabilities and model runtime compatibility.
 
-No dependency versions were changed in this pass.
+No dependency versions were changed in the initial audit pass. The later app
+cleanup removed the direct `go_router` dependency after the unused router and
+remaining `context.go(...)` calls were removed.
 
 ## Code DRY And Refactor Findings
 
@@ -145,14 +214,14 @@ Largest Dart files by current scan:
 
 - `lib/screens/profile/profile_screen.dart` - 1097 lines
 - `lib/screens/workout/running/active_running_screen.dart` - 1044 lines
-- `lib/screens/onboarding/survey_daily_targets_screen.dart` - 941 lines
-- `lib/screens/wear/wear_heart_rate_screen.dart` - 927 lines
-- `lib/services/watch_bridge.dart` - 922 lines
-- `lib/screens/profile/buddy_customization_screen.dart` - 857 lines
-- `lib/features/activity_classifier/presentation/tracker_page.dart` - 830 lines
-- `lib/screens/health/health_screen.dart` - 813 lines
-- `lib/screens/home/home_screen.dart` - 775 lines
-- `lib/screens/dashboard/home_tab.dart` - 748 lines
+- `lib/screens/onboarding/survey_daily_targets_screen.dart` - 858 lines
+- `lib/screens/wear/wear_heart_rate_screen.dart` - 853 lines
+- `lib/screens/health/health_screen.dart` - 849 lines
+- `lib/services/watch_bridge.dart` - 825 lines
+- `lib/screens/profile/buddy_customization_screen.dart` - 806 lines
+- `lib/features/activity_classifier/presentation/tracker_page.dart` - 765 lines
+- `lib/screens/home/home_screen.dart` - 728 lines
+- `lib/screens/home/widgets/stats_section.dart` - 647 lines
 
 Main DRY/architecture hotspots:
 

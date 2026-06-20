@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:wear_plus/wear_plus.dart';
 
@@ -13,9 +15,16 @@ class WorkoutScreen extends StatefulWidget {
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isTracking = false;
-  final int _duration = 0;
-  final int _heartRate = 72;
-  final int _calories = 0;
+  int _duration = 0;
+  int _heartRate = 72;
+  int _calories = 0;
+  Timer? _trackingTimer;
+
+  @override
+  void dispose() {
+    _trackingTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +108,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           shape: const CircleBorder(),
           padding: const EdgeInsets.all(20),
         ),
-        child: Icon(_isTracking ? Icons.stop : Icons.play_arrow, size: 48),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(_isTracking ? Icons.stop : Icons.play_arrow, size: 42),
+            const SizedBox(height: 4),
+            Text(
+              _isTracking ? 'Stop' : 'Start',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -128,13 +147,30 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 
   void _toggleTracking() {
+    if (_isTracking) {
+      _trackingTimer?.cancel();
+      setState(() {
+        _isTracking = false;
+        _heartRate = 72;
+      });
+      return;
+    }
+
+    _trackingTimer?.cancel();
     setState(() {
-      _isTracking = !_isTracking;
-      if (_isTracking) {
-        // TODO: Start workout tracking
-      } else {
-        // TODO: Stop workout tracking
-      }
+      _isTracking = true;
+      _duration = 0;
+      _calories = 0;
+      _heartRate = 96;
+    });
+
+    _trackingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _duration += 1;
+        _heartRate = 96 + (_duration % 8);
+        _calories = (_duration / 60 * 6).round();
+      });
     });
   }
 

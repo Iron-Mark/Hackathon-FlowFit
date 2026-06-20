@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:logger/logger.dart';
 import '../models/tracked_data.dart';
 import 'database_service.dart';
+import 'supabase_service.dart';
 
 /// Heart Rate Data Manager
 /// Manages in-memory buffer, database storage, and data lifecycle
@@ -252,11 +253,16 @@ class HeartRateDataManager {
 class DataSyncManager {
   final DatabaseService _dbService;
   final Logger _logger;
+  final SupabaseService? _supabaseService;
   Timer? _syncTimer;
 
-  DataSyncManager({DatabaseService? dbService, Logger? logger})
-    : _dbService = dbService ?? DatabaseService.instance,
-      _logger = logger ?? Logger();
+  DataSyncManager({
+    DatabaseService? dbService,
+    Logger? logger,
+    SupabaseService? supabaseService,
+  }) : _dbService = dbService ?? DatabaseService.instance,
+       _logger = logger ?? Logger(),
+       _supabaseService = supabaseService;
 
   /// Start periodic sync (every N minutes)
   void startPeriodicSync({Duration interval = const Duration(minutes: 15)}) {
@@ -284,11 +290,17 @@ class DataSyncManager {
 
       _logger.i('Syncing ${unsyncedData.length} records');
 
-      // TODO: Upload to Supabase or your backend
-      // Example:
-      // final response = await supabase.from('heart_rate_data').insert(unsyncedData);
+      final supabaseService = _resolveSupabaseService();
+      if (supabaseService == null) {
+        _logger.w('Supabase is not initialized; keeping data unsynced');
+        return false;
+      }
 
-      // For now, just mark as synced (placeholder)
+      final payload = unsyncedData
+          .map(_heartRateRowToSupabasePayload)
+          .toList(growable: false);
+      await supabaseService.saveHeartRateDataBatch(payload);
+
       final ids = unsyncedData.map((data) => data['id'] as int).toList();
       await _dbService.markAsSynced(ids);
 
@@ -298,6 +310,51 @@ class DataSyncManager {
       _logger.e('Error syncing data', error: e, stackTrace: stackTrace);
       return false;
     }
+  }
+
+  SupabaseService? _resolveSupabaseService() {
+    if (_supabaseService != null) return _supabaseService;
+    try {
+      return SupabaseService();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Map<String, dynamic> _heartRateRowToSupabasePayload(
+    Map<String, dynamic> row,
+  ) {
+    final ibiValues = _parseIbiValues(row['ibi_values']);
+    return {
+      'bpm': row['hr'] as int?,
+      'timestamp': row['timestamp'] as int,
+      'status': row['status'] as String?,
+      'ibiValues': ibiValues,
+      'ibi_values': ibiValues,
+      'raw_data': {
+        'local_id': row['id'],
+        'hrv': row['hrv'],
+        'spo2': row['spo2'],
+        'created_at': row['created_at'],
+      },
+    };
+  }
+
+  List<int> _parseIbiValues(Object? value) {
+    if (value == null) return const [];
+    if (value is List) {
+      return value
+          .map((entry) => entry is int ? entry : int.tryParse('$entry'))
+          .whereType<int>()
+          .toList();
+    }
+    final text = value.toString().trim();
+    if (text.isEmpty) return const [];
+    return text
+        .split(',')
+        .map((entry) => int.tryParse(entry.trim()))
+        .whereType<int>()
+        .toList();
   }
 
   /// Dispose resources

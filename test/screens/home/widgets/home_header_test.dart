@@ -102,6 +102,29 @@ void main() {
       expect(iconButton.tooltip, 'Notifications');
     });
 
+    testWidgets('notification button opens notification settings', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [unreadNotificationsProvider.overrideWith((ref) => 2)],
+          child: MaterialApp(
+            home: const Scaffold(appBar: HomeHeader()),
+            routes: {
+              '/notification-settings': (context) => const Scaffold(
+                body: Center(child: Text('Notification Settings Route')),
+              ),
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byTooltip('Notifications'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Notification Settings Route'), findsOneWidget);
+    });
+
     testWidgets('uses theme colors correctly', (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(

@@ -16,7 +16,7 @@ The adult survey flow (Steps 0-4) has been replaced with the **Whale-Themed Budd
 
 ---
 
-## ✅ NEW: Whale-Themed Buddy Onboarding (8 Screens)
+## ✅ NEW: Whale-Themed Buddy Onboarding (9 Screens)
 
 **Target Audience**: Kids aged 7-12
 **Theme**: Ocean whale companion
@@ -81,14 +81,24 @@ The adult survey flow (Steps 0-4) has been replaced with the **Whale-Themed Budd
   - Shuffle button
   - Validation: 2-20 characters
 - **Backend**: `setBuddyName(name)` → state
+- **Navigation**: → `/buddy_profile_setup`
+
+### Step 6: Buddy Profile Setup (`buddy_profile_setup_screen.dart`)
+
+- **Route**: `/buddy_profile_setup`
+- **Purpose**: Optional nickname and age setup
+- **Inputs**:
+  - Nickname (optional)
+  - Age 7-12 (optional)
+- **Backend**: `setUserInfo(nickname, age)` → state
 - **Navigation**: → `/goal-selection`
 
-### Step 6: Goal Selection (`goal_selection_screen.dart`) 🆕
+### Step 7: Goal Selection (`goal_selection_screen.dart`) 🆕
 
 - **Route**: `/goal-selection`
 - **Purpose**: Select wellness goals (multi-select)
 - **Title**: "What areas would you like support with?"
-- **Progress**: ●●●●●●○○ (step 6 of 8)
+- **Progress**: step 7 of 9
 - **Goals** (5 cards with emojis):
   - 🎯 Boost focus and productivity
   - 🪥 Stay fresh and clean
@@ -102,7 +112,7 @@ The adult survey flow (Steps 0-4) has been replaced with the **Whale-Themed Budd
 - **Backend**: `toggleGoal(goalId)` → state
 - **Navigation**: → `/notification-permission`
 
-### Step 7: Notification Permission (`notification_permission_screen.dart`) 🆕
+### Step 8: Notification Permission (`notification_permission_screen.dart`) 🆕
 
 - **Route**: `/notification-permission`
 - **Purpose**: Request notification permission (optional)
@@ -117,7 +127,7 @@ The adult survey flow (Steps 0-4) has been replaced with the **Whale-Themed Budd
 - **Permission**: Uses `permission_handler` package
 - **Navigation**: → `/buddy-ready`
 
-### Step 8: Buddy Ready (`buddy_ready_screen.dart`) 🆕
+### Step 9: Buddy Ready (`buddy_ready_screen.dart`) 🆕
 
 - **Route**: `/buddy-ready`
 - **Purpose**: Celebration & completion
@@ -149,36 +159,39 @@ ref.read(buddyOnboardingProvider.notifier).selectColor('blue');
 // Set buddy name (step 5)
 ref.read(buddyOnboardingProvider.notifier).setBuddyName('Bubbles');
 
-// Toggle goal (step 6)
+// Set optional profile info (step 6)
+ref.read(buddyOnboardingProvider.notifier).setUserInfo('Captain', 9);
+
+// Toggle goal (step 7)
 ref.read(buddyOnboardingProvider.notifier).toggleGoal('focus');
 
-// Set notification permission (step 7)
+// Set notification permission (step 8)
 ref.read(buddyOnboardingProvider.notifier).setNotificationPermission(true);
 
-// Complete onboarding (step 8)
+// Complete onboarding (step 9)
 await ref.read(buddyOnboardingProvider.notifier).completeOnboarding(userId);
 
 // Access state
 final state = ref.watch(buddyOnboardingProvider);
 final progress = state.progress; // 0.0 to 1.0
-final currentStep = state.currentStep; // 0-7
+final currentStep = state.currentStep; // 0-8
 ```
 
 ## State Model (`BuddyOnboardingState`)
 
 ```dart
 class BuddyOnboardingState {
-  final int currentStep;              // 0-7
+  final int currentStep;              // 0-8
   final String? userName;             // Step 2
   final String? selectedColor;        // Step 4 (default: 'blue')
   final String? buddyName;            // Step 5
   final String? userNickname;         // Optional
   final int? userAge;                 // Optional (7-12)
-  final List<String> selectedGoals;   // Step 6
-  final bool notificationsGranted;    // Step 7
-  final bool isComplete;              // After step 8
+  final List<String> selectedGoals;   // Step 7
+  final bool notificationsGranted;    // Step 8
+  final bool isComplete;              // After step 9
 
-  double get progress => (currentStep + 1) / 8;
+  double get progress => (currentStep + 1) / 9;
 }
 ```
 

@@ -109,7 +109,7 @@ PhoneDataListener: Heart rate: 72 BPM
 
 ### Removed Clutter
 - No scrolling menu
-- No extra features (coming soon)
+- No unrelated menu items on the watch-first heart-rate screen
 - No complex status messages
 - Focus on core functionality
 

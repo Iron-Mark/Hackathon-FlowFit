@@ -242,15 +242,13 @@ void main() {
       expect(find.text('Profile'), findsNothing);
     });
 
-    /// Test: Error handling code exists and handles exceptions gracefully
+    /// Test: Error handling keeps the user on Profile when signOut fails.
     /// Requirements: 8.4, 8.5
-    /// Note: This test verifies the error handling structure is in place.
-    /// The actual error display behavior is tested through integration tests.
-    testWidgets('logout flow has error handling for signOut failures', (
+    testWidgets('logout failure shows an error and does not navigate', (
       WidgetTester tester,
     ) async {
       // Arrange: Build ProfileScreen with mock auth repository
-      final mockAuthRepo = MockAuthRepository();
+      final mockAuthRepo = MockAuthRepositoryWithError();
       final mockProfileRepo = MockProfileRepository();
       final mockCoreProfileRepo = MockCoreProfileRepository();
 
@@ -288,16 +286,15 @@ void main() {
 
       // Act: Confirm logout
       final confirmButton = find.widgetWithText(TextButton, 'Logout');
+      await tester.tap(confirmButton);
+      await tester.pumpAndSettle();
 
-      // Assert: The logout flow should not throw unhandled exceptions
-      // This verifies that error handling code is in place
+      // Assert: The app should not navigate as if logout succeeded.
+      expect(find.text('Welcome Screen'), findsNothing);
+      expect(find.text('Profile'), findsOneWidget);
       expect(
-        () async {
-          await tester.tap(confirmButton);
-          await tester.pumpAndSettle();
-        },
-        returnsNormally,
-        reason: 'Logout flow should handle errors gracefully without crashing',
+        find.text('Could not sign out. Check your connection and try again.'),
+        findsOneWidget,
       );
     });
 

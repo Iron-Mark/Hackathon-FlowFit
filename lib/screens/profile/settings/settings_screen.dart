@@ -81,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingItem(
                     context,
                     'App Integration',
-                    'Connect with other apps',
+                    'Manage supported integrations',
                     SolarIconsOutline.widget,
                     onTap: () {
                       Navigator.pushNamed(context, '/app-integration');
@@ -227,7 +227,7 @@ class SettingsScreen extends StatelessWidget {
     String title,
     String subtitle,
     IconData icon, {
-    VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
 

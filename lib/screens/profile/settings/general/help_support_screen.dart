@@ -1,9 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+typedef SupportEmailLauncher = Future<bool> Function(Uri uri);
 
 class HelpSupportScreen extends StatelessWidget {
-  const HelpSupportScreen({super.key});
+  const HelpSupportScreen({super.key, this.launchSupportEmail});
+
+  final SupportEmailLauncher? launchSupportEmail;
+
+  Future<void> _openSupportEmail(
+    BuildContext context, {
+    required String subject,
+    String body = '',
+  }) async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: FlowFitRuntimeConfig.supportEmail,
+      queryParameters: {'subject': subject, if (body.isNotEmpty) 'body': body},
+    );
+
+    try {
+      final launched = await (launchSupportEmail ?? _launchSupportEmail)(uri);
+      if (launched) return;
+    } catch (_) {
+      // Fall through to the in-app fallback below.
+    }
+
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Email app unavailable. Contact ${FlowFitRuntimeConfig.supportEmail}.',
+        ),
+        duration: Duration(seconds: 4),
+      ),
+    );
+  }
+
+  Future<bool> _launchSupportEmail(Uri uri) {
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,32 +136,23 @@ class HelpSupportScreen extends StatelessWidget {
                     'Get help via email',
                     SolarIconsOutline.letter,
                     Colors.blue,
-                    () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Opening email: ${FlowFitRuntimeConfig.supportEmail}',
-                          ),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    () => _openSupportEmail(
+                      context,
+                      subject: 'FlowFit support request',
+                    ),
                   ),
                   _buildDivider(theme),
                   _buildActionItem(
                     context,
-                    'Live Chat',
-                    'Chat with our support team',
+                    'Message Support',
+                    'Send a support request',
                     SolarIconsOutline.chatRound,
                     Colors.green,
-                    () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Live chat coming soon'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    () => _openSupportEmail(
+                      context,
+                      subject: 'FlowFit support request',
+                      body: 'Hi FlowFit support,\n\n',
+                    ),
                   ),
                   _buildDivider(theme),
                   _buildActionItem(
@@ -132,14 +161,12 @@ class HelpSupportScreen extends StatelessWidget {
                     'Help us improve FlowFit',
                     SolarIconsOutline.bug,
                     Colors.orange,
-                    () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Bug report form coming soon'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    () => _openSupportEmail(
+                      context,
+                      subject: 'FlowFit bug report',
+                      body:
+                          'What happened?\n\nSteps to reproduce:\n1. \n2. \n3. \n\nDevice/app details:\n',
+                    ),
                   ),
                 ],
               ),
@@ -176,7 +203,7 @@ class HelpSupportScreen extends StatelessWidget {
                   _buildFAQItem(
                     context,
                     'How do I sync with other apps?',
-                    'Go to Settings > App Integration to connect FlowFit with your favorite health and fitness apps.',
+                    'Go to Settings > App Integration to set up Samsung Health Sensor API support for Galaxy Watch. Other providers are marked Not supported until they are implemented.',
                   ),
                   _buildDivider(theme),
                   _buildFAQItem(
@@ -235,8 +262,8 @@ class HelpSupportScreen extends StatelessWidget {
                   _buildContactRow(
                     context,
                     SolarIconsOutline.clockCircle,
-                    'Support Hours',
-                    'Mon-Fri, 9AM-6PM EST',
+                    'Support Channel',
+                    'Email support',
                   ),
                 ],
               ),

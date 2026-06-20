@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
+
+import '../../../services/profile_goal_preferences.dart';
 
 class WeightGoalsScreen extends StatefulWidget {
   const WeightGoalsScreen({super.key});
@@ -23,17 +26,43 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedGoals();
+  }
+
+  @override
   void dispose() {
     _currentWeightController.dispose();
     _goalWeightController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadSavedGoals() async {
+    final prefs = await SharedPreferences.getInstance();
+    final goals = await ProfileGoalPreferences(prefs).loadWeightGoals();
+    if (!mounted) return;
+    setState(() {
+      _currentWeightController.text = goals.currentWeight;
+      _goalWeightController.text = goals.goalWeight;
+      if (_weeklyGoalOptions.contains(goals.weeklyGoal)) {
+        _selectedWeeklyGoal = goals.weeklyGoal;
+      }
+    });
+  }
+
   Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      await Future.delayed(const Duration(milliseconds: 800));
+      final prefs = await SharedPreferences.getInstance();
+      await ProfileGoalPreferences(prefs).saveWeightGoals(
+        WeightGoalSettings(
+          currentWeight: _currentWeightController.text.trim(),
+          goalWeight: _goalWeightController.text.trim(),
+          weeklyGoal: _selectedWeeklyGoal,
+        ),
+      );
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -142,6 +171,10 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your current weight';
                   }
+                  final parsed = double.tryParse(value);
+                  if (parsed == null || parsed <= 0) {
+                    return 'Please enter a valid current weight';
+                  }
                   return null;
                 },
               ),
@@ -176,6 +209,10 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your goal weight';
+                  }
+                  final parsed = double.tryParse(value);
+                  if (parsed == null || parsed <= 0) {
+                    return 'Please enter a valid goal weight';
                   }
                   return null;
                 },

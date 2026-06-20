@@ -7,7 +7,7 @@
 
 ## ✅ Implemented Features
 
-### 8-Screen Whale-Themed Onboarding Flow
+### 9-Screen Whale-Themed Onboarding Flow
 
 All screens have been implemented according to the whale companion theme specification:
 
@@ -50,19 +50,28 @@ All screens have been implemented according to the whale companion theme specifi
   - Subtitle: "You can change this later."
   - Name suggestions: Whale-themed (Bubbles, Splash, Wave, Marina, Ocean, Finn, Luna, Neptune, Coral, Pearl, Moby, Tide, Azure, Blue, Aqua)
 - **Features**: Shuffle button, validation (2-20 chars)
-- **Navigation**: Routes to `/goal-selection` (or `/quick-profile-setup` in existing flow)
+- **Navigation**: Routes to `/buddy_profile_setup`
 
-#### **Screen 6: GoalSelectionScreen** ✅ NEW
+#### **Screen 6: BuddyProfileSetupScreen** ✅
+
+- **File**: `buddy_profile_setup_screen.dart`
+- **Features**:
+  - Optional nickname
+  - Optional age 7-12
+  - Skip and Continue paths both preserve the onboarding flow
+- **Navigation**: Routes to `/goal-selection`
+
+#### **Screen 7: GoalSelectionScreen** ✅ NEW
 
 - **File**: `goal_selection_screen.dart` (newly created)
 - **Features**:
-  - Progress indicator (6/8 filled circles)
+  - Progress indicator (7/9 filled circles)
   - Buddy with lightbulb 💡
   - 5 multi-select goal cards with emojis
   - Goals: focus, hygiene, active, stress, social
 - **Navigation**: Routes to `/notification-permission`
 
-#### **Screen 7: NotificationPermissionScreen** ✅ NEW
+#### **Screen 8: NotificationPermissionScreen** ✅ NEW
 
 - **File**: `notification_permission_screen.dart` (newly created)
 - **Features**:
@@ -71,7 +80,7 @@ All screens have been implemented according to the whale companion theme specifi
   - Two buttons: "TURN ON NOTIFICATIONS" (green), "Maybe later" (gray)
 - **Navigation**: Routes to `/buddy-ready`
 
-#### **Screen 8: BuddyReadyScreen** ✅ NEW
+#### **Screen 9: BuddyReadyScreen** ✅ NEW
 
 - **File**: `buddy_ready_screen.dart` (newly created)
 - **Features**:
@@ -89,12 +98,12 @@ All screens have been implemented according to the whale companion theme specifi
 
 **`lib/models/buddy_onboarding_state.dart`** ✅
 
-- Added `currentStep` (0-7 for 8 screens)
+- Added `currentStep` (0-8 for 9 screens)
 - Added `userName` (from step 2)
 - Added `selectedGoals` (List<String> from step 6)
 - Added `notificationsGranted` (bool from step 7)
 - Updated `copyWith()`, `toString()`, `operator ==`, `hashCode`
-- Added `progress` getter: `(currentStep + 1) / 8`
+- Added `progress` getter: `(currentStep + 1) / 9`
 
 ### Providers
 
@@ -168,9 +177,10 @@ All screens have been implemented according to the whale companion theme specifi
 3. BuddyHatchScreen ✅ (celebration)
 4. BuddyColorSelectionScreen ✅ (6 whale colors)
 5. BuddyNamingScreen ✅ (name whale buddy)
-6. GoalSelectionScreen ✅ (multi-select wellness goals)
-7. NotificationPermissionScreen ✅ (optional)
-8. BuddyReadyScreen ✅ (stat gain + complete)
+6. BuddyProfileSetupScreen ✅ (optional nickname/age)
+7. GoalSelectionScreen ✅ (multi-select wellness goals)
+8. NotificationPermissionScreen ✅ (optional)
+9. BuddyReadyScreen ✅ (stat gain + complete)
 → Dashboard
 ```
 
@@ -185,6 +195,7 @@ Need to add to `lib/main.dart` or route configuration:
 ```dart
 '/buddy-intro': (context) => const BuddyIntroScreen(),
 '/buddy-hatch': (context) => const BuddyHatchScreen(),
+'/buddy_profile_setup': (context) => const BuddyProfileSetupScreen(),
 '/goal-selection': (context) => const GoalSelectionScreen(),
 '/notification-permission': (context) => const NotificationPermissionScreen(),
 '/buddy-ready': (context) => const BuddyReadyScreen(),
@@ -283,7 +294,7 @@ CREATE INDEX idx_user_profiles_wellness_goals ON user_profiles USING GIN (wellne
 
 - `nickname` (existing) - User's name from step 2 or custom nickname
 - `wellness_goals` (NEW) - Array of selected goal IDs
-- `notifications_enabled` (NEW) - Permission status from step 7
+- `notifications_enabled` (NEW) - Permission status from step 8
 - `is_kids_mode` (existing) - Auto-set based on age
 
 **buddy_profiles** (existing):
@@ -296,7 +307,7 @@ CREATE INDEX idx_user_profiles_wellness_goals ON user_profiles USING GIN (wellne
 
 ## 📝 Testing Checklist
 
-- [ ] Test full 8-screen flow from welcome to dashboard
+- [ ] Test full 9-screen flow from welcome to dashboard
 - [ ] Verify whale theme text in all screens
 - [ ] Test goal multi-select (select/deselect)
 - [ ] Test notification permission (grant/deny/skip)
@@ -311,7 +322,7 @@ CREATE INDEX idx_user_profiles_wellness_goals ON user_profiles USING GIN (wellne
 
 ## 🚀 Deployment Notes
 
-**Ready for Testing**: All 8 screens are implemented with whale theme.
+**Ready for Testing**: All 9 screens are implemented with whale theme.
 
 **Before Production**:
 

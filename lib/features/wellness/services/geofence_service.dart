@@ -81,7 +81,7 @@ class GeofenceService extends ChangeNotifier {
   Future<void> activateMission(String id) async {
     final mission = repository.getById(id);
     if (mission == null) return;
-    repository.update(
+    await repository.update(
       mission.copyWith(isActive: true, status: GeofenceStatus.unknown),
     );
     _cumulativeDistanceForMission[id] = 0.0;
@@ -92,7 +92,7 @@ class GeofenceService extends ChangeNotifier {
   Future<void> deactivateMission(String id) async {
     final mission = repository.getById(id);
     if (mission == null) return;
-    repository.update(mission.copyWith(isActive: false));
+    await repository.update(mission.copyWith(isActive: false));
     _cumulativeDistanceForMission.remove(id);
     _lastPositionForMission.remove(id);
     notifyListeners();

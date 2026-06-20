@@ -13,6 +13,10 @@ class WellnessSettingsScreen extends ConsumerStatefulWidget {
 
 class _WellnessSettingsScreenState
     extends ConsumerState<WellnessSettingsScreen> {
+  static const _stressAlertsKey = 'wellness_stress_alerts_enabled';
+  static const _cardioAlertsKey = 'wellness_cardio_alerts_enabled';
+  static const _alertFrequencyKey = 'wellness_alert_frequency_minutes';
+
   bool _monitoringEnabled = false;
   bool _stressAlertsEnabled = true;
   bool _cardioAlertsEnabled = true;
@@ -25,14 +29,52 @@ class _WellnessSettingsScreenState
   }
 
   Future<void> _loadSettings() async {
-    // Load settings from SharedPreferences
-    // This is a placeholder - actual implementation would load from prefs
+    final prefs = ref.read(sharedPreferencesProvider);
+    final monitoringService = ref.read(wellnessMonitoringServiceProvider);
+
     setState(() {
-      _monitoringEnabled = true;
-      _stressAlertsEnabled = true;
-      _cardioAlertsEnabled = true;
-      _alertFrequency = 30;
+      _monitoringEnabled = monitoringService.isEnabled;
+      _stressAlertsEnabled = prefs.getBool(_stressAlertsKey) ?? true;
+      _cardioAlertsEnabled = prefs.getBool(_cardioAlertsKey) ?? true;
+      _alertFrequency = prefs.getInt(_alertFrequencyKey) ?? 30;
     });
+  }
+
+  Future<void> _setMonitoringEnabled(bool value) async {
+    final previousValue = _monitoringEnabled;
+    setState(() => _monitoringEnabled = value);
+
+    try {
+      final monitoringService = ref.read(wellnessMonitoringServiceProvider);
+      if (value) {
+        await monitoringService.enableMonitoring();
+      } else {
+        await monitoringService.disableMonitoring();
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _monitoringEnabled = previousValue);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            value
+                ? 'Could not start wellness monitoring. Check sensor permissions and try again.'
+                : 'Could not stop wellness monitoring. Please try again.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _setBoolPreference(String key, bool value) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.setBool(key, value);
+  }
+
+  Future<void> _setAlertFrequency(int value) async {
+    final prefs = ref.read(sharedPreferencesProvider);
+    await prefs.setInt(_alertFrequencyKey, value);
   }
 
   @override
@@ -64,10 +106,7 @@ class _WellnessSettingsScreenState
                   title: 'Enable Wellness Monitoring',
                   subtitle: 'Track your wellness state throughout the day',
                   value: _monitoringEnabled,
-                  onChanged: (value) async {
-                    setState(() => _monitoringEnabled = value);
-                    // TODO: Enable/disable monitoring service
-                  },
+                  onChanged: _setMonitoringEnabled,
                 ),
               ],
             ),
@@ -84,6 +123,7 @@ class _WellnessSettingsScreenState
                   value: _stressAlertsEnabled,
                   onChanged: (value) {
                     setState(() => _stressAlertsEnabled = value);
+                    _setBoolPreference(_stressAlertsKey, value);
                   },
                 ),
                 _buildSwitchTile(
@@ -92,6 +132,7 @@ class _WellnessSettingsScreenState
                   value: _cardioAlertsEnabled,
                   onChanged: (value) {
                     setState(() => _cardioAlertsEnabled = value);
+                    _setBoolPreference(_cardioAlertsKey, value);
                   },
                 ),
                 _buildDropdownTile(
@@ -107,6 +148,7 @@ class _WellnessSettingsScreenState
                   onChanged: (value) {
                     if (value != null) {
                       setState(() => _alertFrequency = value);
+                      _setAlertFrequency(value);
                     }
                   },
                 ),
@@ -129,7 +171,7 @@ class _WellnessSettingsScreenState
                 _buildActionTile(
                   icon: Icons.delete_outline,
                   title: 'Clear Wellness History',
-                  subtitle: 'Delete all stored wellness data',
+                  subtitle: 'Clear local device wellness history',
                   color: Colors.red,
                   onTap: () => _showClearDataDialog(),
                 ),
@@ -138,9 +180,7 @@ class _WellnessSettingsScreenState
                   title: 'Privacy Policy',
                   subtitle: 'Learn how we protect your data',
                   color: Colors.blue,
-                  onTap: () {
-                    // Navigate to privacy policy
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/privacy-policy'),
                 ),
               ],
             ),
@@ -415,7 +455,7 @@ class _WellnessSettingsScreenState
           style: TextStyle(fontFamily: 'GeneralSans'),
         ),
         content: const Text(
-          'This will permanently delete all your wellness data including state history and statistics. This action cannot be undone.',
+          'This clears local wellness state history and transitions on this device. It does not delete account, workout, heart-rate, or Supabase records.',
           style: TextStyle(fontFamily: 'GeneralSans'),
         ),
         actions: [
@@ -426,21 +466,31 @@ class _WellnessSettingsScreenState
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('Clear'),
           ),
         ],
       ),
     );
 
     if (confirmed == true && mounted) {
-      // Clear wellness history
-      await ref.read(wellnessStateProvider.notifier).clearHistory();
+      try {
+        // Clear local wellness history.
+        await ref.read(wellnessStateProvider.notifier).clearHistory();
 
-      if (mounted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Local wellness history cleared'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (_) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Wellness history cleared'),
-            backgroundColor: Colors.green,
+            content: Text('Could not clear local wellness history. Try again.'),
+            backgroundColor: Colors.red,
           ),
         );
       }

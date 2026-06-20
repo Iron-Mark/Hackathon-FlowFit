@@ -7,27 +7,50 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 class OpenRouteService {
   static const String apiKey = '5b3ce35978511000001cf62248';
   static const String baseUrl = 'https://api.openrouteservice.org';
-  
-  final _cacheManager = DefaultCacheManager();
+
+  static const Map<String, int> _categoryIdsByName = {
+    'garden': 272,
+    'nature_reserve': 279,
+    'nature reserve': 279,
+    'park': 280,
+    'beach': 332,
+    'water': 340,
+    'waterfront': 340,
+    'picnic_site': 625,
+    'picnic site': 625,
+    'viewpoint': 627,
+  };
+
+  static const Map<int, String> _categoryNamesById = {
+    272: 'garden',
+    279: 'nature_reserve',
+    280: 'park',
+    332: 'beach',
+    340: 'waterfront',
+    625: 'picnic_site',
+    627: 'viewpoint',
+  };
+
+  final http.Client _httpClient;
+  DefaultCacheManager? _cacheManager;
+
+  OpenRouteService({http.Client? httpClient})
+    : _httpClient = httpClient ?? http.Client();
+
+  DefaultCacheManager get _mapTileCache =>
+      _cacheManager ??= DefaultCacheManager();
 
   /// Encodes a list of GPS coordinates into a polyline string
   Future<String> encodePolyline(List<LatLng> points) async {
     if (points.isEmpty) return '';
 
     try {
-      final coordinates = points
-          .map((p) => [p.longitude, p.latitude])
-          .toList();
+      final coordinates = points.map((p) => [p.longitude, p.latitude]).toList();
 
-      final response = await http.post(
+      final response = await _httpClient.post(
         Uri.parse('$baseUrl/v2/directions/foot-walking/geojson'),
-        headers: {
-          'Authorization': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'coordinates': coordinates,
-        }),
+        headers: {'Authorization': apiKey, 'Content-Type': 'application/json'},
+        body: jsonEncode({'coordinates': coordinates}),
       );
 
       if (response.statusCode == 200) {
@@ -92,7 +115,7 @@ class OpenRouteService {
   Future<String?> getMapTile(int x, int y, int zoom) async {
     try {
       final url = getMapTileUrl(x, y, zoom);
-      final file = await _cacheManager.getSingleFile(url);
+      final file = await _mapTileCache.getSingleFile(url);
       return file.path;
     } catch (e) {
       return null;
@@ -102,12 +125,7 @@ class OpenRouteService {
   /// Calculates bounding box for a list of route points
   Map<String, double> calculateBounds(List<LatLng> routePoints) {
     if (routePoints.isEmpty) {
-      return {
-        'minLat': 0.0,
-        'maxLat': 0.0,
-        'minLng': 0.0,
-        'maxLng': 0.0,
-      };
+      return {'minLat': 0.0, 'maxLat': 0.0, 'minLng': 0.0, 'maxLng': 0.0};
     }
 
     double minLat = routePoints.first.latitude;
@@ -136,35 +154,138 @@ class OpenRouteService {
     required double radius,
     required List<String> categories,
   }) async {
+    final categoryIds = _resolveCategoryIds(categories);
+    if (categoryIds.isEmpty) return [];
+
     try {
-      // Mock implementation - in production, use OpenRouteService POI API
-      // For now, generate mock POIs based on location
-      final pois = <POI>[];
-      
-      // Generate some mock POIs around the location
-      final random = DateTime.now().millisecondsSinceEpoch % 100;
-      for (int i = 0; i < 5; i++) {
-        final angle = (i / 5) * 2 * 3.14159;
-        final distance = (radius / 2) * (0.5 + (random + i) % 50 / 100);
-        final lat = location.latitude + (distance / 111000) * (angle > 3.14159 ? -1 : 1);
-        final lng = location.longitude + (distance / 111000) * (angle % 3.14159 > 1.57 ? -1 : 1);
-        
-        pois.add(POI(
-          name: '${categories[i % categories.length]} ${i + 1}',
-          location: LatLng(lat, lng),
-          category: categories[i % categories.length],
-        ));
-      }
-      
-      return pois;
+      final response = await _httpClient.post(
+        Uri.parse('$baseUrl/pois'),
+        headers: {'Authorization': apiKey, 'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'request': 'pois',
+          'geometry': {
+            'geojson': {
+              'type': 'Point',
+              'coordinates': [location.longitude, location.latitude],
+            },
+            'buffer': radius.round().clamp(100, 5000),
+          },
+          'filters': {'category_ids': categoryIds},
+          'limit': 20,
+        }),
+      );
+
+      if (response.statusCode != 200) return [];
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) return [];
+
+      final features = decoded['features'];
+      if (features is! List) return [];
+
+      return features.map(_parsePOIFeature).whereType<POI>().take(20).toList();
     } catch (e) {
       return [];
     }
   }
 
+  List<int> _resolveCategoryIds(List<String> categories) {
+    final ids = <int>{};
+
+    for (final category in categories) {
+      final normalized = category.trim().toLowerCase().replaceAll('-', '_');
+      final id =
+          _categoryIdsByName[normalized] ??
+          _categoryIdsByName[normalized.replaceAll('_', ' ')];
+      if (id != null) {
+        ids.add(id);
+      }
+    }
+
+    return ids.toList(growable: false);
+  }
+
+  POI? _parsePOIFeature(dynamic feature) {
+    if (feature is! Map<String, dynamic>) return null;
+
+    final geometry = feature['geometry'];
+    if (geometry is! Map<String, dynamic>) return null;
+
+    final coordinates = geometry['coordinates'];
+    if (coordinates is! List || coordinates.length < 2) return null;
+
+    final longitude = _asDouble(coordinates[0]);
+    final latitude = _asDouble(coordinates[1]);
+    if (longitude == null || latitude == null) return null;
+
+    final properties = feature['properties'] is Map<String, dynamic>
+        ? feature['properties'] as Map<String, dynamic>
+        : <String, dynamic>{};
+    final categoryId = _extractCategoryId(properties['category_ids']);
+    final category = _categoryNamesById[categoryId] ?? 'point_of_interest';
+
+    return POI(
+      name: _extractPOIName(properties, category),
+      location: LatLng(latitude, longitude),
+      category: category,
+    );
+  }
+
+  double? _asDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  int? _extractCategoryId(dynamic categoryIds) {
+    if (categoryIds is Map) {
+      for (final key in categoryIds.keys) {
+        final id = int.tryParse(key.toString());
+        if (id != null && _categoryNamesById.containsKey(id)) {
+          return id;
+        }
+      }
+    }
+
+    if (categoryIds is List) {
+      for (final value in categoryIds) {
+        final id = value is int ? value : int.tryParse(value.toString());
+        if (id != null && _categoryNamesById.containsKey(id)) {
+          return id;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  String _extractPOIName(Map<String, dynamic> properties, String category) {
+    final directName = properties['name'];
+    if (directName is String && directName.trim().isNotEmpty) {
+      return directName.trim();
+    }
+
+    final osmTags = properties['osm_tags'];
+    if (osmTags is Map) {
+      final osmName = osmTags['name'];
+      if (osmName is String && osmName.trim().isNotEmpty) {
+        return osmName.trim();
+      }
+    }
+
+    return category
+        .split('_')
+        .map(
+          (part) => part.isEmpty
+              ? part
+              : '${part[0].toUpperCase()}${part.substring(1)}',
+        )
+        .join(' ');
+  }
+
   /// Clears the map tile cache
   Future<void> clearCache() async {
-    await _cacheManager.emptyCache();
+    await _mapTileCache.emptyCache();
   }
 }
 
@@ -174,11 +295,7 @@ class POI {
   final LatLng location;
   final String category;
 
-  POI({
-    required this.name,
-    required this.location,
-    required this.category,
-  });
+  POI({required this.name, required this.location, required this.category});
 }
 
 /// Exception thrown when OpenRouteService API fails

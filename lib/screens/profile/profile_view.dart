@@ -102,12 +102,13 @@ class ProfileView extends ConsumerWidget {
               Navigator.pushNamed(context, '/change-password');
             },
           ),
-          _buildSettingItem(
-            context,
-            'Logout',
-            SolarIconsOutline.logout,
-            onTap: onLogout ?? () {},
-          ),
+          if (onLogout != null)
+            _buildSettingItem(
+              context,
+              'Logout',
+              SolarIconsOutline.logout,
+              onTap: onLogout!,
+            ),
           const SizedBox(height: 24),
         ],
       ),
@@ -341,7 +342,7 @@ class ProfileView extends ConsumerWidget {
     BuildContext context,
     String title,
     IconData icon, {
-    VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
     return Container(
@@ -363,7 +364,7 @@ class ProfileView extends ConsumerWidget {
           size: 16,
           color: theme.colorScheme.onSurfaceVariant,
         ),
-        onTap: onTap ?? () {},
+        onTap: onTap,
       ),
     );
   }

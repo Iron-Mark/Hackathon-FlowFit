@@ -330,6 +330,13 @@ class PhoneDataListener {
         error: e,
       );
       return false;
+    } catch (e, stackTrace) {
+      _logger.e(
+        '❌ Failed to start listening',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      return false;
     }
   }
 
@@ -347,6 +354,8 @@ class PhoneDataListener {
         'code=${e.code}, message=${e.message}',
         error: e,
       );
+    } catch (e, stackTrace) {
+      _logger.e('❌ Failed to stop listening', error: e, stackTrace: stackTrace);
     }
   }
 

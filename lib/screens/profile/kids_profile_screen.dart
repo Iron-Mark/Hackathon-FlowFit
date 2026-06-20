@@ -33,13 +33,13 @@ class KidsProfileScreen extends ConsumerWidget {
               ? _buildEmptyState(context)
               : _buildKidsProfileContent(context, profile, userId, ref),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => _buildErrorState(context),
+          error: (error, stack) => _buildErrorState(context, ref, userId),
         ),
       ),
     );
   }
 
-  Widget _buildErrorState(BuildContext context) {
+  Widget _buildErrorState(BuildContext context, WidgetRef ref, String userId) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -48,7 +48,10 @@ class KidsProfileScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           const Text('Oops! Something went wrong'),
           const SizedBox(height: 24),
-          ElevatedButton(onPressed: () {}, child: const Text('Try Again')),
+          ElevatedButton(
+            onPressed: () => ref.invalidate(profileNotifierProvider(userId)),
+            child: const Text('Try Again'),
+          ),
         ],
       ),
     );
@@ -78,7 +81,7 @@ class KidsProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () => Navigator.pushNamed(context, '/buddy-welcome'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4CAF50),
               ),
@@ -100,9 +103,8 @@ class KidsProfileScreen extends ConsumerWidget {
 
     return buddyProfileAsync.when(
       data: (buddyProfile) {
-        // Use real buddy profile if it exists, otherwise use mock
         final effectiveBuddyProfile =
-            buddyProfile ?? _getMockBuddyProfile(userId, profile);
+            buddyProfile ?? _buildBuddyPreviewProfile(userId, profile);
 
         return _buildProfileWithBuddy(
           context,
@@ -114,42 +116,30 @@ class KidsProfileScreen extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stack) {
-        // On error, fall back to mock profile
-        final mockBuddyProfile = _getMockBuddyProfile(userId, profile);
+        final previewProfile = _buildBuddyPreviewProfile(userId, profile);
         return _buildProfileWithBuddy(
           context,
           profile,
-          mockBuddyProfile,
-          false, // isRealProfile
+          previewProfile,
+          false,
           ref,
         );
       },
     );
   }
 
-  /// Get mock buddy profile as fallback
-  BuddyProfile _getMockBuddyProfile(String userId, UserProfile profile) {
+  BuddyProfile _buildBuddyPreviewProfile(String userId, UserProfile profile) {
     return BuddyProfile(
-      id: 'buddy-mock',
+      id: 'buddy-onboarding-preview',
       userId: userId,
       name: profile.nickname ?? 'Buddy',
       color: 'blue',
-      level: 5,
-      xp: 350,
-      unlockedColors: const ['blue', 'teal', 'green'],
+      level: 1,
+      xp: 0,
+      unlockedColors: const ['blue'],
       accessories: const {
-        'unlocked': {
-          'hats': ['cap'],
-          'clothes': ['basic'],
-          'shoes': [],
-          'extras': [],
-        },
-        'current': {
-          'hat': 'cap',
-          'clothes': 'basic',
-          'shoes': null,
-          'extra': null,
-        },
+        'unlocked': {'hats': [], 'clothes': [], 'shoes': [], 'extras': []},
+        'current': {'hat': null, 'clothes': null, 'shoes': null, 'extra': null},
         'background': 'home',
       },
       createdAt: DateTime.now(),
@@ -196,22 +186,29 @@ class KidsProfileScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: BuddyProfileCard(
               buddyProfile: buddyProfile,
-              onCustomizeTap: () {
-                if (isRealProfile) {
-                  Navigator.pushNamed(context, '/buddy-customization');
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Complete the Buddy onboarding to unlock customization!',
-                      ),
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                }
-              },
+              onCustomizeTap: () => isRealProfile
+                  ? Navigator.pushNamed(context, '/buddy-customization')
+                  : Navigator.pushNamed(context, '/buddy-welcome'),
             ),
           ),
+          if (!isRealProfile) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, '/buddy-welcome'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4CAF50),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('Finish Buddy Setup'),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -286,23 +283,12 @@ class KidsProfileScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           _buildActionTile(
             context,
-            'Customize ${buddyProfile.name}',
+            isRealProfile ? 'Customize ${buddyProfile.name}' : 'Set Up Buddy',
             SolarIconsOutline.palette,
             const Color(0xFF4ECDC4),
-            () {
-              if (isRealProfile) {
-                Navigator.pushNamed(context, '/buddy-customization');
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Complete the Buddy onboarding to unlock customization!',
-                    ),
-                    duration: Duration(seconds: 3),
-                  ),
-                );
-              }
-            },
+            () => isRealProfile
+                ? Navigator.pushNamed(context, '/buddy-customization')
+                : Navigator.pushNamed(context, '/buddy-welcome'),
           ),
           _buildActionTile(
             context,
@@ -500,12 +486,26 @@ class KidsProfileScreen extends ConsumerWidget {
     );
 
     if (shouldLogout == true && context.mounted) {
-      await ref.read(authNotifierProvider.notifier).signOut();
+      try {
+        await ref.read(authNotifierProvider.notifier).signOut();
 
-      if (context.mounted) {
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil('/welcome', (route) => false);
+        if (context.mounted) {
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil('/welcome', (route) => false);
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Could not sign out. Check your connection and try again.',
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       }
     }
   }

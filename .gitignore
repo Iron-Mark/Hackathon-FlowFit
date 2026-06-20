@@ -33,6 +33,7 @@ supabase/.temp/
 .pub/
 /build/
 /coverage/
+/test-results/
 
 # Symbolication related
 app.*.symbols

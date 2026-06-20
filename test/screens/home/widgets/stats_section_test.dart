@@ -21,6 +21,7 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
+            activityComparisonProvider.overrideWith((ref) async => 0),
             core_providers.currentHeartRateProvider.overrideWith(
               (ref) => Stream.value(
                 HeartRateData(
@@ -55,6 +56,7 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
+            activityComparisonProvider.overrideWith((ref) async => 0),
             core_providers.currentHeartRateProvider.overrideWith(
               (ref) => Stream.value(
                 HeartRateData(
@@ -380,6 +382,7 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
+            activityComparisonProvider.overrideWith((ref) async => 0),
           ],
           child: const MaterialApp(home: Scaffold(body: StatsSection())),
         ),

@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
+
+import '../../../../services/user_settings_preferences.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -17,6 +22,48 @@ class _NotificationSettingsScreenState
   bool _sleepReminders = true;
   bool _achievementNotifications = true;
   bool _weeklyReports = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedSettings();
+  }
+
+  Future<void> _loadSavedSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final settings = await UserSettingsPreferences(
+      prefs,
+    ).loadNotificationSettings();
+    if (!mounted) return;
+
+    setState(() {
+      _workoutReminders = settings.workoutReminders;
+      _mealReminders = settings.mealReminders;
+      _waterReminders = settings.waterReminders;
+      _sleepReminders = settings.sleepReminders;
+      _achievementNotifications = settings.achievementNotifications;
+      _weeklyReports = settings.weeklyReports;
+    });
+  }
+
+  Future<void> _saveSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await UserSettingsPreferences(prefs).saveNotificationSettings(
+      NotificationPreferenceSettings(
+        workoutReminders: _workoutReminders,
+        mealReminders: _mealReminders,
+        waterReminders: _waterReminders,
+        sleepReminders: _sleepReminders,
+        achievementNotifications: _achievementNotifications,
+        weeklyReports: _weeklyReports,
+      ),
+    );
+  }
+
+  void _updateSetting(ValueChanged<bool> update, bool value) {
+    setState(() => update(value));
+    unawaited(_saveSettings());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +155,10 @@ class _NotificationSettingsScreenState
                     'Get reminded to exercise',
                     SolarIconsOutline.running,
                     _workoutReminders,
-                    (value) => setState(() => _workoutReminders = value),
+                    (value) => _updateSetting(
+                      (next) => _workoutReminders = next,
+                      value,
+                    ),
                   ),
                   _buildDivider(theme),
                   _buildSwitchItem(
@@ -117,7 +167,8 @@ class _NotificationSettingsScreenState
                     'Track your meals on time',
                     SolarIconsOutline.hamburgerMenu,
                     _mealReminders,
-                    (value) => setState(() => _mealReminders = value),
+                    (value) =>
+                        _updateSetting((next) => _mealReminders = next, value),
                   ),
                   _buildDivider(theme),
                   _buildSwitchItem(
@@ -126,7 +177,8 @@ class _NotificationSettingsScreenState
                     'Stay hydrated throughout the day',
                     SolarIconsOutline.cup,
                     _waterReminders,
-                    (value) => setState(() => _waterReminders = value),
+                    (value) =>
+                        _updateSetting((next) => _waterReminders = next, value),
                   ),
                   _buildDivider(theme),
                   _buildSwitchItem(
@@ -135,7 +187,8 @@ class _NotificationSettingsScreenState
                     'Get reminded to sleep on time',
                     SolarIconsOutline.moon,
                     _sleepReminders,
-                    (value) => setState(() => _sleepReminders = value),
+                    (value) =>
+                        _updateSetting((next) => _sleepReminders = next, value),
                   ),
                 ],
               ),
@@ -176,8 +229,10 @@ class _NotificationSettingsScreenState
                     'Celebrate your milestones',
                     SolarIconsOutline.cupStar,
                     _achievementNotifications,
-                    (value) =>
-                        setState(() => _achievementNotifications = value),
+                    (value) => _updateSetting(
+                      (next) => _achievementNotifications = next,
+                      value,
+                    ),
                   ),
                   _buildDivider(theme),
                   _buildSwitchItem(
@@ -186,7 +241,8 @@ class _NotificationSettingsScreenState
                     'Get weekly progress summaries',
                     SolarIconsOutline.chartSquare,
                     _weeklyReports,
-                    (value) => setState(() => _weeklyReports = value),
+                    (value) =>
+                        _updateSetting((next) => _weeklyReports = next, value),
                   ),
                 ],
               ),

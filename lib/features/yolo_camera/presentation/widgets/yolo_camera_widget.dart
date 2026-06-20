@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,16 +12,23 @@ enum DetectionMode { object, pose }
 
 enum CameraMode { realtime, singleShot }
 
+typedef YoloGalleryImagePicker = Future<String?> Function();
+typedef YoloImageByteReader = Future<Uint8List> Function(String path);
+
 class YoloCameraWidget extends ConsumerStatefulWidget {
   final DetectionMode detectionMode;
   final CameraMode cameraMode;
   final Function(List<DetectionResult>)? onDetection;
+  final YoloGalleryImagePicker? pickImage;
+  final YoloImageByteReader? readImageBytes;
 
   const YoloCameraWidget({
     super.key,
     this.detectionMode = DetectionMode.object,
     this.cameraMode = CameraMode.realtime,
     this.onDetection,
+    this.pickImage,
+    this.readImageBytes,
   });
 
   @override
@@ -31,6 +39,7 @@ class _YoloCameraWidgetState extends ConsumerState<YoloCameraWidget>
     with WidgetsBindingObserver {
   CameraController? _controller;
   bool _isDetecting = false;
+  bool _isPickingImage = false;
   bool _isInitialized = false;
   File? _capturedImage;
 
@@ -181,35 +190,63 @@ class _YoloCameraWidgetState extends ConsumerState<YoloCameraWidget>
   }
 
   Future<void> _pickAndDetectImage() async {
+    if (_isPickingImage) return;
+
+    setState(() {
+      _isPickingImage = true;
+    });
+
     try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final imagePath = await (widget.pickImage ?? _defaultPickImage)();
 
-      if (pickedFile != null && mounted) {
-        setState(() {
-          _capturedImage = File(pickedFile.path);
-        });
+      if (imagePath == null || !mounted) return;
 
-        // Read image bytes
-        final imageBytes = await _capturedImage!.readAsBytes();
+      final selectedImage = File(imagePath);
+      setState(() {
+        _capturedImage = selectedImage;
+      });
 
-        // Run detection
-        final useCase = ref.read(detectImageUseCaseProvider);
-        List<DetectionResult> results;
-        if (widget.detectionMode == DetectionMode.object) {
-          results = await useCase.detectObjects(imageBytes);
-        } else {
-          results = await useCase.detectPose(imageBytes);
-        }
+      // Read image bytes
+      final imageBytes =
+          await (widget.readImageBytes ?? _defaultReadImageBytes)(imagePath);
 
-        if (mounted) {
-          ref.read(detectionResultsProvider.notifier).state = results;
-          widget.onDetection?.call(results);
-        }
+      // Run detection
+      final useCase = ref.read(detectImageUseCaseProvider);
+      List<DetectionResult> results;
+      if (widget.detectionMode == DetectionMode.object) {
+        results = await useCase.detectObjects(imageBytes);
+      } else {
+        results = await useCase.detectPose(imageBytes);
+      }
+
+      if (mounted) {
+        ref.read(detectionResultsProvider.notifier).state = results;
+        widget.onDetection?.call(results);
       }
     } catch (e) {
       debugPrint('Error picking/detecting image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not analyze image: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingImage = false;
+        });
+      }
     }
+  }
+
+  Future<String?> _defaultPickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    return pickedFile?.path;
+  }
+
+  Future<Uint8List> _defaultReadImageBytes(String path) {
+    return File(path).readAsBytes();
   }
 
   @override
@@ -255,10 +292,12 @@ class _YoloCameraWidgetState extends ConsumerState<YoloCameraWidget>
           right: 0,
           child: Center(
             child: ElevatedButton.icon(
-              onPressed: _pickAndDetectImage,
+              onPressed: _isPickingImage ? null : _pickAndDetectImage,
               icon: const Icon(Icons.photo_library),
               label: Text(
-                _capturedImage == null ? 'Pick Image' : 'Pick Another',
+                _isPickingImage
+                    ? 'Analyzing...'
+                    : (_capturedImage == null ? 'Pick Image' : 'Pick Another'),
               ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(

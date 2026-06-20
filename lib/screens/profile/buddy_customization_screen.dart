@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/buddy_character_widget.dart';
 import '../../widgets/buddy_idle_animation.dart';
 import '../../widgets/buddy_error_widget.dart';
-import '../../core/config/supabase_tables.dart';
+import '../../models/buddy_profile.dart';
 import '../../utils/buddy_colors.dart';
+import '../../utils/buddy_customization.dart';
 import '../../providers/buddy_profile_provider.dart';
 
 /// Buddy Customization Screen
@@ -32,6 +33,7 @@ class _BuddyCustomizationScreenState
   bool _isSaving = false;
   int _currentTab = 0; // 0: Colors, 1: Accessories, 2: Backgrounds, 3: Rename
   final TextEditingController _nameController = TextEditingController();
+  bool _hasHydratedProfile = false;
 
   // Available accessories (emoji-based for simplicity)
   static const Map<String, Map<String, dynamic>> accessories = {
@@ -88,7 +90,7 @@ class _BuddyCustomizationScreenState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = ref.watch(buddyCustomizationCurrentUserIdProvider);
 
     if (userId == null) {
       return Scaffold(
@@ -189,14 +191,7 @@ class _BuddyCustomizationScreenState
             );
           }
 
-          // Initialize selected color from profile if not set
-          if (_selectedColor == null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              setState(() {
-                _selectedColor = profile.color;
-              });
-            });
-          }
+          _hydrateProfileSelections(profile);
 
           return _buildContent(theme, profile);
         },
@@ -217,11 +212,6 @@ class _BuddyCustomizationScreenState
     final xpForNextLevel = currentLevel * 100;
     final xpProgress = currentXP % xpForNextLevel;
     final progressPercent = xpProgress / xpForNextLevel;
-
-    // Initialize name controller with current name
-    if (_nameController.text.isEmpty) {
-      _nameController.text = profile.name;
-    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -285,7 +275,9 @@ class _BuddyCustomizationScreenState
                   const SizedBox(height: 8),
                   // Level and XP display (long press for admin level hack)
                   GestureDetector(
-                    onLongPress: () => _showLevelHack(currentLevel),
+                    onLongPress: kDebugMode
+                        ? () => _showLevelHack(currentLevel)
+                        : null,
                     child: Text(
                       'Level $currentLevel',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -336,6 +328,22 @@ class _BuddyCustomizationScreenState
         ],
       ),
     );
+  }
+
+  void _hydrateProfileSelections(BuddyProfile profile) {
+    if (_hasHydratedProfile) return;
+
+    _selectedColor = profile.color;
+    _selectedAccessory = normalizeBuddyAccessorySelection(
+      profile.accessories,
+      accessories.keys,
+    );
+    _selectedBackground = normalizeBuddyBackgroundSelection(
+      profile.accessories,
+      backgrounds.keys,
+    );
+    _nameController.text = profile.name;
+    _hasHydratedProfile = true;
   }
 
   Widget _buildTab(String label, int index) {
@@ -727,22 +735,17 @@ class _BuddyCustomizationScreenState
 
   Future<void> _setLevel(int newLevel) async {
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
+      final userId = ref.read(buddyCustomizationCurrentUserIdProvider);
       if (userId == null) return;
-
-      final supabase = Supabase.instance.client;
 
       // Calculate XP for the new level
       final newXP = (newLevel - 1) * 100;
 
-      await supabase
-          .from(SupabaseTables.buddyProfiles)
-          .update({
-            'level': newLevel,
-            'xp': newXP,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('user_id', userId);
+      await ref.read(buddyCustomizationSaveProvider)(userId, {
+        'level': newLevel,
+        'xp': newXP,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
 
       // Refresh the provider
       ref.invalidate(buddyProfileNotifierProvider(userId));
@@ -769,52 +772,46 @@ class _BuddyCustomizationScreenState
   }
 
   Future<void> _handleSave(String userId) async {
+    final nameError = validateBuddyCustomizationName(_nameController.text);
+    if (nameError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(nameError),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final profile = ref.read(buddyProfileNotifierProvider(userId)).value;
+    if (profile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Load your Buddy profile before saving changes.'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isSaving = true;
     });
 
     try {
-      final supabase = Supabase.instance.client;
-      final updates = <String, dynamic>{};
-
-      // Add color if changed
-      if (_selectedColor != null) {
-        updates['color'] = _selectedColor;
-      }
-
-      // Add name if changed
-      if (_nameController.text.isNotEmpty) {
-        updates['name'] = _nameController.text.trim();
-      }
-
-      // Add accessories and background to accessories JSON
-      if (_selectedAccessory != null || _selectedBackground != null) {
-        final currentProfile = await supabase
-            .from(SupabaseTables.buddyProfiles)
-            .select('accessories')
-            .eq('user_id', userId)
-            .maybeSingle();
-
-        final currentAccessories =
-            currentProfile?['accessories'] as Map<String, dynamic>? ?? {};
-
-        if (_selectedAccessory != null) {
-          currentAccessories['current_accessory'] = _selectedAccessory;
-        }
-        if (_selectedBackground != null) {
-          currentAccessories['current_background'] = _selectedBackground;
-        }
-
-        updates['accessories'] = currentAccessories;
-      }
-
-      updates['updated_at'] = DateTime.now().toIso8601String();
+      final updates = buildBuddyCustomizationUpdates(
+        profile: profile,
+        nameInput: _nameController.text,
+        selectedColor: _selectedColor,
+        selectedAccessory: _selectedAccessory,
+        selectedBackground: _selectedBackground,
+        updatedAt: DateTime.now(),
+      );
 
       // Save to database
-      await supabase
-          .from(SupabaseTables.buddyProfiles)
-          .update(updates)
-          .eq('user_id', userId);
+      await ref.read(buddyCustomizationSaveProvider)(userId, updates);
 
       // Refresh the provider
       ref.invalidate(buddyProfileNotifierProvider(userId));

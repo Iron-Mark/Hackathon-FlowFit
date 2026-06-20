@@ -8,7 +8,13 @@ import '../../widgets/onboarding_button.dart';
 import '../../utils/buddy_colors.dart';
 import '../../core/exceptions/buddy_exceptions.dart';
 
-/// Buddy Ready Screen - Step 8 of 8 (Final)
+typedef BuddyReadyCompletionAction =
+    Future<void> Function({
+      required WidgetRef ref,
+      required BuildContext context,
+    });
+
+/// Buddy Ready Screen - Step 9 of 9 (Final)
 ///
 /// Celebration & first stat gain screen.
 /// Speech bubble: "Wow! When you take care of yourself,
@@ -18,7 +24,9 @@ import '../../core/exceptions/buddy_exceptions.dart';
 ///
 /// Whale-themed onboarding completion.
 class BuddyReadyScreen extends ConsumerStatefulWidget {
-  const BuddyReadyScreen({super.key});
+  const BuddyReadyScreen({super.key, this.completeOnboarding});
+
+  final BuddyReadyCompletionAction? completeOnboarding;
 
   @override
   ConsumerState<BuddyReadyScreen> createState() => _BuddyReadyScreenState();
@@ -64,16 +72,9 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
     setState(() => _isLoading = true);
 
     try {
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
-      // Complete onboarding and save to database
-      await ref
-          .read(buddyOnboardingProvider.notifier)
-          .completeOnboarding(userId);
+      final completeOnboarding =
+          widget.completeOnboarding ?? _completeSupabaseOnboarding;
+      await completeOnboarding(ref: ref, context: context);
 
       if (mounted) {
         // Navigate to dashboard
@@ -127,6 +128,22 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
           );
         }
       }
+    } on BuddyException catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.friendlyMessage),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _handleNext,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -146,6 +163,23 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
         );
       }
     }
+  }
+
+  Future<void> _completeSupabaseOnboarding({
+    required WidgetRef ref,
+    required BuildContext context,
+  }) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+
+    if (userId == null) {
+      throw BuddyAuthException(
+        'User not authenticated',
+        userFriendlyMessage:
+            'Oops! You need to be logged in to create your Buddy.',
+      );
+    }
+
+    await ref.read(buddyOnboardingProvider.notifier).completeOnboarding(userId);
   }
 
   @override

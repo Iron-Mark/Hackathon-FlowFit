@@ -29,7 +29,7 @@ The workflow currently covers:
 - `dart analyze --format=machine`.
 - `flutter analyze`.
 - `flutter test --reporter compact`.
-- Flutter web JavaScript release smoke build.
+- Flutter web JavaScript release smoke build with `--no-wasm-dry-run`.
 - Public privacy/account-deletion page checks.
 - Local static web deployment verification.
 - Flutter web Wasm smoke build.
@@ -60,7 +60,8 @@ compile gates used before the checkpoint push:
 - Android phone debug build: covered.
 - Wear OS debug build: covered.
 - Android release bundle compile-smoke: covered.
-- Web JS and Wasm compile-smoke: covered.
+- Web JS and Wasm compile-smoke: covered; the JS build disables Flutter's Wasm
+  dry run and the Wasm backend is compiled in a separate explicit smoke step.
 - Public compliance pages: covered.
 - Web deployment verification: covered in Pages workflow when production
   repository variables are configured.

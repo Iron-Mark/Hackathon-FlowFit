@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flowfit/models/resistance_session.dart';
 import 'package:flowfit/models/running_session.dart';
 import 'package:flowfit/models/walking_session.dart';
+import 'package:flowfit/models/workout_session.dart';
 
 void main() {
   group('workout session Supabase row parsing', () {
@@ -115,5 +116,59 @@ void main() {
       expect(resistance.split, BodySplit.upper);
       expect(walking.mode, WalkingMode.free);
     });
+
+    test('generic workout session factory dispatches by workout type', () {
+      final running = WorkoutSession.fromJson({
+        'id': '7ad0520e-2f0f-4b97-a974-9f339541cc0b',
+        'user_id': '154748e0-165f-40aa-a4a1-a59f69723a0f',
+        'workout_type': 'running',
+        'start_time': '2026-06-14T00:00:00.000Z',
+        'goal_type': 'distance',
+        'current_distance': 2,
+        'status': 'active',
+      });
+
+      final walking = WorkoutSession.fromJson({
+        'id': '34c81212-6f64-4a91-bf83-bdc7c51f91fa',
+        'user_id': '154748e0-165f-40aa-a4a1-a59f69723a0f',
+        'workout_type': 'walking',
+        'start_time': '2026-06-14T00:00:00.000Z',
+        'mode': null,
+        'current_distance': 1,
+        'steps': 1300,
+        'mission_completed': false,
+        'status': 'completed',
+      });
+
+      final resistance = WorkoutSession.fromJson({
+        'id': 'ef1ffb99-748b-4b47-a352-58717a694a65',
+        'user_id': '154748e0-165f-40aa-a4a1-a59f69723a0f',
+        'workout_type': 'resistance',
+        'workout_subtype': 'upper',
+        'start_time': '2026-06-14T00:00:00.000Z',
+        'exercises_completed': const [],
+        'status': 'completed',
+      });
+
+      expect(running, isA<RunningSession>());
+      expect(walking, isA<WalkingSession>());
+      expect(resistance, isA<ResistanceSession>());
+    });
+
+    test(
+      'generic workout session factory rejects unsupported rows clearly',
+      () {
+        expect(
+          () => WorkoutSession.fromJson({
+            'id': 'unsupported',
+            'user_id': '154748e0-165f-40aa-a4a1-a59f69723a0f',
+            'workout_type': 'cycling',
+            'start_time': '2026-06-14T00:00:00.000Z',
+            'status': 'completed',
+          }),
+          throwsA(isA<FormatException>()),
+        );
+      },
+    );
   });
 }

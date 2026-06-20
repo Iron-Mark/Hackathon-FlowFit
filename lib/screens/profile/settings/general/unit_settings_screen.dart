@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
+
+import '../../../../services/user_settings_preferences.dart';
 
 class UnitSettingsScreen extends StatefulWidget {
   const UnitSettingsScreen({super.key});
@@ -14,6 +19,51 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
   String _weightUnit = 'Kilograms';
   String _heightUnit = 'Centimeters';
   String _temperatureUnit = 'Celsius';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedUnits();
+  }
+
+  Future<void> _loadSavedUnits() async {
+    final prefs = await SharedPreferences.getInstance();
+    final settings = await UserSettingsPreferences(prefs).loadUnitSettings();
+    if (!mounted) return;
+
+    setState(() {
+      _measurementSystem = _validMeasurementSystem(settings.measurementSystem);
+      _distanceUnit = _validUnit(settings.distanceUnit, const [
+        'Kilometers',
+        'Miles',
+      ], 'Kilometers');
+      _weightUnit = _validUnit(settings.weightUnit, const [
+        'Kilograms',
+        'Pounds',
+      ], 'Kilograms');
+      _heightUnit = _validUnit(settings.heightUnit, const [
+        'Centimeters',
+        'Feet/Inches',
+      ], 'Centimeters');
+      _temperatureUnit = _validUnit(settings.temperatureUnit, const [
+        'Celsius',
+        'Fahrenheit',
+      ], 'Celsius');
+    });
+  }
+
+  Future<void> _saveUnits() async {
+    final prefs = await SharedPreferences.getInstance();
+    await UserSettingsPreferences(prefs).saveUnitSettings(
+      UnitPreferenceSettings(
+        measurementSystem: _measurementSystem,
+        distanceUnit: _distanceUnit,
+        weightUnit: _weightUnit,
+        heightUnit: _heightUnit,
+        temperatureUnit: _temperatureUnit,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +198,11 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
                     'Distance',
                     _distanceUnit,
                     SolarIconsOutline.mapPointWave,
+                    options: const ['Kilometers', 'Miles'],
+                    onSelected: (value) {
+                      setState(() => _distanceUnit = value);
+                      unawaited(_saveUnits());
+                    },
                   ),
                   _buildDivider(theme),
                   _buildUnitItem(
@@ -155,6 +210,11 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
                     'Weight',
                     _weightUnit,
                     SolarIconsOutline.scale,
+                    options: const ['Kilograms', 'Pounds'],
+                    onSelected: (value) {
+                      setState(() => _weightUnit = value);
+                      unawaited(_saveUnits());
+                    },
                   ),
                   _buildDivider(theme),
                   _buildUnitItem(
@@ -162,6 +222,11 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
                     'Height',
                     _heightUnit,
                     SolarIconsOutline.ruler,
+                    options: const ['Centimeters', 'Feet/Inches'],
+                    onSelected: (value) {
+                      setState(() => _heightUnit = value);
+                      unawaited(_saveUnits());
+                    },
                   ),
                   _buildDivider(theme),
                   _buildUnitItem(
@@ -169,6 +234,11 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
                     'Temperature',
                     _temperatureUnit,
                     SolarIconsOutline.temperature,
+                    options: const ['Celsius', 'Fahrenheit'],
+                    onSelected: (value) {
+                      setState(() => _temperatureUnit = value);
+                      unawaited(_saveUnits());
+                    },
                   ),
                 ],
               ),
@@ -196,6 +266,7 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
         _temperatureUnit = 'Fahrenheit';
       }
     });
+    unawaited(_saveUnits());
   }
 
   Widget _buildRadioItem(
@@ -243,33 +314,115 @@ class _UnitSettingsScreenState extends State<UnitSettingsScreen> {
     BuildContext context,
     String label,
     String value,
-    IconData icon,
-  ) {
+    IconData icon, {
+    required List<String> options,
+    required ValueChanged<String> onSelected,
+  }) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Icon(icon, size: 24, color: theme.colorScheme.primary),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: () => _showUnitPicker(
+        context,
+        title: label,
+        currentValue: value,
+        options: options,
+        onSelected: onSelected,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: theme.colorScheme.primary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
+            Text(
+              value,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right,
+              size: 20,
               color: theme.colorScheme.onSurfaceVariant,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  Future<void> _showUnitPicker(
+    BuildContext context, {
+    required String title,
+    required String currentValue,
+    required List<String> options,
+    required ValueChanged<String> onSelected,
+  }) async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                RadioGroup<String>(
+                  groupValue: currentValue,
+                  onChanged: (value) {
+                    if (value != null) {
+                      Navigator.pop(context, value);
+                    }
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final option in options)
+                        RadioListTile<String>(
+                          contentPadding: EdgeInsets.zero,
+                          value: option,
+                          title: Text(option),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null && selected != currentValue) {
+      onSelected(selected);
+    }
+  }
+
+  String _validMeasurementSystem(String value) {
+    return value == 'Imperial' ? 'Imperial' : 'Metric';
+  }
+
+  String _validUnit(String value, List<String> allowed, String fallback) {
+    return allowed.contains(value) ? value : fallback;
   }
 
   Widget _buildDivider(ThemeData theme) {

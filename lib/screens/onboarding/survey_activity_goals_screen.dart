@@ -5,7 +5,6 @@ import '../../theme/app_theme.dart';
 import '../../presentation/providers/providers.dart';
 import '../../widgets/survey_app_bar.dart';
 import '../../core/utils/logger.dart';
-import 'survey_daily_targets_screen.dart';
 
 class SurveyActivityGoalsScreen extends ConsumerStatefulWidget {
   const SurveyActivityGoalsScreen({super.key});
@@ -207,13 +206,7 @@ class _SurveyActivityGoalsScreenState
 
     // Navigate to next screen
     if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const SurveyDailyTargetsScreen(),
-        settings: RouteSettings(arguments: args),
-      ),
-    );
+    Navigator.pushNamed(context, '/survey_daily_targets', arguments: args);
   }
 
   @override

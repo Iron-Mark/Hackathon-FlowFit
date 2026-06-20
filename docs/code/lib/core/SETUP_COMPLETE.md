@@ -57,15 +57,16 @@ All required dependencies are present in `pubspec.yaml`:
 ### 3. Riverpod Code Generation Configured
 
 - ✅ Created `build.yaml` with Riverpod generator configuration
-- ✅ Created example provider in `lib/core/providers/example_provider.dart`
 - ✅ Successfully ran `build_runner` and generated `.g.dart` files
 - ✅ Verified code generation is working correctly
+- Historical note: the original generated `example_provider` scaffold was
+  removed during maintained-fork cleanup after real providers existed.
 
 ### 4. Navigation Configured
 
-- ✅ Created `lib/shared/navigation/app_router.dart`
-- ✅ Set up basic route structure with go_router
-- ✅ Defined placeholder routes for all main features:
+- Historical note: the initial `go_router` scaffold was later retired because
+  the active app uses the `MaterialApp.routes` table in `lib/main.dart`.
+- The maintained route surface now covers:
   - Dashboard (/)
   - Fitness (/fitness)
   - Nutrition (/nutrition)
@@ -81,12 +82,12 @@ All required dependencies are present in `pubspec.yaml`:
 
 ## Next Steps
 
-The core architecture is now ready for feature implementation. The next tasks will:
+The core architecture is now maintained through the active feature modules. The
+next cleanup tasks should:
 
-1. Define domain entities and repository interfaces
-2. Implement mock repositories with sample data
-3. Set up Riverpod providers for state management
-4. Build UI screens and components
+1. Keep repository interfaces aligned with Supabase-backed implementations.
+2. Remove obsolete early-task docs when equivalent maintained docs exist.
+3. Keep Riverpod generated files tied to real production providers only.
 
 ## Code Generation Commands
 

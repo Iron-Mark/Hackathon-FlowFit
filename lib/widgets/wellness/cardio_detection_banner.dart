@@ -103,14 +103,6 @@ class CardioDetectionBanner extends StatelessWidget {
                     onTap: () => onStartWorkout('walking'),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildActivityButton(
-                    icon: Icons.directions_bike,
-                    label: 'Cycle',
-                    onTap: () => onStartWorkout('cycling'),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 8),

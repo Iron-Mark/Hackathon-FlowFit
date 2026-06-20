@@ -7,15 +7,6 @@ import 'health/health_screen.dart';
 import 'track/track_screen.dart';
 import 'progress/progress_screen.dart';
 import 'profile/kids_profile_screen.dart';
-// Keep tab imports for future use
-// ignore: unused_import
-import 'dashboard/home_tab.dart';
-// ignore: unused_import
-import 'dashboard/health_tab.dart';
-// ignore: unused_import
-import 'dashboard/track_tab.dart';
-// ignore: unused_import
-import 'dashboard/progress_tab.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -26,6 +17,16 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _currentIndex = 0;
+  int _healthActionNonce = 0;
+  HealthInitialAction? _pendingHealthAction;
+
+  void _openHealthAction(HealthInitialAction action) {
+    setState(() {
+      _currentIndex = 1;
+      _pendingHealthAction = action;
+      _healthActionNonce++;
+    });
+  }
 
   List<Widget> _getScreens() {
     final authState = ref.watch(authNotifierProvider);
@@ -44,8 +45,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
 
     return [
-      const HomeScreen(),
-      const HealthScreen(),
+      HomeScreen(
+        onLogWater: () => _openHealthAction(HealthInitialAction.addWater),
+        onLogMeal: () => _openHealthAction(HealthInitialAction.addMeal),
+      ),
+      HealthScreen(
+        key: ValueKey(_healthActionNonce),
+        initialAction: _pendingHealthAction,
+      ),
       const TrackScreen(),
       const ProgressScreen(),
       profileScreen,
@@ -67,12 +74,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final initialTab = args?['initialTab'] as int?;
+    final healthAction = _parseHealthAction(args?['healthAction']);
 
     if (initialTab != null && initialTab >= 0 && initialTab < 5) {
       setState(() {
         _currentIndex = initialTab;
+        if (initialTab == 1 && healthAction != null) {
+          _pendingHealthAction = healthAction;
+          _healthActionNonce++;
+        }
       });
     }
+  }
+
+  HealthInitialAction? _parseHealthAction(Object? value) {
+    if (value is! String) return null;
+    for (final action in HealthInitialAction.values) {
+      if (action.name == value) return action;
+    }
+    return null;
   }
 
   void _checkAuthState() {

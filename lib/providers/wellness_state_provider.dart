@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/wellness_state.dart';
 import '../models/state_transition.dart';
 import '../services/wellness_state_service.dart';
+import '../services/wellness_monitoring_service.dart';
 import '../services/watch_bridge.dart';
 import '../services/phone_data_listener.dart';
 
@@ -22,6 +23,17 @@ final phoneDataListenerServiceProvider = Provider<PhoneDataListener>((ref) {
 final wellnessStateServiceProvider = Provider<WellnessStateService>((ref) {
   final phoneDataListener = ref.watch(phoneDataListenerServiceProvider);
   return WellnessStateService(phoneDataListener);
+});
+
+/// Provider for the wellness monitoring lifecycle service.
+final wellnessMonitoringServiceProvider = Provider<WellnessMonitoringService>((
+  ref,
+) {
+  final service = ref.watch(wellnessStateServiceProvider);
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final monitoringService = WellnessMonitoringService(service, prefs);
+  ref.onDispose(monitoringService.dispose);
+  return monitoringService;
 });
 
 /// State notifier for wellness state management
@@ -220,5 +232,5 @@ final todayDurationsProvider = Provider<Map<WellnessState, Duration>>((ref) {
 
 /// Provider for SharedPreferences (must be initialized in main)
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('SharedPreferences must be overridden in main.dart');
+  throw StateError('SharedPreferences must be overridden in main.dart');
 });

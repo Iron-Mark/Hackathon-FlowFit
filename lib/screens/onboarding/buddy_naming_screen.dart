@@ -87,8 +87,7 @@ class _BuddyNamingScreenState extends ConsumerState<BuddyNamingScreen> {
     // Save name to provider
     ref.read(buddyOnboardingProvider.notifier).setBuddyName(name);
 
-    // Navigate to goal selection screen (Step 6 of whale onboarding)
-    Navigator.of(context).pushNamed('/goal-selection');
+    Navigator.of(context).pushNamed('/buddy_profile_setup');
   }
 
   @override

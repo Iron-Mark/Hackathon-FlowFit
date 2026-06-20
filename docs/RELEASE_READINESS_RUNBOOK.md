@@ -630,7 +630,7 @@ flutter analyze
 flutter test --reporter compact
 flutter build apk --debug --no-pub
 flutter build apk --debug -t lib\main_wear.dart --no-pub
-flutter build web --release --no-pub
+flutter build web --release --no-pub --no-wasm-dry-run
 
 # Requires android/key.properties, unless the smoke-only env var above is set.
 flutter build appbundle --release --no-pub `
@@ -695,9 +695,10 @@ supplied with separate fresh evidence for the same commit.
 `.github/workflows/flutter-ci.yml` runs the same core gates on pull requests,
 pushes to `main`, `develop`, and `supabase/**`, plus manual dispatch. The
 workflow installs the required Android SDK packages, runs the advisory
-release-readiness audit, builds the JS web artifact, builds Android phone/Wear
-debug APKs, and produces a debug-signed release App Bundle smoke artifact named
-`flowfit-release-smoke-not-for-store`. The CI release smoke uses
+release-readiness audit, builds the JS web artifact with `--no-wasm-dry-run`,
+builds Android phone/Wear debug APKs, and produces a debug-signed release App
+Bundle smoke artifact named `flowfit-release-smoke-not-for-store`. The CI
+release smoke uses
 `com.flowfit.smoke` package/auth values plus matching Dart defines and
 validation-shaped dummy Supabase client Dart defines, mirroring the local
 preflight. It also verifies the built public privacy and account-deletion pages,

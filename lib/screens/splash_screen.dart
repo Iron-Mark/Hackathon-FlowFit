@@ -1,16 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/config/supabase_tables.dart';
 import '../presentation/providers/providers.dart';
 import '../domain/entities/auth_state.dart';
+
+typedef SplashRouteResolver = Future<SplashRoute> Function(WidgetRef ref);
+
+class SplashRoute {
+  const SplashRoute(this.name, {this.arguments});
+
+  final String name;
+  final Object? arguments;
+}
 
 /// Splash screen shown while checking authentication state.
 ///
 /// Requirements: 5.1 - Check auth state on app start
 class SplashScreen extends ConsumerStatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({
+    super.key,
+    this.resolveRoute,
+    this.minimumDisplayDuration = const Duration(seconds: 3),
+  });
+
+  final SplashRouteResolver? resolveRoute;
+  final Duration minimumDisplayDuration;
 
   @override
   ConsumerState<SplashScreen> createState() => _SplashScreenState();
@@ -21,6 +35,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  bool _isRetrying = false;
+  String? _startupError;
 
   @override
   void initState() {
@@ -60,84 +76,55 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   Future<void> _checkAuthState() async {
     // Wait for animation and minimum splash time
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(widget.minimumDisplayDuration);
 
     if (!mounted) return;
 
-    // final authState = ref.read(authNotifierProvider);
-    final authNotifier = ref.read(authNotifierProvider.notifier);
+    setState(() {
+      _isRetrying = true;
+      _startupError = null;
+    });
 
-    // Initialize auth state (check for existing session)
+    try {
+      final resolveRoute = widget.resolveRoute ?? _resolveDefaultRoute;
+      final route = await resolveRoute(ref);
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context,
+        route.name,
+        arguments: route.arguments,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isRetrying = false;
+        _startupError =
+            'Could not check your account setup. Check your connection and try again.';
+      });
+    }
+  }
+
+  Future<SplashRoute> _resolveDefaultRoute(WidgetRef ref) async {
+    final authNotifier = ref.read(authNotifierProvider.notifier);
     await authNotifier.initialize();
 
-    if (!mounted) return;
-
     final updatedAuthState = ref.read(authNotifierProvider);
+    final user = updatedAuthState.user;
 
-    if (updatedAuthState.status == AuthStatus.authenticated &&
-        updatedAuthState.user != null) {
-      // User is authenticated, check if onboarding is complete
-      final profileRepository = ref.read(profileRepositoryProvider);
-      final userId = updatedAuthState.user!.id;
-
-      try {
-        // Check if user profile exists
-        final hasCompletedSurvey = await profileRepository.hasCompletedSurvey(
-          userId,
-        );
-
-        if (!mounted) return;
-
-        if (hasCompletedSurvey) {
-          // User profile exists, but we also need to check if buddy profile exists
-          // (for users who chose kids mode)
-          try {
-            final supabase = Supabase.instance.client;
-            final buddyResponse = await supabase
-                .from(SupabaseTables.buddyProfiles)
-                .select()
-                .eq('user_id', userId)
-                .maybeSingle();
-
-            if (!mounted) return;
-
-            // If buddy profile exists, onboarding is complete
-            if (buddyResponse != null) {
-              Navigator.pushReplacementNamed(context, '/dashboard');
-            } else {
-              // No buddy profile - they need to complete whale onboarding
-              Navigator.pushReplacementNamed(context, '/dashboard');
-            }
-          } catch (e) {
-            // Error checking buddy profile, go to dashboard anyway
-            if (mounted) {
-              Navigator.pushReplacementNamed(context, '/dashboard');
-            }
-          }
-        } else {
-          // Profile incomplete, go to whale onboarding (kids app)
-          Navigator.pushReplacementNamed(
-            context,
-            '/buddy-welcome',
-            arguments: {'userId': userId},
-          );
-        }
-      } catch (e) {
-        // Error checking profile, assume incomplete and go to whale onboarding
-        if (mounted) {
-          Navigator.pushReplacementNamed(
-            context,
-            '/buddy-welcome',
-            arguments: {'userId': updatedAuthState.user!.id},
-          );
-        }
-      }
-    } else {
-      // Not authenticated, go to welcome screen
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/welcome');
-      }
+    if (updatedAuthState.status != AuthStatus.authenticated || user == null) {
+      return const SplashRoute('/welcome');
     }
+
+    final hasCompletedSurvey = await ref
+        .read(profileRepositoryProvider)
+        .hasCompletedSurvey(user.id);
+
+    if (hasCompletedSurvey) {
+      return const SplashRoute('/dashboard');
+    }
+
+    return SplashRoute('/age-gate', arguments: {'userId': user.id});
   }
 
   @override
@@ -177,14 +164,37 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 opacity: _fadeAnimation,
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: 48.0),
-                  child: Text(
-                    'FlowFit',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: const Color(0xFF3183E8), // Brand Blue
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'GeneralSans',
-                      letterSpacing: -0.5,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'FlowFit',
+                        style: Theme.of(context).textTheme.displayMedium
+                            ?.copyWith(
+                              color: const Color(0xFF3183E8), // Brand Blue
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'GeneralSans',
+                              letterSpacing: -0.5,
+                            ),
+                      ),
+                      if (_startupError != null) ...[
+                        const SizedBox(height: 16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            _startupError!,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: Colors.red[700]),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton(
+                          onPressed: _isRetrying ? null : _checkAuthState,
+                          child: const Text('Try Again'),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),

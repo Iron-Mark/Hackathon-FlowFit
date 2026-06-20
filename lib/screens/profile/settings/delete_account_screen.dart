@@ -7,8 +7,13 @@ import '../../../services/local_account_data_cleanup.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/deep_link_handler.dart';
 
+typedef DeleteAccountAction = Future<void> Function({required String password});
+
 class DeleteAccountScreen extends StatefulWidget {
-  const DeleteAccountScreen({super.key});
+  const DeleteAccountScreen({super.key, DeleteAccountAction? deleteAccount})
+    : _deleteAccount = deleteAccount;
+
+  final DeleteAccountAction? _deleteAccount;
 
   @override
   State<DeleteAccountScreen> createState() => _DeleteAccountScreenState();
@@ -67,23 +72,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         setState(() => _isLoading = true);
 
         try {
-          final client = Supabase.instance.client;
-          final user = client.auth.currentUser;
-          if (user == null) {
-            throw const AuthException(
-              'You must be signed in to delete your account.',
-            );
-          }
-
-          DeepLinkHandler.beginInternalAuthFlow();
-          try {
-            await _reauthenticateForDeletion(client, user);
-            await client.rpc('request_account_deletion');
-            await _clearLocalAccountData(user.id);
-            await client.auth.signOut();
-          } finally {
-            DeepLinkHandler.endInternalAuthFlow();
-          }
+          final deleteAccount = widget._deleteAccount ?? _deleteSupabaseAccount;
+          await deleteAccount(password: _passwordController.text);
 
           if (mounted) {
             setState(() => _isLoading = false);
@@ -116,9 +106,30 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     }
   }
 
+  Future<void> _deleteSupabaseAccount({required String password}) async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+    if (user == null) {
+      throw const AuthException(
+        'You must be signed in to delete your account.',
+      );
+    }
+
+    DeepLinkHandler.beginInternalAuthFlow();
+    try {
+      await _reauthenticateForDeletion(client, user, password);
+      await client.rpc('request_account_deletion');
+      await _clearLocalAccountData(user.id);
+      await client.auth.signOut();
+    } finally {
+      DeepLinkHandler.endInternalAuthFlow();
+    }
+  }
+
   Future<void> _reauthenticateForDeletion(
     SupabaseClient client,
     User user,
+    String password,
   ) async {
     final email = user.email;
     if (email == null || email.trim().isEmpty) {
@@ -129,7 +140,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
     final response = await client.auth.signInWithPassword(
       email: email,
-      password: _passwordController.text,
+      password: password,
     );
 
     if (response.user?.id != user.id) {

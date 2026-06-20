@@ -47,44 +47,28 @@ solar_icons: ^0.0.5  # Solar icon pack
 - Bold labels above fields
 - Light gray input backgrounds
 - Blue primary button
-- Social login buttons (Google, Apple)
 - Terms & Privacy Policy text
 - "Already have an account? Log In" link
-- **Bypasses authentication** - goes directly to home
+- Submits through the Supabase-backed signup flow
 
 #### Login Screen
 - Similar clean design
 - Email and password fields
 - "Forgot Password?" link
-- Social login options
 - "Don't have an account? Sign Up" link
-- **Bypasses authentication** - goes directly to home
+- Submits through the Supabase-backed login flow
 
-### 4. Authentication Bypass
+### 4. Authentication Behavior
 
-Both login and signup now bypass authentication and go directly to `/home`:
+Login and signup use the app auth providers and Supabase-backed repositories.
+Google/Apple social OAuth buttons are intentionally hidden until real provider
+flows are implemented; no social button should bypass authentication.
 
 ```dart
-Future<void> _handleSignUp() async {
-  if (_formKey.currentState!.validate()) {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    
-    if (mounted) {
-      setState(() => _isLoading = false);
-      // Bypass authentication - go directly to home
-      Navigator.pushReplacementNamed(context, '/home');
-    }
-  }
-}
-```
-
-Social login buttons also bypass:
-```dart
-onPressed: () {
-  // Bypass - go directly to home
-  Navigator.pushReplacementNamed(context, '/home');
-}
+await ref.read(authNotifierProvider.notifier).signIn(
+  email: email,
+  password: password,
+);
 ```
 
 ---

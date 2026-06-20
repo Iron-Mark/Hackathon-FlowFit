@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
+
+import '../../../services/profile_goal_preferences.dart';
 
 class FitnessGoalsScreen extends StatefulWidget {
   const FitnessGoalsScreen({super.key});
@@ -33,11 +36,43 @@ class _FitnessGoalsScreenState extends State<FitnessGoalsScreen> {
     'Sports Performance',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedGoals();
+  }
+
+  Future<void> _loadSavedGoals() async {
+    final prefs = await SharedPreferences.getInstance();
+    final goals = await ProfileGoalPreferences(prefs).loadFitnessGoals();
+    if (!mounted) return;
+    setState(() {
+      if (_activityLevels.contains(goals.activityLevel)) {
+        _activityLevel = goals.activityLevel;
+      }
+      _workoutsPerWeek = goals.workoutsPerWeek.clamp(1, 7);
+      _minutesPerWorkout = goals.minutesPerWorkout.clamp(15, 120);
+      _selectedGoals
+        ..clear()
+        ..addAll(
+          goals.goals.where((goal) => _fitnessGoalOptions.contains(goal)),
+        );
+    });
+  }
+
   Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      await Future.delayed(const Duration(milliseconds: 800));
+      final prefs = await SharedPreferences.getInstance();
+      await ProfileGoalPreferences(prefs).saveFitnessGoals(
+        FitnessGoalSettings(
+          activityLevel: _activityLevel,
+          workoutsPerWeek: _workoutsPerWeek,
+          minutesPerWorkout: _minutesPerWorkout,
+          goals: List<String>.from(_selectedGoals),
+        ),
+      );
 
       if (mounted) {
         setState(() => _isLoading = false);

@@ -165,6 +165,30 @@ void main() {
       expect(find.text('Today'), findsOneWidget);
     });
 
+    testWidgets('opens activity details without requiring GoRouter', (
+      WidgetTester tester,
+    ) async {
+      final activity = RecentActivity(
+        id: '1',
+        name: 'Morning Run',
+        type: 'run',
+        details: '3.2 miles • 30 min',
+        date: DateTime.now(),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: ActivityCard(activity: activity)),
+        ),
+      );
+
+      await tester.tap(find.byType(ActivityCard));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Date'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Close'), findsOneWidget);
+    });
+
     testWidgets('uses correct icon and color for run type', (
       WidgetTester tester,
     ) async {

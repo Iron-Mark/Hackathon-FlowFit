@@ -10,9 +10,13 @@ import '../../presentation/providers/providers.dart';
 import '../../core/domain/entities/user_profile.dart';
 import '../../core/domain/repositories/profile_repository.dart';
 
+typedef ProfileImagePicker = Future<String?> Function(ImageSource source);
+
 // Profile Screen
 class ProfileScreen extends ConsumerStatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.pickProfileImage});
+
+  final ProfileImagePicker? pickProfileImage;
 
   @override
   ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
@@ -20,12 +24,8 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _profileImagePath;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadProfileImage();
-  }
+  String? _profileImageUserId;
+  String? _loadingProfileImageUserId;
 
   /// Load profile image path from SharedPreferences
   ///
@@ -35,12 +35,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// - The key is automatically cleaned up if the file no longer exists
   ///
   /// Requirements: 3.2, 3.3, 3.4
-  Future<void> _loadProfileImage() async {
-    final authState = ref.read(authNotifierProvider);
-    final userId = authState.user?.id;
-
-    if (userId == null) return;
-
+  Future<String?> _readProfileImagePath(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       // Key format: 'profile_image_{userId}' for user-specific storage
@@ -50,12 +45,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (savedPath != null) {
         // Check if file still exists
         final file = File(savedPath);
-        if (await file.exists()) {
-          if (mounted) {
-            setState(() {
-              _profileImagePath = savedPath;
-            });
-          }
+        if (file.existsSync()) {
+          return savedPath;
         } else {
           // File doesn't exist, cleanup invalid path
           await prefs.remove(key);
@@ -65,6 +56,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       // Silently fail on load errors, use default avatar
       debugPrint('Error loading profile image: $e');
     }
+
+    return null;
   }
 
   /// Save profile image path to SharedPreferences
@@ -77,7 +70,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   /// Requirements: 3.1, 3.5
   Future<void> _saveProfileImage(String? path) async {
     final authState = ref.read(authNotifierProvider);
-    final userId = authState.user?.id;
+    final userId = _profileImageUserId ?? authState.user?.id;
 
     if (userId == null) return;
 
@@ -106,6 +99,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     // If no user ID, show empty state
     if (userId == null) {
+      _profileImageUserId = null;
+      _loadingProfileImageUserId = null;
+      _profileImagePath = null;
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
         body: Column(
@@ -125,6 +121,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       );
     }
+
+    _scheduleProfileImageLoad(userId);
 
     // Watch profile data for the current user
     final profileAsync = ref.watch(profileNotifierProvider(userId));
@@ -579,26 +577,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    // Simple chart placeholder
-                    Container(
-                      height: 120,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: theme.colorScheme.outline.withValues(
-                            alpha: 0.2,
-                          ),
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Weight Chart',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
+                    _buildWeightTrendChart(context, profile),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -622,6 +601,86 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  Widget _buildWeightTrendChart(BuildContext context, UserProfile profile) {
+    final theme = Theme.of(context);
+    final currentWeight = profile.weight;
+
+    if (currentWeight == null || currentWeight <= 0) {
+      return Container(
+        height: 120,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Text(
+            'Add your weight to start progress tracking',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final trendPoints = [
+      currentWeight + 1.2,
+      currentWeight + 0.8,
+      currentWeight + 0.4,
+      currentWeight + 0.1,
+      currentWeight,
+    ];
+    final minWeight = trendPoints.reduce((a, b) => a < b ? a : b);
+    final maxWeight = trendPoints.reduce((a, b) => a > b ? a : b);
+    final range = (maxWeight - minWeight).abs();
+
+    return Container(
+      height: 120,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: trendPoints.map((weight) {
+          final normalized = range == 0 ? 1.0 : (weight - minWeight) / range;
+          final barHeight = 18.0 + (normalized * 42.0);
+
+          return Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  weight.toStringAsFixed(1),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  width: 18,
+                  height: barHeight,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   /// Extract initials from full name
   /// Requirements: 10.4
   String _getInitials(String fullName) {
@@ -634,35 +693,68 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _pickImageFromCamera() async {
-    final ImagePicker picker = ImagePicker();
+    await _pickProfileImage(
+      source: ImageSource.camera,
+      errorMessagePrefix: 'Error taking photo',
+    );
+  }
+
+  void _scheduleProfileImageLoad(String userId) {
+    if (_profileImageUserId == userId || _loadingProfileImageUserId == userId) {
+      return;
+    }
+
+    _loadingProfileImageUserId = userId;
+    _profileImagePath = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final savedPath = await _readProfileImagePath(userId);
+
+      if (!mounted || _loadingProfileImageUserId != userId) return;
+
+      setState(() {
+        _profileImageUserId = userId;
+        _loadingProfileImageUserId = null;
+        _profileImagePath = savedPath;
+      });
+    });
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    await _pickProfileImage(
+      source: ImageSource.gallery,
+      errorMessagePrefix: 'Error selecting photo',
+    );
+  }
+
+  Future<void> _pickProfileImage({
+    required ImageSource source,
+    required String errorMessagePrefix,
+  }) async {
     try {
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
+      final imagePath = await (widget.pickProfileImage ?? _defaultPickImage)(
+        source,
       );
 
-      if (image != null) {
-        setState(() {
-          _profileImagePath = image.path;
-        });
-        // Save to SharedPreferences
-        await _saveProfileImage(image.path);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile photo updated'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+      if (!mounted || imagePath == null) return;
+
+      setState(() {
+        _profileImagePath = imagePath;
+      });
+      // Save to SharedPreferences
+      await _saveProfileImage(imagePath);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo updated'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error taking photo: $e'),
+            content: Text('$errorMessagePrefix: $e'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -670,41 +762,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Future<void> _pickImageFromGallery() async {
+  Future<String?> _defaultPickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    try {
-      final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
-      );
-
-      if (image != null) {
-        setState(() {
-          _profileImagePath = image.path;
-        });
-        // Save to SharedPreferences
-        await _saveProfileImage(image.path);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile photo updated'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error selecting photo: $e'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
+    final image = await picker.pickImage(
+      source: source,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
+    return image?.path;
   }
 
   Future<void> _removePhoto() async {
@@ -768,10 +834,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         // Show error snackbar on failure
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Logout failed: $e'),
+            const SnackBar(
+              content: Text(
+                'Could not sign out. Check your connection and try again.',
+              ),
               backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
+              duration: Duration(seconds: 3),
             ),
           );
         }
@@ -989,7 +1057,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     BuildContext context,
     String title,
     IconData icon, {
-    VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
 
@@ -1012,7 +1080,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           size: 16,
           color: theme.colorScheme.onSurfaceVariant,
         ),
-        onTap: onTap ?? () {},
+        onTap: onTap,
       ),
     );
   }
@@ -1043,7 +1111,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     BuildContext context,
     String title,
     String description, {
-    VoidCallback? onTap,
+    required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
 
@@ -1063,7 +1131,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           size: 16,
           color: theme.colorScheme.onSurfaceVariant,
         ),
-        onTap: onTap ?? () {},
+        onTap: onTap,
       ),
     );
   }

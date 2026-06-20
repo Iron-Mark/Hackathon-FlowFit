@@ -23,7 +23,9 @@ On your first visit, you'll see a 3-step onboarding:
 - Grant body sensors permission
 - Grant location permission for routes and geofence missions
 - Verify watch connection
-- Tap "Get Started"
+- Tap **Check Setup** to request/verify body sensor and location permission and
+  check the Samsung Galaxy Watch bridge. **Get Started** is only enabled after
+  the setup check succeeds.
 
 ---
 
@@ -71,7 +73,6 @@ When cardio activity is detected:
 3. Options to start tracking:
    - **Run**: Track as running workout
    - **Walk**: Track as walking workout
-   - **Cycle**: Track as cycling workout
    - **No Thanks**: Continue monitoring only
 
 ### 5. Daily Statistics
@@ -136,15 +137,16 @@ Access settings by tapping the ⚙️ icon in the app bar.
 1. Check if your Samsung Galaxy Watch is paired
 2. Open Galaxy Wearable app and verify connection
 3. Restart Bluetooth on both devices
-4. Try reconnecting the watch
+4. Return to Wellness Tracker onboarding and tap **Check Setup** again
 
 ### "Permission denied" Error
 
 **Solutions:**
 1. Go to Settings → Apps → FlowFit → Permissions
 2. Enable "Body Sensors" permission
-3. Restart the app
-4. Try accessing wellness tracker again
+3. Enable location permission if you want route and geofence missions
+4. Restart the app
+5. Return to Wellness Tracker onboarding and tap **Check Setup** again
 
 ### Routes not loading
 
@@ -191,7 +193,7 @@ In debug builds, a purple bug icon appears in the bottom right.
 ### For Exercise Detection:
 - Start moving with elevated heart rate
 - Detection is immediate (no delay)
-- Works for running, walking, cycling
+- Quick-start tracking is available for running and walking
 
 ### For Calming Routes:
 - Enable location services for better routes
@@ -217,8 +219,9 @@ heart-rate, and mission records can sync to Supabase over HTTPS for app
 features and account recovery.
 
 **Q: Can I export my wellness data?**  
-A: Export is not implemented yet. You can request account and associated app
-data deletion from the in-app Delete Account screen or public deletion page.
+A: The current app does not expose a separate wellness export button. You can
+request account and associated app data deletion from the in-app Delete Account
+screen or public deletion page.
 
 **Q: How accurate is stress detection?**  
 A: The algorithm uses validated thresholds (HR > 100 BPM + low motion). Accuracy improves over time as you use the feature.

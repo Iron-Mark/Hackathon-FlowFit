@@ -73,6 +73,32 @@ void main() {
       expect(find.text('Invalid email or password'), findsOneWidget);
     });
 
+    testWidgets(
+      'INTEGRATION: profile lookup failure does not navigate to dashboard',
+      (tester) async {
+        await _pumpLoginHarness(
+          tester,
+          profileRepository: _FakeProfileRepository(throwOnLookup: true),
+        );
+
+        await _enterLoginForm(
+          tester,
+          email: 'lookup_failure@flowfit.test',
+          password: 'TestPassword123!',
+        );
+        await _tapAndSettle(tester, find.text('Log In').last);
+
+        expect(find.text('Dashboard'), findsNothing);
+        expect(find.text('Welcome Back!'), findsOneWidget);
+        expect(
+          find.text(
+            'Could not check onboarding status. Check your connection and try again.',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
     testWidgets('INTEGRATION: Session persistence redirects existing user', (
       tester,
     ) async {
@@ -91,37 +117,16 @@ void main() {
     });
   });
 
-  group('Social Sign-In Shortcuts Integration Tests', () {
-    testWidgets('INTEGRATION: Google Sign-In button navigates to dashboard', (
+  group('Unavailable social sign-in shortcuts', () {
+    testWidgets('Login screen does not expose fake social auth buttons', (
       tester,
     ) async {
       await _pumpLoginHarness(tester);
 
-      await _tapAndSettle(tester, find.text('Sign in with Google'));
-
-      expect(find.text('Dashboard'), findsOneWidget);
-    });
-
-    testWidgets('INTEGRATION: Apple Sign-In button navigates to dashboard', (
-      tester,
-    ) async {
-      await _pumpLoginHarness(tester);
-
-      await _tapAndSettle(tester, find.text('Sign in with Apple'));
-
-      expect(find.text('Dashboard'), findsOneWidget);
-    });
-
-    testWidgets('INTEGRATION: Social sign-in does not create auth session', (
-      tester,
-    ) async {
-      final authRepository = _FakeAuthRepository();
-      await _pumpLoginHarness(tester, authRepository: authRepository);
-
-      await _tapAndSettle(tester, find.text('Sign in with Google'));
-
-      expect(find.text('Dashboard'), findsOneWidget);
-      expect(authRepository.currentUser, isNull);
+      expect(find.text('Sign in with Google'), findsNothing);
+      expect(find.text('Sign in with Apple'), findsNothing);
+      expect(find.text('Or sign in with'), findsNothing);
+      expect(find.text('Welcome Back!'), findsOneWidget);
     });
   });
 }
@@ -258,10 +263,13 @@ class _FakeAuthRepository implements IAuthRepository {
 }
 
 class _FakeProfileRepository implements IProfileRepository {
-  _FakeProfileRepository({Set<String>? completedUsers})
-    : completedUsers = completedUsers ?? {};
+  _FakeProfileRepository({
+    Set<String>? completedUsers,
+    this.throwOnLookup = false,
+  }) : completedUsers = completedUsers ?? {};
 
   final Set<String> completedUsers;
+  final bool throwOnLookup;
   final Map<String, domain_profile.UserProfile> _profiles = {};
 
   @override
@@ -280,6 +288,9 @@ class _FakeProfileRepository implements IProfileRepository {
 
   @override
   Future<bool> hasCompletedSurvey(String userId) async {
+    if (throwOnLookup) {
+      throw StateError('profile lookup unavailable');
+    }
     return completedUsers.contains(userId) || _profiles.containsKey(userId);
   }
 

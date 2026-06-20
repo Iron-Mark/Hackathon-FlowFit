@@ -57,25 +57,28 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
       final gpsService = ref.read(gpsTrackingServiceProvider);
       final location = await gpsService.getCurrentLocation();
 
+      if (!mounted) return;
       setState(() {
         _currentLocation = location;
         _selectedLocation = location;
         _isLoadingLocation = false;
       });
 
-      // Center map on current location
-      _mapController.move(location, 15.0);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _mapController.move(location, 15.0);
+        }
+      });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoadingLocation = false;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to get current location. Please enable GPS.'),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to get current location. Please enable GPS.'),
+        ),
+      );
     }
   }
 

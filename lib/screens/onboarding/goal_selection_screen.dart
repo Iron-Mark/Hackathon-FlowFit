@@ -7,7 +7,7 @@ import '../../widgets/buddy_idle_animation.dart';
 import '../../widgets/onboarding_button.dart';
 import '../../theme/app_theme.dart';
 
-/// Wellness Goal Selection Screen - Step 6 of 8
+/// Wellness Goal Selection Screen - Step 7 of 9
 ///
 /// Multi-select goal cards inspired by whale companion pattern.
 /// Kids select areas they want support with.
@@ -50,20 +50,20 @@ class GoalSelectionScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Progress indicator: ●●●●●●○○ (step 6 of 8)
+              // Progress indicator: step 7 of 9
               Semantics(
-                label: 'Progress: Step 6 of 8',
+                label: 'Progress: Step 7 of 9',
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
-                    8,
+                    9,
                     (index) => Container(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       width: 8,
                       height: 8,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: index <= 5
+                        color: index <= 6
                             ? const Color(0xFF4ECDC4)
                             : Colors.grey[300],
                       ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
+
+import '../../../../services/user_settings_preferences.dart';
 
 class LanguageSettingsScreen extends StatefulWidget {
   const LanguageSettingsScreen({super.key});
@@ -25,6 +28,37 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
     {'name': 'Hindi', 'native': 'हिन्दी', 'code': 'hi'},
     {'name': 'Russian', 'native': 'Русский', 'code': 'ru'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedLanguage();
+  }
+
+  Future<void> _loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final language = await UserSettingsPreferences(prefs).loadLanguage();
+    if (!mounted) return;
+
+    if (_languages.any((item) => item['name'] == language)) {
+      setState(() => _selectedLanguage = language);
+    }
+  }
+
+  Future<void> _selectLanguage(String language) async {
+    setState(() => _selectedLanguage = language);
+
+    final prefs = await SharedPreferences.getInstance();
+    await UserSettingsPreferences(prefs).saveLanguage(language);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Language changed to $language'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,19 +146,7 @@ class _LanguageSettingsScreenState extends State<LanguageSettingsScreen> {
                           color: theme.colorScheme.primary,
                         )
                       : null,
-                  onTap: () {
-                    setState(() {
-                      _selectedLanguage = language['name']!;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Language changed to ${language['name']}',
-                        ),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
+                  onTap: () => _selectLanguage(language['name']!),
                 );
               },
             ),

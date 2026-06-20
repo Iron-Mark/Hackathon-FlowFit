@@ -330,4 +330,4 @@ Debug builds may add `${flowfitDevAuthScheme}` from
 For issues or questions:
 - Check troubleshooting section
 - Review setup guides
-- Contact: support@flowfit.com
+- Contact: marksiazon.dev@gmail.com

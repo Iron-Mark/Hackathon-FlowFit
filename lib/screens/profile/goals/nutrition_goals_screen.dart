@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
+
+import '../../../services/profile_goal_preferences.dart';
 
 class NutritionGoalsScreen extends StatefulWidget {
   const NutritionGoalsScreen({super.key});
@@ -18,6 +21,12 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedGoals();
+  }
+
+  @override
   void dispose() {
     _caloriesController.dispose();
     _proteinController.dispose();
@@ -26,11 +35,33 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
     super.dispose();
   }
 
+  Future<void> _loadSavedGoals() async {
+    final prefs = await SharedPreferences.getInstance();
+    final goals = await ProfileGoalPreferences(prefs).loadNutritionGoals();
+    if (!mounted) return;
+    setState(() {
+      _caloriesController.text = goals.calories;
+      _proteinController.text = goals.protein;
+      _carbsController.text = goals.carbs;
+      _fatsController.text = goals.fats;
+      _useCustomMacros = goals.useCustomMacros;
+    });
+  }
+
   Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      await Future.delayed(const Duration(milliseconds: 800));
+      final prefs = await SharedPreferences.getInstance();
+      await ProfileGoalPreferences(prefs).saveNutritionGoals(
+        NutritionGoalSettings(
+          calories: _caloriesController.text.trim(),
+          protein: _proteinController.text.trim(),
+          carbs: _carbsController.text.trim(),
+          fats: _fatsController.text.trim(),
+          useCustomMacros: _useCustomMacros,
+        ),
+      );
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -139,6 +170,10 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your calorie goal';
                   }
+                  final parsed = int.tryParse(value);
+                  if (parsed == null || parsed <= 0) {
+                    return 'Please enter a valid calorie goal';
+                  }
                   return null;
                 },
               ),
@@ -206,6 +241,10 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                     if (_useCustomMacros && (value == null || value.isEmpty)) {
                       return 'Please enter protein goal';
                     }
+                    final parsed = int.tryParse(value ?? '');
+                    if (_useCustomMacros && (parsed == null || parsed < 0)) {
+                      return 'Please enter a valid protein goal';
+                    }
                     return null;
                   },
                 ),
@@ -241,6 +280,10 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                     if (_useCustomMacros && (value == null || value.isEmpty)) {
                       return 'Please enter carbs goal';
                     }
+                    final parsed = int.tryParse(value ?? '');
+                    if (_useCustomMacros && (parsed == null || parsed < 0)) {
+                      return 'Please enter a valid carbs goal';
+                    }
                     return null;
                   },
                 ),
@@ -275,6 +318,10 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                   validator: (value) {
                     if (_useCustomMacros && (value == null || value.isEmpty)) {
                       return 'Please enter fats goal';
+                    }
+                    final parsed = int.tryParse(value ?? '');
+                    if (_useCustomMacros && (parsed == null || parsed < 0)) {
+                      return 'Please enter a valid fats goal';
                     }
                     return null;
                   },

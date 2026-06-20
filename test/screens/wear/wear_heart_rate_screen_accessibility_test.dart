@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +10,8 @@ import 'package:wear_plus/wear_plus.dart';
 /// Requirement 3.3: Touch targets must be at least 48x48dp
 void main() {
   const watchDataChannel = MethodChannel('com.flowfit.watch/data');
+  const watchSyncChannel = MethodChannel('com.flowfit.watch/sync');
+  const heartRateEventChannel = EventChannel('com.flowfit.watch/heartrate');
 
   group('WearHeartRateScreen Accessibility Tests', () {
     setUp(() {
@@ -20,8 +24,23 @@ void main() {
               case 'connectWatch':
               case 'isWatchConnected':
                 return true;
+              case 'startHeartRate':
+                return false;
+              case 'stopHeartRate':
+              case 'getTestModeData':
               case 'disconnectWatch':
                 return null;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchSyncChannel, (call) async {
+            switch (call.method) {
+              case 'checkPhoneConnection':
+                return false;
+              case 'sendHeartRateToPhone':
+                return true;
               default:
                 return null;
             }
@@ -31,6 +50,10 @@ void main() {
     tearDown(() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(watchDataChannel, null);
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchSyncChannel, null);
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockStreamHandler(heartRateEventChannel, null);
     });
 
     Future<void> pumpWearHeartRateScreen(WidgetTester tester) async {
@@ -77,16 +100,71 @@ void main() {
     testWidgets('Send button meets minimum touch target size (48x48dp)', (
       WidgetTester tester,
     ) async {
-      // This test would require mocking the heart rate data
-      // For now, we verify the button exists when heart rate is available
-      // The actual size verification would be similar to the Start button test
+      var sendCalls = 0;
 
-      // Note: Full integration test would require:
-      // 1. Mock WatchBridgeService to provide heart rate data
-      // 2. Trigger monitoring to show the Send button
-      // 3. Verify Send button size >= 48x48dp
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchDataChannel, (call) async {
+            switch (call.method) {
+              case 'checkPermission':
+                return 'granted';
+              case 'connectWatch':
+              case 'isWatchConnected':
+              case 'startHeartRate':
+                return true;
+              case 'stopHeartRate':
+              case 'disconnectWatch':
+                return null;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchSyncChannel, (call) async {
+            switch (call.method) {
+              case 'checkPhoneConnection':
+                return false;
+              case 'sendHeartRateToPhone':
+                sendCalls += 1;
+                expect(call.arguments, isA<Map>());
+                expect('${call.arguments}', contains('74'));
+                return true;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockStreamHandler(
+            heartRateEventChannel,
+            MockStreamHandler.inline(
+              onListen: (arguments, events) {
+                events.success({
+                  'bpm': 74,
+                  'timestamp': DateTime.now().millisecondsSinceEpoch,
+                  'status': 'active',
+                  'ibiValues': [810, 805],
+                });
+              },
+            ),
+          );
 
-      // Skipping for now as it requires extensive mocking
+      await pumpWearHeartRateScreen(tester);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final sendButtonFinder = find.widgetWithText(ElevatedButton, 'Send');
+      expect(sendButtonFinder, findsOneWidget);
+
+      final RenderBox buttonBox =
+          tester.renderObject(sendButtonFinder) as RenderBox;
+      expect(buttonBox.size.height, greaterThanOrEqualTo(48.0));
+      expect(buttonBox.size.width, greaterThanOrEqualTo(48.0));
+
+      await tester.tap(sendButtonFinder);
+      await tester.pump();
+
+      expect(sendCalls, 1);
+      expect(find.text('Sent!'), findsOneWidget);
     });
 
     testWidgets('All interactive elements have sufficient padding', (
@@ -114,6 +192,52 @@ void main() {
         );
       }
     });
+
+    testWidgets(
+      'Start ignores duplicate taps and unmounts during native start',
+      (WidgetTester tester) async {
+        final startCompleter = Completer<bool>();
+        var startCalls = 0;
+
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(watchDataChannel, (call) async {
+              switch (call.method) {
+                case 'checkPermission':
+                  return 'granted';
+                case 'connectWatch':
+                case 'isWatchConnected':
+                  return true;
+                case 'startHeartRate':
+                  startCalls += 1;
+                  return startCompleter.future;
+                case 'stopHeartRate':
+                case 'disconnectWatch':
+                  return null;
+                default:
+                  return null;
+              }
+            });
+
+        await pumpWearHeartRateScreen(tester);
+
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
+        await tester.pump();
+
+        expect(startCalls, 1);
+        expect(find.widgetWithText(ElevatedButton, 'Wait'), findsOneWidget);
+
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Wait'));
+        await tester.pump();
+
+        expect(startCalls, 1);
+
+        await tester.pumpWidget(const SizedBox.shrink());
+        startCompleter.complete(true);
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets('Font sizes meet minimum accessibility requirements', (
       WidgetTester tester,
@@ -144,20 +268,56 @@ void main() {
     testWidgets(
       'Error display shows icon and descriptive text with proper styling',
       (WidgetTester tester) async {
-        // Note: This test verifies the error display widget structure
-        // In a real scenario, we would need to mock an error condition
-        // to trigger the error display. For now, we verify the widget
-        // is properly structured when it would be shown.
+        await pumpWearHeartRateScreen(tester);
 
-        // The error display widget (_buildErrorDisplay) is verified to:
-        // 1. Use errorRed color (#F44336) with sufficient contrast
-        // 2. Display error icon (Icons.error_outline)
-        // 3. Display descriptive error message
-        // 4. Use minimum 14sp font size
-        // 5. Meet WCAG 2.1 Level AA requirements
+        await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
+        await tester.pump(const Duration(milliseconds: 100));
 
-        // This is validated through code review and manual testing
-        // as triggering actual error states requires extensive mocking
+        expect(find.byIcon(Icons.error_outline), findsOneWidget);
+        expect(
+          find.text('Failed to start heart rate tracking'),
+          findsOneWidget,
+        );
+        expect(find.text('Start failed'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Test mode toggle displays live sensor values from the native bridge',
+      (WidgetTester tester) async {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(watchDataChannel, (call) async {
+              switch (call.method) {
+                case 'checkPermission':
+                  return 'granted';
+                case 'connectWatch':
+                case 'isWatchConnected':
+                  return true;
+                case 'getTestModeData':
+                  return {
+                    'heartRate': 82,
+                    'accelerometerX': 1.25,
+                    'accelerometerY': -0.5,
+                    'accelerometerZ': 9.81,
+                    'bufferSize': 3,
+                    'timeSinceLastTransmission': 2500,
+                  };
+                case 'disconnectWatch':
+                  return null;
+                default:
+                  return null;
+              }
+            });
+
+        await pumpWearHeartRateScreen(tester);
+
+        await tester.tap(find.byIcon(Icons.bug_report_outlined));
+        await tester.pump(const Duration(milliseconds: 600));
+
+        expect(find.text('Test Mode'), findsOneWidget);
+        expect(find.text('82 bpm'), findsOneWidget);
+        expect(find.text('3/32 samples'), findsOneWidget);
+        expect(find.text('2 s ago'), findsOneWidget);
       },
     );
   });

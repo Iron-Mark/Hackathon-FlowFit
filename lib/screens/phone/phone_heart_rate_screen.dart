@@ -23,6 +23,9 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
   StreamSubscription<SensorBatch>? _sensorBatchSubscription;
   bool _isConnected = false;
   DateTime? _lastDataTime;
+  bool _isStartingListener = true;
+  bool _listenerStarted = false;
+  String? _listenerError;
 
   // Test mode state
   bool _isTestMode = false;
@@ -34,6 +37,25 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
     super.initState();
     _listenToWatchData();
     _listenToSensorBatches();
+    _startWatchListener();
+  }
+
+  Future<void> _startWatchListener() async {
+    setState(() {
+      _isStartingListener = true;
+      _listenerError = null;
+    });
+
+    final started = await _dataListener.startListening();
+    if (!mounted) return;
+
+    setState(() {
+      _isStartingListener = false;
+      _listenerStarted = started;
+      _listenerError = started
+          ? null
+          : 'Could not start phone watch listener. Check Bluetooth and Wear OS connection, then retry.';
+    });
   }
 
   void _listenToWatchData() {
@@ -72,8 +94,13 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
       },
       onError: (error) {
         debugPrint('Error receiving watch data: $error');
+        if (!mounted) return;
         setState(() {
           _isConnected = false;
+          _isStartingListener = false;
+          _listenerStarted = false;
+          _listenerError =
+              'Watch data stream stopped. Check Bluetooth and Wear OS connection, then retry.';
         });
       },
     );
@@ -146,7 +173,9 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
           ),
         ],
       ),
-      body: _receivedData.isEmpty ? _buildEmptyState() : _buildDataList(),
+      body: _isTestMode || _receivedData.isNotEmpty
+          ? _buildDataList()
+          : _buildEmptyState(),
     );
   }
 
@@ -155,10 +184,18 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.watch, size: 80, color: Colors.grey[400]),
+          Icon(
+            _listenerStarted ? Icons.watch : Icons.watch_off,
+            size: 80,
+            color: _listenerStarted ? Colors.green[400] : Colors.grey[400],
+          ),
           const SizedBox(height: 24),
           Text(
-            'No data received yet',
+            _isStartingListener
+                ? 'Starting watch listener...'
+                : _listenerStarted
+                ? 'Listening for watch data'
+                : 'Watch listener is not active',
             style: TextStyle(
               fontSize: 20,
               color: Colors.grey[600],
@@ -166,10 +203,25 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            'Start heart rate tracking on your watch',
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              _listenerError ?? 'Start heart rate tracking on your watch',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              textAlign: TextAlign.center,
+            ),
           ),
+          if (_isStartingListener) ...[
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(),
+          ] else if (!_listenerStarted) ...[
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: _startWatchListener,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
         ],
       ),
     );

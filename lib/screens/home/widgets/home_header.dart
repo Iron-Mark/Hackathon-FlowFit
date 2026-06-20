@@ -4,13 +4,13 @@ import 'package:solar_icons/solar_icons.dart';
 import '../../../providers/dashboard_providers.dart';
 
 /// HomeHeader widget displays the app branding and notification indicator
-/// 
+///
 /// Features:
 /// - App branding ("FlowFit")
 /// - Notification bell icon with badge
 /// - Badge displays count (or "9+" for counts > 9)
-/// - Navigation to notifications screen on tap
-/// 
+/// - Navigation to notification settings on tap
+///
 /// Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6
 class HomeHeader extends ConsumerWidget implements PreferredSizeWidget {
   const HomeHeader({super.key});
@@ -47,9 +47,7 @@ class HomeHeader extends ConsumerWidget implements PreferredSizeWidget {
 class _NotificationButton extends StatelessWidget {
   final int unreadCount;
 
-  const _NotificationButton({
-    required this.unreadCount,
-  });
+  const _NotificationButton({required this.unreadCount});
 
   @override
   Widget build(BuildContext context) {
@@ -73,18 +71,14 @@ class _NotificationButton extends StatelessWidget {
         ],
       ),
       tooltip: 'Notifications',
-      onPressed: () {
-        // Navigate to notifications screen
-        // TODO: Implement navigation when notifications screen is ready
-        // Navigator.of(context).pushNamed('/notifications');
-        debugPrint('Navigate to notifications screen');
-      },
+      onPressed: () =>
+          Navigator.of(context).pushNamed('/notification-settings'),
     );
   }
 }
 
 /// Notification badge displaying unread count
-/// 
+///
 /// Displays:
 /// - Exact count when count <= 9
 /// - "9+" when count > 9
@@ -92,9 +86,7 @@ class _NotificationButton extends StatelessWidget {
 class _NotificationBadge extends StatelessWidget {
   final int count;
 
-  const _NotificationBadge({
-    required this.count,
-  });
+  const _NotificationBadge({required this.count});
 
   String get _badgeText {
     if (count > 9) return '9+';
@@ -111,10 +103,7 @@ class _NotificationBadge extends StatelessWidget {
         color: theme.colorScheme.error,
         borderRadius: BorderRadius.circular(10),
       ),
-      constraints: const BoxConstraints(
-        minWidth: 18,
-        minHeight: 18,
-      ),
+      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
       child: Text(
         _badgeText,
         style: theme.textTheme.labelSmall?.copyWith(

@@ -18,7 +18,14 @@ void main() {
   test('delete account screen submits the Supabase deletion request RPC', () {
     expect(screenSource, contains('DeepLinkHandler.beginInternalAuthFlow()'));
     expect(screenSource, contains('DeepLinkHandler.endInternalAuthFlow()'));
-    expect(screenSource, contains('_reauthenticateForDeletion(client, user)'));
+    expect(
+      screenSource,
+      contains('widget._deleteAccount ?? _deleteSupabaseAccount'),
+    );
+    expect(
+      screenSource,
+      contains('_reauthenticateForDeletion(client, user, password)'),
+    );
     expect(screenSource, contains('client.auth.signInWithPassword'));
     expect(screenSource, contains("client.rpc('request_account_deletion')"));
     expect(screenSource, contains('_clearLocalAccountData(user.id)'));

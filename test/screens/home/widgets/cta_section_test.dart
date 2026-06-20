@@ -40,12 +40,16 @@ void main() {
       expect(find.text('Ready to move?'), findsOneWidget);
     });
 
-    testWidgets('displays all three buttons', (WidgetTester tester) async {
+    testWidgets('displays all three buttons without test copy', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildHarness());
 
       expect(find.text('START WORKOUT'), findsOneWidget);
       expect(find.text('Wellness Tracker'), findsOneWidget);
-      expect(find.text('OLD MAP MISSIONS (Test)'), findsOneWidget);
+      expect(find.text('Map Missions'), findsOneWidget);
+      expect(find.textContaining('OLD'), findsNothing);
+      expect(find.textContaining('Test'), findsNothing);
     });
 
     testWidgets('START WORKOUT button is ElevatedButton', (
@@ -72,13 +76,13 @@ void main() {
       expect(wellnessTrackerButton, findsOneWidget);
     });
 
-    testWidgets('OLD MAP MISSIONS button is OutlinedButton', (
+    testWidgets('Map Missions button is OutlinedButton', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(buildHarness());
 
       final missionButton = find.ancestor(
-        of: find.text('OLD MAP MISSIONS (Test)'),
+        of: find.text('Map Missions'),
         matching: find.byType(OutlinedButton),
       );
       expect(missionButton, findsOneWidget);
@@ -137,12 +141,12 @@ void main() {
       expect(lastNavigatedRoute, '/wellness-tracker');
     });
 
-    testWidgets('OLD MAP MISSIONS navigates to /mission', (
+    testWidgets('Map Missions navigates to /mission', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(buildHarness());
 
-      await tester.tap(find.text('OLD MAP MISSIONS (Test)'));
+      await tester.tap(find.text('Map Missions'));
       await tester.pumpAndSettle();
 
       expect(lastNavigatedRoute, '/mission');

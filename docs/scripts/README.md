@@ -613,7 +613,9 @@ a path, such as `https://iron-mark.github.io/Hackathon-FlowFit`, the wrapper
 passes the matching Flutter `--base-href` so project-site hosts load assets
 from the correct subpath. Override that derived value only when needed with
 `FLOWFIT_WEB_BASE_HREF`. The web target uses the JavaScript backend by default;
-pass `-WebWasm` when the deployed web release should be Flutter WebAssembly.
+for JavaScript builds it passes `--no-wasm-dry-run` so Flutter does not run the
+advisory Wasm compiler pass during the normal release wrapper. Pass `-WebWasm`
+when the deployed web release should be Flutter WebAssembly.
 The artifact manifest records the selected backend in
 `releaseInputs.webBuildBackend` and the resolved base href in
 `releaseInputs.webBaseHref`.

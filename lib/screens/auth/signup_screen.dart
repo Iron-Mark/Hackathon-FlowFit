@@ -64,6 +64,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     }
   }
 
+  void _openConsentLink(String link) {
+    final routeName = switch (link) {
+      'Read Terms' => '/terms-of-service',
+      'Read Policy' => '/privacy-policy',
+      _ => null,
+    };
+
+    if (routeName == null) return;
+
+    Navigator.pushNamed(context, routeName);
+  }
+
   @override
   Widget build(BuildContext context) {
     // Listen to auth state changes
@@ -592,11 +604,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   spacing: 8,
                   children: links.map((link) {
                     return GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('$link coming soon')),
-                        );
-                      },
+                      onTap: () => _openConsentLink(link),
                       child: Text(
                         link,
                         style: const TextStyle(

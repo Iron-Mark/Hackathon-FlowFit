@@ -3,6 +3,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/config/supabase_tables.dart';
 import '../models/buddy_profile.dart';
 
+typedef BuddyCustomizationSave =
+    Future<void> Function(String userId, Map<String, dynamic> updates);
+
+final buddyCustomizationCurrentUserIdProvider = Provider<String?>((ref) {
+  return Supabase.instance.client.auth.currentUser?.id;
+});
+
+final buddyCustomizationSaveProvider = Provider<BuddyCustomizationSave>((ref) {
+  return (userId, updates) async {
+    await Supabase.instance.client
+        .from(SupabaseTables.buddyProfiles)
+        .update(updates)
+        .eq('user_id', userId);
+  };
+});
+
 /// Buddy Profile Provider
 ///
 /// Fetches and manages Buddy profile data from Supabase

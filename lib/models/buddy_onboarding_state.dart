@@ -1,10 +1,10 @@
 /// Buddy onboarding state model (Whale-themed)
 ///
 /// Manages temporary onboarding data before final profile creation.
-/// This state is used during the 8-screen whale-themed onboarding flow
+/// This state is used during the 9-screen whale-themed onboarding flow
 /// to collect user choices before persisting them to the database.
 class BuddyOnboardingState {
-  /// Current step in onboarding (0-7 for 8 screens)
+  /// Current step in onboarding (0-8 for 9 screens)
   final int currentStep;
 
   /// User's name (entered in step 2)
@@ -69,7 +69,7 @@ class BuddyOnboardingState {
   }
 
   /// Get progress (0.0 to 1.0)
-  double get progress => (currentStep + 1) / 8;
+  double get progress => (currentStep + 1) / 9;
 
   @override
   String toString() {

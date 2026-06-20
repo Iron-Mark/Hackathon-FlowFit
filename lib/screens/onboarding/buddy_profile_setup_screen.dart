@@ -40,15 +40,15 @@ class _BuddyProfileSetupScreenState
   }
 
   void _onSkip() {
-    Navigator.of(context).pushNamed('/buddy-completion');
+    Navigator.of(context).pushNamed('/goal-selection');
   }
 
   void _onContinue() {
     final nickname = _nicknameController.text.trim();
-    if (nickname.isNotEmpty) {
-      ref.read(buddyOnboardingProvider.notifier).setUserNickname(nickname);
-    }
-    Navigator.of(context).pushNamed('/buddy-completion');
+    ref
+        .read(buddyOnboardingProvider.notifier)
+        .setUserInfo(nickname.isEmpty ? null : nickname, _selectedAge);
+    Navigator.of(context).pushNamed('/goal-selection');
   }
 
   @override

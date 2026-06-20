@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart';
 
+enum HealthInitialAction { addWater, addMeal }
+
 // Health Screen
 class HealthScreen extends StatefulWidget {
-  const HealthScreen({super.key});
+  const HealthScreen({super.key, this.initialAction});
+
+  final HealthInitialAction? initialAction;
 
   @override
   State<HealthScreen> createState() => _HealthScreenState();
@@ -13,104 +17,118 @@ class HealthScreen extends StatefulWidget {
 class _HealthScreenState extends State<HealthScreen> {
   // State variables
   DateTime _selectedDate = DateTime.now();
-  double _waterIntake = 1.5;
   final double _waterGoal = 2.0;
+  final int _calorieGoal = 2000;
   String _selectedMealTab = 'Breakfast';
-  TimeOfDay _bedTime = const TimeOfDay(hour: 22, minute: 30);
-  TimeOfDay _wakeTime = const TimeOfDay(hour: 6, minute: 0);
-
-  // Mock data for food items
-  final Map<String, List<Map<String, String>>> _foodItems = {
-    'Breakfast': [
-      {'name': 'Oatmeal with Berries', 'calories': '350 kcal'},
-      {'name': 'Black Coffee', 'calories': '5 kcal'},
-    ],
-    'Lunch': [
-      {'name': 'Grilled Chicken Salad', 'calories': '450 kcal'},
-      {'name': 'Apple', 'calories': '80 kcal'},
-    ],
-    'Dinner': [
-      {'name': 'Salmon with Veggies', 'calories': '550 kcal'},
-    ],
-    'Snacks': [
-      {'name': 'Almonds', 'calories': '160 kcal'},
-    ],
+  late final Map<String, _DailyHealthLog> _dailyLogs = {
+    _dateKey(_selectedDate): _DailyHealthLog.seeded(),
   };
+
+  _DailyHealthLog get _selectedLog =>
+      _dailyLogs.putIfAbsent(_dateKey(_selectedDate), _DailyHealthLog.empty);
+
+  int get _totalCalories => _selectedLog.foodItems.values
+      .expand((items) => items)
+      .fold(0, (total, item) => total + _parseCalories(item['calories']));
+
+  double get _calorieProgress =>
+      (_totalCalories / _calorieGoal).clamp(0.0, 1.0);
+
+  @override
+  void initState() {
+    super.initState();
+    final initialAction = widget.initialAction;
+    if (initialAction != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _handleInitialAction(initialAction);
+      });
+    }
+  }
+
+  void _handleInitialAction(HealthInitialAction action) {
+    switch (action) {
+      case HealthInitialAction.addWater:
+        _updateWater(0.25);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Added 250 ml of water to today\'s log.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      case HealthInitialAction.addMeal:
+        _showAddFoodDialog();
+        return;
+    }
+  }
 
   void _updateWater(double amount) {
     setState(() {
-      _waterIntake = (_waterIntake + amount).clamp(0.0, _waterGoal * 2);
+      _selectedLog.waterIntake = (_selectedLog.waterIntake + amount).clamp(
+        0.0,
+        _waterGoal * 2,
+      );
     });
+  }
+
+  void _removeFoodItem(String mealTab, int index) {
+    final items = _selectedLog.foodItems[mealTab];
+    if (items == null || index < 0 || index >= items.length) {
+      return;
+    }
+
+    final removedItem = items[index];
+    setState(() {
+      items.removeAt(index);
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${removedItem['name']} removed from $mealTab'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _changeDate(int days) {
     setState(() {
       _selectedDate = _selectedDate.add(Duration(days: days));
+      _selectedMealTab = 'Breakfast';
     });
   }
 
-  Future<void> _showAddFoodDialog() async {
-    final nameController = TextEditingController();
-    final caloriesController = TextEditingController();
+  String _dateKey(DateTime date) =>
+      DateTime(date.year, date.month, date.day).toIso8601String();
 
+  int _parseCalories(String? value) {
+    if (value == null) return 0;
+    final match = RegExp(r'\d+').firstMatch(value);
+    return match == null ? 0 : int.tryParse(match.group(0)!) ?? 0;
+  }
+
+  Future<void> _showAddFoodDialog() async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Food'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Food Name',
-                hintText: 'e.g., Banana',
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: caloriesController,
-              decoration: const InputDecoration(
-                labelText: 'Calories',
-                hintText: 'e.g., 105',
-                suffixText: 'kcal',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty &&
-                  caloriesController.text.isNotEmpty) {
-                setState(() {
-                  if (_foodItems[_selectedMealTab] == null) {
-                    _foodItems[_selectedMealTab] = [];
-                  }
-                  _foodItems[_selectedMealTab]!.add({
-                    'name': nameController.text,
-                    'calories': '${caloriesController.text} kcal',
-                  });
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
+      builder: (context) => _AddFoodDialog(
+        onAdd: (name, calories) {
+          setState(() {
+            if (_selectedLog.foodItems[_selectedMealTab] == null) {
+              _selectedLog.foodItems[_selectedMealTab] = [];
+            }
+            _selectedLog.foodItems[_selectedMealTab]!.add({
+              'name': name,
+              'calories': '$calories kcal',
+            });
+          });
+        },
       ),
     );
   }
 
   Future<void> _showEditSleepDialog() async {
-    TimeOfDay tempBedTime = _bedTime;
-    TimeOfDay tempWakeTime = _wakeTime;
+    TimeOfDay tempBedTime = _selectedLog.bedTime;
+    TimeOfDay tempWakeTime = _selectedLog.wakeTime;
 
     await showDialog(
       context: context,
@@ -156,8 +174,8 @@ class _HealthScreenState extends State<HealthScreen> {
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  _bedTime = tempBedTime;
-                  _wakeTime = tempWakeTime;
+                  _selectedLog.bedTime = tempBedTime;
+                  _selectedLog.wakeTime = tempWakeTime;
                 });
                 Navigator.pop(context);
               },
@@ -185,15 +203,15 @@ class _HealthScreenState extends State<HealthScreen> {
       now.year,
       now.month,
       now.day,
-      _bedTime.hour,
-      _bedTime.minute,
+      _selectedLog.bedTime.hour,
+      _selectedLog.bedTime.minute,
     );
     var wake = DateTime(
       now.year,
       now.month,
       now.day,
-      _wakeTime.hour,
-      _wakeTime.minute,
+      _selectedLog.wakeTime.hour,
+      _selectedLog.wakeTime.minute,
     );
 
     if (wake.isBefore(bed)) {
@@ -210,6 +228,8 @@ class _HealthScreenState extends State<HealthScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final selectedLog = _selectedLog;
+    final totalCalories = _totalCalories;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -321,7 +341,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        '1250/2000 kcal',
+                                        '$totalCalories/$_calorieGoal kcal',
                                         style: theme.textTheme.bodyMedium
                                             ?.copyWith(
                                               color: theme
@@ -359,7 +379,7 @@ class _HealthScreenState extends State<HealthScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: LinearProgressIndicator(
-                              value: 0.625, // 1250/2000
+                              value: _calorieProgress,
                               minHeight: 8,
                               backgroundColor:
                                   theme.colorScheme.surfaceContainerHighest,
@@ -390,16 +410,23 @@ class _HealthScreenState extends State<HealthScreen> {
                           const SizedBox(height: 20),
 
                           // Food Items
-                          ...(_foodItems[_selectedMealTab] ?? []).map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _buildFoodItem(
-                                context,
-                                item['name']!,
-                                item['calories']!,
+                          ...(selectedLog.foodItems[_selectedMealTab] ?? [])
+                              .asMap()
+                              .entries
+                              .map(
+                                (entry) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: _buildFoodItem(
+                                    context,
+                                    entry.value['name']!,
+                                    entry.value['calories']!,
+                                    onRemove: () => _removeFoodItem(
+                                      _selectedMealTab,
+                                      entry.key,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -453,7 +480,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                 ],
                               ),
                               Text(
-                                '${_waterIntake.toStringAsFixed(1)} / ${_waterGoal.toStringAsFixed(1)} L',
+                                '${selectedLog.waterIntake.toStringAsFixed(1)} / ${_waterGoal.toStringAsFixed(1)} L',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -475,10 +502,9 @@ class _HealthScreenState extends State<HealthScreen> {
                                     width: 160,
                                     height: 160,
                                     child: CircularProgressIndicator(
-                                      value: (_waterIntake / _waterGoal).clamp(
-                                        0.0,
-                                        1.0,
-                                      ),
+                                      value:
+                                          (selectedLog.waterIntake / _waterGoal)
+                                              .clamp(0.0, 1.0),
                                       strokeWidth: 14,
                                       backgroundColor: theme
                                           .colorScheme
@@ -494,7 +520,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Text(
-                                        '${((_waterIntake / _waterGoal) * 100).toInt()}%',
+                                        '${((selectedLog.waterIntake / _waterGoal) * 100).toInt()}%',
                                         style: theme.textTheme.displaySmall
                                             ?.copyWith(
                                               fontWeight: FontWeight.bold,
@@ -653,7 +679,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
-                                        _bedTime.format(context),
+                                        selectedLog.bedTime.format(context),
                                         style: theme.textTheme.headlineSmall
                                             ?.copyWith(
                                               fontWeight: FontWeight.bold,
@@ -687,7 +713,7 @@ class _HealthScreenState extends State<HealthScreen> {
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
-                                        _wakeTime.format(context),
+                                        selectedLog.wakeTime.format(context),
                                         style: theme.textTheme.headlineSmall
                                             ?.copyWith(
                                               fontWeight: FontWeight.bold,
@@ -742,7 +768,12 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 
-  Widget _buildFoodItem(BuildContext context, String name, String calories) {
+  Widget _buildFoodItem(
+    BuildContext context,
+    String name,
+    String calories, {
+    required VoidCallback onRemove,
+  }) {
     final theme = Theme.of(context);
 
     return Row(
@@ -775,10 +806,30 @@ class _HealthScreenState extends State<HealthScreen> {
             ],
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.more_vert, size: 20),
-          onPressed: () {},
-          color: theme.colorScheme.onSurfaceVariant,
+        PopupMenuButton<String>(
+          tooltip: 'Food actions',
+          icon: Icon(
+            Icons.more_vert,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          onSelected: (value) {
+            if (value == 'remove') {
+              onRemove();
+            }
+          },
+          itemBuilder: (context) => const [
+            PopupMenuItem(
+              value: 'remove',
+              child: Row(
+                children: [
+                  Icon(Icons.delete_outline, size: 18),
+                  SizedBox(width: 8),
+                  Text('Remove'),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -808,6 +859,121 @@ class _HealthScreenState extends State<HealthScreen> {
         ),
         onPressed: onPressed,
       ),
+    );
+  }
+}
+
+class _DailyHealthLog {
+  _DailyHealthLog({
+    required this.waterIntake,
+    required this.foodItems,
+    required this.bedTime,
+    required this.wakeTime,
+  });
+
+  factory _DailyHealthLog.seeded() {
+    return _DailyHealthLog(
+      waterIntake: 1.5,
+      foodItems: {
+        'Breakfast': [
+          {'name': 'Oatmeal with Berries', 'calories': '350 kcal'},
+          {'name': 'Black Coffee', 'calories': '5 kcal'},
+        ],
+        'Lunch': [
+          {'name': 'Grilled Chicken Salad', 'calories': '450 kcal'},
+          {'name': 'Apple', 'calories': '80 kcal'},
+        ],
+        'Dinner': [
+          {'name': 'Salmon with Veggies', 'calories': '550 kcal'},
+        ],
+        'Snacks': [
+          {'name': 'Almonds', 'calories': '160 kcal'},
+        ],
+      },
+      bedTime: const TimeOfDay(hour: 22, minute: 30),
+      wakeTime: const TimeOfDay(hour: 6, minute: 0),
+    );
+  }
+
+  factory _DailyHealthLog.empty() {
+    return _DailyHealthLog(
+      waterIntake: 0,
+      foodItems: {'Breakfast': [], 'Lunch': [], 'Dinner': [], 'Snacks': []},
+      bedTime: const TimeOfDay(hour: 22, minute: 30),
+      wakeTime: const TimeOfDay(hour: 6, minute: 0),
+    );
+  }
+
+  double waterIntake;
+  Map<String, List<Map<String, String>>> foodItems;
+  TimeOfDay bedTime;
+  TimeOfDay wakeTime;
+}
+
+class _AddFoodDialog extends StatefulWidget {
+  const _AddFoodDialog({required this.onAdd});
+
+  final void Function(String name, String calories) onAdd;
+
+  @override
+  State<_AddFoodDialog> createState() => _AddFoodDialogState();
+}
+
+class _AddFoodDialogState extends State<_AddFoodDialog> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _caloriesController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _caloriesController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameController.text.trim();
+    final calories = _caloriesController.text.trim();
+    if (name.isEmpty || calories.isEmpty) return;
+
+    widget.onAdd(name, calories);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add Food'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: 'Food Name',
+              hintText: 'e.g., Banana',
+            ),
+            autofocus: true,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _caloriesController,
+            decoration: const InputDecoration(
+              labelText: 'Calories',
+              hintText: 'e.g., 105',
+              suffixText: 'kcal',
+            ),
+            keyboardType: TextInputType.number,
+            onSubmitted: (_) => _submit(),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Add')),
+      ],
     );
   }
 }

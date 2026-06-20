@@ -28,16 +28,12 @@ class YoloRepositoryImpl implements YoloRepository {
   Future<void> initPoseDetector() async {
     if (_poseDetector != null) return;
 
-    // TODO: Pose detection disabled - YOLOv11n-pose format incompatible with plugin
-    // The plugin expects 56 features (17 keypoints × 3 + 5 bbox)
-    // YOLOv11n-pose outputs 50 features (different format)
-    // Solution: Use YOLOv8n-pose instead or update plugin
-    debugPrint('⚠️ Pose detection disabled - incompatible model format');
+    // Pose detection is unavailable until the bundled model matches the
+    // ultralytics_yolo pose output contract expected by the plugin.
+    debugPrint(
+      'Pose detection unavailable: bundled YOLOv11n-pose output format is incompatible with the active plugin.',
+    );
     return;
-
-    // Commented out until compatible model is available
-    // _poseDetector = YOLO(modelPath: 'yolov11n_pose', task: YOLOTask.pose);
-    // await _poseDetector!.loadModel();
   }
 
   @override

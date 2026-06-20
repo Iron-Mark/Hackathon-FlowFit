@@ -2,12 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../services/watch_bridge.dart';
 
+typedef SensorPermissionWatchBridgeFactory = WatchBridgeService Function();
+typedef SensorPermissionSettingsOpener = Future<bool> Function();
+
 /// Permission rationale screen for Wear OS
 /// Displays explanation when sensor permissions are denied
 /// Provides options to retry or open settings
 /// Requirements: 7.4
 class SensorPermissionRationaleScreen extends StatefulWidget {
-  const SensorPermissionRationaleScreen({super.key});
+  const SensorPermissionRationaleScreen({
+    super.key,
+    this.watchBridgeFactory,
+    this.openSettings,
+  });
+
+  final SensorPermissionWatchBridgeFactory? watchBridgeFactory;
+  final SensorPermissionSettingsOpener? openSettings;
 
   @override
   State<SensorPermissionRationaleScreen> createState() =>
@@ -16,7 +26,8 @@ class SensorPermissionRationaleScreen extends StatefulWidget {
 
 class _SensorPermissionRationaleScreenState
     extends State<SensorPermissionRationaleScreen> {
-  final WatchBridgeService _watchBridge = WatchBridgeService();
+  late final WatchBridgeService _watchBridge =
+      (widget.watchBridgeFactory ?? WatchBridgeService.new)();
   bool _isRequesting = false;
   String? _errorMessage;
 
@@ -27,6 +38,8 @@ class _SensorPermissionRationaleScreenState
   }
 
   Future<void> _retryPermission() async {
+    if (_isRequesting) return;
+
     setState(() {
       _isRequesting = true;
       _errorMessage = null;
@@ -56,15 +69,26 @@ class _SensorPermissionRationaleScreenState
   }
 
   Future<void> _openSettings() async {
+    if (_isRequesting) return;
+
     setState(() {
       _isRequesting = true;
       _errorMessage = null;
     });
 
     try {
-      await openAppSettings();
+      final opened = await (widget.openSettings ?? openAppSettings)();
 
       if (!mounted) return;
+
+      if (!opened) {
+        setState(() {
+          _isRequesting = false;
+          _errorMessage =
+              'Could not open app settings. Open settings manually to grant sensor access.';
+        });
+        return;
+      }
 
       // Wait a bit for user to return from settings
       await Future.delayed(const Duration(milliseconds: 500));
@@ -80,6 +104,8 @@ class _SensorPermissionRationaleScreenState
       } else {
         setState(() {
           _isRequesting = false;
+          _errorMessage =
+              'Sensor access is still disabled. Enable body sensors in settings to continue.';
         });
       }
     } catch (e) {
@@ -150,10 +176,7 @@ class _SensorPermissionRationaleScreenState
                   '• Monitor your heart rate\n'
                   '• Detect your movements\n'
                   '• Classify your activities',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.white70),
                   textAlign: TextAlign.center,
                 ),
 
@@ -171,10 +194,7 @@ class _SensorPermissionRationaleScreenState
                     ),
                     child: Text(
                       _errorMessage!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -189,13 +209,20 @@ class _SensorPermissionRationaleScreenState
                   child: ElevatedButton.icon(
                     onPressed: _isRequesting ? null : _retryPermission,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2196F3), // WearColors.primaryBlue
+                      backgroundColor: const Color(
+                        0xFF2196F3,
+                      ), // WearColors.primaryBlue
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor:
-                          const Color(0xFF90CAF9).withValues(alpha: 0.6),
-                      disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
+                      disabledBackgroundColor: const Color(
+                        0xFF90CAF9,
+                      ).withValues(alpha: 0.6),
+                      disabledForegroundColor: Colors.white.withValues(
+                        alpha: 0.6,
+                      ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -234,9 +261,13 @@ class _SensorPermissionRationaleScreenState
                         color: Color(0xFF2196F3),
                         width: 1,
                       ),
-                      disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
+                      disabledForegroundColor: Colors.white.withValues(
+                        alpha: 0.6,
+                      ),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),

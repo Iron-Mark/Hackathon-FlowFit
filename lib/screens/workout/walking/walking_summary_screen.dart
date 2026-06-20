@@ -374,6 +374,9 @@ class WalkingSummaryScreen extends ConsumerWidget {
     WidgetRef ref,
     WalkingSession session,
   ) async {
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       // Show loading indicator
       showDialog(
@@ -388,13 +391,13 @@ class WalkingSummaryScreen extends ConsumerWidget {
 
       if (context.mounted) {
         // Close loading dialog
-        Navigator.of(context).pop();
+        navigator.pop();
 
         // Return to Track Tab (home)
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        navigator.popUntil((route) => route.isFirst);
 
         // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text('Workout saved successfully!'),
             backgroundColor: Color(0xFF10B981),
@@ -404,10 +407,10 @@ class WalkingSummaryScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         // Close loading dialog
-        Navigator.of(context).pop();
+        navigator.pop();
 
         // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           SnackBar(
             content: Text('Error saving workout: $e'),
             backgroundColor: Colors.red,

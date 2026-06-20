@@ -40,7 +40,6 @@ dependencies:
   tflite_flutter: ^0.12.1
   heart_bpm: ^2.0.0+0
 
-  go_router: ^13.2.5 # Keep current - 17.x has breaking changes
   cupertino_icons: ^1.0.8 # SAFE UPGRADE: New icons
   flutter_svg: ^2.0.10 # SAFE UPGRADE: Bug fixes
   solar_icons: ^0.0.5 # Solar icon pack
@@ -66,6 +65,7 @@ dependencies:
 
   gotrue: ^2.16.0
   path: ^1.9.1
+  url_launcher: 6.3.2
 flutter:
   assets:
     - assets/model/activity_tracker.tflite

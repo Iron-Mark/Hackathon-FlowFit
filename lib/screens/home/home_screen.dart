@@ -1,14 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:solar_icons/solar_icons.dart';
 import '../../widgets/flowy_companion.dart';
 import '../../services/phone_data_listener.dart';
 import '../../models/heart_rate_data.dart';
+import '../health/health_screen.dart';
 
 // Home Screen - Redesigned for beginners with Flowy companion
-// Features: Pose-detection workouts, water/food reminders, beginner guidance
+// Features: AI movement tracking, water/food reminders, beginner guidance
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onLogWater, this.onLogMeal});
+
+  final VoidCallback? onLogWater;
+  final VoidCallback? onLogMeal;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -76,7 +81,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _getUserName() {
-    // TODO: Get from user profile/auth
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      final metadata = user?.userMetadata ?? const <String, dynamic>{};
+      final name =
+          metadata['full_name'] ?? metadata['name'] ?? metadata['nickname'];
+      if (name is String && name.trim().isNotEmpty) {
+        return name.trim().split(RegExp(r'\s+')).first;
+      }
+
+      final email = user?.email;
+      if (email != null && email.contains('@')) {
+        final localPart = email.split('@').first;
+        if (localPart.trim().isNotEmpty) return localPart.trim();
+      }
+    } catch (_) {
+      // Some widget tests build this screen without a Supabase singleton.
+    }
+
     return 'Friend';
   }
 
@@ -163,15 +185,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Primary Action - Random Workout with Pose Detection
+                  // Primary Action - AI movement tracking
                   _buildPrimaryFeatureCard(
                     context,
-                    'Start Random Workout 🎲',
-                    'Follow along with AI pose detection',
+                    'Start AI Workout',
+                    'Classify movement with your watch sensors',
                     SolarIconsBold.dumbbell,
                     Colors.blue,
                     () {
-                      // Navigate to workout with pose detection
                       Navigator.pushNamed(context, '/activity-classifier');
                     },
                   ),
@@ -194,7 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         '💧',
                         Colors.cyan,
                         () {
-                          _showWaterLog(context);
+                          _openHealthLog(context, HealthInitialAction.addWater);
                         },
                       ),
                       _buildFeatureCard(
@@ -203,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         '🍽️',
                         Colors.orange,
                         () {
-                          _showMealLog(context);
+                          _openHealthLog(context, HealthInitialAction.addMeal);
                         },
                       ),
                       _buildFeatureCard(
@@ -738,38 +759,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Quick actions dialogs
-  void _showWaterLog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('💧 Log Water'),
-        content: const Text(
-          'Great job staying hydrated! Track your water intake.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
+  void _openHealthLog(BuildContext context, HealthInitialAction action) {
+    final callback = switch (action) {
+      HealthInitialAction.addWater => widget.onLogWater,
+      HealthInitialAction.addMeal => widget.onLogMeal,
+    };
 
-  void _showMealLog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('🍽️ Log Meal'),
-        content: const Text('Remember to eat healthy! Log your meals here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+    if (callback != null) {
+      callback();
+      return;
+    }
+
+    Navigator.pushNamed(
+      context,
+      '/dashboard',
+      arguments: {'initialTab': 1, 'healthAction': action.name},
     );
   }
 }

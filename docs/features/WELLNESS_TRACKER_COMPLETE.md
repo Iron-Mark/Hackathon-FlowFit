@@ -153,7 +153,7 @@ Samsung Galaxy Watch
 
 ### 3. Exercise Detection
 - Automatic cardio activity detection
-- Quick-start workout tracking (Run/Walk/Cycle)
+- Quick-start workout tracking for supported Run/Walk flows
 - Seamless integration with existing workout flow
 - Real-time heart rate display
 
@@ -215,7 +215,7 @@ Samsung Galaxy Watch
 1. System detects: HR > 100 BPM + high motion (immediate)
 2. Cardio detection banner appears
 3. User sees: "Exercise detected! Keep it up! 💪"
-4. User taps Run/Walk/Cycle button
+4. User taps Run or Walk
 5. System navigates to workout tracker
 6. Workout session starts with detected activity type
 
@@ -264,9 +264,11 @@ Samsung Galaxy Watch
 ## 🧪 Testing Checklist
 
 ### Manual Testing
-- [ ] First-time onboarding flow
-- [ ] Permission requests
-- [ ] Watch connection check
+- [x] First-time onboarding flow uses a real setup readiness check
+- [x] Body sensor and location permission requests are wired through existing
+      platform services
+- [x] Watch connection check is wired through `WatchBridgeService`
+- [ ] Physical Samsung Galaxy Watch setup pass
 - [ ] Stress detection and alert
 - [ ] Route suggestion and selection
 - [ ] Exercise detection and workout integration
@@ -374,7 +376,10 @@ All requirements from the mood-responsive-map specification are fully implemente
 
 ## 🎉 Ready for Production!
 
-The Wellness Tracker is now **fully implemented** and ready for testing on real devices with Samsung Galaxy Watch. All 20 tasks are complete, all files compile without errors, and the feature is integrated with the existing sensor infrastructure.
+The Wellness Tracker code path is implemented and ready for real-device release
+QA with a Samsung Galaxy Watch. Static checks and widget coverage can verify the
+onboarding gate locally; final sensor accuracy, battery impact, and watch bridge
+behavior still require physical device testing.
 
 ### Next Steps:
 1. Test on physical device with Samsung Galaxy Watch

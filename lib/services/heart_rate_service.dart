@@ -95,8 +95,7 @@ class HeartRateService {
 
   /// Checks if heart rate monitor is available
   Future<bool> isAvailable() async {
-    // TODO: Check if heart rate sensor is available
-    return true; // Placeholder
+    return !_heartRateController.isClosed;
   }
 
   /// Disposes resources

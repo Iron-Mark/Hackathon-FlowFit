@@ -174,14 +174,10 @@ final profileNotifierProvider =
           return ProfileNotifier(repository, userId, syncQueue: syncQueue);
         },
         loading: () {
-          // Repository still loading - create notifier with placeholder
-          // This prevents null errors during initialization
-          return ProfileNotifier(_PlaceholderRepository(), userId);
+          return ProfileNotifier.initializing(userId);
         },
         error: (error, stack) {
-          // Repository failed to load - create notifier with placeholder
-          // The notifier will handle the error state appropriately
-          return ProfileNotifier(_PlaceholderRepository(), userId);
+          return ProfileNotifier.failed(userId, error, stack);
         },
       );
     });
@@ -230,38 +226,3 @@ final syncStatusProvider = StreamProvider.family<SyncStatus, String>((
     },
   );
 });
-
-/// Placeholder repository for initialization phase.
-///
-/// Used temporarily while the real repository is being initialized.
-/// All methods return safe default values to prevent errors during startup.
-class _PlaceholderRepository implements ProfileRepository {
-  @override
-  Future<UserProfile?> getLocalProfile(String userId) async => null;
-
-  @override
-  Future<void> saveLocalProfile(UserProfile profile) async {}
-
-  @override
-  Future<void> deleteLocalProfile(String userId) async {}
-
-  @override
-  Future<UserProfile?> getBackendProfile(String userId) async => null;
-
-  @override
-  Future<void> saveBackendProfile(UserProfile profile) async {}
-
-  @override
-  Future<void> syncProfile(String userId) async {}
-
-  @override
-  Future<bool> hasPendingSync(String userId) async => false;
-
-  @override
-  Stream<SyncStatus> watchSyncStatus(String userId) {
-    return Stream.value(SyncStatus.offline);
-  }
-
-  @override
-  Future<bool> hasCompletedSurvey(String userId) async => false;
-}

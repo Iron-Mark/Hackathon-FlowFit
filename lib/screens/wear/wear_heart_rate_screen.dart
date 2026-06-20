@@ -57,6 +57,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
 
   HeartRateData? _currentHeartRate;
   bool _isMonitoring = false;
+  bool _isMonitoringBusy = false;
   bool _isConnected = false;
   bool _isSending = false;
   String _statusMessage = 'Ready';
@@ -67,6 +68,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   bool _isTestMode = false;
   Map<String, dynamic>? _testModeData;
   Timer? _testModeTimer;
+  Timer? _statusResetTimer;
 
   StreamSubscription? _heartRateSubscription;
   StreamSubscription? _transmissionSubscription;
@@ -213,6 +215,8 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   Future<void> _toggleMonitoring() async {
+    if (_isMonitoringBusy) return;
+
     if (_isMonitoring) {
       await _stopMonitoring();
     } else {
@@ -221,13 +225,21 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   Future<void> _startMonitoring() async {
+    if (_isMonitoringBusy) return;
+
+    setState(() {
+      _isMonitoringBusy = true;
+    });
+
     if (!_isConnected) {
       setState(() {
         _statusMessage = 'Connecting...';
       });
       await _checkConnection();
+      if (!mounted) return;
       if (!_isConnected) {
         setState(() {
+          _isMonitoringBusy = false;
           _statusMessage = 'Connection failed';
           _errorMessage = 'Unable to connect to sensor service';
         });
@@ -241,16 +253,20 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       });
 
       final started = await _watchBridge.startHeartRateTracking();
+      if (!mounted) return;
 
       if (!started) {
         setState(() {
+          _isMonitoringBusy = false;
           _statusMessage = 'Start failed';
           _errorMessage = 'Failed to start heart rate tracking';
         });
         return;
       }
 
+      await _heartRateSubscription?.cancel();
       setState(() {
+        _isMonitoringBusy = false;
         _isMonitoring = true;
         _isAccelerometerActive = true; // Accelerometer starts with heart rate
         _statusMessage = 'Monitoring';
@@ -284,6 +300,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
             }
 
             setState(() {
+              _isMonitoringBusy = false;
               _isMonitoring = false;
               _statusMessage = 'Error';
               _errorMessage = errorMessage;
@@ -293,8 +310,10 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         },
       );
     } catch (e) {
+      if (!mounted) return;
       // Requirements: 6.5 - Handle sensor initialization failures
       setState(() {
+        _isMonitoringBusy = false;
         _isMonitoring = false;
         _statusMessage = 'Failed';
         _errorMessage = 'Sensor initialization failed. Tap retry to try again.';
@@ -304,17 +323,31 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   Future<void> _stopMonitoring() async {
+    if (_isMonitoringBusy) return;
+
     try {
+      setState(() {
+        _isMonitoringBusy = true;
+        _statusMessage = 'Stopping...';
+      });
+
       await _watchBridge.stopHeartRateTracking();
+      if (!mounted) return;
+
       await _heartRateSubscription?.cancel();
+      _heartRateSubscription = null;
+      if (!mounted) return;
 
       setState(() {
+        _isMonitoringBusy = false;
         _isMonitoring = false;
         _isAccelerometerActive = false; // Accelerometer stops with heart rate
         _statusMessage = 'Stopped';
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
+        _isMonitoringBusy = false;
         _statusMessage = 'Error stopping';
         _errorMessage = 'Failed to stop monitoring';
       });
@@ -324,6 +357,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   Future<void> _sendToPhone() async {
     if (_currentHeartRate == null) return;
 
+    _statusResetTimer?.cancel();
     setState(() {
       _isSending = true;
       _statusMessage = 'Sending...';
@@ -344,7 +378,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         });
 
         // Reset status and clear error after delay
-        Future.delayed(const Duration(seconds: 2), () {
+        _statusResetTimer = Timer(const Duration(seconds: 2), () {
           if (mounted) {
             setState(() {
               _statusMessage = _isMonitoring ? 'Active' : 'Ready';
@@ -422,6 +456,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     _heartRateSubscription?.cancel();
     _transmissionSubscription?.cancel();
     _testModeTimer?.cancel();
+    _statusResetTimer?.cancel();
     _pulseController.dispose();
     _transmissionController.dispose();
     _watchBridge.dispose();
@@ -578,7 +613,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       width: 120,
       height: 48, // WCAG 2.1 Level AA: minimum 48dp touch target
       child: ElevatedButton.icon(
-        onPressed: _toggleMonitoring,
+        onPressed: _isMonitoringBusy ? null : _toggleMonitoring,
         style:
             ElevatedButton.styleFrom(
               backgroundColor: _isMonitoring
@@ -602,9 +637,18 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
                     : WearColors.primaryBlue;
               }),
             ),
-        icon: Icon(_isMonitoring ? Icons.pause : Icons.play_arrow, size: 20),
+        icon: _isMonitoringBusy
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : Icon(_isMonitoring ? Icons.pause : Icons.play_arrow, size: 20),
         label: Text(
-          _isMonitoring ? 'Stop' : 'Start',
+          _isMonitoringBusy ? 'Wait' : (_isMonitoring ? 'Stop' : 'Start'),
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ),

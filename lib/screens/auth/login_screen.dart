@@ -5,9 +5,15 @@ import 'package:solar_icons/solar_icons.dart';
 import '../../theme/app_theme.dart';
 import '../../presentation/providers/providers.dart';
 import '../../domain/entities/auth_state.dart';
+import '../../core/config/flowfit_runtime_config.dart';
+
+typedef PasswordResetSender =
+    Future<void> Function(String email, {String? redirectTo});
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.sendPasswordReset});
+
+  final PasswordResetSender? sendPasswordReset;
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -18,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isResettingPassword = false;
 
   @override
   void initState() {
@@ -28,12 +35,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
   }
 
-  void _checkAuthState() {
+  Future<void> _checkAuthState() async {
     final authState = ref.read(authNotifierProvider);
 
-    // If already authenticated, redirect to dashboard
+    // If already authenticated, route through the same onboarding gate as login.
     if (authState.user != null && mounted) {
-      Navigator.of(context).pushReplacementNamed('/dashboard');
+      await _navigateAfterAuthentication(authState.user!.id);
     }
   }
 
@@ -57,6 +64,89 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _navigateAfterAuthentication(String userId) async {
+    try {
+      final hasCompletedSurvey = await ref
+          .read(profileRepositoryProvider)
+          .hasCompletedSurvey(userId);
+
+      if (!mounted) return;
+
+      if (hasCompletedSurvey) {
+        Navigator.pushReplacementNamed(context, '/dashboard');
+      } else {
+        Navigator.pushReplacementNamed(
+          context,
+          '/age-gate',
+          arguments: {'userId': userId},
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not check onboarding status. Check your connection and try again.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleForgotPassword() async {
+    final email = _emailController.text.trim();
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter your email address first'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isResettingPassword = true);
+
+    try {
+      final sendReset =
+          widget.sendPasswordReset ??
+          (String email, {String? redirectTo}) => ref
+              .read(supabaseClientProvider)
+              .auth
+              .resetPasswordForEmail(email, redirectTo: redirectTo);
+
+      await sendReset(
+        email,
+        redirectTo: FlowFitRuntimeConfig.authRedirectUrl(),
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password reset email sent. Check your inbox.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not send reset email. Try again later.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isResettingPassword = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Listen to auth state changes
@@ -66,30 +156,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Listen for auth state changes and navigate accordingly
     ref.listen<AuthState>(authNotifierProvider, (previous, next) async {
       if (next.status == AuthStatus.authenticated && next.user != null) {
-        // Check if user has completed onboarding
-        try {
-          final hasCompletedSurvey = await ref
-              .read(profileRepositoryProvider)
-              .hasCompletedSurvey(next.user!.id);
-
-          if (!context.mounted) return;
-
-          if (hasCompletedSurvey) {
-            // Navigate to dashboard if onboarding is complete
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          } else {
-            // Navigate to age gate to choose onboarding flow (kids or adult)
-            Navigator.pushReplacementNamed(
-              context,
-              '/age-gate',
-              arguments: {'userId': next.user!.id},
-            );
-          }
-        } catch (e) {
-          // If there's an error checking survey status, default to dashboard
-          if (!context.mounted) return;
-          Navigator.pushReplacementNamed(context, '/dashboard');
-        }
+        await _navigateAfterAuthentication(next.user!.id);
       } else if (next.errorMessage != null) {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
@@ -257,16 +324,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Forgot password feature coming soon'),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Forgot password?',
-                      style: TextStyle(
+                    onPressed: _isResettingPassword
+                        ? null
+                        : _handleForgotPassword,
+                    child: Text(
+                      _isResettingPassword
+                          ? 'Sending reset email...'
+                          : 'Forgot password?',
+                      style: const TextStyle(
                         color: AppTheme.cyan,
                         fontWeight: FontWeight.w600,
                       ),
@@ -307,103 +372,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Divider
-                Row(
-                  children: [
-                    Expanded(
-                      child: Divider(
-                        color: AppTheme.text.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Or sign in with',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.text.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(
-                        color: AppTheme.text.withValues(alpha: 0.1),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 24),
-
-                // Google Sign In Button
-                SizedBox(
-                  height: 56,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // Go directly to dashboard
-                      Navigator.pushReplacementNamed(context, '/dashboard');
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.text,
-                      side: BorderSide(
-                        color: AppTheme.text.withValues(alpha: 0.1),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                    icon: Icon(
-                      Icons.g_mobiledata,
-                      size: 32,
-                      color: Colors.red[600],
-                    ),
-                    label: const Text(
-                      'Sign in with Google',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Apple Sign In Button
-                SizedBox(
-                  height: 56,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // Go directly to dashboard
-                      Navigator.pushReplacementNamed(context, '/dashboard');
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.text,
-                      side: BorderSide(
-                        color: AppTheme.text.withValues(alpha: 0.1),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                    icon: const Icon(
-                      Icons.apple,
-                      size: 24,
-                      color: Colors.black,
-                    ),
-                    label: const Text(
-                      'Sign in with Apple',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                   ),
                 ),
 

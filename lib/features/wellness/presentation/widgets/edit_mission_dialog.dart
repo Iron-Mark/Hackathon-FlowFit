@@ -10,8 +10,9 @@ class EditMissionDialog extends StatefulWidget {
 }
 
 class _EditMissionDialogState extends State<EditMissionDialog> {
-  late String _title;
-  String? _description;
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _targetDistanceController;
   late MissionType _type;
   late double _radius;
   double? _targetDistance;
@@ -19,11 +20,24 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
   @override
   void initState() {
     super.initState();
-    _title = widget.mission.title;
-    _description = widget.mission.description;
+    _titleController = TextEditingController(text: widget.mission.title);
+    _descriptionController = TextEditingController(
+      text: widget.mission.description ?? '',
+    );
     _type = widget.mission.type;
     _radius = widget.mission.radiusMeters;
     _targetDistance = widget.mission.targetDistanceMeters;
+    _targetDistanceController = TextEditingController(
+      text: _targetDistance?.toString() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _targetDistanceController.dispose();
+    super.dispose();
   }
 
   @override
@@ -35,54 +49,74 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: TextEditingController(text: _title),
+              controller: _titleController,
               decoration: const InputDecoration(labelText: 'Title'),
-              onChanged: (v) => setState(() => _title = v),
             ),
             TextField(
-              controller: TextEditingController(text: _description),
+              controller: _descriptionController,
               decoration: const InputDecoration(labelText: 'Description'),
-              onChanged: (v) => setState(() => _description = v),
             ),
             DropdownButton<MissionType>(
               value: _type,
               items: MissionType.values
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t.name))).toList(),
-              onChanged: (v) => setState(() => _type = v ?? MissionType.sanctuary),
+                  .map((t) => DropdownMenuItem(value: t, child: Text(t.name)))
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _type = v ?? MissionType.sanctuary),
             ),
             Row(
               children: [
                 const Text('Radius (m)'),
                 Expanded(
-                  child: Slider(min: 10, max: 2000, value: _radius, onChanged: (v) => setState(() => _radius = v)),
+                  child: Slider(
+                    min: 10,
+                    max: 2000,
+                    value: _radius,
+                    onChanged: (v) => setState(() => _radius = v),
+                  ),
                 ),
                 Text(_radius.toStringAsFixed(0)),
               ],
             ),
             if (_type == MissionType.target)
               TextField(
-                decoration: const InputDecoration(labelText: 'Target distance (m)'),
+                controller: _targetDistanceController,
+                decoration: const InputDecoration(
+                  labelText: 'Target distance (m)',
+                ),
                 keyboardType: TextInputType.number,
-                controller: TextEditingController(text: _targetDistance?.toString()),
-                onChanged: (v) => setState(() => _targetDistance = double.tryParse(v)),
+                onChanged: (v) =>
+                    setState(() => _targetDistance = double.tryParse(v)),
               ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
         TextButton(
-            onPressed: () {
-              final updated = widget.mission.copyWith(
-                title: _title,
-                description: _description,
-                radiusMeters: _radius,
-                type: _type,
-                targetDistanceMeters: _targetDistance,
-              );
-              Navigator.of(context).pop(updated);
-            },
-            child: const Text('Save')),
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            final title = _titleController.text.trim();
+            final description = _descriptionController.text.trim();
+            final updated = GeofenceMission(
+              id: widget.mission.id,
+              title: title.isEmpty ? widget.mission.title : title,
+              description: description.isEmpty ? null : description,
+              center: widget.mission.center,
+              radiusMeters: _radius,
+              type: _type,
+              isActive: widget.mission.isActive,
+              targetDistanceMeters: _type == MissionType.target
+                  ? _targetDistance
+                  : null,
+              status: widget.mission.status,
+            );
+            Navigator.of(context).pop(updated);
+          },
+          child: const Text('Save'),
+        ),
       ],
     );
   }

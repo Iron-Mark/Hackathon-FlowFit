@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -10,12 +11,36 @@ import 'package:share_plus/share_plus.dart';
 import 'package:solar_icons/solar_icons.dart';
 import '../../../models/running_session.dart';
 
+typedef ShareAchievementImagePicker = Future<File?> Function();
+typedef ShareAchievementCapture = Future<Uint8List> Function(GlobalKey key);
+typedef ShareAchievementDirectoryProvider = Future<Directory> Function();
+typedef ShareAchievementImageWriter =
+    Future<File> Function({
+      required Directory directory,
+      required Uint8List pngBytes,
+    });
+typedef ShareAchievementFileSharer =
+    Future<void> Function({required File file, required String text});
+
 /// Strava-style share achievement screen
 /// Allows users to add a background image and overlay workout stats with GPS route
 class ShareAchievementScreen extends StatefulWidget {
   final RunningSession session;
+  final ShareAchievementImagePicker? pickImage;
+  final ShareAchievementCapture? captureShareCard;
+  final ShareAchievementDirectoryProvider? getShareDirectory;
+  final ShareAchievementImageWriter? writeShareImage;
+  final ShareAchievementFileSharer? shareImage;
 
-  const ShareAchievementScreen({super.key, required this.session});
+  const ShareAchievementScreen({
+    super.key,
+    required this.session,
+    this.pickImage,
+    this.captureShareCard,
+    this.getShareDirectory,
+    this.writeShareImage,
+    this.shareImage,
+  });
 
   @override
   State<ShareAchievementScreen> createState() => _ShareAchievementScreenState();
@@ -25,6 +50,7 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
   File? _backgroundImage;
   final GlobalKey _shareKey = GlobalKey();
   bool _isGenerating = false;
+  bool _isPickingImage = false;
 
   String _formatTime(int? seconds) {
     if (seconds == null) return '00:00';
@@ -45,38 +71,59 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (_isPickingImage) return;
 
-    if (pickedFile != null) {
+    setState(() => _isPickingImage = true);
+
+    try {
+      final pickedImage = await (widget.pickImage ?? _defaultPickImage)();
+      if (!mounted || pickedImage == null) return;
+
       setState(() {
-        _backgroundImage = File(pickedFile.path);
+        _backgroundImage = pickedImage;
       });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error selecting image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPickingImage = false);
+      }
     }
   }
 
+  Future<File?> _defaultPickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    return pickedFile == null ? null : File(pickedFile.path);
+  }
+
   Future<void> _shareAchievement() async {
+    if (_isGenerating) return;
+
     setState(() => _isGenerating = true);
 
     try {
-      // Capture the widget as an image
-      final boundary =
-          _shareKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      final pngBytes = byteData!.buffer.asUint8List();
+      final pngBytes = await (widget.captureShareCard ?? _captureShareCard)(
+        _shareKey,
+      );
 
       // Save to temporary file
-      final tempDir = await getTemporaryDirectory();
-      final file = File('${tempDir.path}/flowfit_achievement.png');
-      await file.writeAsBytes(pngBytes);
+      final tempDir = await (widget.getShareDirectory ?? getTemporaryDirectory)
+          .call();
+      final file = await (widget.writeShareImage ?? _writeShareImage)(
+        directory: tempDir,
+        pngBytes: pngBytes,
+      );
 
       // Share the image
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text:
-            '🏃 Just completed a ${_formatDistance(widget.session.currentDistance)} km run with FlowFit! #FlowFit #Running',
-      );
+      await (widget.shareImage ?? _shareImage)(file: file, text: _shareText());
 
       if (mounted) {
         // Navigate back to dashboard after sharing
@@ -98,6 +145,43 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
         setState(() => _isGenerating = false);
       }
     }
+  }
+
+  Future<Uint8List> _captureShareCard(GlobalKey key) async {
+    final currentContext = key.currentContext;
+    if (currentContext == null) {
+      throw StateError('Share card is not ready yet.');
+    }
+
+    final renderObject = currentContext.findRenderObject();
+    if (renderObject is! RenderRepaintBoundary) {
+      throw StateError('Share card is not ready yet.');
+    }
+
+    final image = await renderObject.toImage(pixelRatio: 3.0);
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    if (byteData == null) {
+      throw StateError('Unable to render share image.');
+    }
+
+    return byteData.buffer.asUint8List();
+  }
+
+  Future<void> _shareImage({required File file, required String text}) async {
+    await Share.shareXFiles([XFile(file.path)], text: text);
+  }
+
+  Future<File> _writeShareImage({
+    required Directory directory,
+    required Uint8List pngBytes,
+  }) async {
+    final file = File('${directory.path}/flowfit_achievement.png');
+    await file.writeAsBytes(pngBytes);
+    return file;
+  }
+
+  String _shareText() {
+    return '🏃 Just completed a ${_formatDistance(widget.session.currentDistance)} km run with FlowFit! #FlowFit #Running';
   }
 
   @override
@@ -367,7 +451,9 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
               onPressed: _pickImage,
               icon: const Icon(SolarIconsBold.gallery),
               label: Text(
-                _backgroundImage != null
+                _isPickingImage
+                    ? 'Opening Gallery...'
+                    : _backgroundImage != null
                     ? 'Change Background'
                     : 'Add Background Image',
                 style: const TextStyle(
@@ -430,6 +516,11 @@ class RoutePolylinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (routePoints.isEmpty) return;
 
+    if (routePoints.length == 1) {
+      _drawMarkerPair(canvas, [size.center(Offset.zero)]);
+      return;
+    }
+
     // Calculate bounds of the route
     double minLat = routePoints.first.latitude;
     double maxLat = routePoints.first.latitude;
@@ -444,8 +535,21 @@ class RoutePolylinePainter extends CustomPainter {
     }
 
     // Add padding
-    final latRange = maxLat - minLat;
-    final lngRange = maxLng - minLng;
+    var latRange = maxLat - minLat;
+    var lngRange = maxLng - minLng;
+
+    if (latRange == 0) {
+      minLat -= 0.0001;
+      maxLat += 0.0001;
+      latRange = maxLat - minLat;
+    }
+
+    if (lngRange == 0) {
+      minLng -= 0.0001;
+      maxLng += 0.0001;
+      lngRange = maxLng - minLng;
+    }
+
     const padding = 0.1; // 10% padding
 
     minLat -= latRange * padding;
@@ -454,7 +558,7 @@ class RoutePolylinePainter extends CustomPainter {
     maxLng += lngRange * padding;
 
     // Convert GPS coordinates to canvas coordinates
-    List<Offset> canvasPoints = routePoints.map((point) {
+    final canvasPoints = routePoints.map((point) {
       final x = ((point.longitude - minLng) / (maxLng - minLng)) * size.width;
       final y =
           size.height -
@@ -492,6 +596,10 @@ class RoutePolylinePainter extends CustomPainter {
     }
     canvas.drawPath(polylinePath, polylinePaint);
 
+    _drawMarkerPair(canvas, canvasPoints);
+  }
+
+  void _drawMarkerPair(Canvas canvas, List<Offset> canvasPoints) {
     // Draw start marker (green circle)
     final startMarkerPaint = Paint()
       ..color = const Color(0xFF10B981)

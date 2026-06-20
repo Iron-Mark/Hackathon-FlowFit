@@ -20,7 +20,7 @@
 
 3. **Continue with Other Test Suites**
    - Test Suite 2: Complete Login Flow
-   - Test Suite 3: Social Sign-In Shortcuts
+   - Test Suite 3: Social OAuth Availability
    - Test Suite 4: Survey Data Persistence
    - Test Suite 5: Error Handling
 
@@ -148,9 +148,9 @@ For rapid verification, run these critical tests manually:
 2. **Login Flow** (1 min)
    - Login with valid credentials → Reach dashboard
 
-3. **Social Buttons** (1 min)
-   - Tap Google button → Reach dashboard
-   - Verify no auth session created
+3. **Social OAuth Guard** (1 min)
+   - Confirm Google/Apple sign-in buttons are not shown
+   - Confirm dashboard is reachable only through real login or restored session
 
 4. **Session Persistence** (1 min)
    - Close and reopen app → Auto-login to dashboard
@@ -196,14 +196,14 @@ A: Run tests on actual device/emulator, not in Dart VM
 |-----------|-----------|--------|--------|
 | Signup Flow | ✅ | ✅ | Ready |
 | Login Flow | ⚠️ Partial | ✅ | Ready |
-| Social Sign-In | ✅ | ✅ | Ready |
+| Social OAuth Guard | ✅ | ✅ | Ready |
 | Survey Persistence | ❌ | ✅ | Manual Only |
 | Error Handling | ❌ | ✅ | Manual Only |
 
 Legend:
 - ✅ Fully implemented
 - ⚠️ Partially implemented
-- ❌ Not implemented (manual only)
+- ❌ Manual coverage only
 
 ---
 

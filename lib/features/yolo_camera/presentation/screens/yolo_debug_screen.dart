@@ -207,8 +207,9 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
                     ),
                     ButtonSegment(
                       value: DetectionMode.pose,
-                      label: Text('Pose'),
+                      label: Text('Pose unavailable'),
                       icon: Icon(Icons.accessibility_new),
+                      enabled: false,
                     ),
                   ],
                   selected: {_detectionMode},
@@ -357,7 +358,7 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             Text('• Object: YOLOv11s model'),
-            Text('• Pose: YOLOv11n-pose model'),
+            Text('• Pose: unavailable until a compatible pose model is added'),
             SizedBox(height: 16),
             Text(
               'Camera Modes:',

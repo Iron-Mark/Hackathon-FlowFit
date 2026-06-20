@@ -99,7 +99,14 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
   @override
   void dispose() {
     _notificationTapSub?.cancel();
-    _moodTracker.stopMonitoring();
+    unawaited(
+      _moodTracker.stopMonitoring().catchError((
+        Object error,
+        StackTrace stack,
+      ) {
+        debugPrint('MapsPageWrapper: stopMonitoring failed: $error');
+      }),
+    );
     _watchBridge?.stopPermissionMonitoring();
     _watchBridge?.stopConnectionMonitoring();
     _service.dispose();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:solar_icons/solar_icons.dart';
 import '../../../models/recent_activity.dart';
 import '../../../providers/dashboard_providers.dart';
@@ -295,10 +294,7 @@ class ActivityCard extends StatelessWidget {
       color: theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        onTap: () {
-          // Navigate to activity details screen
-          context.go('/activity/${activity.id}');
-        },
+        onTap: () => _showActivityDetails(context),
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(16.0),
@@ -386,6 +382,91 @@ class ActivityCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  void _showActivityDetails(BuildContext context) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  activity.name,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  activity.details,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildDetailRow(context, 'Date', activity.dateLabel),
+                if (activity.hasMoodData) ...[
+                  const SizedBox(height: 8),
+                  _buildDetailRow(
+                    context,
+                    'Mood',
+                    '${activity.preMood!.emoji} to ${activity.postMood!.emoji}',
+                  ),
+                ],
+                if (activity.moodBoostText.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    activity.moodBoostText,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.green.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
+    final theme = Theme.of(context);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

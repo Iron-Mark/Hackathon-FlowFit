@@ -12,6 +12,44 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   bool _isWeekView = true;
 
+  void _showSleepDetails() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sleep Details',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Average duration: 7h 32m',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                _buildSleepDetailRow(context, 'Deep sleep', '2h 15m'),
+                _buildSleepDetailRow(context, 'Light sleep', '3h 10m'),
+                _buildSleepDetailRow(context, 'REM sleep', '1h 36m'),
+                _buildSleepDetailRow(context, 'Awake', '31m'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -199,7 +237,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                 ],
                               ),
                               TextButton(
-                                onPressed: () {},
+                                onPressed: _showSleepDetails,
                                 child: const Text(
                                   'View Details',
                                   style: TextStyle(
@@ -367,6 +405,29 @@ class _ProgressScreenState extends State<ProgressScreen> {
         const SizedBox(width: 6),
         Text(label, style: theme.textTheme.bodySmall),
       ],
+    );
+  }
+
+  Widget _buildSleepDetailRow(
+    BuildContext context,
+    String label,
+    String duration,
+  ) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
+          Text(
+            duration,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

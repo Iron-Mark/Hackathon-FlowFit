@@ -10,6 +10,12 @@ class SupabaseService {
     await _client.from(SupabaseTables.heartRate).insert(data);
   }
 
+  /// Save multiple heart rate records to Supabase.
+  Future<void> saveHeartRateDataBatch(List<Map<String, dynamic>> data) async {
+    if (data.isEmpty) return;
+    await _client.from(SupabaseTables.heartRate).insert(data);
+  }
+
   /// Get heart rate data for a date range
   Future<List<Map<String, dynamic>>> getHeartRateData({
     required DateTime startDate,

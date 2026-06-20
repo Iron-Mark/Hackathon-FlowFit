@@ -1,8 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:solar_icons/solar_icons.dart';
 
+enum _IntegrationAction { unsupported, wellnessSetup }
+
 class AppIntegrationScreen extends StatelessWidget {
   const AppIntegrationScreen({super.key});
+
+  void _showIntegrationDetails(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required bool isConnected,
+    required _IntegrationAction action,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(subtitle, style: theme.textTheme.bodyMedium),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(
+                      isConnected
+                          ? SolarIconsBold.checkCircle
+                          : SolarIconsOutline.infoCircle,
+                      color: isConnected ? Colors.green : Colors.orange,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        isConnected
+                            ? 'Connected and ready to sync.'
+                            : 'FlowFit uses the Samsung Health Sensor API through the watch wellness setup flow.',
+                      ),
+                    ),
+                  ],
+                ),
+                if (action == _IntegrationAction.wellnessSetup) ...[
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pushNamed(context, '/wellness-onboarding');
+                      },
+                      child: const Text('Open Wellness Setup'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +121,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Connect your favorite apps to sync your data',
+                      'Set up Galaxy Watch sensors and review provider support',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -91,7 +161,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'Google Fit',
-                    'Sync your activity and health data',
+                    'Not supported in this build',
                     SolarIconsOutline.heartPulse,
                     false,
                     Colors.red,
@@ -100,7 +170,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'Apple Health',
-                    'Connect with Apple Health app',
+                    'Not supported in this Android build',
                     SolarIconsOutline.heartPulse,
                     false,
                     Colors.pink,
@@ -109,7 +179,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'Strava',
-                    'Import your runs and rides',
+                    'Not supported in this build',
                     SolarIconsOutline.running,
                     false,
                     Colors.orange,
@@ -118,7 +188,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'MyFitnessPal',
-                    'Sync nutrition and calorie data',
+                    'Not supported in this build',
                     SolarIconsOutline.hamburgerMenu,
                     false,
                     Colors.blue,
@@ -159,7 +229,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'Fitbit',
-                    'Connect your Fitbit device',
+                    'Not supported in this build',
                     SolarIconsOutline.clockCircle,
                     false,
                     Colors.teal,
@@ -168,7 +238,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'Garmin',
-                    'Sync with Garmin devices',
+                    'Not supported in this build',
                     SolarIconsOutline.clockCircle,
                     false,
                     Colors.blue,
@@ -177,10 +247,11 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'Samsung Health',
-                    'Connect Samsung wearables',
+                    'Set up Galaxy Watch sensor access',
                     SolarIconsOutline.clockCircle,
                     false,
                     Colors.purple,
+                    action: _IntegrationAction.wellnessSetup,
                   ),
                 ],
               ),
@@ -218,7 +289,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'Google Calendar',
-                    'Schedule workouts in your calendar',
+                    'Not supported in this build',
                     SolarIconsOutline.calendar,
                     false,
                     Colors.blue,
@@ -227,7 +298,7 @@ class AppIntegrationScreen extends StatelessWidget {
                   _buildIntegrationItem(
                     context,
                     'Spotify',
-                    'Play music during workouts',
+                    'Not supported in this build',
                     SolarIconsOutline.musicNote,
                     false,
                     Colors.green,
@@ -249,19 +320,23 @@ class AppIntegrationScreen extends StatelessWidget {
     String subtitle,
     IconData icon,
     bool isConnected,
-    Color iconColor,
-  ) {
+    Color iconColor, {
+    _IntegrationAction action = _IntegrationAction.unsupported,
+  }) {
     final theme = Theme.of(context);
+    final isActionable =
+        isConnected || action == _IntegrationAction.wellnessSetup;
 
     return InkWell(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$title integration coming soon'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      },
+      onTap: isActionable
+          ? () => _showIntegrationDetails(
+              context,
+              title: title,
+              subtitle: subtitle,
+              isConnected: isConnected,
+              action: action,
+            )
+          : null,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -314,17 +389,29 @@ class AppIntegrationScreen extends StatelessWidget {
                   ),
                 ),
               )
-            else
+            else if (action == _IntegrationAction.wellnessSetup)
               TextButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('$title integration coming soon'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-                child: const Text('Connect'),
+                onPressed: () =>
+                    Navigator.pushNamed(context, '/wellness-onboarding'),
+                child: const Text('Set Up'),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Not supported',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
           ],
         ),

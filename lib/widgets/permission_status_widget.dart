@@ -36,6 +36,12 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
   }
 
   Future<void> _initializePermissionState() async {
+    await _refreshPermissionState();
+  }
+
+  Future<void> _refreshPermissionState({
+    PermissionStatus? fallbackStatus,
+  }) async {
     try {
       final status = await widget.watchBridge.checkBodySensorPermission();
       if (mounted) {
@@ -45,6 +51,11 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
       }
     } catch (e) {
       debugPrint('Error checking initial permission state: $e');
+      if (fallbackStatus != null && mounted) {
+        setState(() {
+          _currentStatus = fallbackStatus;
+        });
+      }
     }
   }
 
@@ -56,7 +67,12 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
     });
 
     try {
-      await widget.watchBridge.requestBodySensorPermission();
+      final granted = await widget.watchBridge.requestBodySensorPermission();
+      await _refreshPermissionState(
+        fallbackStatus: granted
+            ? PermissionStatus.granted
+            : PermissionStatus.denied,
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +94,9 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
   Future<void> _openSettings() async {
     try {
       final opened = await widget.watchBridge.openAppSettings();
-      if (!opened && mounted) {
+      if (opened) {
+        await _refreshPermissionState();
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to open app settings'),
@@ -102,22 +120,21 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
   Widget build(BuildContext context) {
     return StreamBuilder<PermissionStatus>(
       stream: widget.watchBridge.permissionStateStream,
-      initialData: _currentStatus,
       builder: (context, snapshot) {
-        final status = snapshot.data ?? _currentStatus;
-        
+        final streamedStatus = snapshot.data;
+
         // Update local state
-        if (status != _currentStatus) {
+        if (streamedStatus != null && streamedStatus != _currentStatus) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               setState(() {
-                _currentStatus = status;
+                _currentStatus = streamedStatus;
               });
             }
           });
         }
 
-        return _buildPermissionCard(status);
+        return _buildPermissionCard(_currentStatus);
       },
     );
   }
@@ -141,7 +158,8 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
       statusColor = Colors.red;
       statusIcon = Icons.cancel;
       statusText = 'Permission Denied';
-      statusMessage = 'Sensor features are disabled. Grant permission to enable.';
+      statusMessage =
+          'Sensor features are disabled. Grant permission to enable.';
     } else {
       statusColor = Colors.orange;
       statusIcon = Icons.warning;
@@ -176,10 +194,7 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
                       const SizedBox(height: 4),
                       Text(
                         statusMessage,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -196,9 +211,7 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
                       onPressed: _openSettings,
                       icon: const Icon(Icons.settings),
                       label: const Text('Open Settings'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: statusColor,
-                      ),
+                      style: TextButton.styleFrom(foregroundColor: statusColor),
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -215,8 +228,9 @@ class _PermissionStatusWidgetState extends State<PermissionStatusWidget> {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text('Grant Permission'),

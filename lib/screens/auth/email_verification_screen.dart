@@ -7,8 +7,25 @@ import 'package:gotrue/gotrue.dart' as gotrue;
 import '../../theme/app_theme.dart';
 import 'dart:async';
 
+typedef EmailVerificationStatusChecker = Future<bool> Function();
+typedef EmailVerificationEmailResender = Future<void> Function(String email);
+typedef EmailVerificationAuthStateStream = Stream<gotrue.AuthState> Function();
+
 class EmailVerificationScreen extends ConsumerStatefulWidget {
-  const EmailVerificationScreen({super.key});
+  const EmailVerificationScreen({
+    super.key,
+    this.checkVerificationStatus,
+    this.resendVerificationEmail,
+    this.authStateChanges,
+    this.autoCheckInterval = const Duration(seconds: 5),
+    this.navigationDelay = const Duration(milliseconds: 500),
+  });
+
+  final EmailVerificationStatusChecker? checkVerificationStatus;
+  final EmailVerificationEmailResender? resendVerificationEmail;
+  final EmailVerificationAuthStateStream? authStateChanges;
+  final Duration? autoCheckInterval;
+  final Duration navigationDelay;
 
   @override
   ConsumerState<EmailVerificationScreen> createState() =>
@@ -43,9 +60,10 @@ class _EmailVerificationScreenState
 
   void _listenToAuthChanges() {
     // Listen to Supabase auth state changes for deep link verification
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
-      data,
-    ) {
+    final authStateChanges =
+        widget.authStateChanges ??
+        () => Supabase.instance.client.auth.onAuthStateChange;
+    _authSubscription = authStateChanges().listen((data) {
       if (data.event == AuthChangeEvent.signedIn && data.session != null) {
         final user = data.session!.user;
         // Check if email is verified
@@ -60,8 +78,11 @@ class _EmailVerificationScreenState
   }
 
   void _startAutoCheck() {
+    final autoCheckInterval = widget.autoCheckInterval;
+    if (autoCheckInterval == null) return;
+
     // Auto-check verification status every 5 seconds
-    _autoCheckTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _autoCheckTimer = Timer.periodic(autoCheckInterval, (timer) {
       _checkVerification(silent: true);
     });
   }
@@ -73,9 +94,14 @@ class _EmailVerificationScreenState
 
     try {
       // Refresh session to get latest user data
-      final response = await Supabase.instance.client.auth.refreshSession();
-      final user = response.user;
-      final isVerified = user?.emailConfirmedAt != null;
+      final checkStatus =
+          widget.checkVerificationStatus ??
+          () async {
+            final response = await Supabase.instance.client.auth
+                .refreshSession();
+            return response.user?.emailConfirmedAt != null;
+          };
+      final isVerified = await checkStatus();
 
       if (mounted) {
         if (!silent) {
@@ -126,7 +152,7 @@ class _EmailVerificationScreenState
     );
 
     // Navigate to age gate to choose onboarding flow
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(widget.navigationDelay, () {
       if (mounted) {
         Navigator.pushReplacementNamed(
           context,
@@ -147,12 +173,17 @@ class _EmailVerificationScreenState
           ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       final email = args?['email'] as String?;
 
-      if (email != null) {
-        await Supabase.instance.client.auth.resend(
-          type: OtpType.signup,
-          email: email,
-        );
+      if (email == null || email.trim().isEmpty) {
+        throw StateError('Missing email address for verification resend.');
       }
+
+      final resendEmail =
+          widget.resendVerificationEmail ??
+          (String email) => Supabase.instance.client.auth.resend(
+            type: OtpType.signup,
+            email: email,
+          );
+      await resendEmail(email);
 
       if (mounted) {
         setState(() {

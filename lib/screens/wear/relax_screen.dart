@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:wear_plus/wear_plus.dart';
 
@@ -14,6 +16,8 @@ class RelaxScreen extends StatefulWidget {
 class _RelaxScreenState extends State<RelaxScreen>
     with SingleTickerProviderStateMixin {
   bool _isPlaying = false;
+  int _elapsedSeconds = 0;
+  Timer? _sessionTimer;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -23,7 +27,7 @@ class _RelaxScreenState extends State<RelaxScreen>
     _animationController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
     _fadeAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
@@ -32,8 +36,15 @@ class _RelaxScreenState extends State<RelaxScreen>
 
   @override
   void dispose() {
+    _sessionTimer?.cancel();
     _animationController.dispose();
     super.dispose();
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -94,8 +105,14 @@ class _RelaxScreenState extends State<RelaxScreen>
                     _buildPlayPauseButton(),
                     const SizedBox(height: 24),
                     Text(
-                      _isPlaying ? 'Ocean Waves' : 'Tap to play',
+                      _isPlaying ? 'Guided breathing' : 'Tap to start',
                       style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _formatDuration(_elapsedSeconds),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                       textAlign: TextAlign.center,
                     ),
                   ] else ...[
@@ -132,7 +149,17 @@ class _RelaxScreenState extends State<RelaxScreen>
           shape: const CircleBorder(),
           padding: const EdgeInsets.all(20),
         ),
-        child: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, size: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(_isPlaying ? Icons.pause : Icons.play_arrow, size: 36),
+            const SizedBox(height: 4),
+            Text(
+              _isPlaying ? 'Pause' : 'Start',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -141,9 +168,15 @@ class _RelaxScreenState extends State<RelaxScreen>
     setState(() {
       _isPlaying = !_isPlaying;
       if (_isPlaying) {
-        // TODO: Start audio playback using audioplayers plugin
+        _animationController.repeat(reverse: true);
+        _sessionTimer?.cancel();
+        _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted) return;
+          setState(() => _elapsedSeconds++);
+        });
       } else {
-        // TODO: Pause audio playback
+        _sessionTimer?.cancel();
+        _animationController.stop();
       }
     });
   }

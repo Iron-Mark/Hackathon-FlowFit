@@ -4,24 +4,23 @@ import '../../domain/repositories/i_auth_repository.dart';
 import '../../domain/exceptions/auth_exceptions.dart';
 
 /// StateNotifier for managing authentication state.
-/// 
+///
 /// Handles user sign up, sign in, sign out, and session restoration.
 /// Validates inputs before making repository calls.
-/// 
+///
 /// Requirements: 1.1, 2.1, 2.3, 2.5, 5.1, 5.2
 class AuthNotifier extends StateNotifier<AuthState> {
   final IAuthRepository _authRepository;
 
-  AuthNotifier(this._authRepository)
-      : super(AuthState.initial()) {
+  AuthNotifier(this._authRepository) : super(AuthState.initial()) {
     _init();
   }
 
   /// Initialize the notifier by checking for an existing session.
-  /// 
+  ///
   /// If a valid session exists, restore the authenticated user state.
   /// Otherwise, set state to unauthenticated.
-  /// 
+  ///
   /// Requirement 5.1: Check for valid stored session on app start
   /// Requirement 5.2: Restore user's authentication state if session exists
   Future<void> _init() async {
@@ -39,17 +38,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Public method to initialize or re-initialize auth state.
-  /// 
+  ///
   /// Can be called from splash screen or when app resumes.
   Future<void> initialize() async {
     await _init();
   }
 
   /// Signs up a new user with email and password.
-  /// 
+  ///
   /// Validates email format and password strength before calling repository.
   /// Updates state to authenticated on success, or error on failure.
-  /// 
+  ///
   /// Requirement 1.1: Create new user account with valid credentials
   /// Requirement 1.3: Reject invalid email format before sending to Supabase
   /// Requirement 1.4: Reject password shorter than 8 characters
@@ -96,17 +95,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Signs in an existing user with email and password.
-  /// 
+  ///
   /// Validates credentials and updates state on success or failure.
   /// Persists session locally for automatic re-authentication.
-  /// 
+  ///
   /// Requirement 2.1: Authenticate user with valid credentials
   /// Requirement 2.2: Reject invalid credentials with error message
   /// Requirement 2.3: Persist session locally on successful login
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     // Set loading state
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
 
@@ -132,10 +128,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Signs out the current user.
-  /// 
+  ///
   /// Clears the session and all locally stored authentication tokens.
-  /// Updates state to unauthenticated.
-  /// 
+  /// Updates state to unauthenticated only after repository sign-out succeeds.
+  ///
   /// Requirement 2.5: Clear session and all auth tokens on logout
   Future<void> signOut() async {
     try {
@@ -145,16 +141,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Update state to unauthenticated
       state = AuthState.unauthenticated();
     } on AuthException catch (e) {
-      // Even if sign out fails, clear local state
-      state = AuthState.error(e.message, status: AuthStatus.unauthenticated);
+      state = state.copyWith(errorMessage: e.message);
+      rethrow;
     } catch (e) {
-      // Even if sign out fails, clear local state
-      state = AuthState.unauthenticated();
+      state = state.copyWith(
+        errorMessage:
+            'Could not sign out. Check your connection and try again.',
+      );
+      throw Exception(
+        'Could not sign out. Check your connection and try again.',
+      );
     }
   }
 
   /// Validates email format using a simple regex.
-  /// 
+  ///
   /// Returns true if email matches the pattern, false otherwise.
   bool _isValidEmail(String email) {
     final emailRegex = RegExp(

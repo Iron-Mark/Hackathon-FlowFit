@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,9 +15,25 @@ import '../../widgets/wellness/cardio_detection_banner.dart';
 import '../../widgets/wellness/wellness_debug_panel.dart';
 import 'wellness_onboarding_screen.dart';
 
+typedef WellnessOnboardingCompletionChecker = Future<bool> Function();
+typedef WellnessTrackerLifecycleAction = Future<void> Function();
+
 /// Main wellness tracker page
 class WellnessTrackerPage extends ConsumerStatefulWidget {
-  const WellnessTrackerPage({super.key});
+  const WellnessTrackerPage({
+    super.key,
+    this.hasCompletedOnboarding,
+    this.startMonitoring,
+    this.stopMonitoring,
+    this.startStepCounting,
+    this.stopStepCounting,
+  });
+
+  final WellnessOnboardingCompletionChecker? hasCompletedOnboarding;
+  final WellnessTrackerLifecycleAction? startMonitoring;
+  final WellnessTrackerLifecycleAction? stopMonitoring;
+  final WellnessTrackerLifecycleAction? startStepCounting;
+  final WellnessTrackerLifecycleAction? stopStepCounting;
 
   @override
   ConsumerState<WellnessTrackerPage> createState() =>
@@ -38,9 +56,14 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
   Future<void> _checkOnboardingAndInitialize() async {
     // Check if onboarding has been completed
     final hasCompleted =
-        await WellnessOnboardingScreen.hasCompletedOnboarding();
+        await (widget.hasCompletedOnboarding ??
+            WellnessOnboardingScreen.hasCompletedOnboarding)();
 
-    if (!hasCompleted && mounted) {
+    if (!mounted) {
+      return;
+    }
+
+    if (!hasCompleted) {
       // Navigate to onboarding
       Navigator.of(context).pushReplacementNamed('/wellness-onboarding');
       return;
@@ -58,20 +81,36 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
       debugPrint('WellnessTrackerPage: Notifier initialized');
 
       // Start the wellness state service
-      final service = ref.read(wellnessStateServiceProvider);
-      await service.startMonitoring();
+      if (widget.startMonitoring != null) {
+        await widget.startMonitoring!();
+      } else {
+        final service = ref.read(wellnessStateServiceProvider);
+        await service.startMonitoring();
+      }
       debugPrint('WellnessTrackerPage: Wellness service started');
 
       // Start phone step counting
-      final phoneStepCounter = ref.read(phoneStepCounterServiceProvider);
-      await phoneStepCounter.startCounting();
+      if (widget.startStepCounting != null) {
+        await widget.startStepCounting!();
+      } else {
+        final phoneStepCounter = ref.read(phoneStepCounterServiceProvider);
+        await phoneStepCounter.startCounting();
+      }
       debugPrint('WellnessTrackerPage: Phone step counter started');
+
+      if (!mounted) {
+        return;
+      }
 
       setState(() {
         _isInitializing = false;
       });
     } catch (e) {
       debugPrint('WellnessTrackerPage: Initialization failed: $e');
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
         _isInitializing = false;
         _errorMessage = 'Failed to start monitoring: $e';
@@ -81,11 +120,38 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
 
   @override
   void dispose() {
-    final service = ref.read(wellnessStateServiceProvider);
-    service.stopMonitoring();
+    if (widget.stopMonitoring != null) {
+      unawaited(
+        widget.stopMonitoring!().catchError((Object error, StackTrace stack) {
+          debugPrint('WellnessTrackerPage: stopMonitoring failed: $error');
+        }),
+      );
+    } else {
+      final service = ref.read(wellnessStateServiceProvider);
+      unawaited(
+        service.stopMonitoring().catchError((Object error, StackTrace stack) {
+          debugPrint('WellnessTrackerPage: stopMonitoring failed: $error');
+        }),
+      );
+    }
 
-    final phoneStepCounter = ref.read(phoneStepCounterServiceProvider);
-    phoneStepCounter.stopCounting();
+    if (widget.stopStepCounting != null) {
+      unawaited(
+        widget.stopStepCounting!().catchError((Object error, StackTrace stack) {
+          debugPrint('WellnessTrackerPage: stopCounting failed: $error');
+        }),
+      );
+    } else {
+      final phoneStepCounter = ref.read(phoneStepCounterServiceProvider);
+      unawaited(
+        phoneStepCounter.stopCounting().catchError((
+          Object error,
+          StackTrace stack,
+        ) {
+          debugPrint('WellnessTrackerPage: stopCounting failed: $error');
+        }),
+      );
+    }
 
     super.dispose();
   }
@@ -355,10 +421,9 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
           CardioDetectionBanner(
             heartRate: wellnessState.heartRate ?? 0,
             onStartWorkout: (activityType) {
-              // Navigate to workout tracker
               Navigator.pushNamed(
                 context,
-                '/workout',
+                '/workout/select-type',
                 arguments: {
                   'activityType': activityType,
                   'startTime': DateTime.now(),

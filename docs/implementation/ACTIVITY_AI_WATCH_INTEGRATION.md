@@ -18,6 +18,9 @@ The UI now shows:
 - **Connection Status** - Clear indicators for watch connection state
 - **Disabled Simulation Controls** - Slider is disabled when using watch data
 - **Better Visual Feedback** - Icons and colors show connection status
+- **Retryable Listener Errors** - If the phone-side watch listener cannot start
+  or a watch stream stops, the page shows the failure and a retry button instead
+  of silently waiting forever.
 
 ### 3. **Better State Management**
 - Automatically disables simulation when switching to Watch mode
@@ -96,6 +99,18 @@ UI Display (Stress/Cardio/Strength)
 └─────────────────────────────────────┘
 ```
 
+### Watch Listener - Needs Retry
+```
+┌─────────────────────────────────────┐
+│ Galaxy Watch: Listener inactive    │
+└─────────────────────────────────────┘
+│ Could not start watch listener.     │
+│ Check Bluetooth and Wear OS         │
+│ connection, then retry.             │
+│ [Retry watch listener]              │
+└─────────────────────────────────────┘
+```
+
 ### Watch Mode - Connected
 ```
 ┌─────────────────────────────────────┐
@@ -124,6 +139,14 @@ UI Display (Stress/Cardio/Strength)
 2. Start heart rate on Galaxy Watch
 3. See live BPM appear in green box
 4. Activity classification uses real heart rate
+5. If the listener fails to start or a stream stops, verify **Retry watch
+   listener** restarts the listener and clears the error once watch data is
+   available again.
+
+### Automated Regression
+```bash
+flutter test test\features\activity_classifier\presentation\tracker_page_watch_listener_test.dart --reporter compact
+```
 
 ### Test Movement
 1. Toggle **"Simulate Movement"** ON
@@ -170,6 +193,8 @@ UI Display (Stress/Cardio/Strength)
 6. ✅ Disabled slider when not in Simulation mode
 7. ✅ Better visual feedback with icons and colors
 8. ✅ Updated app bar title to "Activity AI Classifier"
+9. ✅ Added retryable listener-start and stream-error states for Watch HR and
+   Watch accelerometer modes
 
 ## 🎯 Benefits
 
@@ -184,6 +209,7 @@ UI Display (Stress/Cardio/Strength)
 - ✅ Clear visual indicators for connection status
 - ✅ Slider disabled when not needed
 - ✅ Big green display shows live watch heart rate
+- ✅ Watch listener failures are recoverable without leaving the screen
 - ✅ Better user experience overall
 
 ## 🚀 Next Steps

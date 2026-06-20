@@ -48,14 +48,16 @@ features/{feature}/
 ### 2. Configured Riverpod Code Generation
 
 - ✅ Created `build.yaml` with Riverpod generator configuration
-- ✅ Created example provider demonstrating code generation
 - ✅ Successfully ran `build_runner` and generated `.g.dart` files
 - ✅ Verified code generation works correctly
+- Maintained-fork update: the original example provider scaffold was removed
+  once real production providers existed.
 
-### 3. Configured go_router Navigation
+### 3. Configured Navigation
 
-- ✅ Created `lib/shared/navigation/app_router.dart`
-- ✅ Set up basic route structure with placeholder routes for:
+- Maintained-fork update: the early `go_router` scaffold was retired; active
+  named routes are maintained in `lib/main.dart`.
+- The route surface still covers:
   - Dashboard (/)
   - Fitness (/fitness)
   - Nutrition (/nutrition)
@@ -98,9 +100,10 @@ This task satisfies the following requirements from the specification:
 - `build.yaml` - Build runner configuration
 
 ### Code Files
-- `lib/shared/navigation/app_router.dart` - Router configuration
-- `lib/core/providers/example_provider.dart` - Example provider
-- `lib/core/providers/example_provider.g.dart` - Generated provider code (auto-generated)
+- Historical: `lib/shared/navigation/app_router.dart` was the initial router
+  scaffold and has been retired in favor of `lib/main.dart` named routes.
+- Historical: `lib/core/providers/example_provider.dart` and its generated
+  file were removed after real providers replaced the example scaffold.
 
 ### Documentation Files
 - `docs/code/lib/ARCHITECTURE.md` - Architecture documentation

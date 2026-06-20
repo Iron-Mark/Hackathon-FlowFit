@@ -66,24 +66,30 @@ Profile Tab (dashboard_screen.dart)
 - Toggle switches for different notification types
 - Activity Reminders (Workout, Meal, Water, Sleep)
 - Progress & Updates (Achievements, Weekly Reports)
+- Local persistence for changed reminder preferences
 
 #### App Integration Screen
 
-- Connect with health & fitness apps (Google Fit, Apple Health, Strava, MyFitnessPal)
-- Wearable device integration (Fitbit, Garmin, Samsung Health)
-- Social & productivity apps (Google Calendar, Spotify)
+- Shows integration readiness for health, wearable, social, and productivity
+  providers without presenting unsupported providers as connectable.
+- Unsupported third-party providers expose a Details action that states direct
+  account sync is not available in this build.
+- Samsung Health routes to the real Wellness setup flow for Galaxy Watch sensor
+  permission and connection checks.
 
 #### Language Settings Screen
 
 - 12 supported languages
 - Native language names displayed
 - Visual selection feedback
+- Local persistence for selected language
 
 #### Unit Settings Screen
 
 - Measurement system selection (Metric/Imperial)
 - Individual unit preferences (Distance, Weight, Height, Temperature)
 - Auto-updates when system changes
+- Tappable individual unit pickers with local persistence
 
 #### Terms of Service Screen
 
@@ -115,7 +121,8 @@ Profile Tab (dashboard_screen.dart)
 - Current password verification
 - New password with confirmation
 - Form validation
-- Success feedback
+- Supabase reauthentication and password update
+- Success and failure feedback
 
 #### Delete Account Screen
 

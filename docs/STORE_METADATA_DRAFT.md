@@ -16,7 +16,7 @@ project, package/bundle ownership, and a verified support inbox.
 | iOS bundle ID | `com.oldstlabs.flowfit` | Apple Developer confirmation required |
 | Production auth scheme | `com.oldstlabs.flowfit` | Add to Supabase redirect URLs |
 | Dev auth scheme | `com.oldstlabs.flowfit.dev` | Add to Supabase redirect URLs |
-| Support email | `support@flowfit.com` | Reserved source token; replace with verified `FLOWFIT_SUPPORT_EMAIL` |
+| Support email | `marksiazon.dev@gmail.com` | Verified maintainer support inbox; keep `FLOWFIT_SUPPORT_EMAIL` aligned for release builds |
 | Privacy policy URL | `https://iron-mark.github.io/Hackathon-FlowFit/privacy.html` | GitHub Pages release origin |
 | Account deletion URL | `https://iron-mark.github.io/Hackathon-FlowFit/account-deletion.html` | GitHub Pages release origin |
 

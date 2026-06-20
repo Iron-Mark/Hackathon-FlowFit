@@ -21,7 +21,7 @@ Created comprehensive integration test files that verify the complete user flows
 - **Login with Incomplete Profile**: Tests login → survey for users without completed surveys
 - **Invalid Credentials**: Verifies error handling for wrong passwords
 - **Session Persistence**: Tests automatic re-authentication across app restarts
-- **Social Sign-In Shortcuts**: Verifies Google/Apple buttons navigate without creating sessions
+- **Social OAuth Guard**: Verifies Google/Apple shortcuts are hidden until real OAuth is implemented
 - **Requirements Covered**: 2.1, 2.2, 5.1, 5.2, 5.3, 5.4, 6.1, 6.2, 6.3
 
 ### 2. Manual Testing Guide
@@ -32,7 +32,7 @@ Created `MANUAL_TESTING_GUIDE.md` with detailed step-by-step instructions for:
 - **5 test suites**:
   1. Complete Signup Flow (5 tests)
   2. Complete Login Flow (5 tests)
-  3. Social Sign-In Shortcuts (3 tests)
+  3. Social OAuth Guard (1 test)
   4. Survey Data Persistence (5 tests)
   5. Error Handling (3 tests)
 
@@ -83,8 +83,8 @@ The integration tests cover:
 - ✅ Duplicate email error handling
 - ✅ Invalid email format validation
 - ✅ Invalid credentials error handling
-- ✅ Social sign-in button navigation
-- ✅ No auth session creation for social buttons
+- ✅ Social OAuth shortcuts are hidden until real provider flows exist
+- ✅ No social button can bypass Supabase Auth
 
 ### Manual Tests Required
 
@@ -123,9 +123,9 @@ All requirements from the specification are covered by tests:
 | 5.2 - Restore auth state | ✅ Manual | Manual |
 | 5.3 - Navigate to dashboard | ✅ Manual | Manual |
 | 5.4 - Navigate to survey | ✅ Manual | Manual |
-| 6.1 - Google button navigation | ✅ Automated + Manual | Both |
-| 6.2 - Apple button navigation | ✅ Automated + Manual | Both |
-| 6.3 - No auth session | ✅ Automated + Manual | Both |
+| 6.1 - Google OAuth hidden until implemented | ✅ Automated + Manual | Both |
+| 6.2 - Apple OAuth hidden until implemented | ✅ Automated + Manual | Both |
+| 6.3 - No social auth bypass | ✅ Automated + Manual | Both |
 | 7.1 - Network error handling | ✅ Manual | Manual |
 | 7.2 - Error logging | ✅ Manual | Manual |
 | 7.5 - Sanitized error messages | ✅ Manual | Manual |

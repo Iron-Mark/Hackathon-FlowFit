@@ -9,22 +9,17 @@ final activityHistoryProvider = FutureProvider<List<RecentActivity>>((
 ) async {
   final sessionService = ref.watch(workoutSessionServiceProvider);
 
-  try {
-    // Fetch recent sessions from database
-    final sessions = await sessionService.listRecentSessions(limit: 20);
+  // Fetch recent sessions from database
+  final sessions = await sessionService.listRecentSessions(limit: 20);
 
-    // Convert to RecentActivity format
-    return sessions
-        .map((session) => _convertToRecentActivity(session))
-        .toList();
-  } catch (e) {
-    // Return empty list on error
-    return [];
-  }
+  // Convert to RecentActivity format
+  return sessions
+      .map((session) => workoutSessionToRecentActivity(session))
+      .toList();
 });
 
 /// Converts a WorkoutSession to RecentActivity
-RecentActivity _convertToRecentActivity(WorkoutSession session) {
+RecentActivity workoutSessionToRecentActivity(WorkoutSession session) {
   // Format details based on workout type
   String details = '';
   String type = '';

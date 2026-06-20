@@ -1945,6 +1945,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(storeReleaseBuild, contains('webBuildBackend'));
     expect(webReleaseBuild, contains("if (\$WebWasm)"));
     expect(webReleaseBuild, contains("'--wasm'"));
+    expect(webReleaseBuild, contains("'--no-wasm-dry-run'"));
     expect(storeReleaseBuild, contains('function New-WebReleaseArchive'));
     expect(storeReleaseBuild, contains('build/release'));
     expect(storeReleaseBuild, contains('flowfit-web-release.zip'));
@@ -2030,6 +2031,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
   });
 
   test('ci runs web static verifier against built web output', () {
+    expect(ciWorkflow, contains('--no-wasm-dry-run'));
     expect(ciWorkflow, contains('scripts/verify_web_deployment.ps1'));
     expect(ciWorkflow, contains('-AllowInsecureLocalhost'));
     expect(ciWorkflow, contains('web-static-ci-smoke.json'));
@@ -3293,17 +3295,12 @@ function Resolve-DnsName {
     final activeSettings = File(
       'lib/screens/profile/settings/settings_screen.dart',
     ).readAsStringSync();
-    final legacySettings = File(
-      'lib/screens/profile/settings_screen.dart',
-    ).readAsStringSync();
 
-    for (final source in [activeSettings, legacySettings]) {
-      expect(source, contains('Delete Account'));
-      expect(
-        source,
-        contains("Navigator.pushNamed(context, '/delete-account')"),
-      );
-    }
+    expect(activeSettings, contains('Delete Account'));
+    expect(
+      activeSettings,
+      contains("Navigator.pushNamed(context, '/delete-account')"),
+    );
   });
 }
 

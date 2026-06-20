@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-import 'random_workout_screen.dart';
-import 'walk_screen.dart';
-import '../workout/running/running_setup_screen.dart';
-
 class TrackScreen extends StatelessWidget {
   const TrackScreen({super.key});
 
@@ -46,18 +42,12 @@ class TrackScreen extends StatelessWidget {
               const SizedBox(height: 24),
               _activityButton(
                 context: context,
-                title: 'Random Workout',
-                subtitle: 'Fun exercises with Flowy!',
+                title: 'AI Workout',
+                subtitle: 'Classify movement with phone or watch sensors',
                 icon: Icons.fitness_center,
                 color: const Color(0xFFFF6B6B),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const RandomWorkoutScreen(),
-                    ),
-                  );
-                },
+                onTap: () =>
+                    Navigator.pushNamed(context, '/activity-classifier'),
               ),
               const SizedBox(height: 12),
               _activityButton(
@@ -66,12 +56,8 @@ class TrackScreen extends StatelessWidget {
                 subtitle: 'Explore the outdoors',
                 icon: Icons.directions_walk,
                 color: const Color(0xFF4ECDC4),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const WalkScreen()),
-                  );
-                },
+                onTap: () =>
+                    Navigator.pushNamed(context, '/workout/walking/options'),
               ),
               const SizedBox(height: 12),
               _activityButton(
@@ -80,14 +66,8 @@ class TrackScreen extends StatelessWidget {
                 subtitle: 'Track your pace and progress',
                 icon: Icons.directions_run,
                 color: const Color(0xFF2D82E8),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const RunningSetupScreen(),
-                    ),
-                  );
-                },
+                onTap: () =>
+                    Navigator.pushNamed(context, '/workout/running/setup'),
               ),
             ],
           ),

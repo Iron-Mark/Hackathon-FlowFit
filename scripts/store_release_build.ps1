@@ -949,6 +949,8 @@ function Invoke-WebReleaseBuild {
     )
     if ($WebWasm) {
         $webBuildCommand += '--wasm'
+    } else {
+        $webBuildCommand += '--no-wasm-dry-run'
     }
     $webBuildCommand += @(
         '--no-pub',

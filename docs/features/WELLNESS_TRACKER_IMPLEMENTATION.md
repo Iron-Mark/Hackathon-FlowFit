@@ -12,7 +12,7 @@
 - ✅ **Task 5**: WellnessTrackerPage with 3-section layout (State Card, Map View, Stats Section)
 - ✅ **Task 6**: StressAlertBanner with slide-down animation, 3 action buttons, and auto-dismiss
 - ✅ **Task 8**: WellnessMapWidget with flutter_map integration, route visualization, and user location marker
-- ✅ **Task 9**: CardioDetectionBanner with workout integration (Run/Walk/Cycle quick-start)
+- ✅ **Task 9**: CardioDetectionBanner with workout integration (Run/Walk quick-start)
 - ✅ **Task 10**: WellnessStatsCard with daily timeline, duration tracking, and insights
 
 ### Integration (Tasks 11-12)
@@ -124,7 +124,7 @@ WellnessTrackerPage UI
 
 5. **Exercise Detection**:
    - When CARDIO is detected, banner appears with workout options
-   - Click Run/Walk/Cycle to start tracking workout
+   - Click Run/Walk to start a supported workout
 
 ## 🔍 Integration with Existing Systems
 

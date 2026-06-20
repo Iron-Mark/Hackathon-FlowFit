@@ -6,24 +6,40 @@ import 'package:flowfit/models/workout_session.dart';
 
 void main() {
   group('WorkoutTypeSelectionScreen', () {
-    testWidgets('displays header with correct text', (WidgetTester tester) async {
+    Widget buildNavigationHarness() {
+      return ProviderScope(
+        child: MaterialApp(
+          home: const WorkoutTypeSelectionScreen(),
+          routes: {
+            '/workout/running/setup': (_) =>
+                const Scaffold(body: Text('route:running')),
+            '/workout/walking/options': (_) =>
+                const Scaffold(body: Text('route:walking')),
+            '/workout/resistance/select-split': (_) =>
+                const Scaffold(body: Text('route:resistance')),
+          },
+        ),
+      );
+    }
+
+    testWidgets('displays header with correct text', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: WorkoutTypeSelectionScreen(),
-          ),
+          child: MaterialApp(home: WorkoutTypeSelectionScreen()),
         ),
       );
 
       expect(find.text('Choose Your Workout'), findsOneWidget);
     });
 
-    testWidgets('displays all three workout type cards', (WidgetTester tester) async {
+    testWidgets('displays all three workout type cards', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: WorkoutTypeSelectionScreen(),
-          ),
+          child: MaterialApp(home: WorkoutTypeSelectionScreen()),
         ),
       );
 
@@ -33,12 +49,12 @@ void main() {
       expect(find.text('Resistance Training'), findsOneWidget);
     });
 
-    testWidgets('displays estimated duration and calories for each card', (WidgetTester tester) async {
+    testWidgets('displays estimated duration and calories for each card', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: WorkoutTypeSelectionScreen(),
-          ),
+          child: MaterialApp(home: WorkoutTypeSelectionScreen()),
         ),
       );
 
@@ -47,22 +63,30 @@ void main() {
       expect(find.textContaining('cal'), findsAtLeastNWidgets(3));
     });
 
-    testWidgets('displays benefits text for each card', (WidgetTester tester) async {
+    testWidgets('displays benefits text for each card', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: WorkoutTypeSelectionScreen(),
-          ),
+          child: MaterialApp(home: WorkoutTypeSelectionScreen()),
         ),
       );
 
       // Verify benefits are displayed
-      expect(find.text('Improve cardiovascular health and endurance'), findsOneWidget);
-      expect(find.text('Low-impact exercise for daily movement'), findsOneWidget);
+      expect(
+        find.text('Improve cardiovascular health and endurance'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Low-impact exercise for daily movement'),
+        findsOneWidget,
+      );
       expect(find.text('Build strength and muscle definition'), findsOneWidget);
     });
 
-    testWidgets('WorkoutTypeCard has correct styling', (WidgetTester tester) async {
+    testWidgets('WorkoutTypeCard has correct styling', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -81,18 +105,48 @@ void main() {
 
       // Find the container with gradient
       final container = tester.widget<Container>(
-        find.descendant(
-          of: find.byType(WorkoutTypeCard),
-          matching: find.byType(Container),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(WorkoutTypeCard),
+              matching: find.byType(Container),
+            )
+            .first,
       );
 
       // Verify border radius is 16px
       final decoration = container.decoration as BoxDecoration;
       expect(decoration.borderRadius, BorderRadius.circular(16));
-      
+
       // Verify gradient is applied
       expect(decoration.gradient, isA<LinearGradient>());
+    });
+
+    testWidgets('Running card opens running setup route', (tester) async {
+      await tester.pumpWidget(buildNavigationHarness());
+
+      await tester.tap(find.text('Running'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('route:running'), findsOneWidget);
+    });
+
+    testWidgets('Walking card opens walking options route', (tester) async {
+      await tester.pumpWidget(buildNavigationHarness());
+
+      await tester.tap(find.text('Walking'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('route:walking'), findsOneWidget);
+    });
+
+    testWidgets('Resistance card opens split selection route', (tester) async {
+      await tester.pumpWidget(buildNavigationHarness());
+
+      await tester.ensureVisible(find.text('Resistance Training'));
+      await tester.tap(find.text('Resistance Training'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('route:resistance'), findsOneWidget);
     });
   });
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../providers/mood_tracking_provider.dart';
 
 /// Post-workout mood check screen
@@ -11,8 +10,13 @@ import '../providers/mood_tracking_provider.dart';
 /// Requirements: 10.1, 10.2, 10.4
 class PostWorkoutMoodCheck extends ConsumerStatefulWidget {
   final String sessionId;
+  final VoidCallback? onComplete;
 
-  const PostWorkoutMoodCheck({super.key, required this.sessionId});
+  const PostWorkoutMoodCheck({
+    super.key,
+    required this.sessionId,
+    this.onComplete,
+  });
 
   @override
   ConsumerState<PostWorkoutMoodCheck> createState() =>
@@ -64,11 +68,11 @@ class _PostWorkoutMoodCheckState extends ConsumerState<PostWorkoutMoodCheck> {
 
     ref.read(moodTrackingProvider.notifier).selectPostMood(moodValue);
 
-    // Navigate to workout summary
     if (mounted) {
-      // The navigation path will depend on workout type
-      // For now, we'll use a generic summary route
-      context.go('/workout/summary/${widget.sessionId}');
+      widget.onComplete?.call();
+      if (widget.onComplete == null) {
+        Navigator.of(context).maybePop(true);
+      }
     }
   }
 

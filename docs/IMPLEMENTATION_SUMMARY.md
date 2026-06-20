@@ -130,7 +130,7 @@ flutter run
 ### 3. Test Flow
 1. **Loading Screen** (3 seconds)
 2. **Welcome Screen** → Choose Login or Sign Up
-3. **Auth Screen** → Enter credentials (bypasses backend for now)
+3. **Auth Screen** → Enter credentials through Supabase-backed auth
 4. **Home Screen** → Receives data from watch
 
 ### 4. Watch Data Flow
@@ -311,7 +311,7 @@ expect(hrv, greaterThan(0));
 ### ⏳ Pending
 - Backend authentication API
 - Supabase data sync
-- Google/Apple Sign In
+- Real Google/Apple OAuth provider flows
 - Font files (General Sans)
 - Push notifications
 - Data export features

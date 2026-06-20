@@ -23,6 +23,16 @@ class ProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
     loadProfile();
   }
 
+  ProfileNotifier.initializing(this.userId)
+    : _repository = _UnavailableProfileRepository(),
+      _syncQueue = null,
+      super(const AsyncValue.loading());
+
+  ProfileNotifier.failed(this.userId, Object error, StackTrace stackTrace)
+    : _repository = _UnavailableProfileRepository(),
+      _syncQueue = null,
+      super(AsyncValue.error(error, stackTrace));
+
   /// Load profile with local-first strategy.
   ///
   /// 1. Load from local storage first (fast, works offline)
@@ -285,4 +295,43 @@ class ProfileNotifier extends StateNotifier<AsyncValue<UserProfile?>> {
       state = AsyncValue.error(e, st);
     }
   }
+}
+
+class _UnavailableProfileRepository implements ProfileRepository {
+  Never _throwUnavailable() {
+    throw StateError('Profile repository is not available.');
+  }
+
+  @override
+  Future<UserProfile?> getLocalProfile(String userId) async =>
+      _throwUnavailable();
+
+  @override
+  Future<void> saveLocalProfile(UserProfile profile) async =>
+      _throwUnavailable();
+
+  @override
+  Future<void> deleteLocalProfile(String userId) async => _throwUnavailable();
+
+  @override
+  Future<UserProfile?> getBackendProfile(String userId) async =>
+      _throwUnavailable();
+
+  @override
+  Future<void> saveBackendProfile(UserProfile profile) async =>
+      _throwUnavailable();
+
+  @override
+  Future<void> syncProfile(String userId) async => _throwUnavailable();
+
+  @override
+  Future<bool> hasPendingSync(String userId) async => _throwUnavailable();
+
+  @override
+  Stream<SyncStatus> watchSyncStatus(String userId) {
+    return Stream.error(StateError('Profile repository is not available.'));
+  }
+
+  @override
+  Future<bool> hasCompletedSurvey(String userId) async => _throwUnavailable();
 }

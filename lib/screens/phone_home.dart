@@ -22,6 +22,7 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
   List<TrackedData> _heartRateHistory = [];
   TrackedData? _latestHeartRate;
   bool _isConnected = false;
+  bool _isStartingListener = false;
   String _statusMessage = 'Waiting for watch data...';
   Map<String, dynamic> _statistics = {};
 
@@ -91,17 +92,42 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
       onError: (error) {
         _logger.e('❌ Stream error: $error');
         setState(() {
-          _statusMessage = 'Error: $error';
+          _statusMessage =
+              'Watch data stream stopped. Check Bluetooth and Wear OS connection, then retry.';
           _isConnected = false;
         });
       },
     );
 
-    // Start listening for watch data
-    _dataListener.startListening();
+    _startListening();
 
     // Load recent history
     _loadRecentHistory();
+  }
+
+  Future<void> _startListening() async {
+    if (mounted) {
+      setState(() {
+        _isStartingListener = true;
+        _statusMessage = 'Starting watch listener...';
+      });
+    }
+
+    final started = await _dataListener.startListening();
+    if (!mounted) return;
+
+    setState(() {
+      _isStartingListener = false;
+      if (started) {
+        _statusMessage = _isConnected
+            ? _statusMessage
+            : 'Listening for watch data...';
+      } else {
+        _isConnected = false;
+        _statusMessage =
+            'Could not start watch listener. Check Bluetooth and Wear OS connection, then retry.';
+      }
+    });
   }
 
   Future<void> _loadRecentHistory() async {
@@ -129,7 +155,11 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
   void dispose() {
     _heartRateSubscription?.cancel();
     _dataManagerSubscription?.cancel();
-    _dataManager.dispose();
+    unawaited(
+      _dataManager.dispose().catchError((Object error, StackTrace stack) {
+        _logger.e('Error disposing heart rate data manager', error: error);
+      }),
+    );
     _syncManager.dispose();
     _dataListener.dispose();
     super.dispose();
@@ -518,6 +548,12 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
   }
 
   Widget _buildStatusCard(ColorScheme colorScheme) {
+    final canRetry =
+        !_isStartingListener &&
+        !_isConnected &&
+        (_statusMessage.startsWith('Could not start') ||
+            _statusMessage.startsWith('Watch data stream stopped'));
+
     return Card(
       color: _isConnected
           ? colorScheme.primaryContainer
@@ -556,6 +592,14 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
                           : colorScheme.onSurfaceVariant,
                     ),
                   ),
+                  if (canRetry) ...[
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: _startListening,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
                 ],
               ),
             ),

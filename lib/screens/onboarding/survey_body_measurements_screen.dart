@@ -5,7 +5,6 @@ import '../../theme/app_theme.dart';
 import '../../presentation/providers/providers.dart';
 import '../../widgets/survey_app_bar.dart';
 import '../../core/utils/logger.dart';
-import 'survey_activity_goals_screen.dart';
 
 class SurveyBodyMeasurementsScreen extends ConsumerStatefulWidget {
   const SurveyBodyMeasurementsScreen({super.key});
@@ -163,13 +162,7 @@ class _SurveyBodyMeasurementsScreenState
 
       // Navigate to next screen
       if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SurveyActivityGoalsScreen(),
-          settings: RouteSettings(arguments: args),
-        ),
-      );
+      Navigator.pushNamed(context, '/survey_activity_goals', arguments: args);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

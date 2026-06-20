@@ -4,14 +4,14 @@ import '../../../providers/workout_flow_provider.dart';
 import '../../../widgets/quick_mood_check_bottom_sheet.dart';
 
 /// CTASection widget displays unified workout entry point
-/// 
+///
 /// Shows:
 /// - Section header "Ready to move?"
 /// - Single primary button "START WORKOUT"
-/// 
+///
 /// Navigation:
 /// - START WORKOUT -> Opens mood check bottom sheet
-/// 
+///
 /// Requirements: 1.1, 1.2, 1.5
 class CTASection extends ConsumerWidget {
   const CTASection({super.key});
@@ -34,7 +34,7 @@ class CTASection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Single unified START WORKOUT button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -43,10 +43,8 @@ class CTASection extends ConsumerWidget {
             height: 56,
             child: ElevatedButton(
               onPressed: () {
-                // Start workout flow with mood check
                 ref.read(workoutFlowProvider.notifier).startWorkoutFlow();
-                
-                // Show mood check bottom sheet
+
                 showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
@@ -80,7 +78,7 @@ class CTASection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        
+
         // Wellness Tracker button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -109,8 +107,8 @@ class CTASection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        
-        // Test button for OLD Map Mission screen (temporary for testing)
+
+        // Map missions entry point.
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: SizedBox(
@@ -118,7 +116,6 @@ class CTASection extends ConsumerWidget {
             height: 48,
             child: OutlinedButton(
               onPressed: () {
-                // Navigate to the OLD map mission screen (wellness feature)
                 Navigator.of(context).pushNamed('/mission');
               },
               style: OutlinedButton.styleFrom(
@@ -129,7 +126,7 @@ class CTASection extends ConsumerWidget {
                 ),
               ),
               child: Text(
-                'OLD MAP MISSIONS (Test)',
+                'Map Missions',
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: const Color(0xFF10B981),
                   fontWeight: FontWeight.w600,

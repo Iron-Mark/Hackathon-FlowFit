@@ -40,6 +40,17 @@ Future<void> _enterTextAndSettle(
   await tester.pumpAndSettle();
 }
 
+Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {
+  for (var attempt = 0; attempt < 20; attempt++) {
+    if (finder.evaluate().isNotEmpty) {
+      return;
+    }
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+
+  expect(finder, findsOneWidget);
+}
+
 /// Integration tests for profile-onboarding integration.
 ///
 /// These tests verify:
@@ -253,9 +264,122 @@ void main() {
 
     testWidgets(
       'INTEGRATION: Profile editing flow saves changes',
-      (WidgetTester tester) async {},
+      (WidgetTester tester) async {
+        const testUserId = 'test-user-edit';
+
+        final repository = await container.read(
+          profile_providers.profileRepositoryProvider.future,
+        );
+        await repository.saveLocalProfile(
+          UserProfile(
+            userId: testUserId,
+            fullName: 'Original User',
+            age: 31,
+            gender: 'male',
+            height: 175.0,
+            weight: 75.0,
+            heightUnit: 'cm',
+            weightUnit: 'kg',
+            activityLevel: 'moderately_active',
+            goals: const ['maintain_weight'],
+            dailyCalorieTarget: 2200,
+            dailyStepsTarget: 10000,
+            dailyActiveMinutesTarget: 30,
+            dailyWaterTarget: 2.0,
+            createdAt: DateTime(2026),
+            updatedAt: DateTime(2026),
+            isSynced: true,
+          ),
+        );
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              home: Builder(
+                builder: (context) {
+                  return Scaffold(
+                    body: Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/survey_basic_info',
+                            arguments: {
+                              'userId': testUserId,
+                              'name': 'Original User',
+                              'fromEdit': true,
+                            },
+                          );
+                        },
+                        child: const Text('Edit Profile'),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              routes: {
+                '/survey_basic_info': (context) =>
+                    const SurveyBasicInfoScreen(),
+                '/survey_body_measurements': (context) =>
+                    const SurveyBodyMeasurementsScreen(),
+                '/survey_activity_goals': (context) =>
+                    const SurveyActivityGoalsScreen(),
+                '/survey_daily_targets': (context) =>
+                    const SurveyDailyTargetsScreen(),
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await _tapAndSettle(tester, find.text('Edit Profile'));
+        await _pumpUntilFound(tester, find.text('Full Name'));
+
+        await _enterTextAndSettle(
+          tester,
+          find.byType(TextFormField).at(0),
+          'Edited User',
+        );
+        await _tapAndSettle(tester, find.text('Female'));
+        await _enterTextAndSettle(
+          tester,
+          find.byType(TextFormField).at(1),
+          '34',
+        );
+        await _tapAndSettle(tester, find.text('Continue'));
+
+        await _enterTextAndSettle(
+          tester,
+          find.widgetWithText(TextFormField, 'Enter height'),
+          '168',
+        );
+        await _enterTextAndSettle(
+          tester,
+          find.widgetWithText(TextFormField, 'Enter weight'),
+          '64',
+        );
+        await _tapAndSettle(tester, find.text('Continue'));
+
+        await _tapAndSettle(tester, find.text('Very Active'));
+        await _tapAndSettle(tester, find.text('Build Muscle'));
+        await _tapAndSettle(tester, find.text('Continue'));
+
+        await _tapAndSettle(tester, find.text('Complete & Start App'));
+        await tester.pump(const Duration(milliseconds: 600));
+        await tester.pumpAndSettle();
+
+        final updatedProfile = await repository.getLocalProfile(testUserId);
+        expect(updatedProfile, isNotNull);
+        expect(updatedProfile!.fullName, 'Edited User');
+        expect(updatedProfile.age, 34);
+        expect(updatedProfile.gender, 'female');
+        expect(updatedProfile.height, 168.0);
+        expect(updatedProfile.weight, 64.0);
+        expect(updatedProfile.activityLevel, 'very_active');
+        expect(updatedProfile.goals, contains('build_muscle'));
+      },
       timeout: const Timeout(Duration(minutes: 1)),
-      skip: true, // EditProfileScreen was removed; edit flow uses surveys.
     );
 
     testWidgets(

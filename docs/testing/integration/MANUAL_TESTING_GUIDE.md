@@ -327,73 +327,22 @@ _______________________________________________________________________
 
 ---
 
-## Test Suite 3: Social Sign-In Shortcuts
+## Test Suite 3: Social OAuth Availability
 
 **Requirements Tested**: 6.1, 6.2, 6.3
 
-### Test 3.1: Google Sign-In Button Navigation
+### Test 3.1: Social Auth Shortcuts Are Hidden Until Real OAuth Exists
 
 **Steps**:
 1. Navigate to Login screen
-2. Locate "Sign in with Google" button
-3. Verify button shows Google icon
-4. Tap "Sign in with Google" button
+2. Inspect the visible sign-in options
+3. Confirm only email/password login and password reset are available
 
 **Expected Result**:
-- Immediate navigation to Dashboard
-- No authentication dialog shown
-- No actual Google OAuth flow
-
-**Verification**:
-5. Open Supabase dashboard
-6. Check Authentication → Users
-7. Verify NO new user was created
-
-**Status**: ✅ PASS / ❌ FAIL
-
-**Notes**:
-_______________________________________________________________________
-
----
-
-### Test 3.2: Apple Sign-In Button Navigation
-
-**Steps**:
-1. Navigate to Login screen
-2. Locate "Sign in with Apple" button
-3. Verify button shows Apple icon
-4. Tap "Sign in with Apple" button
-
-**Expected Result**:
-- Immediate navigation to Dashboard
-- No authentication dialog shown
-- No actual Apple OAuth flow
-
-**Verification**:
-5. Open Supabase dashboard
-6. Check Authentication → Users
-7. Verify NO new user was created
-
-**Status**: ✅ PASS / ❌ FAIL
-
-**Notes**:
-_______________________________________________________________________
-
----
-
-### Test 3.3: Social Sign-In No Auth Session
-
-**Steps**:
-1. Ensure logged out
-2. Navigate to Login screen
-3. Tap either Google or Apple sign-in button
-4. Navigate to Dashboard
-5. **Close and reopen app**
-
-**Expected Result**:
-- After app restart, Welcome screen is shown
-- No persistent session created
-- Must login again
+- "Sign in with Google" is not shown
+- "Sign in with Apple" is not shown
+- No social button can bypass Supabase Auth
+- Dashboard is reachable only after a real email/password login or restored session
 
 **Status**: ✅ PASS / ❌ FAIL
 
@@ -612,10 +561,10 @@ _______________________________________________________________________
 |------------|-------------|--------|--------|---------|
 | Signup Flow | 5 | | | |
 | Login Flow | 5 | | | |
-| Social Sign-In | 3 | | | |
+| Social OAuth Guard | 1 | | | |
 | Survey Persistence | 5 | | | |
 | Error Handling | 3 | | | |
-| **TOTAL** | **21** | | | |
+| **TOTAL** | **19** | | | |
 
 ## Issues Found
 

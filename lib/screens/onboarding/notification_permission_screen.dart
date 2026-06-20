@@ -6,35 +6,62 @@ import '../../widgets/buddy_character_widget.dart';
 import '../../widgets/buddy_idle_animation.dart';
 import '../../widgets/onboarding_button.dart';
 
-/// Notification Permission Screen - Step 7 of 8
+/// Notification Permission Screen - Step 8 of 9
 ///
 /// Request notification permission with preview card showing example.
 /// Kids can opt-in or skip.
 ///
 /// Whale companion pattern implementation.
-class NotificationPermissionScreen extends ConsumerWidget {
+class NotificationPermissionScreen extends ConsumerStatefulWidget {
   const NotificationPermissionScreen({super.key});
 
-  Future<void> _handleTurnOn(BuildContext context, WidgetRef ref) async {
-    final status = await Permission.notification.request();
+  @override
+  ConsumerState<NotificationPermissionScreen> createState() =>
+      _NotificationPermissionScreenState();
+}
 
-    ref
-        .read(buddyOnboardingProvider.notifier)
-        .setNotificationPermission(status.isGranted);
+class _NotificationPermissionScreenState
+    extends ConsumerState<NotificationPermissionScreen> {
+  bool _isRequestingPermission = false;
 
-    if (context.mounted) {
+  Future<void> _handleTurnOn() async {
+    setState(() {
+      _isRequestingPermission = true;
+    });
+
+    try {
+      final status = await Permission.notification.request();
+      if (!mounted) return;
+
+      ref
+          .read(buddyOnboardingProvider.notifier)
+          .setNotificationPermission(status.isGranted);
+
       Navigator.pushNamed(context, '/buddy-ready');
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _isRequestingPermission = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not request notifications. You can try again or continue without reminders.',
+          ),
+        ),
+      );
     }
   }
 
-  void _handleMaybeLater(BuildContext context, WidgetRef ref) {
+  void _handleMaybeLater() {
     ref.read(buddyOnboardingProvider.notifier).setNotificationPermission(false);
 
     Navigator.pushNamed(context, '/buddy-ready');
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = ref.watch(buddyOnboardingProvider);
     final buddyName = state.buddyName ?? 'Bubbles';
@@ -139,8 +166,10 @@ class NotificationPermissionScreen extends ConsumerWidget {
 
               // Turn on notifications button
               OnboardingButton(
-                label: 'TURN ON NOTIFICATIONS',
-                onPressed: () => _handleTurnOn(context, ref),
+                label: _isRequestingPermission
+                    ? 'REQUESTING...'
+                    : 'TURN ON NOTIFICATIONS',
+                onPressed: _isRequestingPermission ? null : _handleTurnOn,
                 customColor: const Color(0xFF66BB6A),
               ),
 
@@ -148,7 +177,7 @@ class NotificationPermissionScreen extends ConsumerWidget {
 
               // Maybe later button
               OutlinedButton(
-                onPressed: () => _handleMaybeLater(context, ref),
+                onPressed: _isRequestingPermission ? null : _handleMaybeLater,
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 64),
                   shape: RoundedRectangleBorder(

@@ -17,6 +17,7 @@ import 'providers/wellness_state_provider.dart';
 import 'theme/app_theme.dart';
 import 'utils/deep_link_handler.dart';
 import 'widgets/buddy_pending_sync_listener.dart';
+import 'screens/startup_configuration_error_screen.dart';
 import 'screens/loading_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/welcome_screen.dart';
@@ -26,6 +27,7 @@ import 'screens/auth/email_verification_screen.dart';
 import 'screens/phone_home.dart';
 import 'screens/phone/phone_heart_rate_screen.dart';
 import 'screens/onboarding/survey_intro_screen.dart';
+import 'screens/onboarding/age_gate_screen.dart';
 import 'screens/onboarding/survey_basic_info_screen.dart';
 import 'screens/onboarding/survey_body_measurements_screen.dart';
 import 'screens/onboarding/survey_activity_goals_screen.dart';
@@ -69,6 +71,7 @@ import 'screens/workout/walking/mission_creation_screen.dart';
 import 'screens/workout/walking/active_walking_screen.dart';
 import 'screens/workout/walking/walking_summary_screen.dart';
 import 'models/mission.dart';
+import 'models/running_session.dart';
 import 'screens/workout/resistance/split_selection_screen.dart';
 import 'screens/workout/resistance/active_resistance_screen.dart';
 import 'screens/workout/resistance/resistance_summary_screen.dart';
@@ -81,6 +84,24 @@ Future<void> main() async {
   // Ensure Flutter bindings are initialized before async operations
   WidgetsFlutterBinding.ensureInitialized();
 
+  try {
+    await _bootstrapPhoneApp();
+  } catch (error, stackTrace) {
+    final redactedMessage = _redactStartupError(error);
+    FlutterError.reportError(
+      FlutterErrorDetails(
+        exception: redactedMessage,
+        stack: stackTrace,
+        library: 'flowfit startup',
+        context: ErrorDescription('while bootstrapping FlowFit'),
+      ),
+    );
+
+    runApp(FlowFitStartupErrorApp(message: redactedMessage));
+  }
+}
+
+Future<void> _bootstrapPhoneApp() async {
   // Initialize Supabase with dart-define configuration and deep link support
   SupabaseRuntimeConfig.validate();
   await Supabase.initialize(
@@ -107,6 +128,20 @@ Future<void> main() async {
       child: const FlowFitPhoneApp(),
     ),
   );
+}
+
+String _redactStartupError(Object error) {
+  return error
+      .toString()
+      .replaceFirst(RegExp(r'^Bad state:\s*'), '')
+      .replaceAllMapped(
+        RegExp(r'sb_(publishable|secret)_[A-Za-z0-9_-]+'),
+        (match) => 'sb_${match.group(1)}_<redacted>',
+      )
+      .replaceAll(
+        RegExp(r'eyJ[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){2,}'),
+        '<redacted-jwt>',
+      );
 }
 
 class FlowFitPhoneApp extends StatelessWidget {
@@ -174,6 +209,7 @@ class FlowFitPhoneApp extends StatelessWidget {
             '/login': (context) => const LoginScreen(),
             '/signup': (context) => const SignUpScreen(),
             '/email_verification': (context) => const EmailVerificationScreen(),
+            '/age-gate': (context) => const AgeGateScreen(),
             // Survey flow (4 steps)
             '/survey_intro': (context) => const SurveyIntroScreen(), // Step 0
             '/survey_basic_info': (context) =>
@@ -212,13 +248,7 @@ class FlowFitPhoneApp extends StatelessWidget {
             '/workout/running/active': (context) => const ActiveRunningScreen(),
             '/workout/running/summary': (context) =>
                 const RunningSummaryScreen(),
-            '/workout/running/share': (context) {
-              final args =
-                  ModalRoute.of(context)?.settings.arguments
-                      as Map<String, dynamic>?;
-              final session = args?['session'];
-              return ShareAchievementScreen(session: session);
-            },
+            '/workout/running/share': buildRunningShareRoute,
             '/workout/walking/options': (context) =>
                 const WalkingOptionsScreen(),
             '/workout/walking/mission': (context) =>
@@ -236,7 +266,7 @@ class FlowFitPhoneApp extends StatelessWidget {
             '/wellness-onboarding': (context) =>
                 const WellnessOnboardingScreen(),
             '/wellness-settings': (context) => const WellnessSettingsScreen(),
-            // Buddy onboarding flow (8-screen whale-themed for kids)
+            // Buddy onboarding flow (whale-themed for kids)
             '/buddy-welcome': (context) => const BuddyWelcomeScreen(),
             '/buddy-intro': (context) => const BuddyIntroScreen(),
             '/buddy-hatch': (context) => const BuddyHatchScreen(),
@@ -259,6 +289,64 @@ class FlowFitPhoneApp extends StatelessWidget {
               '/yolo-debug': (context) => const YoloDebugScreen(),
             },
           },
+        ),
+      ),
+    );
+  }
+}
+
+Widget buildRunningShareRoute(BuildContext context) {
+  final args = ModalRoute.of(context)?.settings.arguments;
+  final session = args is Map<String, dynamic> ? args['session'] : null;
+
+  if (session is RunningSession) {
+    return ShareAchievementScreen(session: session);
+  }
+
+  return const MissingWorkoutSessionScreen(
+    title: 'Share Achievement',
+    message: 'No running session is available to share.',
+  );
+}
+
+class MissingWorkoutSessionScreen extends StatelessWidget {
+  const MissingWorkoutSessionScreen({
+    super.key,
+    required this.title,
+    required this.message,
+  });
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.info_outline, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/dashboard', (route) => false);
+                },
+                child: const Text('Back to Dashboard'),
+              ),
+            ],
+          ),
         ),
       ),
     );
