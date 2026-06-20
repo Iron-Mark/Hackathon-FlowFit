@@ -1501,10 +1501,9 @@ storeFile=upload-keystore.jks
     ], environment: osmTileEnv);
 
     expect(osmTile.exitCode, isNot(0));
-    expect(
-      '${osmTile.stdout}\n${osmTile.stderr}',
-      contains('public OpenStreetMap tile servers'),
-    );
+    final osmTileOutput = '${osmTile.stdout}\n${osmTile.stderr}';
+    expect(osmTileOutput, contains('public OpenStreetMap'));
+    expect(osmTileOutput, contains('tile servers for production traffic'));
 
     final blocked = Process.runSync('pwsh', [
       '-NoProfile',
@@ -1886,10 +1885,9 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       ], environment: env);
 
       expect(result.exitCode, isNot(0));
-      expect(
-        '${result.stdout}\n${result.stderr}',
-        contains('public OpenStreetMap tile servers'),
-      );
+      final output = '${result.stdout}\n${result.stderr}';
+      expect(output, contains('public OpenStreetMap'));
+      expect(output, contains('tile servers for production traffic'));
       expect(result.stdout, isNot(contains('Running phone app')));
     } finally {
       tempDir.deleteSync(recursive: true);

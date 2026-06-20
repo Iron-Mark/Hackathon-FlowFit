@@ -2,8 +2,18 @@ import 'package:flutter/material.dart';
 import '../../presentation/widgets/yolo_camera_widget.dart';
 import '../../domain/entities/detection_result.dart';
 
+typedef YoloDebugCameraBuilder =
+    Widget Function(
+      BuildContext context,
+      DetectionMode detectionMode,
+      CameraMode cameraMode,
+      ValueChanged<List<DetectionResult>> onDetection,
+    );
+
 class YoloDebugScreen extends StatefulWidget {
-  const YoloDebugScreen({super.key});
+  const YoloDebugScreen({super.key, this.cameraBuilder});
+
+  final YoloDebugCameraBuilder? cameraBuilder;
 
   @override
   State<YoloDebugScreen> createState() => _YoloDebugScreenState();
@@ -98,19 +108,31 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
                     child: Builder(
                       builder: (context) {
                         try {
+                          void handleDetection(List<DetectionResult> results) {
+                            debugPrint(
+                              '📊 YoloDebugScreen: Received ${results.length} detections',
+                            );
+                            if (mounted) {
+                              setState(() {
+                                _latestResults = results;
+                              });
+                            }
+                          }
+
+                          final cameraBuilder = widget.cameraBuilder;
+                          if (cameraBuilder != null) {
+                            return cameraBuilder(
+                              context,
+                              _detectionMode,
+                              _cameraMode,
+                              handleDetection,
+                            );
+                          }
+
                           return YoloCameraWidget(
                             detectionMode: _detectionMode,
                             cameraMode: _cameraMode,
-                            onDetection: (results) {
-                              debugPrint(
-                                '📊 YoloDebugScreen: Received ${results.length} detections',
-                              );
-                              if (mounted) {
-                                setState(() {
-                                  _latestResults = results;
-                                });
-                              }
-                            },
+                            onDetection: handleDetection,
                           );
                         } catch (e, stackTrace) {
                           debugPrint(
