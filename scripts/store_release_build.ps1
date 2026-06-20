@@ -302,7 +302,7 @@ function Get-GitPorcelainStatus {
 }
 
 function Assert-CleanGitTree {
-    $statusLines = Get-GitPorcelainStatus
+    $statusLines = @(Get-GitPorcelainStatus)
     if ($statusLines.Count -eq 0) {
         return
     }

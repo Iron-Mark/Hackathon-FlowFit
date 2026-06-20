@@ -266,6 +266,7 @@ void main() {
       expect(storeReleaseBuild, contains('[switch]\$AllowDirty'));
       expect(storeReleaseBuild, contains('Assert-CleanGitTree'));
       expect(storeReleaseBuild, contains('git status --porcelain'));
+      expect(storeReleaseBuild, contains('@(Get-GitPorcelainStatus)'));
       expect(storeReleaseBuild, contains('AllowDirty'));
     },
   );
