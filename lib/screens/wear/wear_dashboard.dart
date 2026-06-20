@@ -51,7 +51,7 @@ class WearDashboard extends StatelessWidget {
   }) {
     return SizedBox(
       width: 140,
-      height: 56,
+      height: 64,
       child: ElevatedButton(
         onPressed: () {
           Navigator.push(
@@ -74,8 +74,8 @@ class WearDashboard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 24),
-            const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 11)),
           ],
         ),
       ),

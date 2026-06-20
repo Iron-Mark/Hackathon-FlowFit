@@ -174,7 +174,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               color: const Color(0xFF3183E8), // Brand Blue
                               fontWeight: FontWeight.bold,
                               fontFamily: 'GeneralSans',
-                              letterSpacing: -0.5,
+                              letterSpacing: 0,
                             ),
                       ),
                       if (_startupError != null) ...[

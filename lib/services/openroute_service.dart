@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import '../core/config/flowfit_runtime_config.dart';
 
 /// Service for OpenRouteService API integration
 class OpenRouteService {
@@ -108,7 +109,7 @@ class OpenRouteService {
 
   /// Gets a map tile URL for the given coordinates and zoom level
   String getMapTileUrl(int x, int y, int zoom) {
-    return 'https://tile.openstreetmap.org/$zoom/$x/$y.png';
+    return FlowFitRuntimeConfig.mapTileUrl(x: x, y: y, zoom: zoom);
   }
 
   /// Fetches and caches a map tile

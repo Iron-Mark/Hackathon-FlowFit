@@ -66,6 +66,40 @@ void main() {
       expect(find.text('1715/2000 kcal'), findsOneWidget);
     });
 
+    testWidgets('meal tabs switch the active meal before adding food', (
+      tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: HealthScreen()));
+
+      expect(find.text('Oatmeal with Berries'), findsOneWidget);
+      expect(find.text('Grilled Chicken Salad'), findsNothing);
+
+      await tester.tap(find.text('Lunch'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Oatmeal with Berries'), findsNothing);
+      expect(find.text('Grilled Chicken Salad'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Add Food'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Food Name'),
+        'Lentil Soup',
+      );
+      await tester.enterText(find.widgetWithText(TextField, 'Calories'), '300');
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Add'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Lentil Soup'), findsOneWidget);
+      expect(find.text('1895/2000 kcal'), findsOneWidget);
+
+      await tester.tap(find.text('Breakfast'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Lentil Soup'), findsNothing);
+      expect(find.text('Oatmeal with Berries'), findsOneWidget);
+    });
+
     testWidgets('food item action menu removes an item', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: HealthScreen()));
 
@@ -123,6 +157,29 @@ void main() {
       expect(find.text('Greek Yogurt'), findsOneWidget);
       expect(find.text('1715/2000 kcal'), findsOneWidget);
       expect(find.text('1.8 / 2.0 L'), findsOneWidget);
+    });
+
+    testWidgets('sleep edit action opens and closes the sleep dialog', (
+      tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: HealthScreen()));
+
+      final editButton = find.widgetWithText(TextButton, 'Edit');
+      await tester.ensureVisible(editButton);
+      await tester.pumpAndSettle();
+
+      await tester.tap(editButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Edit Sleep Schedule'), findsOneWidget);
+      expect(find.text('Bed Time'), findsOneWidget);
+      expect(find.text('Wake Up Time'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit Sleep Schedule'), findsNothing);
     });
   });
 }

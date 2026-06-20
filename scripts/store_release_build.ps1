@@ -84,6 +84,48 @@ function Import-ReleaseEnvFile {
     }
 }
 
+function Assert-MapTileUrlTemplate {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value -notmatch '^https://') {
+        throw 'FLOWFIT_MAP_TILE_URL_TEMPLATE must be an HTTPS URL template.'
+    }
+    foreach ($token in @('{z}', '{x}', '{y}')) {
+        if (-not $Value.Contains($token)) {
+            throw "FLOWFIT_MAP_TILE_URL_TEMPLATE must include $token."
+        }
+    }
+    if ($Value -match 'tile\.(openstreetmap|osm)\.org') {
+        throw 'FLOWFIT_MAP_TILE_URL_TEMPLATE must not point at public OpenStreetMap tile servers for production traffic.'
+    }
+}
+
+function Assert-MapTileSubdomains {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value -notmatch '^[A-Za-z0-9.-]+(,[A-Za-z0-9.-]+)*$') {
+        throw 'FLOWFIT_MAP_TILE_SUBDOMAINS must be a comma-separated list such as a,b,c.'
+    }
+}
+
+function Get-OptionalMapTileDartDefines {
+    $defines = @()
+    foreach ($name in @('FLOWFIT_MAP_TILE_URL_TEMPLATE', 'FLOWFIT_MAP_TILE_SUBDOMAINS')) {
+        $value = [Environment]::GetEnvironmentVariable($name)
+        if (-not [string]::IsNullOrWhiteSpace($value)) {
+            $trimmed = $value.Trim()
+            if ($name -eq 'FLOWFIT_MAP_TILE_URL_TEMPLATE') {
+                Assert-MapTileUrlTemplate -Value $trimmed
+            } elseif ($name -eq 'FLOWFIT_MAP_TILE_SUBDOMAINS') {
+                Assert-MapTileSubdomains -Value $trimmed
+            }
+            $defines += "--dart-define=$name=$trimmed"
+        }
+    }
+
+    return $defines
+}
+
 function Get-DirectoryDigest {
     param([Parameter(Mandatory = $true)][string]$Path)
 
@@ -844,7 +886,7 @@ function Invoke-AndroidReleaseBuild {
     Assert-AndroidSigning
 
     Remove-IgnoredGeneratedAndroidRegistrant
-    Invoke-CheckedCommand 'Android Play Store App Bundle' @(
+    $androidBuildCommand = @(
         'flutter',
         'build',
         'appbundle',
@@ -856,6 +898,8 @@ function Invoke-AndroidReleaseBuild {
         "--dart-define=SUPABASE_URL=$($script:supabaseClientConfig.Url)",
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )
+    $androidBuildCommand += Get-OptionalMapTileDartDefines
+    Invoke-CheckedCommand 'Android Play Store App Bundle' $androidBuildCommand
 
     $artifactPath = 'build/app/outputs/bundle/release/app-release.aab'
     if (-not (Test-Path $artifactPath)) {
@@ -901,6 +945,7 @@ function Invoke-IosReleaseBuild {
         "--dart-define=SUPABASE_URL=$($script:supabaseClientConfig.Url)",
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )
+    $command += Get-OptionalMapTileDartDefines
 
     $exportOptionsPlist = [Environment]::GetEnvironmentVariable('FLOWFIT_IOS_EXPORT_OPTIONS_PLIST')
     if (-not [string]::IsNullOrWhiteSpace($exportOptionsPlist)) {
@@ -960,6 +1005,7 @@ function Invoke-WebReleaseBuild {
         "--dart-define=SUPABASE_URL=$($script:supabaseClientConfig.Url)",
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )
+    $webBuildCommand += Get-OptionalMapTileDartDefines
 
     Invoke-CheckedCommand "Flutter web $webBuildBackend release build" $webBuildCommand
     Assert-WebCompliancePages -SupportEmail $supportEmail -PublicWebBaseUrl $publicWebBaseUrl

@@ -19,7 +19,7 @@ Enhanced the wellness map widget to include real-time GPS tracking with path vis
 
 ### 3. Multi-Layer Map Display ✅
 The map now has proper layering:
-1. **Base Layer**: OpenStreetMap tiles
+1. **Base Layer**: shared FlowFit map tile provider, CARTO Voyager by default
 2. **User Path**: Green polyline showing where you've walked (bottom layer)
 3. **Calming Routes**: Blue polylines for stress-relief routes (middle layer)
 4. **User Marker**: Blue pulsing circle showing current location (top layer)

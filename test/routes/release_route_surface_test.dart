@@ -13,6 +13,7 @@ void main() {
   late String mainSource;
   late String buddyProfileSetupSource;
   late String profileSource;
+  late Set<String> definedRoutes;
 
   setUpAll(() {
     mainSource = File('lib/main.dart').readAsStringSync();
@@ -22,6 +23,9 @@ void main() {
     profileSource = File(
       'lib/screens/profile/profile_screen.dart',
     ).readAsStringSync();
+    definedRoutes = RegExp(
+      r'''['"](/[^'"]*)['"]\s*:''',
+    ).allMatches(mainSource).map((match) => match.group(1)!).toSet();
   });
 
   test('debug-only named routes are gated from the production route map', () {
@@ -64,11 +68,71 @@ void main() {
     );
   });
 
-  test('direct named route references are registered in MaterialApp', () {
-    final definedRoutes = RegExp(
-      r'''['"](/[^'"]+)['"]\s*:''',
-    ).allMatches(mainSource).map((match) => match.group(1)!).toSet();
+  test('release route table keeps the public feature routes wired', () {
+    const requiredReleaseRoutes = <String>{
+      '/',
+      '/loading',
+      '/welcome',
+      '/login',
+      '/signup',
+      '/email_verification',
+      '/age-gate',
+      '/survey_intro',
+      '/survey_basic_info',
+      '/survey_body_measurements',
+      '/survey_activity_goals',
+      '/survey_daily_targets',
+      '/dashboard',
+      '/activity-classifier',
+      '/mission',
+      '/home',
+      '/phone_heart_rate',
+      '/privacy-policy',
+      '/settings',
+      '/notification-settings',
+      '/app-integration',
+      '/language-settings',
+      '/unit-settings',
+      '/terms-of-service',
+      '/help-support',
+      '/change-password',
+      '/delete-account',
+      '/weight-goals',
+      '/fitness-goals',
+      '/nutrition-goals',
+      '/about-us',
+      '/workout/select-type',
+      '/workout/running/setup',
+      '/workout/running/active',
+      '/workout/running/summary',
+      '/workout/running/share',
+      '/workout/walking/options',
+      '/workout/walking/mission',
+      '/workout/walking/active',
+      '/workout/walking/summary',
+      '/workout/resistance/select-split',
+      '/workout/resistance/active',
+      '/workout/resistance/summary',
+      '/wellness-tracker',
+      '/wellness-onboarding',
+      '/wellness-settings',
+      '/buddy-welcome',
+      '/buddy-intro',
+      '/buddy-hatch',
+      '/buddy-color-selection',
+      '/buddy-naming',
+      '/goal-selection',
+      '/notification-permission',
+      '/buddy-ready',
+      '/buddy_profile_setup',
+      '/buddy-completion',
+      '/buddy-customization',
+    };
 
+    expect(definedRoutes, containsAll(requiredReleaseRoutes));
+  });
+
+  test('direct named route references are registered in MaterialApp', () {
     final directNamedRoutePattern = RegExp(
       r'''(?:pushNamed|pushReplacementNamed|pushNamedAndRemoveUntil)\s*\(\s*(?:context\s*,\s*)?['"](/[^'"]+)['"]''',
     );

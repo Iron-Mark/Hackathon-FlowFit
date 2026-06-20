@@ -101,6 +101,48 @@ void main() {
       );
     });
 
+    testWidgets('verified signup opens age gate with consent metadata', (
+      tester,
+    ) async {
+      final authRepository = _FakeAuthRepository();
+
+      await tester.pumpWidget(_signupHarness(authRepository: authRepository));
+      await tester.pumpAndSettle();
+
+      await _enterSignupFields(tester);
+      await _acceptRequiredSignupConsent(tester);
+      await _tapCreateAccount(tester);
+
+      expect(authRepository.signUpCalls, 1);
+      expect(authRepository.lastSignUpEmail, 'member@flowfit.test');
+      expect(authRepository.lastSignUpFullName, 'Test Member');
+      expect(authRepository.lastSignUpMetadata, {
+        'terms_accepted': true,
+        'watch_data_consent': true,
+        'marketing_opt_in': false,
+      });
+      expect(find.text('route:age-gate:test-user'), findsOneWidget);
+    });
+
+    testWidgets('unverified signup opens email verification with user args', (
+      tester,
+    ) async {
+      final authRepository = _FakeAuthRepository(signedUpEmailVerified: false);
+
+      await tester.pumpWidget(_signupHarness(authRepository: authRepository));
+      await tester.pumpAndSettle();
+
+      await _enterSignupFields(tester);
+      await _acceptRequiredSignupConsent(tester);
+      await _tapCreateAccount(tester);
+
+      expect(authRepository.signUpCalls, 1);
+      expect(
+        find.text('route:email:Test Member:member@flowfit.test:test-user'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('Read Terms opens the terms route', (tester) async {
       await tester.pumpWidget(_signupHarness());
       await tester.pumpAndSettle();
@@ -149,8 +191,20 @@ Widget _signupHarness({_FakeAuthRepository? authRepository}) {
         '/login': (_) => const _RouteMarker('route:login'),
         '/terms-of-service': (_) => const _RouteMarker('route:terms'),
         '/privacy-policy': (_) => const _RouteMarker('route:privacy'),
-        '/age-gate': (_) => const _RouteMarker('route:age-gate'),
-        '/email_verification': (_) => const _RouteMarker('route:email'),
+        '/age-gate': (context) {
+          final args =
+              ModalRoute.of(context)!.settings.arguments!
+                  as Map<String, dynamic>;
+          return _RouteMarker('route:age-gate:${args['userId']}');
+        },
+        '/email_verification': (context) {
+          final args =
+              ModalRoute.of(context)!.settings.arguments!
+                  as Map<String, dynamic>;
+          return _RouteMarker(
+            'route:email:${args['name']}:${args['email']}:${args['userId']}',
+          );
+        },
       },
     ),
   );
@@ -173,6 +227,16 @@ Future<void> _enterSignupFields(WidgetTester tester) async {
     find.widgetWithText(TextFormField, 'Re-enter your password'),
     'TestPassword123!',
   );
+}
+
+Future<void> _acceptRequiredSignupConsent(WidgetTester tester) async {
+  final checkboxes = find.byType(Checkbox);
+  await tester.ensureVisible(checkboxes.at(0));
+  await tester.tap(checkboxes.at(0));
+  await tester.pumpAndSettle();
+  await tester.ensureVisible(checkboxes.at(1));
+  await tester.tap(checkboxes.at(1));
+  await tester.pumpAndSettle();
 }
 
 Future<void> _tapCreateAccount(WidgetTester tester) async {
@@ -210,8 +274,14 @@ class _RouteMarker extends StatelessWidget {
 }
 
 class _FakeAuthRepository implements IAuthRepository {
+  _FakeAuthRepository({this.signedUpEmailVerified = true});
+
+  final bool signedUpEmailVerified;
   int signUpCalls = 0;
   domain_user.User? currentUser;
+  String? lastSignUpEmail;
+  String? lastSignUpFullName;
+  Map<String, dynamic>? lastSignUpMetadata;
 
   @override
   Stream<domain_user.User?> authStateChanges() => Stream.value(currentUser);
@@ -241,17 +311,28 @@ class _FakeAuthRepository implements IAuthRepository {
     required Map<String, dynamic> metadata,
   }) async {
     signUpCalls++;
-    currentUser = _user(email: email, fullName: fullName);
+    lastSignUpEmail = email;
+    lastSignUpFullName = fullName;
+    lastSignUpMetadata = Map<String, dynamic>.from(metadata);
+    currentUser = _user(
+      email: email,
+      fullName: fullName,
+      emailConfirmed: signedUpEmailVerified,
+    );
     return currentUser!;
   }
 
-  domain_user.User _user({required String email, String? fullName}) {
+  domain_user.User _user({
+    required String email,
+    String? fullName,
+    bool emailConfirmed = true,
+  }) {
     return domain_user.User(
       id: 'test-user',
       email: email,
       fullName: fullName,
       createdAt: DateTime(2026),
-      emailConfirmedAt: DateTime(2026),
+      emailConfirmedAt: emailConfirmed ? DateTime(2026) : null,
     );
   }
 }

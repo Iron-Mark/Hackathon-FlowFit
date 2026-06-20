@@ -37,6 +37,18 @@ void main() {
     );
   });
 
+  test('map tiles default to a non-OSM provider with reusable subdomains', () {
+    expect(
+      FlowFitRuntimeConfig.mapTileUrlTemplate,
+      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+    );
+    expect(FlowFitRuntimeConfig.mapTileSubdomains, ['a', 'b', 'c']);
+    expect(
+      FlowFitRuntimeConfig.mapTileUrl(x: 1, y: 2, zoom: 3),
+      'https://a.basemaps.cartocdn.com/rastertiles/voyager/3/1/2.png',
+    );
+  });
+
   test('public web URL honors dart define override when expected', () {
     const expectedOverride = String.fromEnvironment(
       'FLOWFIT_EXPECTED_PUBLIC_WEB_BASE_URL',

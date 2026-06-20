@@ -71,7 +71,7 @@ class CTASection extends ConsumerWidget {
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0,
                 ),
               ),
             ),
@@ -130,7 +130,7 @@ class CTASection extends ConsumerWidget {
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: const Color(0xFF10B981),
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0,
                 ),
               ),
             ),

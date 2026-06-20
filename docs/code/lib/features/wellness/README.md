@@ -12,11 +12,13 @@ Core components:
  - `GeofenceRepository` (data interface) — abstracts storage for missions
  - `InMemoryGeofenceRepository` — in-memory, demo-only storage (default)
 - `GeofenceService` — listens to device location, handles events, tracks progress, and emits `GeofenceEvent`s (entered, exited, targetReached, outsideAlert)
-- `WellnessMapsPage` — `flutter_map` (OpenStreetMap) widget for creating, editing, and managing missions; shows markers and geofence circles
+- `WellnessMapsPage` — `flutter_map` widget for creating, editing, and managing missions; shows markers and geofence circles
 
 How to use
 
-1. This feature uses `flutter_map` (OpenStreetMap tiles) by default; no API key setup is required. See the project's README for details if you switch to other map providers.
+1. This feature uses `flutter_map` with the shared FlowFit map tile config. The
+   default is CARTO Voyager. Override `FLOWFIT_MAP_TILE_URL_TEMPLATE` and
+   optional `FLOWFIT_MAP_TILE_SUBDOMAINS` for a production tile provider.
 2. Add the page via router: `GoRoute(path: '/wellness', builder: (ctx, state) => MapsPageWrapper())`
 3. For persistent storage, replace the in-memory repository with your own persisted implementation (local DB or cloud) when wiring `MapsPageWrapper` into the app.
 
@@ -47,7 +49,7 @@ Files:
 
 Integration:
 - Add `MapsPageWrapper()` to your route (an example `/wellness` route is present in `lib/shared/navigation/app_router.dart`).
- - This feature uses `flutter_map` and OpenStreetMap tiles; if you switch to `google_maps_flutter`, follow the plugin docs for API key setup.
+ - This feature uses `flutter_map` and the shared FlowFit tile provider config; do not point production builds at public `tile.openstreetmap.org`.
 - Replace `InMemoryGeofenceRepository` with a persisted implementation backed by local DB or Supabase if persistence is needed.
 
 Notes:

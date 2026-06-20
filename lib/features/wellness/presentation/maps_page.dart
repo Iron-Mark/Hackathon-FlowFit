@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart' as maplat;
 // import 'dart:convert'; // import/export removed
 // import 'package:path_provider/path_provider.dart'; // import/export removed
 import 'package:geolocator/geolocator.dart';
+import '../../../core/config/flowfit_runtime_config.dart';
 import '../domain/geofence_mission.dart';
 import '../data/geofence_repository.dart';
 import '../services/geofence_service.dart';
@@ -392,9 +393,9 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
                     ),
                     children: [
                       fm.TileLayer(
-                        urlTemplate:
-                            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                        subdomains: const ['a', 'b', 'c'],
+                        urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+                        subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
+                        userAgentPackageName: FlowFitRuntimeConfig.authScheme,
                       ),
                       const CurrentLocationLayer(
                         alignPositionOnUpdate: AlignOnUpdate.always,

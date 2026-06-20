@@ -41,7 +41,8 @@ Widget _buildLiveStateCard(WellnessStateData wellnessState) {
 **Solution**:
 - Added proper `ClipRRect` wrapper with border radius for visual consistency
 - Fixed `InteractionOptions` configuration for proper map interaction
-- Added explicit `NetworkTileProvider()` for OpenStreetMap tiles
+- Added explicit `NetworkTileProvider()` using the shared FlowFit map tile
+  config
 - Improved route polyline rendering with proper layering (routes drawn before markers)
 - Added better error handling and logging for route loading
 - Fixed mounted checks to prevent setState after dispose
@@ -60,8 +61,9 @@ FlutterMap(
   ),
   children: [
     TileLayer(
-      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-      userAgentPackageName: 'com.flowfit.app',
+      urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+      subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
+      userAgentPackageName: FlowFitRuntimeConfig.authScheme,
       tileProvider: NetworkTileProvider(),
     ),
     // Routes drawn first (underneath markers)

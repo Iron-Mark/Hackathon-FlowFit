@@ -403,6 +403,10 @@ Configure these repository variables before running it:
   `https://iron-mark.github.io/Hackathon-FlowFit`. The workflow does not provide a fallback public URL; set the repository variable before enabling deployment.
 - Optional `FLOWFIT_WEB_BASE_HREF`, for example `/Hackathon-FlowFit/`, when the
   deployed path cannot be derived from the public web base URL.
+- Optional `FLOWFIT_MAP_TILE_URL_TEMPLATE` and
+  `FLOWFIT_MAP_TILE_SUBDOMAINS` when using a production map tile provider other
+  than the built-in CARTO Voyager default. Do not configure production builds to
+  use public `tile.openstreetmap.org`.
 - `SUPABASE_URL` for the release Supabase project.
 - `SUPABASE_PUBLISHABLE_KEY` for the release Supabase project.
 - `FLOWFIT_SUPPORT_EMAIL` for the deliverable production support/privacy

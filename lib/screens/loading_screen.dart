@@ -99,7 +99,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                       color: const Color(0xFF3183E8), // Brand Blue
                       fontWeight: FontWeight.bold,
                       fontFamily: 'GeneralSans',
-                      letterSpacing: -0.5,
+                      letterSpacing: 0,
                     ),
                   ),
                 ),

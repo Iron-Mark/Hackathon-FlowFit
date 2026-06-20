@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:provider/provider.dart' as provider;
 import 'dart:async';
+import '../../../core/config/flowfit_runtime_config.dart';
 import '../../../providers/running_session_provider.dart';
 import '../../../models/workout_session.dart';
 import '../../../features/activity_classifier/presentation/providers.dart';
@@ -400,7 +401,7 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0,
                   ),
                 ),
               ],
@@ -470,8 +471,9 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.flowfit.app',
+                urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+                subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
+                userAgentPackageName: FlowFitRuntimeConfig.authScheme,
               ),
               // Route polyline
               if (session.routePoints.length > 1)
@@ -718,7 +720,7 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
             fontSize: 13,
             color: Colors.grey[700],
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.3,
+            letterSpacing: 0,
           ),
         ),
       ],
@@ -820,7 +822,7 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
                 fontSize: 11,
                 color: Colors.grey[700],
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.2,
+                letterSpacing: 0,
               ),
               textAlign: TextAlign.center,
             ),
@@ -887,7 +889,7 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0,
                   ),
                 ),
               ],
@@ -965,7 +967,7 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
                       color: Colors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0,
                     ),
                   ),
                   const SizedBox(width: 8),

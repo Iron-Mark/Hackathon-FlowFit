@@ -106,6 +106,30 @@ function Assert-WebBaseHref {
     }
 }
 
+function Assert-MapTileUrlTemplate {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value -notmatch '^https://') {
+        throw 'FLOWFIT_MAP_TILE_URL_TEMPLATE must be an HTTPS URL template.'
+    }
+    foreach ($token in @('{z}', '{x}', '{y}')) {
+        if (-not $Value.Contains($token)) {
+            throw "FLOWFIT_MAP_TILE_URL_TEMPLATE must include $token."
+        }
+    }
+    if ($Value -match 'tile\.(openstreetmap|osm)\.org') {
+        throw 'FLOWFIT_MAP_TILE_URL_TEMPLATE must not point at public OpenStreetMap tile servers for production traffic.'
+    }
+}
+
+function Assert-MapTileSubdomains {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value -notmatch '^[A-Za-z0-9.-]+(,[A-Za-z0-9.-]+)*$') {
+        throw 'FLOWFIT_MAP_TILE_SUBDOMAINS must be a comma-separated list such as a,b,c.'
+    }
+}
+
 function Assert-Email {
     param(
         [Parameter(Mandatory = $true)]
@@ -204,6 +228,8 @@ $supportEmail = $supportEmail.Trim()
 $supabaseUrl = Get-RequiredEnv 'SUPABASE_URL'
 $supabasePublishableKey = Get-RequiredEnv 'SUPABASE_PUBLISHABLE_KEY'
 $webBaseHref = [Environment]::GetEnvironmentVariable('FLOWFIT_WEB_BASE_HREF')
+$mapTileUrlTemplate = [Environment]::GetEnvironmentVariable('FLOWFIT_MAP_TILE_URL_TEMPLATE')
+$mapTileSubdomains = [Environment]::GetEnvironmentVariable('FLOWFIT_MAP_TILE_SUBDOMAINS')
 
 $supportVerifiedValue = [Environment]::GetEnvironmentVariable('FLOWFIT_SUPPORT_EMAIL_VERIFIED')
 if ([string]::IsNullOrWhiteSpace($supportVerifiedValue)) {
@@ -219,6 +245,14 @@ if (-not [string]::IsNullOrWhiteSpace($webBaseHref)) {
     $webBaseHref = $webBaseHref.Trim()
     Assert-WebBaseHref -Value $webBaseHref
 }
+if (-not [string]::IsNullOrWhiteSpace($mapTileUrlTemplate)) {
+    $mapTileUrlTemplate = $mapTileUrlTemplate.Trim()
+    Assert-MapTileUrlTemplate -Value $mapTileUrlTemplate
+}
+if (-not [string]::IsNullOrWhiteSpace($mapTileSubdomains)) {
+    $mapTileSubdomains = $mapTileSubdomains.Trim()
+    Assert-MapTileSubdomains -Value $mapTileSubdomains
+}
 Assert-Email -Name 'FLOWFIT_SUPPORT_EMAIL' -Value $supportEmail
 Assert-ProductionSupportEmail -Value $supportEmail
 Assert-SupabaseUrl -Value $supabaseUrl
@@ -227,6 +261,12 @@ Assert-SupabasePublishableKey -Value $supabasePublishableKey
 Set-ReleaseVariable -Name 'FLOWFIT_PUBLIC_WEB_BASE_URL' -Value $publicWebBaseUrl.Trim().TrimEnd('/')
 if (-not [string]::IsNullOrWhiteSpace($webBaseHref)) {
     Set-ReleaseVariable -Name 'FLOWFIT_WEB_BASE_HREF' -Value $webBaseHref
+}
+if (-not [string]::IsNullOrWhiteSpace($mapTileUrlTemplate)) {
+    Set-ReleaseVariable -Name 'FLOWFIT_MAP_TILE_URL_TEMPLATE' -Value $mapTileUrlTemplate
+}
+if (-not [string]::IsNullOrWhiteSpace($mapTileSubdomains)) {
+    Set-ReleaseVariable -Name 'FLOWFIT_MAP_TILE_SUBDOMAINS' -Value $mapTileSubdomains
 }
 Set-ReleaseVariable -Name 'FLOWFIT_SUPPORT_EMAIL' -Value $supportEmail
 Set-ReleaseVariable -Name 'FLOWFIT_SUPPORT_EMAIL_VERIFIED' -Value $supportVerifiedValue

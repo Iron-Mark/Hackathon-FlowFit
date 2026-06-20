@@ -39,6 +39,7 @@ void main() {
   late String docsIndex;
   late String ciWorkflow;
   late String pagesWorkflow;
+  late String androidProductionReleaseWorkflow;
   late String flowFitRuntimeConfig;
   late String helpSupportScreen;
   late String termsOfServiceScreen;
@@ -142,6 +143,13 @@ void main() {
     final pagesWorkflowFile = File('.github/workflows/flutter-web-pages.yml');
     pagesWorkflow = pagesWorkflowFile.existsSync()
         ? pagesWorkflowFile.readAsStringSync()
+        : '';
+    final androidProductionReleaseWorkflowFile = File(
+      '.github/workflows/android-production-release.yml',
+    );
+    androidProductionReleaseWorkflow =
+        androidProductionReleaseWorkflowFile.existsSync()
+        ? androidProductionReleaseWorkflowFile.readAsStringSync()
         : '';
     copilotInstructions = File(
       '.github/copilot-instructions.md',
@@ -1405,6 +1413,8 @@ storeFile=upload-keystore.jks
     for (final name in [
       'FLOWFIT_PUBLIC_WEB_BASE_URL',
       'FLOWFIT_WEB_BASE_HREF',
+      'FLOWFIT_MAP_TILE_URL_TEMPLATE',
+      'FLOWFIT_MAP_TILE_SUBDOMAINS',
       'FLOWFIT_SUPPORT_EMAIL',
       'FLOWFIT_SUPPORT_EMAIL_VERIFIED',
       'SUPABASE_URL',
@@ -1425,6 +1435,12 @@ storeFile=upload-keystore.jks
     expect(helper, contains('service_role'));
     expect(helper, contains('dnasghxxqwibwqnljvxr'));
     expect(helper, contains('REPLACE_WITH'));
+    expect(helper, contains('Assert-MapTileUrlTemplate'));
+    expect(helper, contains('Assert-MapTileSubdomains'));
+    expect(
+      helper,
+      contains('public OpenStreetMap tile servers for production traffic'),
+    );
     expect(
       helper,
       contains('SupportEmailVerified must be passed before setting true'),
@@ -1448,7 +1464,10 @@ storeFile=upload-keystore.jks
       ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
       ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
       ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
-      ..['SUPABASE_PUBLISHABLE_KEY'] = publishableKey;
+      ..['SUPABASE_PUBLISHABLE_KEY'] = publishableKey
+      ..['FLOWFIT_MAP_TILE_URL_TEMPLATE'] =
+          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'
+      ..['FLOWFIT_MAP_TILE_SUBDOMAINS'] = 'a,b,c';
 
     final dryRun = Process.runSync('pwsh', [
       '-NoProfile',
@@ -1462,8 +1481,29 @@ storeFile=upload-keystore.jks
 
     expect(dryRun.exitCode, 0, reason: '${dryRun.stdout}\n${dryRun.stderr}');
     expect(dryRun.stdout, contains('GH_RELEASE_VARIABLES_DRY_RUN_OK'));
+    expect(dryRun.stdout, contains('FLOWFIT_MAP_TILE_URL_TEMPLATE='));
+    expect(dryRun.stdout, contains('FLOWFIT_MAP_TILE_SUBDOMAINS=a,b,c'));
     expect(dryRun.stdout, contains('SUPABASE_PUBLISHABLE_KEY=<redacted>'));
     expect(dryRun.stdout, isNot(contains(publishableKey)));
+
+    final osmTileEnv = Map<String, String>.from(env)
+      ..['FLOWFIT_MAP_TILE_URL_TEMPLATE'] =
+          'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    final osmTile = Process.runSync('pwsh', [
+      '-NoProfile',
+      '-File',
+      'scripts/configure_github_release_variables.ps1',
+      '-Repo',
+      'Iron-Mark/Hackathon-FlowFit',
+      '-DryRun',
+      '-SupportEmailVerified',
+    ], environment: osmTileEnv);
+
+    expect(osmTile.exitCode, isNot(0));
+    expect(
+      '${osmTile.stdout}\n${osmTile.stderr}',
+      contains('public OpenStreetMap tile servers'),
+    );
 
     final blocked = Process.runSync('pwsh', [
       '-NoProfile',
@@ -1766,6 +1806,15 @@ drop table public.user_profiles;
     expect(runPhoneScript, contains('lib/secrets.dart'));
     expect(runPhoneScript, contains('--dart-define=SUPABASE_URL='));
     expect(runPhoneScript, contains('--dart-define=SUPABASE_PUBLISHABLE_KEY='));
+    expect(runPhoneScript, contains('Get-OptionalMapTileDartDefines'));
+    expect(runPhoneScript, contains('FLOWFIT_MAP_TILE_URL_TEMPLATE'));
+    expect(runPhoneScript, contains('FLOWFIT_MAP_TILE_SUBDOMAINS'));
+    expect(runPhoneScript, contains('Assert-MapTileUrlTemplate'));
+    expect(runPhoneScript, contains('Assert-MapTileSubdomains'));
+    expect(
+      runPhoneScript,
+      contains('public OpenStreetMap tile servers for production traffic'),
+    );
     expect(runPhoneScript, contains('sb_secret_'));
     expect(runPhoneScript, contains('service_role'));
     expect(runPhoneScript, contains('dnasghxxqwibwqnljvxr'));
@@ -1804,6 +1853,41 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       expect(
         '${result.stdout}\n${result.stderr}',
         contains('environment Supabase URL still contains placeholder'),
+      );
+      expect(result.stdout, isNot(contains('Running phone app')));
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('phone run wrapper rejects public OSM tile env before launch', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_run_phone_map_tile_test_',
+    );
+    try {
+      final envFile =
+          File('${tempDir.path}${Platform.pathSeparator}.env.release')
+            ..writeAsStringSync('''
+SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
+''');
+      final env = Map<String, String>.from(Platform.environment)
+        ..['FLOWFIT_MAP_TILE_URL_TEMPLATE'] =
+            'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+        ..remove('FLOWFIT_MAP_TILE_SUBDOMAINS');
+
+      final result = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/run_phone.ps1',
+        '-EnvFile',
+        envFile.path,
+      ], environment: env);
+
+      expect(result.exitCode, isNot(0));
+      expect(
+        '${result.stdout}\n${result.stderr}',
+        contains('public OpenStreetMap tile servers'),
       );
       expect(result.stdout, isNot(contains('Running phone app')));
     } finally {
@@ -1950,6 +2034,15 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
     expect(storeReleaseBuild, contains('build/release'));
     expect(storeReleaseBuild, contains('flowfit-web-release.zip'));
     expect(storeReleaseBuild, contains('Compress-Archive'));
+    expect(storeReleaseBuild, contains('Get-OptionalMapTileDartDefines'));
+    expect(storeReleaseBuild, contains('FLOWFIT_MAP_TILE_URL_TEMPLATE'));
+    expect(storeReleaseBuild, contains('FLOWFIT_MAP_TILE_SUBDOMAINS'));
+    expect(storeReleaseBuild, contains('Assert-MapTileUrlTemplate'));
+    expect(storeReleaseBuild, contains('Assert-MapTileSubdomains'));
+    expect(
+      storeReleaseBuild,
+      contains('public OpenStreetMap tile servers for production traffic'),
+    );
     expect(
       storeReleaseBuild,
       contains("Add-Artifact -Name 'flutter-web-release-zip'"),
@@ -1974,6 +2067,7 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       storeReleaseBuild,
       contains('--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL='),
     );
+    expect(storeReleaseBuild, contains('Get-OptionalMapTileDartDefines'));
   });
 
   test('store release public web URL resolver validates behavior', () {
@@ -2835,6 +2929,8 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
   test('in-app help and legal surfaces use runtime release contact config', () {
     expect(flowFitRuntimeConfig, contains('FLOWFIT_SUPPORT_EMAIL'));
     expect(flowFitRuntimeConfig, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
+    expect(flowFitRuntimeConfig, contains('FLOWFIT_MAP_TILE_URL_TEMPLATE'));
+    expect(flowFitRuntimeConfig, contains('FLOWFIT_MAP_TILE_SUBDOMAINS'));
     expect(helpSupportScreen, contains('FlowFitRuntimeConfig.supportEmail'));
     expect(
       helpSupportScreen,
@@ -2846,6 +2942,54 @@ SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
       expect(source, isNot(contains('legal@flowfit.com')));
       expect(source, isNot(contains('www.flowfit.com')));
     }
+  });
+
+  test('map tile provider config is release-wired and avoids public OSM', () {
+    final mapImplementationDoc = File(
+      'docs/implementation/FLUTTER_MAP_OSM_IMPLEMENTATION.md',
+    ).readAsStringSync();
+
+    expect(
+      flowFitRuntimeConfig,
+      contains('basemaps.cartocdn.com/rastertiles/voyager'),
+    );
+    expect(flowFitRuntimeConfig, contains('mapTileUrlTemplate'));
+    expect(flowFitRuntimeConfig, contains('mapTileSubdomains'));
+    expect(flowFitRuntimeConfig, contains('mapTileUrl('));
+
+    for (final source in [
+      storeReleaseBuild,
+      runPhoneScript,
+      pagesWorkflow,
+      androidProductionReleaseWorkflow,
+      releaseEnvExample,
+      scriptsReadme,
+      releaseReadinessRunbook,
+    ]) {
+      expect(source, contains('FLOWFIT_MAP_TILE_URL_TEMPLATE'));
+      expect(source, contains('FLOWFIT_MAP_TILE_SUBDOMAINS'));
+    }
+
+    expect(
+      scriptsReadme,
+      contains('Do not use public `tile.openstreetmap.org`'),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('Do not configure production builds to'),
+    );
+    expect(
+      releaseEnvExample,
+      contains('Do not use public tile.openstreetmap.org'),
+    );
+    expect(
+      mapImplementationDoc,
+      contains('FlowFitRuntimeConfig.mapTileUrlTemplate'),
+    );
+    expect(
+      mapImplementationDoc,
+      isNot(contains('https://tile.openstreetmap.org')),
+    );
   });
 
   test('support inbox verifier writes evidence with guarded exit codes', () {

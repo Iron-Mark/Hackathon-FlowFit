@@ -603,7 +603,11 @@ existing keystore file. Every target requires real Supabase client values from
 `lib/secrets.dart`; the wrapper passes those values to Flutter as
 `--dart-define` inputs and never writes them to the artifact manifest. Android,
 iOS, and web targets also pass `FLOWFIT_PUBLIC_WEB_BASE_URL` as a Dart define so
-in-app help/legal links match the deployed public compliance pages. The iOS
+in-app help/legal links match the deployed public compliance pages. If
+`FLOWFIT_MAP_TILE_URL_TEMPLATE` and optional `FLOWFIT_MAP_TILE_SUBDOMAINS` are
+set, the wrapper passes them as Dart defines so workout and wellness maps use
+the configured production tile provider; otherwise the app defaults to CARTO
+Voyager. Do not use public `tile.openstreetmap.org` for production traffic. The iOS
 target produces the signed IPA under `build/ios/ipa/` when Apple signing is
 configured. The web target builds `build/web`, replaces `support@flowfit.com`
 in the built public compliance pages with `FLOWFIT_SUPPORT_EMAIL`, creates

@@ -140,6 +140,48 @@ function Resolve-SupabaseClientConfig {
     }
 }
 
+function Assert-MapTileUrlTemplate {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value -notmatch '^https://') {
+        throw 'FLOWFIT_MAP_TILE_URL_TEMPLATE must be an HTTPS URL template.'
+    }
+    foreach ($token in @('{z}', '{x}', '{y}')) {
+        if (-not $Value.Contains($token)) {
+            throw "FLOWFIT_MAP_TILE_URL_TEMPLATE must include $token."
+        }
+    }
+    if ($Value -match 'tile\.(openstreetmap|osm)\.org') {
+        throw 'FLOWFIT_MAP_TILE_URL_TEMPLATE must not point at public OpenStreetMap tile servers for production traffic.'
+    }
+}
+
+function Assert-MapTileSubdomains {
+    param([Parameter(Mandatory = $true)][string]$Value)
+
+    if ($Value -notmatch '^[A-Za-z0-9.-]+(,[A-Za-z0-9.-]+)*$') {
+        throw 'FLOWFIT_MAP_TILE_SUBDOMAINS must be a comma-separated list such as a,b,c.'
+    }
+}
+
+function Get-OptionalMapTileDartDefines {
+    $defines = @()
+    foreach ($name in @('FLOWFIT_MAP_TILE_URL_TEMPLATE', 'FLOWFIT_MAP_TILE_SUBDOMAINS')) {
+        $value = [Environment]::GetEnvironmentVariable($name)
+        if (-not [string]::IsNullOrWhiteSpace($value)) {
+            $trimmed = $value.Trim()
+            if ($name -eq 'FLOWFIT_MAP_TILE_URL_TEMPLATE') {
+                Assert-MapTileUrlTemplate -Value $trimmed
+            } elseif ($name -eq 'FLOWFIT_MAP_TILE_SUBDOMAINS') {
+                Assert-MapTileSubdomains -Value $trimmed
+            }
+            $defines += "--dart-define=$name=$trimmed"
+        }
+    }
+
+    return $defines
+}
+
 Import-ReleaseEnvFile -Path $EnvFile
 $config = Resolve-SupabaseClientConfig
 
@@ -153,6 +195,7 @@ $command = @(
     "--dart-define=SUPABASE_URL=$($config.Url)",
     "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($config.PublishableKey)"
 )
+$command += Get-OptionalMapTileDartDefines
 if ($Release) {
     $command += '--release'
 }

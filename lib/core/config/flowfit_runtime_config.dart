@@ -22,6 +22,40 @@ class FlowFitRuntimeConfig {
     defaultValue: 'https://iron-mark.github.io/Hackathon-FlowFit',
   );
 
+  static const String mapTileUrlTemplate = String.fromEnvironment(
+    'FLOWFIT_MAP_TILE_URL_TEMPLATE',
+    defaultValue:
+        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+  );
+
+  static const String _mapTileSubdomains = String.fromEnvironment(
+    'FLOWFIT_MAP_TILE_SUBDOMAINS',
+    defaultValue: 'a,b,c',
+  );
+
+  static List<String> get mapTileSubdomains => _mapTileSubdomains
+      .split(',')
+      .map((value) => value.trim())
+      .where((value) => value.isNotEmpty)
+      .toList(growable: false);
+
+  static String mapTileUrl({
+    required int x,
+    required int y,
+    required int zoom,
+  }) {
+    final subdomains = mapTileSubdomains;
+    final subdomain = subdomains.isEmpty
+        ? ''
+        : subdomains[(x + y) % subdomains.length];
+
+    return mapTileUrlTemplate
+        .replaceAll('{s}', subdomain)
+        .replaceAll('{z}', zoom.toString())
+        .replaceAll('{x}', x.toString())
+        .replaceAll('{y}', y.toString());
+  }
+
   static String authRedirectUrl({bool isDevelopment = false}) {
     if (kIsWeb) {
       final webOrigin = _currentWebOrigin();

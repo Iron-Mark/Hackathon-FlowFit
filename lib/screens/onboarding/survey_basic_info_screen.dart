@@ -455,7 +455,7 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryBlue,
                       height: 1.0,
-                      letterSpacing: -3,
+                      letterSpacing: 0,
                     ),
                     decoration: const InputDecoration(
                       border: InputBorder.none,
@@ -476,7 +476,7 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
                     fontSize: 15,
                     color: Colors.grey[500],
                     fontWeight: FontWeight.w500,
-                    letterSpacing: 0.3,
+                    letterSpacing: 0,
                   ),
                 ),
               ],

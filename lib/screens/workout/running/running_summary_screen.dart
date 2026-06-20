@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/config/flowfit_runtime_config.dart';
 import '../../../widgets/mood_transformation_card.dart';
 import '../../../providers/running_session_provider.dart';
 
@@ -366,8 +367,9 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.flowfit.app',
+                  urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+                  subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
+                  userAgentPackageName: FlowFitRuntimeConfig.authScheme,
                 ),
                 PolylineLayer(
                   polylines: [

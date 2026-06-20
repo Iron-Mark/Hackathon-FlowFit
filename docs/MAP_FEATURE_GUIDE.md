@@ -119,7 +119,9 @@ Alert: If user exits the zone
 
 ## Technical Features
 
-- **No API Keys Required**: Uses OpenStreetMap (free)
+- **Map Tiles**: Uses CARTO Voyager by default through
+  `FLOWFIT_MAP_TILE_URL_TEMPLATE`; use a production-appropriate provider and
+  avoid public `tile.openstreetmap.org` traffic for releases.
 - **Foreground Tracking**: Monitors mission progress while the app is open
 - **Mission Alerts**: Shows in-app status for mission events
 - **Backend Sync**: Saved wellness records can sync to Supabase when configured

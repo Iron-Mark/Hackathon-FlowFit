@@ -314,7 +314,7 @@ Morning Routine:
 - In-memory storage (missions lost on app restart)
 - Foreground location tracking
 - Basic geofencing from the active location stream
-- OpenStreetMap tiles (no API key needed)
+- Shared FlowFit map tile provider, CARTO Voyager by default
 
 ### Production Readiness Checklist:
 - [ ] Replace in-memory repo with persistent storage

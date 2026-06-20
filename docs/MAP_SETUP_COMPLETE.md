@@ -286,10 +286,11 @@ docs/
 - `geolocator`: GPS location
 - `flutter_local_notifications`: Mission alerts
 
-### No API Keys Required:
-- Uses OpenStreetMap (free)
-- No Google Maps API needed
-- No additional setup required
+### Map Tile Provider:
+- Uses the shared FlowFit map tile config.
+- Defaults to CARTO Voyager.
+- Override `FLOWFIT_MAP_TILE_URL_TEMPLATE` and optional
+  `FLOWFIT_MAP_TILE_SUBDOMAINS` for a production tile provider.
 
 ---
 

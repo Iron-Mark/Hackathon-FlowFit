@@ -2,7 +2,7 @@
 
 Summary
 -------
-- Purpose: Implement a maps-based "Mission Engine" for three mission types: Target, Sanctuary, and Safety Net. Provides geofencing, simple mission lifecycle, local notifications, and a `flutter_map` (OpenStreetMap) UI.
+- Purpose: Implement a maps-based "Mission Engine" for three mission types: Target, Sanctuary, and Safety Net. Provides geofencing, simple mission lifecycle, local notifications, and a `flutter_map` UI backed by the shared FlowFit map tile config.
 - High-level design: Lightweight, feature-first clean architecture with domain, data, services, and presentation layers; default to an in-memory repository for persistence; current release behavior is foreground-only.
 
 Files Added

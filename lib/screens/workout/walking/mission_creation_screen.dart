@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/config/flowfit_runtime_config.dart';
 import '../../../models/mission.dart';
 import '../../../models/mood_rating.dart';
 import '../../../models/walking_session.dart';
@@ -144,8 +145,9 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.flowfit.app',
+              urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+              subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
+              userAgentPackageName: FlowFitRuntimeConfig.authScheme,
             ),
             MarkerLayer(
               markers: [

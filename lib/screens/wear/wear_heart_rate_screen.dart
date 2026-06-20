@@ -595,7 +595,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.white60,
-                  letterSpacing: 2,
+                  letterSpacing: 0,
                 ),
               ),
             ],

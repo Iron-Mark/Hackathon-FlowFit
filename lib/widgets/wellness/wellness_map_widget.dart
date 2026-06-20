@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../core/config/flowfit_runtime_config.dart';
 import '../../models/wellness_state.dart';
 import '../../models/walking_route.dart';
 import '../../services/calming_route_service.dart';
@@ -310,8 +311,9 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
             ),
             children: [
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.flowfit.app',
+                urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+                subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
+                userAgentPackageName: FlowFitRuntimeConfig.authScheme,
                 tileProvider: NetworkTileProvider(),
               ),
 

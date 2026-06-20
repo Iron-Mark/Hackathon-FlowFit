@@ -135,5 +135,5 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
 
 // How to use:
 // - Add `MapsPageWrapper()` to your application's routing for `wellness` category.
-// - This feature uses `flutter_map` + OpenStreetMap tiles by default — no API keys required.
+// - This feature uses `flutter_map` plus the shared FlowFit map tile config.
 // - Optionally, replace `InMemoryGeofenceRepository` with a persisted implementation.

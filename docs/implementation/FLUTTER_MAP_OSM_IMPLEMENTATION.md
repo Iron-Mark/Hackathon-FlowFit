@@ -1,8 +1,10 @@
-# Flutter Map with OpenStreetMap (OSM) Implementation Guide
+# Flutter Map Runtime Tile Provider Implementation Guide
 
 ## 🗺️ Overview
 
-This guide explains how Flutter Map with OpenStreetMap tiles was implemented in the FlowFit app, specifically in the Mission Creation screen for walking workouts.
+This guide explains how Flutter Map is implemented in FlowFit, specifically in the Mission Creation screen for walking workouts.
+
+This file started as an OpenStreetMap implementation note. The maintained fork now uses `FlowFitRuntimeConfig.mapTileUrlTemplate` and `FlowFitRuntimeConfig.mapTileSubdomains`, with CARTO Voyager as the default. Do not configure production or release builds to use public `tile.openstreetmap.org` traffic.
 
 ---
 
@@ -28,6 +30,7 @@ flutter pub get
 ### Step 1: Import Required Packages
 
 ```dart
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 ```
@@ -96,9 +99,10 @@ FlutterMap(
     },
   ),
   children: [
-    // 1. Tile Layer (OSM tiles)
+    // 1. Tile Layer (runtime-configured release tile provider)
     TileLayer(
-      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+      subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
       userAgentPackageName: 'com.flowfit.app',
     ),
 
@@ -125,12 +129,13 @@ FlutterMap(
 
 ### 1. **TileLayer - The Map Tiles**
 
-This is the actual map imagery from OpenStreetMap:
+This is the actual map imagery from the configured tile provider:
 
 ```dart
 TileLayer(
-  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  userAgentPackageName: 'com.flowfit.app',  // Required by OSM
+  urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+  subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
+  userAgentPackageName: 'com.flowfit.app',
 )
 ```
 
@@ -338,9 +343,10 @@ class _MissionCreationScreenState extends State<MissionCreationScreen> {
             },
           ),
           children: [
-            // OSM Tiles
+            // Runtime-configured tiles
             TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+              subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
               userAgentPackageName: 'com.flowfit.app',
             ),
 
@@ -653,10 +659,11 @@ print('Bearing: ${bearing.toStringAsFixed(2)}°');
 
 **Solution:**
 ```dart
-// Add userAgentPackageName (required by OSM)
+// Use the runtime-configured provider and package user agent.
 TileLayer(
-  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  userAgentPackageName: 'com.yourapp.name',  // Required!
+  urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+  subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
+  userAgentPackageName: 'com.yourapp.name',
 )
 ```
 
@@ -728,13 +735,16 @@ TileLayer(
 )
 ```
 
-### 3. **OpenStreetMap (Free)**
+### 3. **CARTO Voyager Default**
 ```dart
 TileLayer(
-  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  urlTemplate: FlowFitRuntimeConfig.mapTileUrlTemplate,
+  subdomains: FlowFitRuntimeConfig.mapTileSubdomains,
   userAgentPackageName: 'com.flowfit.app',
 )
 ```
+
+The default runtime value is CARTO Voyager. For release builds, override it only with a managed HTTPS provider template that includes `{z}`, `{x}`, and `{y}`.
 
 ---
 
@@ -768,8 +778,10 @@ TileLayer(
    - Street view: 15-16
    - Building view: 18
 
-5. **Respect OSM usage policy:**
+5. **Respect tile provider policy:**
    - Always include `userAgentPackageName`
+   - Use a managed provider for production traffic
+   - Do not point production builds at public OpenStreetMap tile servers
    - Don't make excessive requests
    - Consider caching tiles
 
@@ -778,18 +790,17 @@ TileLayer(
 ## 📚 Resources
 
 - **Flutter Map Documentation:** https://docs.fleaflet.dev/
-- **OpenStreetMap:** https://www.openstreetmap.org/
+- **CARTO Basemaps:** https://carto.com/basemaps/
 - **LatLng2 Package:** https://pub.dev/packages/latlong2
-- **OSM Tile Usage Policy:** https://operations.osmfoundation.org/policies/tiles/
 
 ---
 
 ## 🎯 Summary
 
-The Flutter Map with OSM implementation in FlowFit:
+The Flutter Map implementation in FlowFit:
 
 1. ✅ Uses `flutter_map` package for map rendering
-2. ✅ Uses OpenStreetMap tiles (free, no API key needed)
+2. ✅ Uses runtime-configured HTTPS tile providers
 3. ✅ Implements `MapController` for programmatic control
 4. ✅ Shows current location with GPS
 5. ✅ Allows tap-to-select target locations
@@ -801,6 +812,6 @@ The Flutter Map with OSM implementation in FlowFit:
 
 ---
 
-**Last Updated:** November 29, 2025
+**Last Updated:** June 20, 2026
 **Implementation:** Mission Creation Screen
 **Package Version:** flutter_map ^6.0.0
