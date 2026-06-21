@@ -181,6 +181,11 @@ function Invoke-OptionalStoreArtifactVerification {
         '-File',
         $storeArtifactVerifierScript
     ) @(0, 1, 2)
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Advisory artifact verification reported stale or mismatched ignored build evidence; continuing local smoke checks."
+        Write-Host "For final handoff, rerun scripts/store_release_build.ps1 and then verify_store_artifacts.ps1 -Strict."
+    }
 }
 
 function Get-FreeLocalPort {
@@ -339,7 +344,7 @@ try {
     if ($IncludeReleaseSmoke) {
         $env:ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING = 'true'
         if ([string]::IsNullOrWhiteSpace($env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID)) {
-            $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.flowfit.smoke'
+            $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
         }
         if ([string]::IsNullOrWhiteSpace($env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME)) {
             $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID

@@ -35,7 +35,7 @@ The workflow currently covers:
 - Flutter web Wasm smoke build.
 - Android debug APK build.
 - Wear OS debug APK build.
-- Android release App Bundle smoke build with debug signing and smoke IDs.
+- Android release App Bundle smoke build with debug signing and maintained-fork IDs.
 - Upload of web, Wasm, web verification, and release-smoke AAB artifacts.
 
 `.github/workflows/flutter-web-pages.yml` runs readiness checks on PRs and

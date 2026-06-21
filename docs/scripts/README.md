@@ -110,7 +110,7 @@ The release smoke build sets Gradle property
 `FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true` through env var
 `ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true` temporarily.
 If production values are not already set, it also uses
-`com.flowfit.smoke` package/auth defaults and matching Dart auth-scheme defines.
+`com.oldstlabs.flowfit` package/auth defaults and matching Dart auth-scheme defines.
 It also passes `FLOWFIT_SUPPORT_EMAIL`, defaulting to `support@flowfit.com`
 when the environment does not override it. It passes validation-shaped dummy
 Supabase client values as Dart defines only for smoke coverage, so startup

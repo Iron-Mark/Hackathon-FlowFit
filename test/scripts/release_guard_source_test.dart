@@ -922,6 +922,8 @@ storeFile=upload-keystore.jks
     expect(releasePreflight, contains('@(0, 1, 2)'));
     expect(releasePreflight, contains('build/store-release-artifacts.json'));
     expect(releasePreflight, contains('scripts/verify_store_artifacts.ps1'));
+    expect(releasePreflight, contains('continuing local smoke checks'));
+    expect(releasePreflight, contains('verify_store_artifacts.ps1 -Strict'));
     expect(scriptsReadme, contains('verify_store_artifacts.ps1'));
     expect(releaseReadinessRunbook, contains('verify_store_artifacts.ps1'));
     expect(storeSubmissionChecklist, contains('verify_store_artifacts.ps1'));
@@ -2007,6 +2009,13 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       );
     },
   );
+
+  test('ci and preflight release smoke use maintained-fork package IDs', () {
+    for (final source in [ciWorkflow, releasePreflight]) {
+      expect(source, contains('com.oldstlabs.flowfit'));
+      expect(source, isNot(contains('com.flowfit.smoke')));
+    }
+  });
 
   test('store checklist supports env-only Supabase release inputs', () {
     expect(storeSubmissionChecklist, contains('SUPABASE_URL'));

@@ -181,10 +181,10 @@ For a local release smoke build without an upload keystore:
 
 ```powershell
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING = 'true'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.flowfit.smoke'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.flowfit.smoke'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
 flutter build appbundle --release --no-pub `
-  --dart-define=FLOWFIT_AUTH_SCHEME=com.flowfit.smoke `
+  --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit `
   --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com `
   --dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit
 Remove-Item Env:\ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING
@@ -660,13 +660,13 @@ The release preflight also verifies that the Flutter web output contains
 other, that they do not contain internal maintainer/store-review wording, and
 that release source does not reintroduce hard-coded example auth redirects or a
 public privileged deletion RPC. When `-IncludeReleaseSmoke` is set, the script
-also compiles the release App Bundle with smoke-only package/auth values
-(`com.flowfit.smoke`) and matching Dart auth-scheme defines unless the caller
-has already provided production values. That artifact is compile evidence only,
-not a store or runnable production artifact unless real Supabase release defines
-and production IDs are supplied.
-Those smoke IDs are intentionally accepted only by the preflight smoke path; the
-strict audit and `store_release_build.ps1` classify them as non-production.
+also compiles the release App Bundle with maintained-fork package/auth values
+(`com.oldstlabs.flowfit`) and matching Dart auth-scheme defines unless the
+caller has already provided production values. That artifact is compile evidence
+only, not a store or runnable production artifact unless real Supabase release
+defines and upload signing inputs are supplied.
+The strict audit and `store_release_build.ps1` still reject `com.flowfit.smoke`
+and other non-production package/auth IDs.
 
 The preflight now runs `scripts/release_readiness_audit.ps1` in advisory mode
 without creating a temporary `lib/secrets.dart`; tracked build-time defaults
@@ -708,7 +708,7 @@ release-readiness audit, builds the JS web artifact with `--no-wasm-dry-run`,
 builds Android phone/Wear debug APKs, and produces a debug-signed release App
 Bundle smoke artifact named `flowfit-release-smoke-not-for-store`. The CI
 release smoke uses
-`com.flowfit.smoke` package/auth values plus matching Dart defines and
+`com.oldstlabs.flowfit` package/auth values plus matching Dart defines and
 validation-shaped dummy Supabase client Dart defines, mirroring the local
 preflight. It also verifies the built public privacy and account-deletion pages,
 serves
