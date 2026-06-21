@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "web:smoke": "node scripts/verify_web_app_smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.57.0"
+  }
+}

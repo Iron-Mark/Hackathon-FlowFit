@@ -55,12 +55,17 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
 
   void _handleError(String error) {
     debugPrint('❌ YoloDebugScreen: Error occurred: $error');
-    if (mounted) {
+    if (!mounted || (_hasError && _errorMessage == error)) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       setState(() {
         _hasError = true;
         _errorMessage = error;
       });
-    }
+    });
   }
 
   @override
@@ -155,53 +160,74 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
   }
 
   Widget _buildErrorView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            const Text(
-              'An Error Occurred',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.red.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.shade200),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'An Error Occurred',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: SelectableText(
+                        _errorMessage ?? 'Unknown error',
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _hasError = false;
+                          _errorMessage = null;
+                        });
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Try Again'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        debugPrint(
+                          '🏠 YoloDebugScreen: Navigating back to home',
+                        );
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
               ),
-              child: SelectableText(
-                _errorMessage ?? 'Unknown error',
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-              ),
             ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _hasError = false;
-                  _errorMessage = null;
-                });
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                debugPrint('🏠 YoloDebugScreen: Navigating back to home');
-                Navigator.of(context).pop();
-              },
-              child: const Text('Go Back'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

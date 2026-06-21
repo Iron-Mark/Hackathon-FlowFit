@@ -12,7 +12,8 @@ import 'package:logger/logger.dart';
 class HeartBpmAdapter {
   final Logger _logger = Logger();
   StreamSubscription<int>? _subscription;
-  final StreamController<int?> _bpmController = StreamController<int?>.broadcast();
+  final StreamController<int?> _bpmController =
+      StreamController<int?>.broadcast();
 
   int? _currentBpm;
 
@@ -29,13 +30,16 @@ class HeartBpmAdapter {
     _subscription = null;
 
     if (external != null) {
-      _subscription = external.listen((bpm) {
-        _currentBpm = bpm;
-        _bpmController.add(bpm);
-        _logger.d('HeartBpmAdapter: BPM update $bpm (external)');
-      }, onError: (e) {
-        _logger.w('HeartBpmAdapter: external stream error', error: e);
-      });
+      _subscription = external.listen(
+        (bpm) {
+          _currentBpm = bpm;
+          _bpmController.add(bpm);
+          _logger.d('HeartBpmAdapter: BPM update $bpm (external)');
+        },
+        onError: (e) {
+          _logger.w('HeartBpmAdapter: external stream error', error: e);
+        },
+      );
     }
   }
 

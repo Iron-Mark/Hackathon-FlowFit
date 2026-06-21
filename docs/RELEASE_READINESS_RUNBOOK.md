@@ -12,6 +12,10 @@ App Store, and Flutter web deployment.
 - Flutter web JavaScript release build builds locally.
 - Flutter web Wasm smoke build builds locally when explicitly requested.
 - Analyzer and unit/widget tests pass locally.
+- Windows desktop is not a release target for this maintained-fork handoff.
+  If desktop builds are needed, install the Visual Studio C++ ATL component;
+  `flutter_local_notifications_windows` includes `atlbase.h` during native
+  plugin compilation.
 - iOS can be prepared in this repo, but final archive/signing must run on macOS
   with Xcode and an Apple Developer team.
 - Supabase project creation, MCP OAuth, production credentials, and live schema
@@ -674,10 +678,11 @@ If local `build/support-inbox-verification.json` records a failed DNS or inbound
 mail check, preflight reports it as advisory evidence and still runs build
 checks; strict audit remains the release blocker.
 If `build/store-release-artifacts.json` is present, preflight also verifies the
-manifest before smoke builds can rewrite `build/web`. This catches stale
-artifact hashes, missing files, dirty-manifest evidence, and malformed release
-inputs early. For final handoff, rerun the production wrapper and then rerun the
-strict artifact verifier after the final artifacts are created.
+manifest before smoke builds can rewrite `build/web`. This writes advisory
+evidence for stale artifact hashes, missing files, dirty-manifest evidence, and
+malformed release inputs without blocking local smoke builds. For final
+handoff, rerun the production wrapper and then rerun the strict artifact
+verifier after the final artifacts are created.
 When `-OutFile` is provided, the audit writes JSON evidence with pass/warn/fail
 counts and non-secret result details. The production wrapper writes
 `build/store-release-readiness-audit.json` automatically when `-RunStrictAudit`

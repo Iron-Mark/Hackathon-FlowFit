@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flowfit/domain/entities/user.dart' as domain_user;
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
 import 'package:flowfit/presentation/providers/providers.dart';
@@ -82,6 +84,16 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('signup link opens the signup route', (tester) async {
+      await tester.pumpWidget(_loginHarness());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Sign Up'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('route:signup'), findsOneWidget);
+    });
   });
 
   group('SignUpScreen actions', () {
@@ -124,6 +136,38 @@ void main() {
       expect(find.text('route:age-gate:test-user'), findsOneWidget);
     });
 
+    testWidgets('create account ignores duplicate submit while pending', (
+      tester,
+    ) async {
+      final signUpCompleter = Completer<void>();
+      final authRepository = _FakeAuthRepository(
+        signUpCompleter: signUpCompleter,
+      );
+
+      await tester.pumpWidget(_signupHarness(authRepository: authRepository));
+      await tester.pumpAndSettle();
+
+      await _enterSignupFields(tester);
+      await _acceptRequiredSignupConsent(tester);
+
+      final createButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Create Account'),
+      );
+
+      createButton.onPressed!();
+      createButton.onPressed!();
+      await tester.pump();
+
+      expect(authRepository.signUpCalls, 1);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      signUpCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(authRepository.signUpCalls, 1);
+      expect(find.text('route:age-gate:test-user'), findsOneWidget);
+    });
+
     testWidgets('unverified signup opens email verification with user args', (
       tester,
     ) async {
@@ -159,6 +203,17 @@ void main() {
       await _tapConsentLink(tester, 'Read Policy');
 
       expect(find.text('route:privacy'), findsOneWidget);
+    });
+
+    testWidgets('login link opens the login route', (tester) async {
+      await tester.pumpWidget(_signupHarness());
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Log In'));
+      await tester.tap(find.text('Log In'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('route:login'), findsOneWidget);
     });
   });
 }
@@ -274,9 +329,13 @@ class _RouteMarker extends StatelessWidget {
 }
 
 class _FakeAuthRepository implements IAuthRepository {
-  _FakeAuthRepository({this.signedUpEmailVerified = true});
+  _FakeAuthRepository({
+    this.signedUpEmailVerified = true,
+    this.signUpCompleter,
+  });
 
   final bool signedUpEmailVerified;
+  final Completer<void>? signUpCompleter;
   int signUpCalls = 0;
   domain_user.User? currentUser;
   String? lastSignUpEmail;
@@ -314,6 +373,7 @@ class _FakeAuthRepository implements IAuthRepository {
     lastSignUpEmail = email;
     lastSignUpFullName = fullName;
     lastSignUpMetadata = Map<String, dynamic>.from(metadata);
+    await signUpCompleter?.future;
     currentUser = _user(
       email: email,
       fullName: fullName,

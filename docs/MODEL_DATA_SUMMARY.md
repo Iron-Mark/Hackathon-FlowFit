@@ -4,10 +4,10 @@
 
 | Data Type | Source | Rate | Units | Range | Status |
 |-----------|--------|------|-------|-------|--------|
-| **AccX** | Watch Accelerometer | 32 Hz | m/s² | -20 to +20 | ⚠️ Need to implement |
-| **AccY** | Watch Accelerometer | 32 Hz | m/s² | -20 to +20 | ⚠️ Need to implement |
-| **AccZ** | Watch Accelerometer | 32 Hz | m/s² | -20 to +20 | ⚠️ Need to implement |
-| **BPM** | Watch Heart Rate | 1 Hz | BPM | 40-200 | ✅ Working |
+| **AccX** | Watch sensor batch or phone fallback | 32 Hz | m/s² | -20 to +20 | Parser wired; hardware proof pending |
+| **AccY** | Watch sensor batch or phone fallback | 32 Hz | m/s² | -20 to +20 | Parser wired; hardware proof pending |
+| **AccZ** | Watch sensor batch or phone fallback | 32 Hz | m/s² | -20 to +20 | Parser wired; hardware proof pending |
+| **BPM** | Watch Heart Rate | 1 Hz | BPM | 40-200 | Working in app flow |
 
 ## 🎯 Model Requirements
 
@@ -24,22 +24,26 @@ Output: [3 probabilities]
 
 ## 📦 Data Packet Format
 
-### JSON Format (Recommended):
+### JSON Format:
 ```json
 {
+  "type": "sensor_batch",
   "timestamp": 1732545971348,
-  "accX": 0.15,
-  "accY": -0.23,
-  "accZ": 9.81,
-  "bpm": 78
+  "bpm": 78,
+  "sample_rate": 32,
+  "count": 2,
+  "accelerometer": [
+    [0.15, -0.23, 9.81],
+    [0.12, -0.19, 9.79]
+  ]
 }
 ```
 
 ### Send Rate:
-- **32 packets per second** (every ~31ms)
-- Each packet contains all 4 values
+- Batches are parsed as combined accelerometer + BPM packets.
+- Each accelerometer sample becomes `[accX, accY, accZ, bpm]` for the model.
 
-## 🔧 Watch Implementation Needed
+## Watch-Side Hardware Contract
 
 ### 1. Accelerometer Setup (Kotlin)
 ```kotlin
@@ -74,26 +78,21 @@ val json = JSONObject(data).toString()
 sendMessageToPhone("/sensor_data", json.toByteArray())
 ```
 
-## 📱 Phone Side (Already Implemented)
+## Phone Side
 
 ### Current Status:
-- ✅ Receives heart rate from watch
-- ✅ Uses phone accelerometer (fallback)
-- ✅ Buffers 320 samples
-- ✅ Runs TFLite inference
-- ✅ Displays activity classification
-
-### What's Needed:
-- ⚠️ Receive accelerometer from watch
-- ⚠️ Parse combined data packets
-- ⚠️ Switch from phone to watch accelerometer
+- Receives heart rate from watch.
+- Uses phone accelerometer as fallback.
+- Parses combined watch sensor batches in `PhoneDataListener`.
+- Converts sensor batches into `[accX, accY, accZ, bpm]` feature vectors.
+- Buffers 320 samples, runs TFLite inference, and displays classification.
 
 ## 🎯 Implementation Priority
 
 ### High Priority:
-1. ✅ Heart rate from watch - **DONE**
-2. ⚠️ Accelerometer from watch - **TODO**
-3. ⚠️ Combined data packets - **TODO**
+1. Heart rate from watch - implemented.
+2. Combined sensor batch parser - implemented in Flutter.
+3. Watch accelerometer hardware validation - pending paired-device QA.
 
 ### Medium Priority:
 4. Battery optimization
@@ -107,14 +106,14 @@ sendMessageToPhone("/sensor_data", json.toByteArray())
 
 ## 📝 Files to Modify
 
-### Watch Side (Kotlin):
-- `WatchSensorService.kt` - Add accelerometer collection
-- `DataSender.kt` - Send combined packets
-- `AndroidManifest.xml` - Add permissions
+### Watch Side:
+- Keep native Wear data-layer messages aligned with the sensor-batch JSON shape
+  above.
 
-### Phone Side (Flutter):
-- `lib/services/phone_data_listener.dart` - Receive accelerometer
-- `lib/features/activity_classifier/presentation/tracker_page.dart` - Use watch accelerometer
+### Phone Side:
+- `lib/services/phone_data_listener.dart` receives and validates watch batches.
+- `lib/features/activity_classifier/presentation/tracker_page.dart` consumes
+  watch batches when Watch mode is selected, with phone accelerometer fallback.
 
 ## 🚀 Quick Start
 
@@ -125,14 +124,13 @@ flutter run -d 6ece264d
 
 # Navigate to Activity AI
 # Select "Watch" mode
-# Uses: Watch heart rate + Phone accelerometer
+# Uses watch batches when available, otherwise phone accelerometer fallback
 ```
 
-### After implementing watch accelerometer:
+### Paired-device validation:
 ```bash
-# Will use: Watch heart rate + Watch accelerometer
-# More accurate activity classification
-# Better battery life (single device)
+# Requires a real Wear device or a working phone + Wear emulator pair
+# Verify Watch mode receives sensor_batch payloads and classifies activity
 ```
 
 ## 📊 Data Flow
@@ -141,16 +139,16 @@ flutter run -d 6ece264d
 Watch Sensors → Watch App → Wearable Data Layer → Phone App → TFLite Model → UI
 ```
 
-**Current:**
+**Current app path:**
 ```
 Watch HR ✅ → Phone ✅ → Model ✅
 Phone Accel ✅ → Model ✅
 ```
 
-**Target:**
+**Hardware validation target:**
 ```
-Watch HR ✅ → Phone ✅ → Model ✅
-Watch Accel ⚠️ → Phone ⚠️ → Model ✅
+Watch HR -> Phone -> Model
+Watch Accel -> Phone -> Model
 ```
 
 ---

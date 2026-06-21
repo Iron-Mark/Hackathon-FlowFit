@@ -24,6 +24,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _termsAccepted = false;
   bool _watchDataConsent = false;
   bool _marketingOptIn = false;
+  bool _isSubmittingSignUp = false;
 
   @override
   void dispose() {
@@ -35,6 +36,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   Future<void> _handleSignUp() async {
+    if (_isSubmittingSignUp) return;
+
     // Validate consent checkboxes first
     if (!_termsAccepted || !_watchDataConsent) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -48,19 +51,27 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     // Validate form fields
     if (_formKey.currentState!.validate()) {
-      // Call authNotifier to sign up
-      await ref
-          .read(authNotifierProvider.notifier)
-          .signUp(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            fullName: _nameController.text.trim(),
-            metadata: {
-              'terms_accepted': _termsAccepted,
-              'watch_data_consent': _watchDataConsent,
-              'marketing_opt_in': _marketingOptIn,
-            },
-          );
+      setState(() => _isSubmittingSignUp = true);
+
+      try {
+        // Call authNotifier to sign up
+        await ref
+            .read(authNotifierProvider.notifier)
+            .signUp(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              fullName: _nameController.text.trim(),
+              metadata: {
+                'terms_accepted': _termsAccepted,
+                'watch_data_consent': _watchDataConsent,
+                'marketing_opt_in': _marketingOptIn,
+              },
+            );
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmittingSignUp = false);
+        }
+      }
     }
   }
 
@@ -80,7 +91,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget build(BuildContext context) {
     // Listen to auth state changes
     final authState = ref.watch(authNotifierProvider);
-    final isLoading = authState.status == AuthStatus.loading;
+    final isLoading =
+        authState.status == AuthStatus.loading || _isSubmittingSignUp;
 
     // Listen for auth state changes and navigate accordingly
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
@@ -517,8 +529,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                 // Login Link
                 Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         'Already have an account? ',

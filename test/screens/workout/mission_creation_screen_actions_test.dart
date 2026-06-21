@@ -62,6 +62,45 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('Start Mission ignores duplicate taps while creating session', (
+    tester,
+  ) async {
+    final createCompleter = Completer<void>();
+    final sessionService = _FakeWorkoutSessionService(
+      createCompleter: createCompleter,
+    );
+
+    await _pumpScreen(tester, sessionService);
+
+    await tester.ensureVisible(find.text('Start Mission'));
+    await tester.tap(find.text('Start Mission'));
+    await tester.pump();
+
+    expect(sessionService.createCalls, 1);
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.widgetWithText(ElevatedButton, 'Start Mission'),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.text('Start Mission'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(sessionService.createCalls, 1);
+
+    createCompleter.complete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(sessionService.createCalls, 1);
+    expect(sessionService.createdSessions, hasLength(1));
+    expect(find.text('Map Mission'), findsWidgets);
+    expect(find.text('No active walking session'), findsNothing);
+  });
 }
 
 Future<void> _pumpScreen(
@@ -92,13 +131,25 @@ Future<void> _pumpScreen(
 }
 
 class _FakeWorkoutSessionService implements WorkoutSessionService {
-  _FakeWorkoutSessionService({this.throwOnCreate = false});
+  _FakeWorkoutSessionService({
+    this.throwOnCreate = false,
+    this.createCompleter,
+  });
 
   final bool throwOnCreate;
+  final Completer<void>? createCompleter;
   final List<WorkoutSession> createdSessions = [];
+  int createCalls = 0;
 
   @override
   Future<String> createSession(WorkoutSession session) async {
+    createCalls++;
+
+    final completer = createCompleter;
+    if (completer != null) {
+      await completer.future;
+    }
+
     if (throwOnCreate) {
       throw StateError('create failed');
     }

@@ -448,7 +448,7 @@ class _ShareAchievementScreenState extends State<ShareAchievementScreen> {
             width: double.infinity,
             height: 56,
             child: OutlinedButton.icon(
-              onPressed: _pickImage,
+              onPressed: _isPickingImage ? null : _pickImage,
               icon: const Icon(SolarIconsBold.gallery),
               label: Text(
                 _isPickingImage

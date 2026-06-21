@@ -12,26 +12,68 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 }
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
+  bool _isRedirectingAuthenticatedUser = false;
+
   @override
   void initState() {
     super.initState();
     // Check if user is already authenticated
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAuthState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _checkAuthState();
     });
   }
 
-  void _checkAuthState() {
+  Future<void> _checkAuthState() async {
     final authState = ref.read(authNotifierProvider);
+    final user = authState.user;
 
-    // If already authenticated, redirect to dashboard
-    if (authState.user != null && mounted) {
-      Navigator.of(context).pushReplacementNamed('/dashboard');
+    if (user != null && mounted) {
+      await _navigateAfterAuthentication(user.id);
+    }
+  }
+
+  Future<void> _navigateAfterAuthentication(String userId) async {
+    if (_isRedirectingAuthenticatedUser) return;
+    _isRedirectingAuthenticatedUser = true;
+
+    try {
+      final hasCompletedSurvey = await ref
+          .read(profileRepositoryProvider)
+          .hasCompletedSurvey(userId);
+
+      if (!mounted) return;
+
+      if (hasCompletedSurvey) {
+        Navigator.of(context).pushReplacementNamed('/dashboard');
+      } else {
+        Navigator.of(
+          context,
+        ).pushReplacementNamed('/age-gate', arguments: {'userId': userId});
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not check onboarding status. Check your connection and try again.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      _isRedirectingAuthenticatedUser = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authNotifierProvider, (previous, next) async {
+      final user = next.user;
+      if (user != null) {
+        await _navigateAfterAuthentication(user.id);
+      }
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xFFF2F7FF),
       body: SafeArea(
@@ -111,8 +153,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
             const SizedBox(height: 16),
 
             // Login Link
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   'Already have an account? ',

@@ -22,8 +22,13 @@ void main() {
 
       expect(
         () => classifier.predict(buffer),
-        throwsA(isA<StateError>()
-            .having((e) => e.message, 'message', contains('not loaded'))),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('not loaded'),
+          ),
+        ),
       );
     });
 

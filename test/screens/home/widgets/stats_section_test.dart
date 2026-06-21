@@ -5,6 +5,7 @@ import 'package:flowfit/screens/home/widgets/stats_section.dart';
 import 'package:flowfit/providers/dashboard_providers.dart';
 import 'package:flowfit/core/providers/providers.dart' as core_providers;
 import 'package:flowfit/domain/entities/heart_rate_data.dart';
+import 'package:flowfit/models/daily_mood.dart';
 import 'package:flowfit/models/daily_stats.dart';
 
 void main() {
@@ -21,6 +22,7 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
+            dailyMoodProvider.overrideWith((ref) async => _calmMood()),
             activityComparisonProvider.overrideWith((ref) async => 0),
             core_providers.currentHeartRateProvider.overrideWith(
               (ref) => Stream.value(
@@ -56,6 +58,7 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
+            dailyMoodProvider.overrideWith((ref) async => _calmMood()),
             activityComparisonProvider.overrideWith((ref) async => 0),
             core_providers.currentHeartRateProvider.overrideWith(
               (ref) => Stream.value(
@@ -96,6 +99,7 @@ void main() {
             dailyStatsProvider.overrideWith((ref) async {
               throw Exception('Failed to load');
             }),
+            dailyMoodProvider.overrideWith((ref) async => _calmMood()),
             core_providers.currentHeartRateProvider.overrideWith(
               (ref) => Stream.value(
                 HeartRateData(
@@ -130,6 +134,7 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
+            dailyMoodProvider.overrideWith((ref) async => _calmMood()),
             core_providers.currentHeartRateProvider.overrideWith(
               (ref) => Stream.value(
                 HeartRateData(
@@ -158,6 +163,45 @@ void main() {
 
       // Verify theme is being used
       expect(find.byType(StatsSection), findsOneWidget);
+    });
+
+    testWidgets('displays mood unavailable when mood data fails to load', (
+      WidgetTester tester,
+    ) async {
+      final testStats = DailyStats(
+        steps: 5000,
+        stepsGoal: 10000,
+        calories: 300,
+        activeMinutes: 30,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            dailyStatsProvider.overrideWith((ref) async => testStats),
+            dailyMoodProvider.overrideWith((ref) async {
+              throw StateError('heart rate history unavailable');
+            }),
+            activityComparisonProvider.overrideWith((ref) async => 0),
+            core_providers.currentHeartRateProvider.overrideWith(
+              (ref) => Stream.value(
+                HeartRateData(
+                  bpm: 68,
+                  ibiValues: [],
+                  timestamp: DateTime.now(),
+                  status: HeartRateStatus.active,
+                ),
+              ),
+            ),
+          ],
+          child: const MaterialApp(home: Scaffold(body: StatsSection())),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mood unavailable'), findsOneWidget);
+      expect(find.byType(CardioComparisonCard), findsOneWidget);
     });
   });
 
@@ -382,6 +426,7 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
+            dailyMoodProvider.overrideWith((ref) async => _calmMood()),
             activityComparisonProvider.overrideWith((ref) async => 0),
           ],
           child: const MaterialApp(home: Scaffold(body: StatsSection())),
@@ -413,6 +458,7 @@ void main() {
         ProviderScope(
           overrides: [
             dailyStatsProvider.overrideWith((ref) async => testStats),
+            dailyMoodProvider.overrideWith((ref) async => _calmMood()),
           ],
           child: const MaterialApp(home: Scaffold(body: StatsSection())),
         ),
@@ -425,3 +471,5 @@ void main() {
     });
   });
 }
+
+DailyMood _calmMood() => DailyMood(stressMinutes: 0, calmMinutes: 20);

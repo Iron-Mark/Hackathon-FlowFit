@@ -8,7 +8,7 @@ import 'supabase_service.dart';
 /// Manages in-memory buffer, database storage, and data lifecycle
 /// Implements best practices from Kotlin implementation
 class HeartRateDataManager {
-  final DatabaseService _dbService;
+  final HeartRateDataStore _dbService;
   final Logger _logger;
   final int maxBufferSize;
   final int maxDatabaseRecords;
@@ -26,7 +26,7 @@ class HeartRateDataManager {
   DateTime? _lastSaveTime;
 
   HeartRateDataManager({
-    DatabaseService? dbService,
+    HeartRateDataStore? dbService,
     Logger? logger,
     this.maxBufferSize = 100,
     this.maxDatabaseRecords = 10000,
@@ -251,13 +251,13 @@ class HeartRateDataManager {
 
 /// Data sync manager for uploading to backend
 class DataSyncManager {
-  final DatabaseService _dbService;
+  final HeartRateDataStore _dbService;
   final Logger _logger;
   final SupabaseService? _supabaseService;
   Timer? _syncTimer;
 
   DataSyncManager({
-    DatabaseService? dbService,
+    HeartRateDataStore? dbService,
     Logger? logger,
     SupabaseService? supabaseService,
   }) : _dbService = dbService ?? DatabaseService.instance,

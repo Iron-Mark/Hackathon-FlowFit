@@ -6,11 +6,27 @@ import '../../../models/resistance_session.dart';
 import '../../../providers/resistance_session_provider.dart';
 
 /// Active resistance workout screen with exercise progress and session controls.
-class ActiveResistanceScreen extends ConsumerWidget {
+class ActiveResistanceScreen extends ConsumerStatefulWidget {
   const ActiveResistanceScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActiveResistanceScreen> createState() =>
+      _ActiveResistanceScreenState();
+
+  static String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+}
+
+class _ActiveResistanceScreenState
+    extends ConsumerState<ActiveResistanceScreen> {
+  bool _isConfirmingEndWorkout = false;
+  bool _isEndingWorkout = false;
+
+  @override
+  Widget build(BuildContext context) {
     final session = ref.watch(resistanceSessionProvider);
     final notifier = ref.read(resistanceSessionProvider.notifier);
     final currentExercise = notifier.currentExercise;
@@ -48,7 +64,9 @@ class ActiveResistanceScreen extends ConsumerWidget {
             _ExerciseList(session: session),
             const SizedBox(height: 20),
             FilledButton.tonalIcon(
-              onPressed: () => _confirmEndWorkout(context, ref),
+              onPressed: _isConfirmingEndWorkout || _isEndingWorkout
+                  ? null
+                  : _confirmEndWorkout,
               icon: const Icon(Icons.stop_circle_outlined),
               label: const Text('End Workout'),
               style: FilledButton.styleFrom(
@@ -61,16 +79,13 @@ class ActiveResistanceScreen extends ConsumerWidget {
     );
   }
 
-  static String _formatDuration(int seconds) {
-    final minutes = seconds ~/ 60;
-    final remainingSeconds = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
-  }
+  Future<void> _confirmEndWorkout() async {
+    if (_isConfirmingEndWorkout || _isEndingWorkout) return;
 
-  static Future<void> _confirmEndWorkout(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+    setState(() {
+      _isConfirmingEndWorkout = true;
+    });
+
     final shouldEnd = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -91,13 +106,28 @@ class ActiveResistanceScreen extends ConsumerWidget {
       ),
     );
 
-    if (shouldEnd != true || !context.mounted) return;
+    if (!mounted) return;
+    setState(() {
+      _isConfirmingEndWorkout = false;
+    });
+
+    if (shouldEnd == true) {
+      await _endWorkout();
+    }
+  }
+
+  Future<void> _endWorkout() async {
+    if (_isEndingWorkout) return;
+
+    setState(() {
+      _isEndingWorkout = true;
+    });
 
     final notifier = ref.read(resistanceSessionProvider.notifier);
     try {
       await notifier.endWorkout();
     } catch (_) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -108,7 +138,7 @@ class ActiveResistanceScreen extends ConsumerWidget {
       );
     }
 
-    if (!context.mounted) return;
+    if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/workout/resistance/summary');
   }
 }

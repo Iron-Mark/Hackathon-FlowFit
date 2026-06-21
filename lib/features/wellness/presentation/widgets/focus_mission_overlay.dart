@@ -59,13 +59,25 @@ class FocusMissionOverlay extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(mission.title, style: Theme.of(context).textTheme.titleLarge),
-                        Text('${distanceMeters.toStringAsFixed(0)} m • ETA ${_formatEta(eta)}', style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          mission.title,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        Text(
+                          '${distanceMeters.toStringAsFixed(0)} m • ETA ${_formatEta(eta)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ],
                     ),
                   ),
-                  IconButton(onPressed: onCenter, icon: const Icon(Icons.my_location)),
-                  IconButton(onPressed: onUnfocus, icon: const Icon(Icons.close)),
+                  IconButton(
+                    onPressed: onCenter,
+                    icon: const Icon(Icons.my_location),
+                  ),
+                  IconButton(
+                    onPressed: onUnfocus,
+                    icon: const Icon(Icons.close),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -82,7 +94,10 @@ class FocusMissionOverlay extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8.0),
-                  Text('${speedMetersPerSecond.toStringAsFixed(1)} m/s', style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    '${speedMetersPerSecond.toStringAsFixed(1)} m/s',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ],
               ),
               const SizedBox(height: 8.0),
@@ -90,7 +105,9 @@ class FocusMissionOverlay extends StatelessWidget {
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: isActive ? () => onDeactivate() : () => onActivate(),
+                      onPressed: isActive
+                          ? () => onDeactivate()
+                          : () => onActivate(),
                       icon: Icon(isActive ? Icons.stop : Icons.play_arrow),
                       label: Text(isActive ? 'Stop' : 'Start'),
                     ),

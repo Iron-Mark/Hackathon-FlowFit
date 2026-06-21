@@ -180,7 +180,100 @@ function Invoke-OptionalStoreArtifactVerification {
         '-NoProfile',
         '-File',
         $storeArtifactVerifierScript
-    ) @(0, 2)
+    ) @(0, 1, 2)
+}
+
+function Get-FreeLocalPort {
+    $listener = [System.Net.Sockets.TcpListener]::new(
+        [System.Net.IPAddress]::Parse('127.0.0.1'),
+        0
+    )
+    try {
+        $listener.Start()
+        return [int]$listener.LocalEndpoint.Port
+    } finally {
+        $listener.Stop()
+    }
+}
+
+function Get-PythonCommand {
+    $python3 = Get-Command python3 -ErrorAction SilentlyContinue
+    if ($null -ne $python3) {
+        return $python3.Source
+    }
+
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -ne $python) {
+        return $python.Source
+    }
+
+    throw 'Python is required to serve build/web for the web app smoke.'
+}
+
+function Wait-ForLocalWebServer {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUrl
+    )
+
+    $deadline = (Get-Date).AddSeconds(20)
+    do {
+        try {
+            $response = Invoke-WebRequest -Uri $BaseUrl -UseBasicParsing -TimeoutSec 2
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+                return
+            }
+        } catch {
+            Start-Sleep -Milliseconds 500
+        }
+    } while ((Get-Date) -lt $deadline)
+
+    throw "Timed out waiting for local web server at $BaseUrl."
+}
+
+function Invoke-WebAppSmoke {
+    $webRoot = Join-Path $repoRoot 'build/web'
+    $indexHtml = Join-Path $webRoot 'index.html'
+    if (-not (Test-Path -LiteralPath $indexHtml)) {
+        throw 'build/web/index.html is missing; run the Flutter web build before web app smoke.'
+    }
+
+    $port = Get-FreeLocalPort
+    $baseUrl = "http://127.0.0.1:$port"
+    $stdout = Join-Path $repoRoot 'build/web-app-smoke-preflight-server.out.log'
+    $stderr = Join-Path $repoRoot 'build/web-app-smoke-preflight-server.err.log'
+    $outFile = Join-Path $repoRoot 'build/web-app-smoke-preflight.json'
+    $python = Get-PythonCommand
+    $server = $null
+
+    try {
+        $server = Start-Process `
+            -FilePath $python `
+            -ArgumentList @('-m', 'http.server', [string]$port, '--bind', '127.0.0.1') `
+            -WorkingDirectory $webRoot `
+            -RedirectStandardOutput $stdout `
+            -RedirectStandardError $stderr `
+            -WindowStyle Hidden `
+            -PassThru
+
+        Wait-ForLocalWebServer $baseUrl
+
+        Invoke-CheckedCommand 'Flutter web app action smoke' @(
+            'npm',
+            'run',
+            'web:smoke',
+            '--',
+            '--base-url',
+            $baseUrl,
+            '--out-file',
+            $outFile
+        )
+    } finally {
+        if ($null -ne $server -and -not $server.HasExited) {
+            Stop-Process -Id $server.Id -Force
+            $server.WaitForExit()
+        }
+    }
 }
 
 function Remove-IgnoredGeneratedAndroidRegistrant {
@@ -220,6 +313,9 @@ try {
             '--dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
         )
         Assert-WebCompliancePages
+        Invoke-CheckedCommand 'Node dependencies for web app smoke' @('npm', 'ci')
+        Invoke-CheckedCommand 'Install Playwright Chromium for web app smoke' @('npx', 'playwright', 'install', 'chromium')
+        Invoke-WebAppSmoke
         if ($IncludeWasmSmoke) {
             Invoke-CheckedCommand 'Flutter web Wasm release smoke build, not the default store target' @(
                 'flutter',

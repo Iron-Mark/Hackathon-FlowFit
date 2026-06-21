@@ -79,6 +79,49 @@ void main() {
     );
   });
 
+  testWidgets('Start Free Walk ignores duplicate taps while starting', (
+    tester,
+  ) async {
+    final startCompleter = Completer<void>();
+    final notifier = _FakeWalkingOptionsNotifier(
+      startCompleter: startCompleter,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [walkingSessionProvider.overrideWith((ref) => notifier)],
+        child: const MaterialApp(home: WalkingOptionsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Start Free Walk'));
+    await tester.pump();
+
+    expect(notifier.startCalls, 1);
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.widgetWithText(ElevatedButton, 'Start Free Walk'),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.text('Start Free Walk'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(notifier.startCalls, 1);
+
+    startCompleter.complete();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(notifier.startCalls, 1);
+    expect(notifier.lastMode, WalkingMode.free);
+    expect(find.text('No active walking session'), findsNothing);
+  });
+
   testWidgets('Create Mission opens target mission setup', (tester) async {
     await tester.pumpWidget(buildHarness());
     await tester.pumpAndSettle();
@@ -110,7 +153,7 @@ void main() {
 }
 
 class _FakeWalkingOptionsNotifier extends WalkingSessionNotifier {
-  _FakeWalkingOptionsNotifier({this.throwOnStart = false})
+  _FakeWalkingOptionsNotifier({this.throwOnStart = false, this.startCompleter})
     : super(
         gpsService: _FakeGpsTrackingService(),
         timerService: _NoopTimerService(),
@@ -121,6 +164,7 @@ class _FakeWalkingOptionsNotifier extends WalkingSessionNotifier {
       );
 
   final bool throwOnStart;
+  final Completer<void>? startCompleter;
   int startCalls = 0;
   WalkingMode? lastMode;
   int? lastTargetDuration;
@@ -135,6 +179,11 @@ class _FakeWalkingOptionsNotifier extends WalkingSessionNotifier {
     startCalls++;
     lastMode = mode;
     lastTargetDuration = targetDuration;
+
+    final completer = startCompleter;
+    if (completer != null) {
+      await completer.future;
+    }
 
     if (throwOnStart) {
       throw StateError('start failed');

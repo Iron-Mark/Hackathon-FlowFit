@@ -3,7 +3,7 @@ import '../../../domain/entities/heart_rate_data.dart';
 import '../repositories/heart_rate_repository_provider.dart';
 
 /// Current heart rate state provider
-/// 
+///
 /// This provides the latest heart rate data as a stream.
 final currentHeartRateProvider = StreamProvider<HeartRateData>((ref) {
   final repository = ref.watch(heartRateRepositoryProvider);
@@ -11,19 +11,20 @@ final currentHeartRateProvider = StreamProvider<HeartRateData>((ref) {
 });
 
 /// Heart rate tracking state provider
-/// 
+///
 /// Manages whether heart rate tracking is active.
-final heartRateTrackingStateProvider = StateNotifierProvider<HeartRateTrackingNotifier, bool>((ref) {
-  final repository = ref.watch(heartRateRepositoryProvider);
-  return HeartRateTrackingNotifier(repository);
-});
+final heartRateTrackingStateProvider =
+    StateNotifierProvider<HeartRateTrackingNotifier, bool>((ref) {
+      final repository = ref.watch(heartRateRepositoryProvider);
+      return HeartRateTrackingNotifier(repository);
+    });
 
 /// Notifier for heart rate tracking state
 class HeartRateTrackingNotifier extends StateNotifier<bool> {
   final dynamic heartRateRepository;
-  
+
   HeartRateTrackingNotifier(this.heartRateRepository) : super(false);
-  
+
   /// Start tracking
   Future<void> startTracking() async {
     try {
@@ -35,7 +36,7 @@ class HeartRateTrackingNotifier extends StateNotifier<bool> {
       rethrow;
     }
   }
-  
+
   /// Stop tracking
   Future<void> stopTracking() async {
     try {

@@ -36,6 +36,7 @@ class MissionBottomSheet extends StatefulWidget {
 
 class _MissionBottomSheetState extends State<MissionBottomSheet> {
   _MissionFilter _filter = _MissionFilter.all;
+  bool _isAddingAtCenter = false;
 
   List<GeofenceMission> get _filteredMissions {
     return widget.repo.current
@@ -278,6 +279,32 @@ class _MissionBottomSheetState extends State<MissionBottomSheet> {
     );
   }
 
+  Future<void> _addAtVisibleCenter() async {
+    if (_isAddingAtCenter) return;
+
+    final center = widget.lastCenter;
+    if (center == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Map center is not ready yet.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isAddingAtCenter = true;
+    });
+
+    try {
+      await widget.onAddAtLatLng(center);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingAtCenter = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -313,10 +340,9 @@ class _MissionBottomSheetState extends State<MissionBottomSheet> {
               const SizedBox(height: 8.0),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final title = Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -330,34 +356,43 @@ class _MissionBottomSheetState extends State<MissionBottomSheet> {
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
-                    ),
-                    Row(
+                    );
+                    final actions = Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
                       children: [
                         TextButton.icon(
                           onPressed: () => _showFilterSheet(context),
                           icon: const Icon(Icons.filter_list),
                           label: Text(_filterLabel),
                         ),
-                        const SizedBox(width: 8.0),
                         ElevatedButton.icon(
-                          onPressed: () async {
-                            final center = widget.lastCenter;
-                            if (center == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Map center is not ready yet.'),
-                                ),
-                              );
-                              return;
-                            }
-                            await widget.onAddAtLatLng(center);
-                          },
+                          onPressed: _isAddingAtCenter
+                              ? null
+                              : _addAtVisibleCenter,
                           icon: const Icon(Icons.add),
                           label: const Text('Add'),
                         ),
                       ],
-                    ),
-                  ],
+                    );
+
+                    if (constraints.maxWidth < 420) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [title, const SizedBox(height: 8.0), actions],
+                      );
+                    }
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(child: title),
+                        const SizedBox(width: 16.0),
+                        actions,
+                      ],
+                    );
+                  },
                 ),
               ),
               Expanded(child: _buildMissionList(context, controller)),

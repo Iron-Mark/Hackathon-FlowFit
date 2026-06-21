@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 import '../../../services/profile_goal_preferences.dart';
+import 'widgets/goal_save_button.dart';
 
 class NutritionGoalsScreen extends StatefulWidget {
   const NutritionGoalsScreen({super.key});
@@ -49,6 +50,8 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
   }
 
   Future<void> _handleSave() async {
+    if (_isLoading) return;
+
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
@@ -152,6 +155,7 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
               TextFormField(
                 controller: _caloriesController,
                 keyboardType: TextInputType.number,
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: 'Enter daily calories',
                   suffixText: 'kcal',
@@ -223,6 +227,7 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                 TextFormField(
                   controller: _proteinController,
                   keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Enter protein goal',
                     suffixText: 'g',
@@ -262,6 +267,7 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                 TextFormField(
                   controller: _carbsController,
                   keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Enter carbs goal',
                     suffixText: 'g',
@@ -301,6 +307,7 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
                 TextFormField(
                   controller: _fatsController,
                   keyboardType: TextInputType.number,
+                  onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: 'Enter fats goal',
                     suffixText: 'g',
@@ -370,36 +377,7 @@ class _NutritionGoalsScreenState extends State<NutritionGoalsScreen> {
               const SizedBox(height: 32),
 
               // Save Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _handleSave,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.onPrimary,
-                          ),
-                        ),
-                      )
-                    : const Text(
-                        'Save Goals',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
+              GoalSaveButton(isLoading: _isLoading, onPressed: _handleSave),
 
               const SizedBox(height: 20),
             ],

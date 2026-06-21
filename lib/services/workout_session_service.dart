@@ -1,13 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/config/supabase_tables.dart';
 import '../models/workout_session.dart';
-import '../models/running_session.dart';
-import '../models/walking_session.dart';
-import '../models/resistance_session.dart';
 
 /// Service for managing workout session CRUD operations with Supabase
 class WorkoutSessionService {
-  final SupabaseClient _client = Supabase.instance.client;
+  SupabaseClient get _client => Supabase.instance.client;
 
   /// Creates a new workout session in the database
   Future<String> createSession(WorkoutSession session) async {
@@ -31,7 +28,7 @@ class WorkoutSessionService {
 
     if (response == null) return null;
 
-    return _parseWorkoutSession(response);
+    return parseWorkoutSession(response);
   }
 
   /// Updates an existing workout session
@@ -73,7 +70,7 @@ class WorkoutSessionService {
         .limit(limit);
 
     return (response as List)
-        .map((json) => _parseWorkoutSession(json as Map<String, dynamic>))
+        .map((json) => parseWorkoutSession(json as Map<String, dynamic>))
         .toList();
   }
 
@@ -104,23 +101,12 @@ class WorkoutSessionService {
         .order('start_time', ascending: false);
 
     return (response as List)
-        .map((json) => _parseWorkoutSession(json as Map<String, dynamic>))
+        .map((json) => parseWorkoutSession(json as Map<String, dynamic>))
         .toList();
   }
 
-  /// Parses JSON into the appropriate WorkoutSession subclass
-  WorkoutSession _parseWorkoutSession(Map<String, dynamic> json) {
-    final workoutType = json['workout_type'] as String;
-
-    switch (workoutType) {
-      case 'running':
-        return RunningSession.fromJson(json);
-      case 'walking':
-        return WalkingSession.fromJson(json);
-      case 'resistance':
-        return ResistanceSession.fromJson(json);
-      default:
-        throw Exception('Unknown workout type: $workoutType');
-    }
+  /// Parses a Supabase workout row into the appropriate session subtype.
+  static WorkoutSession parseWorkoutSession(Map<String, dynamic> json) {
+    return WorkoutSession.fromJson(json);
   }
 }

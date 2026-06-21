@@ -50,9 +50,7 @@ class UserModel {
     return UserModel(
       id: user.id,
       email: user.email,
-      userMetadata: {
-        if (user.fullName != null) 'full_name': user.fullName,
-      },
+      userMetadata: {if (user.fullName != null) 'full_name': user.fullName},
       createdAt: user.createdAt.toIso8601String(),
     );
   }

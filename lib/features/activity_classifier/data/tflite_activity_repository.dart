@@ -33,10 +33,16 @@ class TFLiteActivityRepository implements ActivityClassifierRepository {
         probabilities: dto.probabilities,
       );
 
-      _logger.i('Activity classified: ${activity.label} (${(activity.confidence * 100).toStringAsFixed(1)}%)');
+      _logger.i(
+        'Activity classified: ${activity.label} (${(activity.confidence * 100).toStringAsFixed(1)}%)',
+      );
       return activity;
     } catch (e, stackTrace) {
-      _logger.e('Failed to classify activity', error: e, stackTrace: stackTrace);
+      _logger.e(
+        'Failed to classify activity',
+        error: e,
+        stackTrace: stackTrace,
+      );
       rethrow;
     }
   }

@@ -84,6 +84,67 @@ void main() {
     expect(find.text('Profile photo updated'), findsOneWidget);
   });
 
+  testWidgets('profile photo avatar ignores duplicate sheet requests', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_harness());
+    await tester.pumpAndSettle();
+
+    final avatarTapTarget = find
+        .ancestor(
+          of: find.byType(CircleAvatar).first,
+          matching: find.byType(GestureDetector),
+        )
+        .first;
+    final avatarGesture = tester.widget<GestureDetector>(avatarTapTarget);
+
+    avatarGesture.onTap!();
+    avatarGesture.onTap!();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Change Profile Photo'), findsOneWidget);
+  });
+
+  testWidgets(
+    'gallery action ignores duplicate picker requests while pending',
+    (tester) async {
+      final image = _writeTestPng(tempDir, 'gallery-pending.png');
+      final pickCompleter = Completer<String?>();
+      var pickCalls = 0;
+
+      await tester.pumpWidget(
+        _harness(
+          pickProfileImage: (source) {
+            pickCalls++;
+            expect(source, ImageSource.gallery);
+            return pickCompleter.future;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await _openPhotoSheet(tester);
+
+      final galleryTile = tester.widget<ListTile>(
+        find.widgetWithText(ListTile, 'Choose from Gallery'),
+      );
+      galleryTile.onTap!();
+      galleryTile.onTap!();
+      await tester.pump();
+
+      expect(pickCalls, 1);
+
+      pickCompleter.complete(image.path);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(pickCalls, 1);
+      expect(prefs.getString(_profileImageKey), image.path);
+      expect(find.text('Profile photo updated'), findsOneWidget);
+    },
+  );
+
   testWidgets('gallery picker failure shows an error and keeps current photo', (
     tester,
   ) async {
@@ -127,6 +188,62 @@ void main() {
     expect(prefs.getString(_profileImageKey), isNull);
     expect(find.text('Profile photo removed'), findsOneWidget);
   });
+
+  testWidgets('remove photo ignores duplicate remove requests', (tester) async {
+    final existingImage = _writeTestPng(tempDir, 'existing-duplicate.png');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_profileImageKey, existingImage.path);
+
+    await tester.pumpWidget(_harness());
+    await tester.pumpAndSettle();
+    await _pumpProfileImageLoad(tester);
+
+    await _openPhotoSheet(tester);
+
+    final removeTile = tester.widget<ListTile>(
+      find.widgetWithText(ListTile, 'Remove Photo'),
+    );
+    removeTile.onTap!();
+    removeTile.onTap!();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(prefs.getString(_profileImageKey), isNull);
+    expect(find.text('Profile photo removed'), findsOneWidget);
+  });
+
+  testWidgets('profile setting and goal tiles open their routes', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_harness());
+    await tester.pumpAndSettle();
+
+    await _tapRouteTile(
+      tester,
+      tileText: 'Change Password',
+      routeText: 'route:change-password',
+    );
+    await _tapRouteTile(
+      tester,
+      tileText: 'Delete Account',
+      routeText: 'route:delete-account',
+    );
+    await _tapRouteTile(
+      tester,
+      tileText: 'Physical Stats',
+      routeText: 'route:weight-goals',
+    );
+    await _tapRouteTile(
+      tester,
+      tileText: 'Fitness Goals',
+      routeText: 'route:fitness-goals',
+    );
+    await _tapRouteTile(
+      tester,
+      tileText: 'Nutrition Goals',
+      routeText: 'route:nutrition-goals',
+    );
+  });
 }
 
 const String _userId = 'test-user-123';
@@ -167,6 +284,21 @@ Future<void> _openPhotoSheet(WidgetTester tester) async {
   await tester.tap(find.byType(CircleAvatar).first);
   await tester.pumpAndSettle();
   expect(find.text('Change Profile Photo'), findsOneWidget);
+}
+
+Future<void> _tapRouteTile(
+  WidgetTester tester, {
+  required String tileText,
+  required String routeText,
+}) async {
+  await tester.ensureVisible(find.text(tileText));
+  await tester.tap(find.text(tileText));
+  await tester.pumpAndSettle();
+
+  expect(find.text(routeText), findsOneWidget);
+
+  Navigator.of(tester.element(find.text(routeText))).pop();
+  await tester.pumpAndSettle();
 }
 
 Future<void> _pumpProfileImageLoad(WidgetTester tester) async {

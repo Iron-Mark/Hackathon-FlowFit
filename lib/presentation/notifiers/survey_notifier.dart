@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../domain/entities/user_profile.dart';
 import '../../domain/repositories/i_profile_repository.dart';
+import '../../core/utils/height_measurements.dart';
 import '../../domain/exceptions/auth_exceptions.dart';
 
 /// State class for survey data and progress.
@@ -155,23 +156,38 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
   ///
   /// Requirement 3.4: Validate numeric inputs are within reasonable ranges
   String? validateBodyMeasurements() {
-    final weight = state.surveyData['weight'] as double?;
-    final height = state.surveyData['height'] as double?;
+    final weight = (state.surveyData['weight'] as num?)?.toDouble();
+    final height = (state.surveyData['height'] as num?)?.toDouble();
+    final weightUnit = state.surveyData['weightUnit'] as String? ?? 'kg';
+    final heightUnit = state.surveyData['heightUnit'] as String? ?? 'cm';
 
     if (weight == null) {
       return 'Weight is required';
     }
 
-    if (weight <= 0 || weight >= 500) {
-      return 'Weight must be between 0 and 500 kg';
+    final maxWeight = weightUnit == 'lbs' ? 1100.0 : 500.0;
+    if (weight <= 0 || weight >= maxWeight) {
+      return 'Weight must be between 0 and ${maxWeight.toStringAsFixed(0)} $weightUnit';
     }
 
     if (height == null) {
       return 'Height is required';
     }
 
-    if (height <= 0 || height >= 300) {
-      return 'Height must be between 0 and 300 cm';
+    if (heightUnit == 'ft') {
+      final totalInches = feetInchesFromHeightValue(
+        height,
+        rawHeightInput: state.surveyData['heightInput'] as String?,
+      ).totalInches;
+      if (totalInches <= 0 || totalInches >= 120) {
+        return 'Height must be between 0 and 10 ft';
+      }
+      return null;
+    }
+
+    const maxHeight = 300.0;
+    if (height <= 0 || height >= maxHeight) {
+      return 'Height must be between 0 and 300 $heightUnit';
     }
 
     return null; // Valid
@@ -258,11 +274,18 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
       gender: state.surveyData['gender'] as String,
       weight: state.surveyData['weight'] as double,
       height: state.surveyData['height'] as double,
+      heightUnit: state.surveyData['heightUnit'] as String? ?? 'cm',
+      weightUnit: state.surveyData['weightUnit'] as String? ?? 'kg',
       activityLevel: state.surveyData['activityLevel'] as String,
       goals: (state.surveyData['goals'] as List<dynamic>)
           .map((e) => e.toString())
           .toList(),
       dailyCalorieTarget: state.surveyData['dailyCalorieTarget'] as int,
+      dailyStepsTarget: state.surveyData['dailyStepsTarget'] as int?,
+      dailyActiveMinutesTarget:
+          state.surveyData['dailyActiveMinutesTarget'] as int?,
+      dailyWaterTarget: (state.surveyData['dailyWaterTarget'] as num?)
+          ?.toDouble(),
       surveyCompleted: true,
     );
 

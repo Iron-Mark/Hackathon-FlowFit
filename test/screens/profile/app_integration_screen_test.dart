@@ -52,4 +52,23 @@ void main() {
 
     expect(find.text('Wellness setup opened'), findsOneWidget);
   });
+
+  testWidgets('Samsung Health row opens details and wellness setup action', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+
+    await tester.ensureVisible(find.text('Samsung Health'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Samsung Health'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open Wellness Setup'), findsOneWidget);
+    expect(find.textContaining('Samsung Health Sensor API'), findsOneWidget);
+
+    await tester.tap(find.text('Open Wellness Setup'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Wellness setup opened'), findsOneWidget);
+  });
 }

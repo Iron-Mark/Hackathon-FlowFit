@@ -48,14 +48,14 @@ Documentation specifically for presenting the project to judges or stakeholders:
 Technical implementation details and verification:
 
 ### Backend Recovery
-- **SUPABASE_RECOVERY_RUNBOOK.md**
+- **SUPABASE_RECOVERY_RUNBOOK.md** (root docs runbook)
   - New Supabase development project setup
   - Project-scoped MCP configuration
   - Canonical migration and verification commands
   - Local Flutter credential recovery
 
 ### Release Readiness
-- **RELEASE_READINESS_RUNBOOK.md**
+- **RELEASE_READINESS_RUNBOOK.md** (root docs runbook)
   - Play Store signing and package configuration
   - App Store/macOS signing requirements
   - Flutter web build and hosting notes
@@ -231,6 +231,8 @@ Build and deployment scripts:
 - **test_phone_receiver.sh** - Test phone data receiver (Linux/Mac)
 - **release_preflight.ps1** - Local analyzer, test, web, optional Wasm,
   Android, Wear, and release-smoke gate
+- **verify_offline_app_actions.ps1** - Supabase-free route/action guard and
+  broad button-driven feature smoke
 - **release_readiness_audit.ps1** - Non-secret Supabase, signing, web, and
   store readiness audit
 - **verify_support_inbox.ps1** - Non-secret support inbox verification

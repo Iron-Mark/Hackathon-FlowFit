@@ -111,11 +111,48 @@ void main() {
     expect(find.text('Permission Denied'), findsOneWidget);
     expect(find.text('Failed to open app settings'), findsOneWidget);
   });
+
+  testWidgets('permission monitoring starts on mount and stops on dispose', (
+    tester,
+  ) async {
+    final bridge = _FakeWatchBridge(initialStatus: PermissionStatus.granted);
+
+    await tester.pumpWidget(_harness(bridge));
+    await tester.pumpAndSettle();
+
+    expect(bridge.monitoringStarted, isTrue);
+    expect(bridge.monitoringStopped, isFalse);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    expect(bridge.monitoringStopped, isTrue);
+  });
+
+  testWidgets('denied state can hide open settings recovery action', (
+    tester,
+  ) async {
+    final bridge = _FakeWatchBridge(initialStatus: PermissionStatus.denied);
+
+    await tester.pumpWidget(_harness(bridge, showOpenSettingsButton: false));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Permission Denied'), findsOneWidget);
+    expect(find.text('Open Settings'), findsNothing);
+  });
 }
 
-Widget _harness(WatchBridgeService bridge) {
+Widget _harness(
+  WatchBridgeService bridge, {
+  bool showOpenSettingsButton = true,
+}) {
   return MaterialApp(
-    home: Scaffold(body: PermissionStatusWidget(watchBridge: bridge)),
+    home: Scaffold(
+      body: PermissionStatusWidget(
+        watchBridge: bridge,
+        showOpenSettingsButton: showOpenSettingsButton,
+      ),
+    ),
   );
 }
 

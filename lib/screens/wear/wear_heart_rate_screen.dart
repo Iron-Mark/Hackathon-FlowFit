@@ -275,12 +275,12 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
 
       _heartRateSubscription = _watchBridge.heartRateStream.listen(
         (heartRateData) {
-          if (mounted) {
-            setState(() {
-              _currentHeartRate = heartRateData;
-              _statusMessage = 'Active';
-            });
-          }
+          if (!mounted || !_isMonitoring) return;
+
+          setState(() {
+            _currentHeartRate = heartRateData;
+            _statusMessage = 'Active';
+          });
         },
         onError: (error) {
           if (mounted) {
@@ -328,26 +328,35 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     try {
       setState(() {
         _isMonitoringBusy = true;
+        _isMonitoring = false;
+        _isAccelerometerActive = false;
         _statusMessage = 'Stopping...';
       });
 
       await _watchBridge.stopHeartRateTracking();
       if (!mounted) return;
 
-      await _heartRateSubscription?.cancel();
+      final heartRateSubscription = _heartRateSubscription;
       _heartRateSubscription = null;
+      if (heartRateSubscription != null) {
+        unawaited(
+          heartRateSubscription.cancel().catchError((Object error) {
+            debugPrint('Heart rate stream cancel error: $error');
+          }),
+        );
+      }
       if (!mounted) return;
 
       setState(() {
         _isMonitoringBusy = false;
-        _isMonitoring = false;
-        _isAccelerometerActive = false; // Accelerometer stops with heart rate
         _statusMessage = 'Stopped';
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isMonitoringBusy = false;
+        _isMonitoring = true;
+        _isAccelerometerActive = true;
         _statusMessage = 'Error stopping';
         _errorMessage = 'Failed to stop monitoring';
       });
@@ -355,7 +364,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   Future<void> _sendToPhone() async {
-    if (_currentHeartRate == null) return;
+    if (_isSending || _currentHeartRate == null) return;
 
     _statusResetTimer?.cancel();
     setState(() {

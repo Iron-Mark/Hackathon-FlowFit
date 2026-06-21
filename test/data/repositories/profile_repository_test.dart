@@ -1,56 +1,62 @@
 import 'dart:io';
 
+import 'package:flowfit/data/repositories/profile_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flowfit/domain/exceptions/auth_exceptions.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show SupabaseClient;
+
+class _MockSupabaseClient extends SupabaseClient {
+  _MockSupabaseClient() : super('https://flowfit.test', 'test-key');
+}
 
 void main() {
   group('ProfileRepository Retry Logic', () {
+    late String source;
+    late ProfileRepository repository;
+
+    setUpAll(() {
+      source = File(
+        'lib/data/repositories/profile_repository.dart',
+      ).readAsStringSync();
+    });
+
+    setUp(() {
+      repository = ProfileRepository(_MockSupabaseClient());
+    });
+
     test('Retry logic attempts operation up to 3 times', () async {
-      // This test verifies the retry logic by checking the implementation
-      // The _executeWithRetry method should:
-      // 1. Attempt the operation
-      // 2. If it fails with a retryable error (NetworkException, UnknownException),
-      //    retry up to 3 times total
-      // 3. If it fails with a non-retryable error (validation errors), throw immediately
+      var attempts = 0;
 
-      // We can verify this by reading the implementation
-      const maxRetries = 3;
+      await expectLater(
+        repository.executeWithRetryForTest<void>(() async {
+          attempts++;
+          throw UnknownException();
+        }),
+        throwsA(isA<UnknownException>()),
+      );
 
-      // The implementation should have a constant or variable for max retries
-      expect(maxRetries, equals(3));
+      expect(attempts, 3);
     });
 
     test('Retry logic uses exponential backoff', () async {
-      // This test verifies that the retry logic implements exponential backoff
-      // The delay should be: 100ms * attempt_number
-      // Attempt 1: 100ms
-      // Attempt 2: 200ms
-      // Attempt 3: 300ms
-
-      const baseDelay = 100; // milliseconds
-
-      // Verify the backoff formula
-      expect(baseDelay * 1, equals(100));
-      expect(baseDelay * 2, equals(200));
-      expect(baseDelay * 3, equals(300));
+      expect(
+        source,
+        contains('Future.delayed(Duration(milliseconds: 100 * attempts))'),
+      );
     });
 
     test('Retry logic does not retry on validation errors', () async {
-      // This test verifies that validation errors (non-network, non-unknown)
-      // are not retried. The implementation should check:
-      // if (e is AuthException &&
-      //     e is! NetworkException &&
-      //     e is! UnknownException) {
-      //   rethrow;
-      // }
+      var attempts = 0;
 
-      // Validation errors should be thrown immediately without retry
-      final AuthException validationError = InvalidEmailException();
-      final isRetryable =
-          validationError is NetworkException ||
-          validationError is UnknownException;
+      await expectLater(
+        repository.executeWithRetryForTest<void>(() async {
+          attempts++;
+          throw InvalidEmailException();
+        }),
+        throwsA(isA<InvalidEmailException>()),
+      );
 
-      expect(isRetryable, isFalse);
+      expect(attempts, 1);
     });
 
     test('Network errors are retryable', () async {
@@ -72,18 +78,10 @@ void main() {
     });
 
     test('ProfileRepository has correct max retries constant', () {
-      // Verify that the ProfileRepository class has the correct max retries value
-      // This is defined as: static const int _maxRetries = 3;
-
-      // We can verify this by checking the implementation
-      // The constant should be 3 as per requirements
-      expect(3, equals(3)); // Max retries should be 3
+      expect(source, contains('static const int _maxRetries = 3;'));
     });
 
     test('createProfile upserts by user_id for recovered partial rows', () {
-      final source = File(
-        'lib/data/repositories/profile_repository.dart',
-      ).readAsStringSync();
       final createProfileStart = source.indexOf(
         'Future<UserProfile> createProfile',
       );
@@ -101,13 +99,10 @@ void main() {
     });
 
     test('Retry logic logs retry attempts', () {
-      // This test verifies that the retry logic logs information about retries
-      // The implementation should call ErrorLogger.logInfo when retrying
-      // and ErrorLogger.logWarning when max retries is reached
-
-      // This is a behavioral test that verifies the logging calls are made
-      // In a real scenario, we would mock the ErrorLogger to verify calls
-      expect(true, isTrue); // Logging is implemented in the retry logic
+      expect(source, contains('ErrorLogger.logInfo('));
+      expect(source, contains("'Retry attempt \$attempts of \$_maxRetries'"));
+      expect(source, contains('ErrorLogger.logWarning('));
+      expect(source, contains("'Max retries (\$attempts) reached, giving up'"));
     });
   });
 }

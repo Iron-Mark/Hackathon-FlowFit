@@ -1,17 +1,17 @@
 /// Data model representing daily fitness statistics
-/// 
+///
 /// Contains current progress toward daily fitness goals including
 /// steps, calories burned, and active minutes.
 class DailyStats {
   /// Current step count for the day
   final int steps;
-  
+
   /// Daily step goal
   final int stepsGoal;
-  
+
   /// Calories burned today
   final int calories;
-  
+
   /// Active minutes today
   final int activeMinutes;
 

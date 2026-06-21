@@ -62,6 +62,28 @@ void main() {
     expect(find.text('Your Nickname (optional)'), findsOneWidget);
   });
 
+  testWidgets('naming suggestion fills the input and can be submitted', (
+    tester,
+  ) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await pumpFlow(tester, container);
+
+    await tester.ensureVisible(find.text('Splash'));
+    await tester.tap(find.text('Splash'));
+    await tester.pump();
+
+    expect(find.widgetWithText(TextField, 'Splash'), findsOneWidget);
+
+    await tester.tap(find.text('THAT\'S PERFECT!'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(container.read(buddyOnboardingProvider).buddyName, 'Splash');
+    expect(find.text('Tell Splash about yourself!'), findsOneWidget);
+  });
+
   testWidgets('profile setup continue saves optional info and opens goals', (
     tester,
   ) async {

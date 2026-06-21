@@ -20,6 +20,8 @@ class _WellnessSettingsScreenState
   bool _monitoringEnabled = false;
   bool _stressAlertsEnabled = true;
   bool _cardioAlertsEnabled = true;
+  bool _isConfirmingClearHistory = false;
+  bool _isClearingHistory = false;
   int _alertFrequency = 30; // minutes
 
   @override
@@ -173,7 +175,9 @@ class _WellnessSettingsScreenState
                   title: 'Clear Wellness History',
                   subtitle: 'Clear local device wellness history',
                   color: Colors.red,
-                  onTap: () => _showClearDataDialog(),
+                  onTap: _isConfirmingClearHistory || _isClearingHistory
+                      ? null
+                      : _showClearDataDialog,
                 ),
                 _buildActionTile(
                   icon: Icons.info_outline,
@@ -395,7 +399,7 @@ class _WellnessSettingsScreenState
     required String title,
     required String subtitle,
     required Color color,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
   }) {
     return ListTile(
       leading: Container(
@@ -431,14 +435,17 @@ class _WellnessSettingsScreenState
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('• ', style: TextStyle(fontSize: 16)),
-          Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'GeneralSans',
-              fontSize: 12,
-              color: Colors.blue[900],
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontFamily: 'GeneralSans',
+                fontSize: 12,
+                color: Colors.blue[900],
+              ),
             ),
           ),
         ],
@@ -447,52 +454,83 @@ class _WellnessSettingsScreenState
   }
 
   Future<void> _showClearDataDialog() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          'Clear Wellness History?',
-          style: TextStyle(fontFamily: 'GeneralSans'),
-        ),
-        content: const Text(
-          'This clears local wellness state history and transitions on this device. It does not delete account, workout, heart-rate, or Supabase records.',
-          style: TextStyle(fontFamily: 'GeneralSans'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
-    );
+    if (_isConfirmingClearHistory || _isClearingHistory) return;
 
-    if (confirmed == true && mounted) {
-      try {
-        // Clear local wellness history.
-        await ref.read(wellnessStateProvider.notifier).clearHistory();
+    setState(() {
+      _isConfirmingClearHistory = true;
+    });
 
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Local wellness history cleared'),
-              backgroundColor: Colors.green,
+    bool? confirmed;
+    try {
+      confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text(
+            'Clear Wellness History?',
+            style: TextStyle(fontFamily: 'GeneralSans'),
+          ),
+          content: const Text(
+            'This clears local wellness state history and transitions on this device. It does not delete account, workout, heart-rate, or Supabase records.',
+            style: TextStyle(fontFamily: 'GeneralSans'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
             ),
-          );
-        }
-      } catch (_) {
-        if (!mounted) return;
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Clear'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isConfirmingClearHistory = false;
+        });
+      }
+    }
+
+    if (confirmed == true) {
+      await _clearWellnessHistory();
+    }
+  }
+
+  Future<void> _clearWellnessHistory() async {
+    if (_isClearingHistory) return;
+
+    setState(() {
+      _isClearingHistory = true;
+    });
+
+    try {
+      // Clear local wellness history.
+      await ref.read(wellnessStateProvider.notifier).clearHistory();
+
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Could not clear local wellness history. Try again.'),
-            backgroundColor: Colors.red,
+            content: Text('Local wellness history cleared'),
+            backgroundColor: Colors.green,
           ),
         );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not clear local wellness history. Try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isClearingHistory = false;
+        });
       }
     }
   }

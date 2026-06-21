@@ -4,7 +4,8 @@ param(
     [string]$SupportEmail = '',
     [int]$TimeoutSeconds = 20,
     [string]$OutFile = '',
-    [switch]$AllowInsecureLocalhost
+    [switch]$AllowInsecureLocalhost,
+    [string]$CompareBuildWebPath = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -133,6 +134,75 @@ function Assert-SupportEmail {
     }
 }
 
+function Get-Sha256HexFromText {
+    param([Parameter(Mandatory = $true)][string]$Content)
+
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($Content)
+    $hashBytes = [System.Security.Cryptography.SHA256]::HashData($bytes)
+    return [System.BitConverter]::ToString($hashBytes).Replace('-', '').ToLowerInvariant()
+}
+
+function Get-Sha256HexFromFile {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+
+function Resolve-CompareBuildWebPath {
+    param([string]$Path)
+
+    if ([string]::IsNullOrWhiteSpace($Path)) {
+        return ''
+    }
+
+    $resolved = Resolve-Path -LiteralPath $Path -ErrorAction SilentlyContinue
+    if ($null -eq $resolved) {
+        Add-Fail 'Local web artifact comparison' "CompareBuildWebPath does not exist: $Path"
+        return ''
+    }
+
+    $indexPath = Join-Path $resolved.ProviderPath 'index.html'
+    if (-not (Test-Path -LiteralPath $indexPath)) {
+        Add-Fail 'Local web artifact comparison' "CompareBuildWebPath is not a Flutter web build directory: $Path"
+        return ''
+    }
+
+    Add-Pass 'Local web artifact comparison' "Comparing deployed app assets with $($resolved.ProviderPath)."
+    return $resolved.ProviderPath
+}
+
+function Assert-DeployedAssetMatchesLocal {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$RemoteContent,
+        [Parameter(Mandatory = $true)]
+        [string]$LocalBuildWebPath,
+        [Parameter(Mandatory = $true)]
+        [string]$RelativePath
+    )
+
+    if ([string]::IsNullOrWhiteSpace($LocalBuildWebPath)) {
+        return
+    }
+
+    $localPath = Join-Path $LocalBuildWebPath $RelativePath
+    if (-not (Test-Path -LiteralPath $localPath)) {
+        Add-Fail "$Name deployed asset freshness" "Local comparison asset is missing: $localPath"
+        return
+    }
+
+    $remoteHash = Get-Sha256HexFromText -Content $RemoteContent
+    $localHash = Get-Sha256HexFromFile -Path $localPath
+    if ($remoteHash -ne $localHash) {
+        Add-Fail "$Name deployed asset freshness" "Deployed $RelativePath hash $remoteHash does not match local build hash $localHash."
+        return
+    }
+
+    Add-Pass "$Name deployed asset freshness" "Deployed $RelativePath matches the local build hash $localHash."
+}
+
 function Resolve-IndexBaseUri {
     param(
         [Parameter(Mandatory = $true)]
@@ -202,6 +272,7 @@ if ([string]::IsNullOrWhiteSpace($SupportEmail)) {
 Assert-SupportEmail -Name 'SupportEmail' -Value $SupportEmail
 
 $rootUri = Resolve-DeploymentUri -Value $BaseUrl
+$compareBuildWebRoot = Resolve-CompareBuildWebPath -Path $CompareBuildWebPath
 $internalTerms = @(
     'Replace this address',
     'backend deletion',
@@ -224,11 +295,13 @@ if (-not [string]::IsNullOrWhiteSpace($index)) {
 $flutterBootstrap = Invoke-WebCheck -Name 'Flutter bootstrap' -Uri ([System.Uri]::new($assetBaseUri, 'flutter_bootstrap.js'))
 if (-not [string]::IsNullOrWhiteSpace($flutterBootstrap)) {
     [void](Assert-TextContains -CheckName 'Flutter bootstrap content' -Content $flutterBootstrap -Terms @('main.dart.js'))
+    Assert-DeployedAssetMatchesLocal -Name 'Flutter bootstrap' -RemoteContent $flutterBootstrap -LocalBuildWebPath $compareBuildWebRoot -RelativePath 'flutter_bootstrap.js'
 }
 
 $compiledApp = Invoke-WebCheck -Name 'Compiled Flutter app' -Uri ([System.Uri]::new($assetBaseUri, 'main.dart.js'))
 if (-not [string]::IsNullOrWhiteSpace($compiledApp)) {
     [void](Assert-TextContains -CheckName 'Compiled Flutter app content' -Content $compiledApp -Terms @('main'))
+    Assert-DeployedAssetMatchesLocal -Name 'Compiled Flutter app' -RemoteContent $compiledApp -LocalBuildWebPath $compareBuildWebRoot -RelativePath 'main.dart.js'
 }
 
 $manifest = Invoke-WebCheck -Name 'Web manifest' -Uri ([System.Uri]::new($assetBaseUri, 'manifest.json'))
@@ -265,6 +338,7 @@ $summary = [pscustomobject]@{
     generatedAt = (Get-Date).ToUniversalTime().ToString('o')
     baseUrl = $rootUri.AbsoluteUri.TrimEnd('/')
     supportEmail = $SupportEmail
+    compareBuildWebPath = $compareBuildWebRoot
     summary = [pscustomobject]@{
         pass = @($results | Where-Object { $_.level -eq 'PASS' }).Count
         fail = @($results | Where-Object { $_.level -eq 'FAIL' }).Count

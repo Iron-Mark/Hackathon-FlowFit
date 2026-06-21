@@ -53,6 +53,21 @@ void main() {
     expect(find.text('route:dashboard'), findsOneWidget);
   });
 
+  testWidgets('locally saved Buddy still opens dashboard', (tester) async {
+    await pumpScreen(
+      tester,
+      completeOnboarding: ({required ref, required context}) async {
+        throw BuddySaveException('offline fallback', savedLocally: true);
+      },
+    );
+
+    await tester.tap(find.text('START FIRST MISSION'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:dashboard'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+  });
+
   testWidgets('start mission failure resets loading and allows cancel', (
     tester,
   ) async {

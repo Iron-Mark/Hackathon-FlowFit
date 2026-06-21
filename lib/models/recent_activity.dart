@@ -2,31 +2,31 @@ import 'package:intl/intl.dart';
 import 'mood_rating.dart';
 
 /// Data model representing a recent workout activity
-/// 
+///
 /// Contains information about a completed workout including
 /// name, type, details, completion date, and mood tracking data.
 class RecentActivity {
   /// Unique activity identifier
   final String id;
-  
+
   /// Activity name (e.g., "Morning Run")
   final String name;
-  
+
   /// Activity type: 'run', 'walk', 'workout', 'cycle'
   final String type;
-  
+
   /// Activity details (e.g., "3.2 miles • 30 min")
   final String details;
-  
+
   /// Activity completion date
   final DateTime date;
 
   /// Pre-workout mood rating
   final MoodRating? preMood;
-  
+
   /// Post-workout mood rating
   final MoodRating? postMood;
-  
+
   /// Mood change (post - pre)
   final int? moodChange;
 
@@ -40,7 +40,10 @@ class RecentActivity {
     this.postMood,
     this.moodChange,
   }) : assert(
-         type == 'run' || type == 'walk' || type == 'workout' || type == 'cycle',
+         type == 'run' ||
+             type == 'walk' ||
+             type == 'workout' ||
+             type == 'cycle',
          'Activity type must be one of: run, walk, workout, cycle',
        ),
        assert(
@@ -66,7 +69,7 @@ class RecentActivity {
     final today = DateTime(now.year, now.month, now.day);
     final activityDay = DateTime(date.year, date.month, date.day);
     final difference = today.difference(activityDay).inDays;
-    
+
     if (difference == 0) return 'Today';
     if (difference == 1) return 'Yesterday';
     return DateFormat('MMM d').format(date);
@@ -79,7 +82,7 @@ class RecentActivity {
       name: json['name'] as String,
       type: json['type'] as String,
       details: json['details'] as String,
-      date: json['date'] is DateTime 
+      date: json['date'] is DateTime
           ? json['date'] as DateTime
           : DateTime.parse(json['date'] as String),
       preMood: json['pre_mood'] != null
@@ -127,6 +130,15 @@ class RecentActivity {
 
   @override
   int get hashCode {
-    return Object.hash(id, name, type, details, date, preMood, postMood, moodChange);
+    return Object.hash(
+      id,
+      name,
+      type,
+      details,
+      date,
+      preMood,
+      postMood,
+      moodChange,
+    );
   }
 }

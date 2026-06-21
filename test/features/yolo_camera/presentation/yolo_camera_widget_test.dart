@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -96,6 +97,204 @@ void main() {
     expect(find.text('Pick Image'), findsOneWidget);
     expect(find.textContaining('Could not analyze image:'), findsOneWidget);
   });
+
+  testWidgets('single-shot pose mode routes gallery bytes to pose detection', (
+    tester,
+  ) async {
+    final image = _writeTestPng(tempDir, 'pose.png');
+    final repository = _FakeYoloRepository();
+    List<DetectionResult>? detectedResults;
+
+    await tester.pumpWidget(
+      _harness(
+        repository: repository,
+        child: YoloCameraWidget(
+          cameraMode: CameraMode.singleShot,
+          detectionMode: DetectionMode.pose,
+          pickImage: () async => image.path,
+          readImageBytes: (_) async => Uint8List.fromList([9, 8, 7]),
+          onDetection: (results) => detectedResults = results,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Pick Image'));
+    await _pumpExternalAsync(tester);
+
+    expect(repository.detectedImageBytes, Uint8List.fromList([9, 8, 7]));
+    expect(repository.detectedAsObject, isFalse);
+    expect(detectedResults, hasLength(1));
+    expect(detectedResults!.single.label, 'pose');
+    expect(find.text('Pick Another'), findsOneWidget);
+  });
+
+  testWidgets('single-shot image byte read failure restores picker action', (
+    tester,
+  ) async {
+    final image = _writeTestPng(tempDir, 'read-failure.png');
+    final repository = _FakeYoloRepository();
+
+    await tester.pumpWidget(
+      _harness(
+        repository: repository,
+        child: YoloCameraWidget(
+          cameraMode: CameraMode.singleShot,
+          pickImage: () async => image.path,
+          readImageBytes: (_) async => throw StateError('decode failed'),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Pick Image'));
+    await _pumpExternalAsync(tester);
+
+    expect(repository.detectedImageBytes, isNull);
+    expect(find.text('Pick Another'), findsOneWidget);
+    expect(find.textContaining('Could not analyze image:'), findsOneWidget);
+    expect(find.textContaining('decode failed'), findsOneWidget);
+  });
+
+  testWidgets(
+    'single-shot pick action is locked while image selection is busy',
+    (tester) async {
+      final image = _writeTestPng(tempDir, 'busy.png');
+      final repository = _FakeYoloRepository();
+      final pickerCompleter = Completer<String?>();
+      var pickCalls = 0;
+
+      await tester.pumpWidget(
+        _harness(
+          repository: repository,
+          child: YoloCameraWidget(
+            cameraMode: CameraMode.singleShot,
+            pickImage: () {
+              pickCalls += 1;
+              return pickerCompleter.future;
+            },
+            readImageBytes: (_) async => Uint8List.fromList([1, 1, 2, 3]),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Pick Image'));
+      await tester.pump();
+
+      expect(find.text('Analyzing...'), findsOneWidget);
+
+      await tester.tap(find.text('Analyzing...'), warnIfMissed: false);
+      await tester.pump();
+
+      expect(pickCalls, 1);
+
+      pickerCompleter.complete(image.path);
+      await _pumpExternalAsync(tester);
+
+      expect(repository.detectedImageBytes, isNotNull);
+      expect(find.text('Pick Another'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'switching from realtime to single-shot disposes loading preview',
+    (tester) async {
+      final repository = _FakeYoloRepository();
+
+      await tester.pumpWidget(
+        _harness(
+          repository: repository,
+          child: const YoloCameraWidget(cameraMode: CameraMode.realtime),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('Pick Image'), findsNothing);
+
+      await tester.pumpWidget(
+        _harness(
+          repository: repository,
+          child: const YoloCameraWidget(cameraMode: CameraMode.singleShot),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Pick Image'), findsOneWidget);
+    },
+  );
+
+  testWidgets('realtime mode with no cameras stays in loading state safely', (
+    tester,
+  ) async {
+    final repository = _FakeYoloRepository();
+
+    await tester.pumpWidget(
+      _harness(
+        repository: repository,
+        loadCameraDescriptions: () async => const [],
+        child: const YoloCameraWidget(cameraMode: CameraMode.realtime),
+      ),
+    );
+    await _pumpAsyncFrame(tester);
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(repository.objectDetectorInitCount, 0);
+    expect(repository.poseDetectorInitCount, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'realtime mode handles camera discovery failure without crashing',
+    (tester) async {
+      final repository = _FakeYoloRepository();
+
+      await tester.pumpWidget(
+        _harness(
+          repository: repository,
+          loadCameraDescriptions: () async =>
+              throw StateError('camera list failed'),
+          child: const YoloCameraWidget(cameraMode: CameraMode.realtime),
+        ),
+      );
+      await _pumpAsyncFrame(tester);
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(repository.objectDetectorInitCount, 0);
+      expect(repository.poseDetectorInitCount, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('realtime detection mode changes reinitialize the detector', (
+    tester,
+  ) async {
+    final repository = _FakeYoloRepository();
+
+    await tester.pumpWidget(
+      _harness(
+        repository: repository,
+        loadCameraDescriptions: () async => const [],
+        child: const YoloCameraWidget(cameraMode: CameraMode.realtime),
+      ),
+    );
+    await _pumpAsyncFrame(tester);
+
+    await tester.pumpWidget(
+      _harness(
+        repository: repository,
+        loadCameraDescriptions: () async => const [],
+        child: const YoloCameraWidget(
+          cameraMode: CameraMode.realtime,
+          detectionMode: DetectionMode.pose,
+        ),
+      ),
+    );
+    await _pumpAsyncFrame(tester);
+
+    expect(repository.objectDetectorInitCount, 0);
+    expect(repository.poseDetectorInitCount, 1);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
 }
 
 Future<void> _pumpExternalAsync(WidgetTester tester) async {
@@ -106,9 +305,27 @@ Future<void> _pumpExternalAsync(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Widget _harness({required YoloRepository repository, required Widget child}) {
+Future<void> _pumpAsyncFrame(WidgetTester tester) async {
+  await tester.pump();
+  await tester.runAsync(() async {
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+  });
+  await tester.pump();
+}
+
+Widget _harness({
+  required YoloRepository repository,
+  required Widget child,
+  Future<List<CameraDescription>> Function()? loadCameraDescriptions,
+}) {
   return ProviderScope(
-    overrides: [yoloRepositoryProvider.overrideWithValue(repository)],
+    overrides: [
+      yoloRepositoryProvider.overrideWithValue(repository),
+      if (loadCameraDescriptions != null)
+        cameraDescriptionProvider.overrideWith(
+          (ref) => loadCameraDescriptions(),
+        ),
+    ],
     child: MaterialApp(
       home: Scaffold(body: SizedBox.expand(child: child)),
     ),
@@ -141,6 +358,8 @@ Future<void> _deleteDirectoryBestEffort(Directory directory) async {
 class _FakeYoloRepository implements YoloRepository {
   Uint8List? detectedImageBytes;
   bool? detectedAsObject;
+  int objectDetectorInitCount = 0;
+  int poseDetectorInitCount = 0;
 
   @override
   Future<List<DetectionResult>> detectFromImageBytes(
@@ -151,7 +370,7 @@ class _FakeYoloRepository implements YoloRepository {
     detectedAsObject = isObjectDetection;
     return [
       DetectionResult(
-        label: 'water bottle',
+        label: isObjectDetection ? 'water bottle' : 'pose',
         confidence: 0.91,
         bbox: const [0.1, 0.1, 0.4, 0.5],
       ),
@@ -168,8 +387,12 @@ class _FakeYoloRepository implements YoloRepository {
   Future<void> dispose() async {}
 
   @override
-  Future<void> initObjectDetector() async {}
+  Future<void> initObjectDetector() async {
+    objectDetectorInitCount += 1;
+  }
 
   @override
-  Future<void> initPoseDetector() async {}
+  Future<void> initPoseDetector() async {
+    poseDetectorInitCount += 1;
+  }
 }

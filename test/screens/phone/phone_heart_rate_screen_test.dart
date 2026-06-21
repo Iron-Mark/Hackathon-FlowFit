@@ -127,6 +127,44 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
   });
 
+  testWidgets('retry after watch stream failure restarts listener', (
+    tester,
+  ) async {
+    var startCalls = 0;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(phoneDataChannel, (call) async {
+          if (call.method == 'startListening') {
+            startCalls += 1;
+            return true;
+          }
+          return null;
+        });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockStreamHandler(
+          heartRateEventChannel,
+          MockStreamHandler.inline(
+            onListen: (arguments, events) {
+              events.error(
+                code: 'WATCH_STREAM_ERROR',
+                message: 'Heart rate stream disconnected',
+              );
+            },
+          ),
+        );
+
+    await pumpScreen(tester);
+
+    expect(startCalls, 1);
+    expect(find.text('Watch listener is not active'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(startCalls, 2);
+    expect(find.text('Listening for watch data'), findsOneWidget);
+    expect(find.text('Retry'), findsNothing);
+  });
+
   testWidgets(
     'test mode shows sensor batch data before heart readings arrive',
     (tester) async {

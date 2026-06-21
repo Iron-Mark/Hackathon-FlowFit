@@ -4,18 +4,18 @@ import '../../services/watch_bridge.dart';
 import '../../services/supabase_service.dart';
 
 /// Implementation of HeartRateRepository
-/// 
+///
 /// This connects the domain layer to the data sources (watch and Supabase).
 class HeartRateRepositoryImpl implements HeartRateRepository {
   final WatchBridgeService _watchBridge;
   final SupabaseService _supabaseService;
-  
+
   HeartRateRepositoryImpl({
     required WatchBridgeService watchBridge,
     required SupabaseService supabaseService,
-  })  : _watchBridge = watchBridge,
-        _supabaseService = supabaseService;
-  
+  }) : _watchBridge = watchBridge,
+       _supabaseService = supabaseService;
+
   @override
   Stream<HeartRateData> get heartRateStream {
     // WatchBridgeService already returns HeartRateData objects
@@ -29,26 +29,26 @@ class HeartRateRepositoryImpl implements HeartRateRepository {
       );
     });
   }
-  
+
   HeartRateStatus _convertStatus(String status) {
     return HeartRateStatus.fromString(status);
   }
-  
+
   @override
   Future<void> startTracking() async {
     await _watchBridge.startHeartRateTracking();
   }
-  
+
   @override
   Future<void> stopTracking() async {
     await _watchBridge.stopHeartRateTracking();
   }
-  
+
   @override
   Future<void> saveHeartRateData(HeartRateData data) async {
     await _supabaseService.saveHeartRateData(data.toJson());
   }
-  
+
   @override
   Future<List<HeartRateData>> getHistoricalData({
     required DateTime startDate,
@@ -58,7 +58,7 @@ class HeartRateRepositoryImpl implements HeartRateRepository {
       startDate: startDate,
       endDate: endDate,
     );
-    
+
     return jsonData.map((json) => HeartRateData.fromJson(json)).toList();
   }
 }

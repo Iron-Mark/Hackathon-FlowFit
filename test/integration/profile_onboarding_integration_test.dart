@@ -200,6 +200,72 @@ void main() {
     );
 
     testWidgets(
+      'INTEGRATION: Survey skip saves smart defaults before dashboard',
+      (WidgetTester tester) async {
+        const testUserId = 'test-user-skip';
+        const testName = 'Skip User';
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              home: Builder(
+                builder: (context) {
+                  return Scaffold(
+                    body: Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/survey_intro',
+                            arguments: {'userId': testUserId, 'name': testName},
+                          );
+                        },
+                        child: const Text('Start Survey'),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              routes: {
+                '/survey_intro': (context) => const SurveyIntroScreen(),
+                '/dashboard': (context) =>
+                    const Scaffold(body: Center(child: Text('Dashboard'))),
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await _tapAndSettle(tester, find.text('Start Survey'));
+        await _tapAndSettle(tester, find.byType(OutlinedButton));
+
+        expect(find.text('Dashboard'), findsOneWidget);
+
+        final repository = await container.read(
+          profile_providers.profileRepositoryProvider.future,
+        );
+        final profile = await repository.getLocalProfile(testUserId);
+
+        expect(profile, isNotNull);
+        expect(profile!.surveyCompleted, isTrue);
+        expect(profile.fullName, testName);
+        expect(profile.age, 18);
+        expect(profile.gender, 'other');
+        expect(profile.height, 170.0);
+        expect(profile.weight, 70.0);
+        expect(profile.activityLevel, 'moderately_active');
+        expect(profile.goals, ['maintain_weight', 'improve_cardio']);
+        expect(profile.dailyCalorieTarget, 2000);
+        expect(profile.dailyStepsTarget, 10000);
+        expect(profile.dailyActiveMinutesTarget, 30);
+        expect(profile.dailyWaterTarget, 2.5);
+        expect(container.read(surveyNotifierProvider).surveyData, isEmpty);
+      },
+      timeout: const Timeout(Duration(minutes: 1)),
+    );
+
+    testWidgets(
       'INTEGRATION: Profile data displays correctly in profile screen',
       (WidgetTester tester) async {
         const testUserId = 'test-user-456';

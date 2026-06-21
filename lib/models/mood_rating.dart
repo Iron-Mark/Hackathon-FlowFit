@@ -1,19 +1,19 @@
 /// Data model representing a mood rating on a 5-point scale
-/// 
+///
 /// Used for pre and post-workout mood tracking to measure
 /// the emotional impact of exercise.
 class MoodRating {
   /// Mood value on 1-5 scale
   /// 1 = Very Bad, 2 = Bad, 3 = Neutral, 4 = Good, 5 = Energized
   final int value;
-  
+
   /// Emoji representation of mood
   /// 😢 😕 😐 🙂 💪
   final String emoji;
-  
+
   /// Timestamp when mood was recorded
   final DateTime timestamp;
-  
+
   /// Optional notes about the mood
   final String? notes;
 
@@ -26,14 +26,8 @@ class MoodRating {
 
   /// Creates a MoodRating from a numeric value (1-5)
   factory MoodRating.fromValue(int value, {String? notes}) {
-    const emojiMap = {
-      1: '😢',
-      2: '😕',
-      3: '😐',
-      4: '🙂',
-      5: '💪',
-    };
-    
+    const emojiMap = {1: '😢', 2: '😕', 3: '😐', 4: '🙂', 5: '💪'};
+
     return MoodRating(
       value: value,
       emoji: emojiMap[value]!,

@@ -1,11 +1,7 @@
 import 'user.dart';
 
 /// Enum representing the authentication status.
-enum AuthStatus {
-  authenticated,
-  unauthenticated,
-  loading,
-}
+enum AuthStatus { authenticated, unauthenticated, loading }
 
 /// Domain entity representing the current authentication state.
 /// Designed to work with Riverpod StateNotifier for reactive state management.
@@ -14,31 +10,24 @@ class AuthState {
   final User? user;
   final String? errorMessage;
 
-  const AuthState({
-    required this.status,
-    this.user,
-    this.errorMessage,
-  });
+  const AuthState({required this.status, this.user, this.errorMessage});
 
   /// Factory constructor for initial loading state
   factory AuthState.initial() => const AuthState(status: AuthStatus.loading);
 
   /// Factory constructor for authenticated state
-  factory AuthState.authenticated(User user) => AuthState(
-        status: AuthStatus.authenticated,
-        user: user,
-      );
+  factory AuthState.authenticated(User user) =>
+      AuthState(status: AuthStatus.authenticated, user: user);
 
   /// Factory constructor for unauthenticated state
-  factory AuthState.unauthenticated() => const AuthState(
-        status: AuthStatus.unauthenticated,
-      );
+  factory AuthState.unauthenticated() =>
+      const AuthState(status: AuthStatus.unauthenticated);
 
   /// Factory constructor for error state
   factory AuthState.error(String message, {AuthStatus? status}) => AuthState(
-        status: status ?? AuthStatus.unauthenticated,
-        errorMessage: message,
-      );
+    status: status ?? AuthStatus.unauthenticated,
+    errorMessage: message,
+  );
 
   /// Creates a copy of this state with the given fields replaced
   AuthState copyWith({

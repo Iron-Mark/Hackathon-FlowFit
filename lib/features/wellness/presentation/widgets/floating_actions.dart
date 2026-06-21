@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:latlong2/latlong.dart' as maplat;
 
-class FloatingMapActions extends StatelessWidget {
+class FloatingMapActions extends StatefulWidget {
   final fm.MapController? mapController;
   final maplat.LatLng? lastCenter;
   final Future<void> Function(maplat.LatLng) onAddAtLatLng;
@@ -17,8 +17,18 @@ class FloatingMapActions extends StatelessWidget {
     super.key,
   });
 
+  @override
+  State<FloatingMapActions> createState() => _FloatingMapActionsState();
+}
+
+class _FloatingMapActionsState extends State<FloatingMapActions> {
+  bool _isCentering = false;
+  bool _isAdding = false;
+
   Future<void> _centerOnCurrentLocation(BuildContext context) async {
-    final controller = mapController;
+    if (_isCentering) return;
+
+    final controller = widget.mapController;
     if (controller == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Map is still loading. Try again soon.')),
@@ -26,9 +36,13 @@ class FloatingMapActions extends StatelessWidget {
       return;
     }
 
+    setState(() {
+      _isCentering = true;
+    });
+
     try {
       final currentLocation =
-          await (currentLocationGetter?.call() ??
+          await (widget.currentLocationGetter?.call() ??
               Geolocator.getCurrentPosition().then(
                 (pos) => maplat.LatLng(pos.latitude, pos.longitude),
               ));
@@ -40,11 +54,19 @@ class FloatingMapActions extends StatelessWidget {
           content: Text('Could not get your location. Check GPS permission.'),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCentering = false;
+        });
+      }
     }
   }
 
   Future<void> _addAtVisibleCenter(BuildContext context) async {
-    final center = lastCenter;
+    if (_isAdding) return;
+
+    final center = widget.lastCenter;
     if (center == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Map center is not ready yet.')),
@@ -52,7 +74,21 @@ class FloatingMapActions extends StatelessWidget {
       return;
     }
 
-    await onAddAtLatLng(maplat.LatLng(center.latitude, center.longitude));
+    setState(() {
+      _isAdding = true;
+    });
+
+    try {
+      await widget.onAddAtLatLng(
+        maplat.LatLng(center.latitude, center.longitude),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAdding = false;
+        });
+      }
+    }
   }
 
   @override
@@ -67,13 +103,17 @@ class FloatingMapActions extends StatelessWidget {
             children: [
               FloatingActionButton.small(
                 heroTag: 'center_location',
-                onPressed: () async => _centerOnCurrentLocation(context),
+                onPressed: _isCentering
+                    ? null
+                    : () async => _centerOnCurrentLocation(context),
                 child: const Icon(Icons.my_location),
               ),
               const SizedBox(height: 8),
               FloatingActionButton.small(
                 heroTag: 'add_mission',
-                onPressed: () async => _addAtVisibleCenter(context),
+                onPressed: _isAdding
+                    ? null
+                    : () async => _addAtVisibleCenter(context),
                 child: const Icon(Icons.add),
               ),
             ],

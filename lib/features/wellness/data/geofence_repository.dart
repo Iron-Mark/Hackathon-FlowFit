@@ -17,7 +17,8 @@ class InMemoryGeofenceRepository extends GeofenceRepository {
   final Map<String, GeofenceMission> _store = {};
 
   @override
-  Future<List<GeofenceMission>> getAll() async => UnmodifiableListView(_store.values);
+  Future<List<GeofenceMission>> getAll() async =>
+      UnmodifiableListView(_store.values);
 
   @override
   List<GeofenceMission> get current => UnmodifiableListView(_store.values);

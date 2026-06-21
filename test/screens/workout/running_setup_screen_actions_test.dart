@@ -60,6 +60,51 @@ void main() {
     },
   );
 
+  testWidgets('distance target slider value is passed to started session', (
+    tester,
+  ) async {
+    final distanceNotifier = _FakeRunningSetupNotifier();
+    await _pumpScreen(tester, distanceNotifier);
+
+    tester.widget<Slider>(find.byType(Slider)).onChanged!(12.5);
+    await tester.pump();
+    expect(find.text('12.5 km'), findsOneWidget);
+
+    await tester.tap(find.text('Start Running'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(distanceNotifier.lastGoalType, GoalType.distance);
+    expect(distanceNotifier.lastTargetDistance, 12.5);
+    expect(distanceNotifier.lastTargetDuration, isNull);
+  });
+
+  testWidgets('duration target slider value is passed to started session', (
+    tester,
+  ) async {
+    final durationNotifier = _FakeRunningSetupNotifier();
+    await _pumpScreen(tester, durationNotifier);
+
+    await tester.tap(
+      find.ancestor(
+        of: find.text('Duration'),
+        matching: find.byType(GestureDetector),
+      ),
+    );
+    await tester.pump();
+    tester.widget<Slider>(find.byType(Slider)).onChanged!(75);
+    await tester.pump();
+    expect(find.text('75 min'), findsOneWidget);
+
+    await tester.tap(find.text('Start Running'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(durationNotifier.lastGoalType, GoalType.duration);
+    expect(durationNotifier.lastTargetDistance, isNull);
+    expect(durationNotifier.lastTargetDuration, 75);
+  });
+
   testWidgets('start failure keeps setup visible with retry feedback', (
     tester,
   ) async {

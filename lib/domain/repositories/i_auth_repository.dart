@@ -25,10 +25,7 @@ abstract class IAuthRepository {
   ///
   /// Returns a [User] entity on successful authentication.
   /// Throws [AuthException] on failure.
-  Future<User> signIn({
-    required String email,
-    required String password,
-  });
+  Future<User> signIn({required String email, required String password});
 
   /// Signs out the current user.
   ///

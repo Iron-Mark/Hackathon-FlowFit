@@ -1,12 +1,12 @@
 // Core providers for the FlowFit phone app
-// 
+//
 // This file exports all providers used throughout the app.
 // Organized by feature domain for clean architecture.
-// 
+//
 // Usage:
 // ```dart
 // import 'package:flowfit/core/providers/providers.dart';
-// 
+//
 // // In your ConsumerWidget:
 // final heartRate = ref.watch(currentHeartRateProvider);
 // ```

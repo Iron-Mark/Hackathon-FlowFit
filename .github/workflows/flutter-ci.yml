@@ -16,6 +16,29 @@ permissions:
   contents: read
 
 jobs:
+  windows-action-smoke:
+    name: Windows Offline App Action Smoke
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.41.9"
+          cache: true
+
+      - name: Flutter dependencies
+        run: flutter pub get
+
+      - name: Offline app action smoke
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/verify_offline_app_actions.ps1 -SkipPubGet
+
   verify:
     name: Analyze, Test, and Build
     runs-on: ubuntu-latest
@@ -64,6 +87,12 @@ jobs:
       - name: Flutter dependencies
         run: flutter pub get
 
+      - name: Node dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
       - name: Release readiness audit
         shell: pwsh
         run: pwsh -NoProfile -File scripts/release_readiness_audit.ps1
@@ -81,6 +110,10 @@ jobs:
           ! grep -F "$blocked_email_redirect" lib/data/repositories/auth_repository.dart
           ! grep -F "$blocked_return_redirect" lib/utils/deep_link_handler.dart
           ! grep -Fi "$blocked_security_mode" supabase/migrations/20260614062844_recreate_flowfit_backend.sql
+
+      - name: Dart format
+        shell: bash
+        run: git ls-files -z '*.dart' | xargs -0 dart format --output=none --set-exit-if-changed
 
       - name: Dart analyzer machine output
         run: dart analyze --format=machine
@@ -141,6 +174,7 @@ jobs:
           done
 
           pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/verify_web_deployment.ps1 -BaseUrl http://127.0.0.1:8791 -SupportEmail support@flowfit.com -AllowInsecureLocalhost -OutFile build/web-static-ci-smoke.json
+          npm run web:smoke -- --base-url http://127.0.0.1:8791 --out-file build/web-app-smoke-ci.json
 
       - name: Flutter web Wasm release build
         run: >
@@ -177,7 +211,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: flowfit-web-static-verification-smoke
-          path: build/web-static-ci-smoke.json
+          path: |
+            build/web-static-ci-smoke.json
+            build/web-app-smoke-ci.json
           if-no-files-found: error
 
       - name: Free web artifact build outputs before Android

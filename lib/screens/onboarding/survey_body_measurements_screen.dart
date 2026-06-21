@@ -4,6 +4,7 @@ import 'package:solar_icons/solar_icons.dart';
 import '../../theme/app_theme.dart';
 import '../../presentation/providers/providers.dart';
 import '../../widgets/survey_app_bar.dart';
+import '../../core/utils/height_measurements.dart';
 import '../../core/utils/logger.dart';
 
 class SurveyBodyMeasurementsScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,7 @@ class _SurveyBodyMeasurementsScreenState
   final _weightController = TextEditingController();
   String _heightUnit = 'cm';
   String _weightUnit = 'kg';
+  bool _isContinuing = false;
   final _logger = Logger('SurveyBodyMeasurementsScreen');
 
   @override
@@ -44,9 +46,13 @@ class _SurveyBodyMeasurementsScreenState
       final profile = profileAsync.valueOrNull;
 
       if (profile != null) {
+        final profileHeightUnit = profile.heightUnit ?? 'cm';
         // User has existing profile data - pre-populate from profile
         if (profile.height != null) {
-          _heightController.text = profile.height.toString();
+          _heightController.text = heightInputLabelFromStoredValue(
+            profile.height!,
+            profileHeightUnit,
+          );
         }
         if (profile.weight != null) {
           _weightController.text = profile.weight.toString();
@@ -55,11 +61,17 @@ class _SurveyBodyMeasurementsScreenState
           setState(() {
             _heightUnit = profile.heightUnit!;
           });
+          ref
+              .read(surveyNotifierProvider.notifier)
+              .updateSurveyData('heightUnit', profile.heightUnit);
         }
         if (profile.weightUnit != null) {
           setState(() {
             _weightUnit = profile.weightUnit!;
           });
+          ref
+              .read(surveyNotifierProvider.notifier)
+              .updateSurveyData('weightUnit', profile.weightUnit);
         }
         // Update survey state with profile data
         if (profile.height != null) {
@@ -78,9 +90,23 @@ class _SurveyBodyMeasurementsScreenState
 
     // If no profile data, load from survey state
     final surveyState = ref.read(surveyNotifierProvider);
-    final height = surveyState.surveyData['height'];
-    if (height != null) {
-      _heightController.text = height.toString();
+    final heightUnit = surveyState.surveyData['heightUnit'] as String?;
+    if (heightUnit != null && heightUnit.isNotEmpty) {
+      _heightUnit = heightUnit;
+    }
+    final weightUnit = surveyState.surveyData['weightUnit'] as String?;
+    if (weightUnit != null && weightUnit.isNotEmpty) {
+      _weightUnit = weightUnit;
+    }
+    final heightInput = surveyState.surveyData['heightInput'] as String?;
+    final height = (surveyState.surveyData['height'] as num?)?.toDouble();
+    if (heightInput != null && heightInput.isNotEmpty) {
+      _heightController.text = heightInput;
+    } else if (height != null) {
+      _heightController.text = heightInputLabelFromStoredValue(
+        height,
+        _heightUnit,
+      );
     }
     final weight = surveyState.surveyData['weight'];
     if (weight != null) {
@@ -99,7 +125,45 @@ class _SurveyBodyMeasurementsScreenState
   bool get _canContinue =>
       _heightController.text.isNotEmpty && _weightController.text.isNotEmpty;
 
+  void _handleHeightUnitChanged(String value) {
+    if (value == _heightUnit) return;
+
+    final convertedInput = convertHeightInputForUnit(
+      input: _heightController.text,
+      fromUnit: _heightUnit,
+      toUnit: value,
+    );
+
+    setState(() {
+      if (convertedInput != null) {
+        _heightController.text = convertedInput;
+      }
+      _heightUnit = value;
+    });
+  }
+
+  void _handleWeightUnitChanged(String value) {
+    if (value == _weightUnit) return;
+
+    final currentWeight = double.tryParse(_weightController.text.trim());
+    setState(() {
+      if (currentWeight != null && currentWeight > 0) {
+        final convertedWeight = _convertWeightInput(
+          currentWeight,
+          fromUnit: _weightUnit,
+          toUnit: value,
+        );
+        if (convertedWeight != null) {
+          _weightController.text = _formatMeasurementInput(convertedWeight);
+        }
+      }
+      _weightUnit = value;
+    });
+  }
+
   Future<void> _handleNext() async {
+    if (_isContinuing) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -109,17 +173,26 @@ class _SurveyBodyMeasurementsScreenState
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final userId = args?['userId'] as String?;
 
+    setState(() => _isContinuing = true);
+
     try {
       // Save data to survey notifier
       final surveyNotifier = ref.read(surveyNotifierProvider.notifier);
+      final parsedHeight = parseHeightForStorage(
+        _heightController.text,
+        _heightUnit,
+      );
+      await surveyNotifier.updateSurveyData('height', parsedHeight);
       await surveyNotifier.updateSurveyData(
-        'height',
-        double.parse(_heightController.text),
+        'heightInput',
+        _heightController.text.trim(),
       );
       await surveyNotifier.updateSurveyData(
         'weight',
         double.parse(_weightController.text),
       );
+      await surveyNotifier.updateSurveyData('heightUnit', _heightUnit);
+      await surveyNotifier.updateSurveyData('weightUnit', _weightUnit);
 
       // Validate using the notifier's validation method
       final validationError = surveyNotifier.validateBodyMeasurements();
@@ -171,6 +244,10 @@ class _SurveyBodyMeasurementsScreenState
             backgroundColor: Colors.red,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isContinuing = false);
       }
     }
   }
@@ -268,13 +345,19 @@ class _SurveyBodyMeasurementsScreenState
                                 flex: 2,
                                 child: TextFormField(
                                   controller: _heightController,
-                                  keyboardType: TextInputType.number,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
                                   style: const TextStyle(
                                     color: AppTheme.text,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   decoration: InputDecoration(
                                     hintText: 'Enter height',
+                                    helperText: _heightUnit == 'ft'
+                                        ? 'Use feet.inches, e.g. 5.8 for 5 ft 8 in'
+                                        : null,
                                     hintStyle: TextStyle(
                                       color: Colors.grey[500],
                                     ),
@@ -300,6 +383,15 @@ class _SurveyBodyMeasurementsScreenState
                                     if (value == null || value.isEmpty) {
                                       return 'Height is required';
                                     }
+                                    if (_heightUnit == 'ft') {
+                                      final height = tryParseFeetInchesInput(
+                                        value,
+                                      );
+                                      if (height == null) {
+                                        return 'Enter inches from 0 to 11';
+                                      }
+                                      return null;
+                                    }
                                     final height = double.tryParse(value);
                                     if (height == null || height <= 0) {
                                       return 'Enter a valid height';
@@ -315,8 +407,7 @@ class _SurveyBodyMeasurementsScreenState
                                   value: _heightUnit,
                                   option1: 'cm',
                                   option2: 'ft',
-                                  onChanged: (value) =>
-                                      setState(() => _heightUnit = value),
+                                  onChanged: _handleHeightUnitChanged,
                                 ),
                               ),
                             ],
@@ -389,8 +480,7 @@ class _SurveyBodyMeasurementsScreenState
                                   value: _weightUnit,
                                   option1: 'kg',
                                   option2: 'lbs',
-                                  onChanged: (value) =>
-                                      setState(() => _weightUnit = value),
+                                  onChanged: _handleWeightUnitChanged,
                                 ),
                               ),
                             ],
@@ -402,7 +492,9 @@ class _SurveyBodyMeasurementsScreenState
                           SizedBox(
                             height: 56,
                             child: ElevatedButton(
-                              onPressed: _canContinue ? _handleNext : null,
+                              onPressed: _canContinue && !_isContinuing
+                                  ? _handleNext
+                                  : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.primaryBlue,
                                 foregroundColor: Colors.white,
@@ -412,9 +504,9 @@ class _SurveyBodyMeasurementsScreenState
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              child: const Text(
-                                'Continue',
-                                style: TextStyle(
+                              child: Text(
+                                _isContinuing ? 'Saving...' : 'Continue',
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -503,5 +595,27 @@ class _SurveyBodyMeasurementsScreenState
         ],
       ),
     );
+  }
+
+  double? _convertWeightInput(
+    double value, {
+    required String fromUnit,
+    required String toUnit,
+  }) {
+    if (fromUnit == toUnit) return value;
+    if (fromUnit == 'kg' && toUnit == 'lbs') {
+      return value / 0.45359237;
+    }
+    if (fromUnit == 'lbs' && toUnit == 'kg') {
+      return value * 0.45359237;
+    }
+    return null;
+  }
+
+  String _formatMeasurementInput(double value) {
+    final rounded = double.parse(value.toStringAsFixed(1));
+    return rounded == rounded.roundToDouble()
+        ? rounded.toStringAsFixed(0)
+        : rounded.toStringAsFixed(1);
   }
 }

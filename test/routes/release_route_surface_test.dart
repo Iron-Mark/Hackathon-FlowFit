@@ -13,7 +13,8 @@ void main() {
   late String mainSource;
   late String buddyProfileSetupSource;
   late String profileSource;
-  late Set<String> definedRoutes;
+  late int debugRouteGate;
+  late Set<String> releaseRoutes;
 
   setUpAll(() {
     mainSource = File('lib/main.dart').readAsStringSync();
@@ -23,14 +24,16 @@ void main() {
     profileSource = File(
       'lib/screens/profile/profile_screen.dart',
     ).readAsStringSync();
-    definedRoutes = RegExp(
+    debugRouteGate = mainSource.indexOf('if (kDebugMode) ...{');
+    final releaseRouteSource = debugRouteGate == -1
+        ? mainSource
+        : mainSource.substring(0, debugRouteGate);
+    releaseRoutes = RegExp(
       r'''['"](/[^'"]*)['"]\s*:''',
-    ).allMatches(mainSource).map((match) => match.group(1)!).toSet();
+    ).allMatches(releaseRouteSource).map((match) => match.group(1)!).toSet();
   });
 
   test('debug-only named routes are gated from the production route map', () {
-    final debugRouteGate = mainSource.indexOf('if (kDebugMode) ...{');
-
     expect(debugRouteGate, isNonNegative);
     expect(mainSource, contains("'/activity-classifier'"));
     expect(
@@ -48,6 +51,26 @@ void main() {
     expect(mainSource.substring(debugRouteGate), contains("'/font-demo'"));
     expect(mainSource.substring(debugRouteGate), contains("'/yolo-debug'"));
     expect(mainSource.substring(debugRouteGate), contains("'/trackertest'"));
+  });
+
+  test('debug route menu is not mounted in the production app shell', () {
+    expect(
+      mainSource,
+      isNot(
+        matches(
+          RegExp(
+            r"^\s*import\s+'widgets/debug_route_menu\.dart';",
+            multiLine: true,
+          ),
+        ),
+      ),
+    );
+    expect(
+      mainSource,
+      isNot(
+        matches(RegExp(r'^\s*const\s+DebugRouteMenu\(\),', multiLine: true)),
+      ),
+    );
   });
 
   test('known onboarding named routes match the MaterialApp route table', () {
@@ -129,10 +152,10 @@ void main() {
       '/buddy-customization',
     };
 
-    expect(definedRoutes, containsAll(requiredReleaseRoutes));
+    expect(releaseRoutes, containsAll(requiredReleaseRoutes));
   });
 
-  test('direct named route references are registered in MaterialApp', () {
+  test('direct named route references are registered in release MaterialApp', () {
     final directNamedRoutePattern = RegExp(
       r'''(?:pushNamed|pushReplacementNamed|pushNamedAndRemoveUntil)\s*\(\s*(?:context\s*,\s*)?['"](/[^'"]+)['"]''',
     );
@@ -151,7 +174,7 @@ void main() {
 
     final missing =
         referencedRoutes.entries
-            .where((entry) => !definedRoutes.contains(entry.key))
+            .where((entry) => !releaseRoutes.contains(entry.key))
             .map((entry) => '${entry.key}: ${entry.value.join(', ')}')
             .toList()
           ..sort();

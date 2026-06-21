@@ -20,6 +20,7 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
   final _ageController = TextEditingController();
   String? _selectedGender;
   bool _isEditMode = false;
+  bool _isContinuing = false;
   final _logger = Logger('SurveyBasicInfoScreen');
 
   @override
@@ -156,6 +157,8 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
   }
 
   Future<void> _handleNext() async {
+    if (_isContinuing) return;
+
     if (_formKey.currentState!.validate()) {
       // Capture context-dependent values BEFORE any async operations
       final args =
@@ -172,69 +175,77 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
         return;
       }
 
-      // Save data to survey notifier
-      final surveyNotifier = ref.read(surveyNotifierProvider.notifier);
+      setState(() => _isContinuing = true);
 
-      // Save name if in edit mode
-      if (_isEditMode && _nameController.text.isNotEmpty) {
+      try {
+        // Save data to survey notifier
+        final surveyNotifier = ref.read(surveyNotifierProvider.notifier);
+
+        // Save name if in edit mode
+        if (_isEditMode && _nameController.text.isNotEmpty) {
+          await surveyNotifier.updateSurveyData(
+            'fullName',
+            _nameController.text.trim(),
+          );
+        }
+
         await surveyNotifier.updateSurveyData(
-          'fullName',
-          _nameController.text.trim(),
+          'age',
+          int.parse(_ageController.text),
         );
-      }
+        await surveyNotifier.updateSurveyData('gender', _selectedGender);
 
-      await surveyNotifier.updateSurveyData(
-        'age',
-        int.parse(_ageController.text),
-      );
-      await surveyNotifier.updateSurveyData('gender', _selectedGender);
+        // Validate using the notifier's validation method
+        final validationError = surveyNotifier.validateBasicInfo();
+        if (validationError != null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(validationError),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
 
-      // Validate using the notifier's validation method
-      final validationError = surveyNotifier.validateBasicInfo();
-      if (validationError != null) {
+        // Incremental save: Save partial profile data to local storage
+        // This ensures data persists if user navigates away
+        // Requirement 1.1, 1.2: Save data locally on each step
+        if (userId != null) {
+          try {
+            final handler = await ref.read(
+              surveyCompletionHandlerProvider.future,
+            );
+            final surveyData = ref.read(surveyNotifierProvider).surveyData;
+
+            // Save partial profile data incrementally
+            // This won't clear survey state, just persists to profile storage
+            await handler.completeSurvey(userId, surveyData);
+            _logger.info('Incremental save successful for basic info');
+          } catch (e, stackTrace) {
+            // Log error but don't block user from continuing
+            // Incremental save is best-effort
+            _logger.warning(
+              'Incremental save failed for basic info',
+              error: e,
+              stackTrace: stackTrace,
+            );
+          }
+        }
+
+        // Navigate to next screen
+        if (!mounted) return;
+        Navigator.pushNamed(
+          context,
+          '/survey_body_measurements',
+          arguments: args,
+        );
+      } finally {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(validationError),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      // Incremental save: Save partial profile data to local storage
-      // This ensures data persists if user navigates away
-      // Requirement 1.1, 1.2: Save data locally on each step
-      if (userId != null) {
-        try {
-          final handler = await ref.read(
-            surveyCompletionHandlerProvider.future,
-          );
-          final surveyData = ref.read(surveyNotifierProvider).surveyData;
-
-          // Save partial profile data incrementally
-          // This won't clear survey state, just persists to profile storage
-          await handler.completeSurvey(userId, surveyData);
-          _logger.info('Incremental save successful for basic info');
-        } catch (e, stackTrace) {
-          // Log error but don't block user from continuing
-          // Incremental save is best-effort
-          _logger.warning(
-            'Incremental save failed for basic info',
-            error: e,
-            stackTrace: stackTrace,
-          );
+          setState(() => _isContinuing = false);
         }
       }
-
-      // Navigate to next screen
-      if (!mounted) return;
-      Navigator.pushNamed(
-        context,
-        '/survey_body_measurements',
-        arguments: args,
-      );
     }
   }
 
@@ -386,7 +397,9 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
                         SizedBox(
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: _canContinue ? _handleNext : null,
+                            onPressed: _canContinue && !_isContinuing
+                                ? _handleNext
+                                : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppTheme.primaryBlue,
                               foregroundColor: Colors.white,
@@ -396,9 +409,9 @@ class _SurveyBasicInfoScreenState extends ConsumerState<SurveyBasicInfoScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Continue',
-                              style: TextStyle(
+                            child: Text(
+                              _isContinuing ? 'Saving...' : 'Continue',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),

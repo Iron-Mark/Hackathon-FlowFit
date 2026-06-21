@@ -286,7 +286,7 @@ Target = TDEE + goal_adjustment
 - [ ] Confirm password matches
 - [ ] Cannot submit without required consents
 - [ ] Optional marketing checkbox works
-- [ ] Terms/Policy links show placeholder
+- [ ] Terms/Policy links open the committed legal screens
 
 ### Survey Flow
 - [ ] Can skip from any screen

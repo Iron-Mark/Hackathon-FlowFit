@@ -21,6 +21,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
   bool _audioCuesEnabled = true;
   bool _hrMonitorEnabled = false;
   bool _isStarting = false;
+  String? _startErrorMessage;
 
   final List<ExerciseProgress> _upperBodyExercises = [
     ExerciseProgress(
@@ -270,6 +271,11 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
               ),
               const SizedBox(height: 24),
 
+              if (_startErrorMessage != null) ...[
+                _StartWorkoutError(message: _startErrorMessage!),
+                const SizedBox(height: 16),
+              ],
+
               // Start Workout Button
               SizedBox(
                 width: double.infinity,
@@ -319,128 +325,124 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
     final theme = Theme.of(context);
     final isSelected = _selectedSplit == split;
 
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedSplit = split);
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [color1, color2],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: isSelected ? Border.all(color: Colors.white, width: 3) : null,
-          boxShadow: [
-            BoxShadow(
-              color: color1.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: 'Select ${split.displayName} resistance split',
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedSplit = split;
+            _startErrorMessage = null;
+          });
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [color1, color2],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text(emoji, style: const TextStyle(fontSize: 32)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    split.displayName,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+            borderRadius: BorderRadius.circular(16),
+            border: isSelected
+                ? Border.all(color: Colors.white, width: 3)
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: color1.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 32)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      split.displayName,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
-                if (isSelected)
-                  const Icon(Icons.check_circle, color: Colors.white, size: 28),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              focus,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.9),
+                  if (isSelected)
+                    const Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.access_time,
-                  size: 16,
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  duration,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.local_fire_department,
-                  size: 16,
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  calories,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-              ],
-            ),
-            if (isSelected) ...[
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white24),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               Text(
-                'Exercises',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                focus,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
               ),
               const SizedBox(height: 12),
-              ...exercises.map(
-                (exercise) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Text(
-                        exercise.emoji,
-                        style: const TextStyle(fontSize: 20),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          exercise.exerciseName,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${exercise.totalSets} × ${exercise.targetReps}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
+              Wrap(
+                spacing: 16,
+                runSpacing: 6,
+                children: [
+                  _ResistanceMetric(icon: Icons.access_time, label: duration),
+                  _ResistanceMetric(
+                    icon: Icons.local_fire_department,
+                    label: calories,
+                  ),
+                ],
+              ),
+              if (isSelected) ...[
+                const SizedBox(height: 16),
+                const Divider(color: Colors.white24),
+                const SizedBox(height: 16),
+                Text(
+                  'Exercises',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                ...exercises.map(
+                  (exercise) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Text(
+                          exercise.emoji,
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            exercise.exerciseName,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${exercise.totalSets} × ${exercise.targetReps}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -451,26 +453,32 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
     final isSelected = _restTimerSeconds == seconds;
 
     return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() => _restTimerSeconds = seconds);
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Center(
-            child: Text(
-              '${seconds}s',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: isSelected
-                    ? Colors.white
-                    : theme.colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
+      child: Semantics(
+        button: true,
+        selected: isSelected,
+        label: '$seconds second rest timer',
+        child: GestureDetector(
+          onTap: () {
+            setState(() => _restTimerSeconds = seconds);
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Text(
+                '${seconds}s',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: isSelected
+                      ? Colors.white
+                      : theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -490,7 +498,10 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
     );
     final preMood = ref.read(workoutFlowProvider).preMood;
 
-    setState(() => _isStarting = true);
+    setState(() {
+      _isStarting = true;
+      _startErrorMessage = null;
+    });
     try {
       await ref
           .read(resistanceSessionProvider.notifier)
@@ -504,19 +515,85 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
           );
     } catch (_) {
       if (!context.mounted) return;
-      setState(() => _isStarting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not start resistance workout. Sign in and check your connection, then try again.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _isStarting = false;
+        _startErrorMessage =
+            'Could not start resistance workout. Sign in and check your connection, then try again.';
+      });
       return;
     }
 
     if (!context.mounted) return;
     Navigator.of(context).pushNamed('/workout/resistance/active');
+  }
+}
+
+class _StartWorkoutError extends StatelessWidget {
+  const _StartWorkoutError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.colorScheme.error),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: theme.colorScheme.onErrorContainer,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onErrorContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResistanceMetric extends StatelessWidget {
+  const _ResistanceMetric({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Colors.white.withValues(alpha: 0.9)),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: Colors.white.withValues(alpha: 0.9),
+          ),
+        ),
+      ],
+    );
   }
 }

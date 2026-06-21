@@ -400,7 +400,10 @@ void main() {
           dailyCalorieTarget: 2400,
         );
 
-        expect(sedentary.dailyCalorieTarget, lessThan(active.dailyCalorieTarget));
+        expect(
+          sedentary.dailyCalorieTarget,
+          lessThan(active.dailyCalorieTarget),
+        );
       });
 
       test('marks survey as completed', () {

@@ -12,8 +12,9 @@ import '../../services/gps_tracking_service.dart';
 /// Map widget that responds to wellness state
 class WellnessMapWidget extends StatefulWidget {
   final WellnessState state;
+  final GPSTrackingService? gpsService;
 
-  const WellnessMapWidget({super.key, required this.state});
+  const WellnessMapWidget({super.key, required this.state, this.gpsService});
 
   @override
   State<WellnessMapWidget> createState() => _WellnessMapWidgetState();
@@ -21,7 +22,8 @@ class WellnessMapWidget extends StatefulWidget {
 
 class _WellnessMapWidgetState extends State<WellnessMapWidget> {
   final MapController _mapController = MapController();
-  final GPSTrackingService _gpsService = GPSTrackingService();
+  late final GPSTrackingService _gpsService;
+  late final bool _ownsGpsService;
   LatLng? _userLocation;
   final List<LatLng> _userPath = []; // Track user's walking path
   List<WalkingRoute> _calmingRoutes = [];
@@ -35,6 +37,8 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
   @override
   void initState() {
     super.initState();
+    _gpsService = widget.gpsService ?? GPSTrackingService();
+    _ownsGpsService = widget.gpsService == null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _initializeLocationAccess();
@@ -46,7 +50,9 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
   void dispose() {
     _locationSubscription?.cancel();
     _gpsService.stopTracking();
-    _gpsService.dispose();
+    if (_ownsGpsService) {
+      _gpsService.dispose();
+    }
     super.dispose();
   }
 
@@ -145,8 +151,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
           _locationError = null; // Clear any previous errors
         });
 
-        // Center map on user location
-        _mapController.move(_userLocation!, 15.0);
+        _moveMapWhenReady(location, 15.0);
       }
       return true;
     } catch (e) {
@@ -184,8 +189,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
             }
           });
 
-          // Auto-center map on user location (smooth follow)
-          _mapController.move(location, _mapController.camera.zoom);
+          _moveMapWhenReady(location, _currentMapZoomOrDefault(15.0));
         }
       });
 
@@ -231,7 +235,7 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
 
         // Auto-pan to show routes
         if (routes.isNotEmpty) {
-          _mapController.move(_userLocation!, 14.0);
+          _moveMapWhenReady(_userLocation!, 14.0);
         }
       }
     } catch (e) {
@@ -240,6 +244,26 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
         setState(() => _isLoadingRoutes = false);
       }
     }
+  }
+
+  double _currentMapZoomOrDefault(double fallback) {
+    try {
+      return _mapController.camera.zoom;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  void _moveMapWhenReady(LatLng location, double zoom) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      try {
+        _mapController.move(location, zoom);
+      } catch (error) {
+        debugPrint('⚠️ WellnessMap: Map controller not ready: $error');
+      }
+    });
   }
 
   @override

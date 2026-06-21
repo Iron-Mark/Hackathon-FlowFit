@@ -77,7 +77,12 @@ class PlaceModeOverlay extends StatelessWidget {
                         value: type,
                         isExpanded: true,
                         items: MissionType.values
-                          .map((t) => DropdownMenuItem(value: t, child: Text(t.name)))
+                            .map(
+                              (t) => DropdownMenuItem(
+                                value: t,
+                                child: Text(t.name),
+                              ),
+                            )
                             .toList(),
                         onChanged: onTypeChanged,
                       ),

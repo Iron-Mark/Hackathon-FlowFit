@@ -1,10 +1,10 @@
 import 'sensor_status.dart';
 
 class HeartRateData {
-  final int? bpm;  // Nullable since it might not be available during measurement
+  final int? bpm; // Nullable since it might not be available during measurement
   final DateTime timestamp;
   final SensorStatus status;
-  final List<int> ibiValues;  // Inter-beat interval values in milliseconds
+  final List<int> ibiValues; // Inter-beat interval values in milliseconds
 
   HeartRateData({
     this.bpm,
@@ -26,13 +26,13 @@ class HeartRateData {
     // Handle status as either String or SensorStatus
     final statusValue = json['status'];
     final SensorStatus parsedStatus;
-    
+
     if (statusValue is String) {
       parsedStatus = SensorStatus.fromJson(statusValue);
     } else {
       parsedStatus = SensorStatus.active;
     }
-    
+
     // Parse IBI values
     final ibiList = json['ibiValues'];
     final List<int> parsedIbiValues;
@@ -41,7 +41,7 @@ class HeartRateData {
     } else {
       parsedIbiValues = [];
     }
-    
+
     return HeartRateData(
       bpm: json['bpm'] as int?,
       timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),

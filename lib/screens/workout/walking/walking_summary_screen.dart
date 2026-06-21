@@ -11,18 +11,47 @@ import 'mission_creation_screen.dart';
 
 /// Walking summary screen with mood transformation, metrics, and map
 /// Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7
-class WalkingSummaryScreen extends ConsumerWidget {
+class WalkingSummaryScreen extends ConsumerStatefulWidget {
   const WalkingSummaryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WalkingSummaryScreen> createState() =>
+      _WalkingSummaryScreenState();
+}
+
+class _WalkingSummaryScreenState extends ConsumerState<WalkingSummaryScreen> {
+  bool _isSaving = false;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final session = ref.watch(walkingSessionProvider);
 
     if (session == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Workout Complete')),
-        body: const Center(child: Text('No session data available')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.directions_walk, size: 48),
+                const SizedBox(height: 16),
+                const Text(
+                  'No session data available',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
+                  child: const Text('Back to Dashboard'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
@@ -130,7 +159,9 @@ class WalkingSummaryScreen extends ConsumerWidget {
             SizedBox(
               height: 48,
               child: ElevatedButton(
-                onPressed: () => _saveToHistory(context, ref, session),
+                onPressed: _isSaving
+                    ? null
+                    : () => _saveToHistory(context, ref, session),
                 child: const Text('Save to History'),
               ),
             ),
@@ -376,10 +407,14 @@ class WalkingSummaryScreen extends ConsumerWidget {
     WidgetRef ref,
     WalkingSession session,
   ) async {
+    if (_isSaving) return;
+
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
     try {
+      setState(() => _isSaving = true);
+
       // Show loading indicator
       showDialog(
         context: context,
@@ -418,6 +453,10 @@ class WalkingSummaryScreen extends ConsumerWidget {
             backgroundColor: Colors.red,
           ),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
       }
     }
   }

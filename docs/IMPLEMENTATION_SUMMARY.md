@@ -184,34 +184,24 @@ minIbiForHRV: 2                 // Minimum IBI values for HRV
 
 ---
 
-## Next Steps
+## Current Integration Status
 
 ### 1. Backend Integration
-```dart
-// In DataSyncManager.syncData()
-// TODO: Replace with actual Supabase upload
-await supabase.from('heart_rate_data').insert(unsyncedData);
-```
+`DataSyncManager.syncData()` now resolves `SupabaseService` when Supabase is
+initialized, uploads unsynced heart-rate rows through
+`saveHeartRateDataBatch()`, and keeps rows unsynced when backend credentials are
+missing so local capture is not lost.
 
-### 2. Add Font Files
-```yaml
-# pubspec.yaml
-flutter:
-  fonts:
-    - family: GeneralSans
-      fonts:
-        - asset: assets/fonts/GeneralSans-Regular.ttf
-        - asset: assets/fonts/GeneralSans-Bold.ttf
-          weight: 700
-```
+### 2. Font Files
+GeneralSans is registered in `pubspec.yaml` from `assets/fonts/GeneralSans/`.
+Use `FontDemoScreen` in debug builds if a local package needs a visual font
+manifest check.
 
 ### 3. Social Login
-```dart
-// Implement Google Sign In
-// Implement Apple Sign In (iOS)
-```
+Google and Apple OAuth remain optional provider integrations. Email/password
+auth is the maintained-fork release path.
 
-### 4. Enhanced Features
+### 4. Future Enhancements
 - Biometric authentication
 - Push notifications
 - Data export (CSV, PDF)

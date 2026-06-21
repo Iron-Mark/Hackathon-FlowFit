@@ -4,11 +4,15 @@ import 'package:solar_icons/solar_icons.dart';
 
 enum HealthInitialAction { addWater, addMeal }
 
+typedef HealthTimePicker =
+    Future<TimeOfDay?> Function(BuildContext context, TimeOfDay initialTime);
+
 // Health Screen
 class HealthScreen extends StatefulWidget {
-  const HealthScreen({super.key, this.initialAction});
+  const HealthScreen({super.key, this.initialAction, this.pickTime});
 
   final HealthInitialAction? initialAction;
+  final HealthTimePicker? pickTime;
 
   @override
   State<HealthScreen> createState() => _HealthScreenState();
@@ -20,6 +24,8 @@ class _HealthScreenState extends State<HealthScreen> {
   final double _waterGoal = 2.0;
   final int _calorieGoal = 2000;
   String _selectedMealTab = 'Breakfast';
+  bool _isShowingAddFoodDialog = false;
+  bool _isShowingEditSleepDialog = false;
   late final Map<String, _DailyHealthLog> _dailyLogs = {
     _dateKey(_selectedDate): _DailyHealthLog.seeded(),
   };
@@ -108,83 +114,114 @@ class _HealthScreenState extends State<HealthScreen> {
   }
 
   Future<void> _showAddFoodDialog() async {
-    await showDialog(
-      context: context,
-      builder: (context) => _AddFoodDialog(
-        onAdd: (name, calories) {
-          setState(() {
-            if (_selectedLog.foodItems[_selectedMealTab] == null) {
-              _selectedLog.foodItems[_selectedMealTab] = [];
-            }
-            _selectedLog.foodItems[_selectedMealTab]!.add({
-              'name': name,
-              'calories': '$calories kcal',
+    if (_isShowingAddFoodDialog) return;
+
+    setState(() {
+      _isShowingAddFoodDialog = true;
+    });
+
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) => _AddFoodDialog(
+          onAdd: (name, calories) {
+            setState(() {
+              if (_selectedLog.foodItems[_selectedMealTab] == null) {
+                _selectedLog.foodItems[_selectedMealTab] = [];
+              }
+              _selectedLog.foodItems[_selectedMealTab]!.add({
+                'name': name,
+                'calories': '$calories kcal',
+              });
             });
-          });
-        },
-      ),
-    );
+          },
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isShowingAddFoodDialog = false;
+        });
+      }
+    }
   }
 
   Future<void> _showEditSleepDialog() async {
+    if (_isShowingEditSleepDialog) return;
+
+    setState(() {
+      _isShowingEditSleepDialog = true;
+    });
+
     TimeOfDay tempBedTime = _selectedLog.bedTime;
     TimeOfDay tempWakeTime = _selectedLog.wakeTime;
 
-    await showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Edit Sleep Schedule'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('Bed Time'),
-                trailing: Text(tempBedTime.format(context)),
-                onTap: () async {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: tempBedTime,
-                  );
-                  if (time != null) {
-                    setDialogState(() => tempBedTime = time);
-                  }
-                },
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('Edit Sleep Schedule'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: const Text('Bed Time'),
+                  trailing: Text(tempBedTime.format(context)),
+                  onTap: () async {
+                    final time = await _pickTime(context, tempBedTime);
+                    if (time != null) {
+                      setDialogState(() => tempBedTime = time);
+                    }
+                  },
+                ),
+                ListTile(
+                  title: const Text('Wake Up Time'),
+                  trailing: Text(tempWakeTime.format(context)),
+                  onTap: () async {
+                    final time = await _pickTime(context, tempWakeTime);
+                    if (time != null) {
+                      setDialogState(() => tempWakeTime = time);
+                    }
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
               ),
-              ListTile(
-                title: const Text('Wake Up Time'),
-                trailing: Text(tempWakeTime.format(context)),
-                onTap: () async {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: tempWakeTime,
-                  );
-                  if (time != null) {
-                    setDialogState(() => tempWakeTime = time);
-                  }
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _selectedLog.bedTime = tempBedTime;
+                    _selectedLog.wakeTime = tempWakeTime;
+                  });
+                  Navigator.pop(context);
                 },
+                child: const Text('Save'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _selectedLog.bedTime = tempBedTime;
-                  _selectedLog.wakeTime = tempWakeTime;
-                });
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
-            ),
-          ],
         ),
-      ),
-    );
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isShowingEditSleepDialog = false;
+        });
+      }
+    }
+  }
+
+  Future<TimeOfDay?> _pickTime(BuildContext context, TimeOfDay initialTime) {
+    final pickTime = widget.pickTime;
+    if (pickTime != null) {
+      return pickTime(context, initialTime);
+    }
+
+    return showTimePicker(context: context, initialTime: initialTime);
   }
 
   String _formatDate(DateTime date) {
@@ -354,7 +391,9 @@ class _HealthScreenState extends State<HealthScreen> {
                                 ],
                               ),
                               ElevatedButton.icon(
-                                onPressed: _showAddFoodDialog,
+                                onPressed: _isShowingAddFoodDialog
+                                    ? null
+                                    : _showAddFoodDialog,
                                 icon: const Icon(Icons.add, size: 18),
                                 label: const Text('Add Food'),
                                 style: ElevatedButton.styleFrom(
@@ -632,7 +671,9 @@ class _HealthScreenState extends State<HealthScreen> {
                                 ],
                               ),
                               TextButton(
-                                onPressed: _showEditSleepDialog,
+                                onPressed: _isShowingEditSleepDialog
+                                    ? null
+                                    : _showEditSleepDialog,
                                 style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
@@ -922,6 +963,7 @@ class _AddFoodDialog extends StatefulWidget {
 class _AddFoodDialogState extends State<_AddFoodDialog> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _caloriesController = TextEditingController();
+  bool _hasSubmitted = false;
 
   @override
   void dispose() {
@@ -931,10 +973,13 @@ class _AddFoodDialogState extends State<_AddFoodDialog> {
   }
 
   void _submit() {
+    if (_hasSubmitted) return;
+
     final name = _nameController.text.trim();
     final calories = _caloriesController.text.trim();
     if (name.isEmpty || calories.isEmpty) return;
 
+    _hasSubmitted = true;
     widget.onAdd(name, calories);
     Navigator.pop(context);
   }

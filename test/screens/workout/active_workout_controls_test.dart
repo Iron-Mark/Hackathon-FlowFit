@@ -87,6 +87,67 @@ void main() {
     expect(find.text('route:walking-summary'), findsOneWidget);
   });
 
+  testWidgets('active walking end ignores duplicate requests while pending', (
+    tester,
+  ) async {
+    final endCompleter = Completer<void>();
+    final notifier = _FakeWalkingSessionNotifier(
+      WalkingSession(
+        id: 'walk-end-pending',
+        userId: 'user-1',
+        startTime: DateTime(2026, 1, 1),
+        mode: WalkingMode.free,
+        targetDuration: 30,
+        durationSeconds: 120,
+        currentDistance: 0.8,
+        steps: 1040,
+      ),
+      endCompleter: endCompleter,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [walkingSessionProvider.overrideWith((ref) => notifier)],
+        child: MaterialApp(
+          home: const ActiveWalkingScreen(),
+          routes: {
+            '/workout/walking/summary': (_) =>
+                const Scaffold(body: Text('route:walking-summary')),
+          },
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(find.text('End'), 300);
+    await tester.tap(find.widgetWithText(FilledButton, 'End'));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'End'),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'End Walk'));
+    await tester.pump();
+
+    expect(notifier.endCalls, 1);
+    expect(find.text('route:walking-summary'), findsNothing);
+
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'End'),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+
+    expect(notifier.endCalls, 1);
+
+    endCompleter.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:walking-summary'), findsOneWidget);
+  });
+
   testWidgets('active resistance set, rest, and end controls work', (
     tester,
   ) async {
@@ -144,6 +205,78 @@ void main() {
     expect(notifier.endCalls, 1);
     expect(find.text('route:resistance-summary'), findsOneWidget);
   });
+
+  testWidgets(
+    'active resistance end ignores duplicate requests while pending',
+    (tester) async {
+      final endCompleter = Completer<void>();
+      final exercise = ExerciseProgress(
+        exerciseName: 'Bench Press',
+        emoji: 'lift',
+        totalSets: 2,
+        targetReps: 10,
+      );
+      final notifier = _FakeResistanceSessionNotifier(
+        ResistanceSession(
+          id: 'resistance-end-pending',
+          userId: 'user-1',
+          startTime: DateTime(2026, 1, 1),
+          split: BodySplit.upper,
+          exercises: [exercise],
+          durationSeconds: 90,
+        ),
+        exercise,
+        endCompleter: endCompleter,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            resistanceSessionProvider.overrideWith((ref) => notifier),
+          ],
+          child: MaterialApp(
+            home: const ActiveResistanceScreen(),
+            routes: {
+              '/workout/resistance/summary': (_) =>
+                  const Scaffold(body: Text('route:resistance-summary')),
+            },
+          ),
+        ),
+      );
+
+      await tester.scrollUntilVisible(
+        find.widgetWithText(FilledButton, 'End Workout'),
+        300,
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'End Workout'));
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'End Workout'),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'End Workout').last);
+      await tester.pump();
+
+      expect(notifier.endCalls, 1);
+      expect(find.text('route:resistance-summary'), findsNothing);
+
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'End Workout').first,
+        warnIfMissed: false,
+      );
+      await tester.pump();
+
+      expect(notifier.endCalls, 1);
+
+      endCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('route:resistance-summary'), findsOneWidget);
+    },
+  );
 
   testWidgets('active running tracker, pause, resume, and end controls work', (
     tester,
@@ -204,6 +337,282 @@ void main() {
 
     await tester.pump(const Duration(seconds: 2));
   });
+
+  testWidgets('active running menu actions pause, resume, track, and end', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final notifier = _FakeRunningSessionNotifier(
+      RunningSession(
+        id: 'run-menu-1',
+        userId: 'user-1',
+        startTime: DateTime(2026, 1, 1),
+        goalType: GoalType.distance,
+        targetDistance: 5,
+        durationSeconds: 90,
+        currentDistance: 0.7,
+        avgPace: 6.0,
+      ),
+    );
+
+    await tester.pumpWidget(_RunningHarness(notifier: notifier));
+
+    await tester.tap(find.byIcon(SolarIconsOutline.menuDots));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pause workout'));
+    await tester.pumpAndSettle();
+
+    expect(notifier.pauseCalls, 1);
+    expect(find.text('PAUSED'), findsOneWidget);
+
+    await tester.tap(find.byIcon(SolarIconsOutline.menuDots));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Resume workout'));
+    await tester.pumpAndSettle();
+
+    expect(notifier.resumeCalls, 1);
+    expect(find.text('RUNNING'), findsOneWidget);
+
+    await tester.tap(find.byIcon(SolarIconsOutline.menuDots));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open AI tracker'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:activity-classifier'), findsOneWidget);
+
+    Navigator.of(tester.element(find.text('route:activity-classifier'))).pop();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(SolarIconsOutline.menuDots));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('End workout'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('End Workout'));
+    await tester.pumpAndSettle();
+
+    expect(notifier.endCalls, 1);
+    expect(find.text('route:running-summary'), findsOneWidget);
+  });
+
+  testWidgets('active running end ignores duplicate requests while pending', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final endCompleter = Completer<void>();
+    final notifier = _FakeRunningSessionNotifier(
+      RunningSession(
+        id: 'run-end-pending',
+        userId: 'user-1',
+        startTime: DateTime(2026, 1, 1),
+        goalType: GoalType.distance,
+        targetDistance: 5,
+        durationSeconds: 90,
+        currentDistance: 0.7,
+      ),
+      endCompleter: endCompleter,
+    );
+
+    await tester.pumpWidget(_RunningHarness(notifier: notifier));
+
+    await tester.tap(find.byIcon(SolarIconsBold.stopCircle));
+    await tester.tap(
+      find.byIcon(SolarIconsBold.stopCircle),
+      warnIfMissed: false,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'End Workout'));
+    await tester.pump();
+
+    expect(notifier.endCalls, 1);
+    expect(find.text('route:running-summary'), findsNothing);
+
+    await tester.tap(
+      find.byIcon(SolarIconsBold.stopCircle),
+      warnIfMissed: false,
+    );
+    await tester.pump();
+
+    expect(notifier.endCalls, 1);
+
+    endCompleter.complete();
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:running-summary'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('active walking end dialog can be cancelled', (tester) async {
+    final walkingNotifier = _FakeWalkingSessionNotifier(
+      WalkingSession(
+        id: 'walk-cancel',
+        userId: 'user-1',
+        startTime: DateTime(2026, 1, 1),
+        mode: WalkingMode.free,
+        durationSeconds: 120,
+        currentDistance: 0.8,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          walkingSessionProvider.overrideWith((ref) => walkingNotifier),
+        ],
+        child: const MaterialApp(home: ActiveWalkingScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('End'), 300);
+    await tester.tap(find.text('End'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(walkingNotifier.endCalls, 0);
+    expect(find.text('End walk?'), findsNothing);
+    expect(find.text('Walking'), findsWidgets);
+    expect(find.text('Pause'), findsOneWidget);
+  });
+
+  testWidgets('active resistance end dialog can be cancelled', (tester) async {
+    final exercise = ExerciseProgress(
+      exerciseName: 'Bench Press',
+      emoji: 'lift',
+      totalSets: 2,
+      targetReps: 10,
+    );
+    final resistanceNotifier = _FakeResistanceSessionNotifier(
+      ResistanceSession(
+        id: 'resistance-cancel',
+        userId: 'user-1',
+        startTime: DateTime(2026, 1, 1),
+        split: BodySplit.upper,
+        exercises: [exercise],
+      ),
+      exercise,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          resistanceSessionProvider.overrideWith((ref) => resistanceNotifier),
+        ],
+        child: const MaterialApp(home: ActiveResistanceScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('End Workout'), 300);
+    await tester.tap(find.text('End Workout'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(resistanceNotifier.endCalls, 0);
+    expect(find.text('Bench Press'), findsWidgets);
+  });
+
+  testWidgets('active running end dialog can be cancelled', (tester) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final runningNotifier = _FakeRunningSessionNotifier(
+      RunningSession(
+        id: 'run-cancel',
+        userId: 'user-1',
+        startTime: DateTime(2026, 1, 1),
+        goalType: GoalType.distance,
+        targetDistance: 5,
+        durationSeconds: 90,
+        currentDistance: 0.7,
+      ),
+    );
+
+    await tester.pumpWidget(_RunningHarness(notifier: runningNotifier));
+
+    await tester.tap(find.byIcon(SolarIconsBold.stopCircle));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(runningNotifier.endCalls, 0);
+    expect(find.text('RUNNING'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 2));
+  });
+
+  testWidgets('active walking empty state back button pops route', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          walkingSessionProvider.overrideWith((ref) {
+            return _EmptyWalkingSessionNotifier();
+          }),
+        ],
+        child: MaterialApp(
+          initialRoute: '/walking',
+          routes: {
+            '/': (_) => const Scaffold(body: Text('route:workouts')),
+            '/walking': (_) => const ActiveWalkingScreen(),
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No active walking session'), findsOneWidget);
+
+    await tester.tap(find.text('Back to workouts'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:workouts'), findsOneWidget);
+  });
+
+  testWidgets('active resistance empty state back button pops route', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          resistanceSessionProvider.overrideWith((ref) {
+            return _EmptyResistanceSessionNotifier();
+          }),
+        ],
+        child: MaterialApp(
+          initialRoute: '/resistance',
+          routes: {
+            '/': (_) => const Scaffold(body: Text('route:workouts')),
+            '/resistance': (_) => const ActiveResistanceScreen(),
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No active resistance workout'), findsOneWidget);
+
+    await tester.tap(find.text('Back to workouts'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:workouts'), findsOneWidget);
+  });
 }
 
 class _RunningHarness extends StatelessWidget {
@@ -242,7 +651,7 @@ class _RunningHarness extends StatelessWidget {
 }
 
 class _FakeWalkingSessionNotifier extends WalkingSessionNotifier {
-  _FakeWalkingSessionNotifier(WalkingSession initial)
+  _FakeWalkingSessionNotifier(WalkingSession initial, {this.endCompleter})
     : super(
         gpsService: _NoopGpsTrackingService(),
         timerService: _NoopTimerService(),
@@ -257,6 +666,7 @@ class _FakeWalkingSessionNotifier extends WalkingSessionNotifier {
   int pauseCalls = 0;
   int resumeCalls = 0;
   int endCalls = 0;
+  final Completer<void>? endCompleter;
 
   @override
   void pauseSession() {
@@ -273,23 +683,40 @@ class _FakeWalkingSessionNotifier extends WalkingSessionNotifier {
   @override
   Future<void> endSession({MoodRating? postMood}) async {
     endCalls++;
+    final completer = endCompleter;
+    if (completer != null) {
+      await completer.future;
+    }
     state = state!.copyWith(status: WorkoutStatus.completed);
   }
+}
+
+class _EmptyWalkingSessionNotifier extends WalkingSessionNotifier {
+  _EmptyWalkingSessionNotifier()
+    : super(
+        gpsService: _NoopGpsTrackingService(),
+        timerService: _NoopTimerService(),
+        hrService: _NoopHeartRateService(),
+        calorieService: CalorieCalculatorService(),
+        sessionService: _NoopWorkoutSessionService(),
+        readCurrentUserId: () => 'user-1',
+      );
 }
 
 class _FakeResistanceSessionNotifier extends ResistanceSessionNotifier {
   _FakeResistanceSessionNotifier(
     ResistanceSession initial,
-    ExerciseProgress exercise,
-  ) : _currentExercise = exercise,
-      super(
-        timerService: _NoopTimerService(),
-        countdownService: _NoopCountdownTimerService(),
-        hrService: _NoopHeartRateService(),
-        calorieService: CalorieCalculatorService(),
-        sessionService: _NoopWorkoutSessionService(),
-        readCurrentUserId: () => 'user-1',
-      ) {
+    ExerciseProgress exercise, {
+    this.endCompleter,
+  }) : _currentExercise = exercise,
+       super(
+         timerService: _NoopTimerService(),
+         countdownService: _NoopCountdownTimerService(),
+         hrService: _NoopHeartRateService(),
+         calorieService: CalorieCalculatorService(),
+         sessionService: _NoopWorkoutSessionService(),
+         readCurrentUserId: () => 'user-1',
+       ) {
     state = initial;
   }
 
@@ -298,6 +725,7 @@ class _FakeResistanceSessionNotifier extends ResistanceSessionNotifier {
   int completeSetCalls = 0;
   int skipRestCalls = 0;
   int endCalls = 0;
+  final Completer<void>? endCompleter;
 
   @override
   ExerciseProgress? get currentExercise => _currentExercise;
@@ -322,12 +750,28 @@ class _FakeResistanceSessionNotifier extends ResistanceSessionNotifier {
   @override
   Future<void> endWorkout({MoodRating? postMood}) async {
     endCalls++;
+    final completer = endCompleter;
+    if (completer != null) {
+      await completer.future;
+    }
     state = state!.copyWith(status: WorkoutStatus.completed);
   }
 }
 
+class _EmptyResistanceSessionNotifier extends ResistanceSessionNotifier {
+  _EmptyResistanceSessionNotifier()
+    : super(
+        timerService: _NoopTimerService(),
+        countdownService: _NoopCountdownTimerService(),
+        hrService: _NoopHeartRateService(),
+        calorieService: CalorieCalculatorService(),
+        sessionService: _NoopWorkoutSessionService(),
+        readCurrentUserId: () => 'user-1',
+      );
+}
+
 class _FakeRunningSessionNotifier extends RunningSessionNotifier {
-  _FakeRunningSessionNotifier(RunningSession initial)
+  _FakeRunningSessionNotifier(RunningSession initial, {this.endCompleter})
     : super(
         gpsService: _NoopGpsTrackingService(),
         timerService: _NoopTimerService(),
@@ -344,6 +788,7 @@ class _FakeRunningSessionNotifier extends RunningSessionNotifier {
   int pauseCalls = 0;
   int resumeCalls = 0;
   int endCalls = 0;
+  final Completer<void>? endCompleter;
 
   @override
   void pauseSession() {
@@ -360,6 +805,10 @@ class _FakeRunningSessionNotifier extends RunningSessionNotifier {
   @override
   Future<void> endSession({MoodRating? postMood}) async {
     endCalls++;
+    final completer = endCompleter;
+    if (completer != null) {
+      await completer.future;
+    }
     state = state!.copyWith(status: WorkoutStatus.completed);
   }
 }

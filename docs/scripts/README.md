@@ -91,9 +91,10 @@ pwsh -NoProfile -File scripts/release_preflight.ps1
 
 If `build/store-release-artifacts.json` already exists from a previous
 production wrapper run, preflight verifies the manifest before smoke builds run
-and writes `build/store-release-artifact-verification.json`. Treat this as a
-stale-artifact guard. For final handoff, rerun the production wrapper and then
-run `verify_store_artifacts.ps1 -Strict` with the expected required artifacts.
+and writes `build/store-release-artifact-verification.json`. This local
+preflight check is advisory because ignored build outputs can be stale after
+smoke builds. For final handoff, rerun the production wrapper and then run
+`verify_store_artifacts.ps1 -Strict` with the expected required artifacts.
 
 **Optional release smoke build**:
 ```powershell
@@ -138,12 +139,70 @@ After the Flutter web build, the script also verifies that
 each other, have the expected titles, and do not contain internal maintainer or
 store-review wording.
 
+`release_preflight.ps1` runs it locally after the JavaScript web build by
+serving `build/web`, installing Playwright Chromium if needed, and writing
+`build/web-app-smoke-preflight.json`.
+
 Before analyzer/build checks, it also fails if release source reintroduces the
 hard-coded example mobile auth redirect or a public privileged deletion RPC.
 
 ---
 
-### 5. release_readiness_audit.ps1
+### 5. verify_offline_app_actions.ps1
+**Purpose**: Fast Supabase-free and device-free smoke for production route
+coverage, interactive-surface coverage, empty interactive-handler guards, auth
+entry routes, and broad button-driven feature actions.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts/verify_offline_app_actions.ps1
+```
+
+Use `-SkipPubGet` after dependencies are already restored:
+
+```powershell
+pwsh -NoProfile -File scripts/verify_offline_app_actions.ps1 -SkipPubGet
+```
+
+This script runs the static route/action guards, interactive surface coverage
+guard, and focused Flutter widget smokes for welcome/login/signup/splash,
+production route-table navigation, auth/login flows, onboarding, home
+CTA/header actions, profile/settings, delete-account flow, dashboard, activity
+classifier navigation, health, phone, Wear, wellness/maps, workout, mood,
+camera, and shared interactive widgets. It does not require Supabase
+credentials, Docker, browser automation, Android devices, or Wear hardware.
+
+---
+
+### 6. verify_web_app_smoke.mjs
+**Purpose**: Browser-level Flutter web smoke for the built app shell and
+high-value unauthenticated navigation actions.
+
+**Usage**:
+```powershell
+npm run web:smoke -- --base-url http://127.0.0.1:8791 --out-file build\web-app-smoke-current.json
+```
+
+Serve `build/web` first, for example:
+
+```powershell
+python -m http.server 8791 --bind 127.0.0.1 --directory build\web
+```
+
+The smoke enables Flutter semantics in Chromium, verifies the welcome/signup
+and login route actions, then covers survey intro to basic info, basic info to
+measurements, Buddy welcome to Buddy intro, phone home Clear dialog, workout
+type actions, settings legal/support/account actions, notification preferences,
+app integration to Wellness setup, language and unit preference routes, the
+Wellness Settings privacy action, the phone heart-rate route, and the Buddy
+completion entry surface. It writes JSON evidence with pass counts, console
+warnings/errors, and failed request counts. Expected local WebGL warnings from
+headless software rendering are recorded, but console errors or failed network
+requests fail the smoke.
+
+---
+
+### 7. release_readiness_audit.ps1
 **Purpose**: Non-secret readiness audit for Supabase recovery, MCP setup,
 Android signing/package IDs, iOS bundle/auth schemes, public web compliance
 URLs, support inbox verification, and local tooling gaps.
@@ -244,7 +303,7 @@ not print Supabase publishable keys or signing values.
 
 ---
 
-### 6. verify_support_inbox.ps1
+### 8. verify_support_inbox.ps1
 **Purpose**: Create a non-secret support inbox evidence file before setting
 `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`.
 
@@ -275,7 +334,7 @@ evidence.
 
 ---
 
-### 7. verify_store_metadata.ps1
+### 9. verify_store_metadata.ps1
 **Purpose**: Create non-secret store listing and asset evidence for Google Play,
 App Store/TestFlight, and Flutter web handoff.
 
@@ -327,7 +386,7 @@ final store metadata must use the verified deliverable support/privacy inbox.
 
 ---
 
-### 8. verify_supabase_backend.ps1
+### 10. verify_supabase_backend.ps1
 **Purpose**: Validate and optionally run the read-only Supabase backend
 verification SQL after the canonical migration has been applied.
 
@@ -360,7 +419,7 @@ or `--db-url`. The SQL returns one row per backend check; every row should have
 
 ---
 
-### 9. configure_supabase_mcp.ps1
+### 11. configure_supabase_mcp.ps1
 **Purpose**: Validate and write project-scoped Supabase MCP config without
 storing tokens, service-role keys, or database passwords in the repo.
 
@@ -392,7 +451,7 @@ prompted.
 
 ---
 
-### 10. configure_github_release_variables.ps1
+### 12. configure_github_release_variables.ps1
 **Purpose**: Validate and set GitHub repository variables used by strict audit
 and the GitHub Pages deployment workflow after the maintainer has real Supabase
 client values and a verified support inbox.
@@ -431,7 +490,7 @@ required so the production web deploy cannot be enabled by accident.
 
 ---
 
-### 11. create_android_upload_keystore.ps1
+### 13. create_android_upload_keystore.ps1
 **Purpose**: Create private Android Play upload signing material for local
 release builds and CI secret handoff without printing generated passwords.
 
@@ -467,7 +526,7 @@ to overwrite an existing handoff file.
 
 ---
 
-### 12. export_android_signing_env.ps1
+### 14. export_android_signing_env.ps1
 **Purpose**: Export private GitHub Actions Android signing secret values from
 an existing ignored `android/key.properties` and upload keystore.
 
@@ -486,7 +545,7 @@ continuations, or whitespace-sensitive values.
 
 ---
 
-### 13. create_ios_export_options.ps1
+### 15. create_ios_export_options.ps1
 **Purpose**: Create an ignored App Store/TestFlight export-options plist for
 `flutter build ipa` when the macOS release host needs explicit Xcode export
 settings.
@@ -521,7 +580,7 @@ before running `scripts\store_release_build.ps1 -Target iOS -SupportEmailVerifie
 
 ---
 
-### 14. store_release_build.ps1
+### 16. store_release_build.ps1
 **Purpose**: Production artifact build wrapper for store/web handoff. It fails
 early when the git working tree is dirty, required production environment
 values, signing files, or public web URLs are missing. By default it also runs
@@ -647,7 +706,7 @@ manifest after the strict audit passes.
 
 ---
 
-### 15. verify_store_artifacts.ps1
+### 17. verify_store_artifacts.ps1
 **Purpose**: Re-verify `build/store-release-artifacts.json` after a production
 artifact build. It checks every manifest artifact path, kind, SHA-256 digest,
 byte size, file count, clean git evidence, release input shape, optional strict
@@ -672,7 +731,7 @@ evidence.
 
 ---
 
-### 16. render_supabase_email_templates.ps1
+### 18. render_supabase_email_templates.ps1
 **Purpose**: Render dashboard-ready Supabase Auth email templates after the
 support/privacy inbox is verified. Source templates keep
 `REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL` so repo files never pin an
@@ -694,7 +753,7 @@ still contain the replacement token or reserved source inbox.
 
 ---
 
-### 17. verify_web_deployment.ps1
+### 19. verify_web_deployment.ps1
 **Purpose**: Verify the deployed Flutter web origin before using it in Play
 Console or App Store Connect.
 
@@ -703,13 +762,18 @@ Console or App Store Connect.
 pwsh -NoProfile -File scripts/verify_web_deployment.ps1 `
   -BaseUrl 'https://iron-mark.github.io/Hackathon-FlowFit' `
   -SupportEmail (Read-Host 'Verified support email') `
+  -CompareBuildWebPath build/web `
   -OutFile build/web-deployment-verification.json
 ```
 
 The script checks the app shell, `manifest.json`, public privacy page, and
 public account-deletion page. It requires HTTPS for real deployment URLs,
 verifies the configured support email, rejects internal maintainer/store-review
-wording, and writes JSON evidence when `-OutFile` is provided.
+wording, and writes JSON evidence when `-OutFile` is provided. When
+`-CompareBuildWebPath build/web` is supplied, it also compares deployed
+`flutter_bootstrap.js` and `main.dart.js` hashes against the local Flutter web
+build so stale GitHub Pages deployments fail even if the static compliance pages
+still respond successfully.
 
 For local smoke testing only, run a local static server for `build/web` and add
 `-AllowInsecureLocalhost`.
@@ -749,7 +813,7 @@ Actions as the source before expecting the workflow to publish.
 
 ---
 
-### 17. configure_local_release.ps1
+### 20. configure_local_release.ps1
 **Purpose**: Create/update local release configuration from validated inputs.
 By default it writes only non-secret Android package/auth IDs to tracked
 `android/gradle.properties`. When real Supabase client values are provided, it

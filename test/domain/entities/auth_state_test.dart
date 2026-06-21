@@ -144,10 +144,7 @@ void main() {
           status: AuthStatus.authenticated,
           user: testUser,
         );
-        final state2 = AuthState(
-          status: AuthStatus.loading,
-          user: testUser,
-        );
+        final state2 = AuthState(status: AuthStatus.loading, user: testUser);
 
         expect(state1, isNot(equals(state2)));
       });
@@ -282,10 +279,7 @@ void main() {
           user: testUser,
           errorMessage: 'Warning',
         );
-        final copy = original.copyWith(
-          clearError: true,
-          clearUser: true,
-        );
+        final copy = original.copyWith(clearError: true, clearUser: true);
 
         expect(copy.user, isNull);
         expect(copy.errorMessage, isNull);

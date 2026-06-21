@@ -18,7 +18,12 @@ class MoodTrackerService {
   final Future<Position> Function()? currentPositionGetter;
   StreamSubscription<MoodState>? _moodSub;
 
-  MoodTrackerService({required this.repository, required this.service, this.moodStreamOverride, this.currentPositionGetter});
+  MoodTrackerService({
+    required this.repository,
+    required this.service,
+    this.moodStreamOverride,
+    this.currentPositionGetter,
+  });
 
   Stream<MoodState> _getMoodStream() {
     if (moodStreamOverride != null) return moodStreamOverride!;
@@ -42,11 +47,18 @@ class MoodTrackerService {
 
   Future<void> _onStressed() async {
     try {
-      final pos = await (currentPositionGetter != null ? currentPositionGetter!() : Geolocator.getCurrentPosition());
+      final pos = await (currentPositionGetter != null
+          ? currentPositionGetter!()
+          : Geolocator.getCurrentPosition());
       final current = await repository.getAll();
       if (current.isEmpty) {
         // Prompt to add sanctuary
-        await NotificationService.showNotification(title: 'Feeling stressed?', body: 'Add a Sanctuary nearby to relax', id: 999, payload: 'add_sanctuary');
+        await NotificationService.showNotification(
+          title: 'Feeling stressed?',
+          body: 'Add a Sanctuary nearby to relax',
+          id: 999,
+          payload: 'add_sanctuary',
+        );
         return;
       }
 
@@ -54,7 +66,12 @@ class MoodTrackerService {
       double bestDist = double.infinity;
       GeofenceMission? best;
       for (final m in current) {
-        final dist = Geolocator.distanceBetween(pos.latitude, pos.longitude, m.center.latitude, m.center.longitude);
+        final dist = Geolocator.distanceBetween(
+          pos.latitude,
+          pos.longitude,
+          m.center.latitude,
+          m.center.longitude,
+        );
         if (dist < bestDist) {
           bestDist = dist;
           best = m;
@@ -64,7 +81,12 @@ class MoodTrackerService {
         // Activate and request UI focus
         await service.activateMission(best.id);
         // Show a notification allowing user to open the app and focus
-        await NotificationService.showNotification(title: 'Stress detected', body: 'Start focus at ${best.title}?', id: 998, payload: 'focus:${best.id}');
+        await NotificationService.showNotification(
+          title: 'Stress detected',
+          body: 'Start focus at ${best.title}?',
+          id: 998,
+          payload: 'focus:${best.id}',
+        );
         // Request focus via GeofenceService stream so UI can respond if active
         service.requestFocus(best.id);
       }

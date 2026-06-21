@@ -16,11 +16,7 @@ class Macros {
     return ((carbohydrates * 4) + (protein * 4) + (fat * 9)).round();
   }
 
-  Macros copyWith({
-    double? carbohydrates,
-    double? protein,
-    double? fat,
-  }) {
+  Macros copyWith({double? carbohydrates, double? protein, double? fat}) {
     return Macros(
       carbohydrates: carbohydrates ?? this.carbohydrates,
       protein: protein ?? this.protein,

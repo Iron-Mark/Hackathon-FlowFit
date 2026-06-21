@@ -30,28 +30,28 @@ enum MissionType {
 }
 
 /// Location-based walking mission
-/// 
+///
 /// Defines a goal for walking workouts such as reaching a specific
 /// location or walking a certain distance.
 class Mission {
   /// Unique mission identifier
   final String id;
-  
+
   /// Type of mission
   final MissionType type;
-  
+
   /// Target GPS location
   final LatLng targetLocation;
-  
+
   /// Target distance in meters (for target missions)
   final double? targetDistance;
-  
+
   /// Radius in meters (for safety net missions)
   final double? radius;
-  
+
   /// Mission name
   final String name;
-  
+
   /// Optional mission description
   final String? description;
 
@@ -68,7 +68,7 @@ class Mission {
   /// Checks if mission is completed based on current location
   bool isCompleted(LatLng currentLocation) {
     final distance = _calculateDistance(currentLocation, targetLocation);
-    
+
     switch (type) {
       case MissionType.target:
         return targetDistance != null && distance >= targetDistance!;

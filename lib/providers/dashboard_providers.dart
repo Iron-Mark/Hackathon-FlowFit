@@ -42,7 +42,6 @@ final recentActivitiesProvider = FutureProvider<List<RecentActivity>>((
 
 /// Provider for daily mood/stress summary from AI tracker
 final dailyMoodProvider = FutureProvider<DailyMood>((ref) async {
-  // Try to get historical heart rate readings for today and derive a mood summary from them.
   try {
     final heartRateRepo = ref.watch(core_hrp.heartRateRepositoryProvider);
     final now = DateTime.now();
@@ -96,7 +95,7 @@ final dailyMoodProvider = FutureProvider<DailyMood>((ref) async {
     final stressedMinutes = (stressedSeconds / 60).round();
     final calmMinutes = (calmSeconds / 60).round();
     return DailyMood(stressMinutes: stressedMinutes, calmMinutes: calmMinutes);
-  } catch (e) {
+  } catch (_) {
     return DailyMood(stressMinutes: 0, calmMinutes: 0);
   }
 });

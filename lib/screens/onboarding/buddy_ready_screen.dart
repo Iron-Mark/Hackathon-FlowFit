@@ -69,6 +69,8 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
   }
 
   Future<void> _handleNext() async {
+    if (_isLoading) return;
+
     setState(() => _isLoading = true);
 
     try {

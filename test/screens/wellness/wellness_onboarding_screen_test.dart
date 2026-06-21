@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flowfit/screens/wellness/wellness_onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -95,5 +97,94 @@ void main() {
     );
     expect(find.text('Wellness tracker opened'), findsNothing);
     expect(prefs.getBool('wellness_onboarding_complete'), isNull);
+  });
+
+  testWidgets('failed setup check can be retried immediately', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    var checks = 0;
+
+    await pumpOnboarding(
+      tester,
+      setupChecker: () async {
+        checks += 1;
+        if (checks == 1) {
+          return const WellnessSetupStatus(
+            hasPermissions: false,
+            isWatchConnected: false,
+            message:
+                'Still needed: body sensors permission, location permission, Samsung Galaxy Watch connection.',
+          );
+        }
+
+        return const WellnessSetupStatus(
+          hasPermissions: true,
+          isWatchConnected: true,
+          message: 'Setup verified. You can start wellness tracking.',
+        );
+      },
+    );
+
+    await moveToSetupStep(tester);
+    await tester.tap(find.text('Check Setup'));
+    await tester.pumpAndSettle();
+
+    expect(checks, 1);
+    expect(find.text('Check Setup'), findsOneWidget);
+    expect(find.byType(SnackBar), findsNothing);
+    expect(
+      find.text(
+        'Still needed: body sensors permission, location permission, Samsung Galaxy Watch connection.',
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('Check Setup'));
+    await tester.pumpAndSettle();
+
+    expect(checks, 2);
+    expect(find.text('Get Started'), findsOneWidget);
+
+    await tester.tap(find.text('Get Started'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Wellness tracker opened'), findsOneWidget);
+    expect(prefs.getBool('wellness_onboarding_complete'), isTrue);
+  });
+
+  testWidgets('setup check ignores duplicate taps while pending', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final setupCompleter = Completer<WellnessSetupStatus>();
+    var checks = 0;
+
+    await pumpOnboarding(
+      tester,
+      setupChecker: () {
+        checks += 1;
+        return setupCompleter.future;
+      },
+    );
+
+    await moveToSetupStep(tester);
+    await tester.tap(find.text('Check Setup'));
+    await tester.tap(find.text('Check Setup'), warnIfMissed: false);
+    await tester.pump();
+
+    expect(checks, 1);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    setupCompleter.complete(
+      const WellnessSetupStatus(
+        hasPermissions: true,
+        isWatchConnected: true,
+        message: 'Setup verified. You can start wellness tracking.',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(checks, 1);
+    expect(find.text('Get Started'), findsOneWidget);
   });
 }

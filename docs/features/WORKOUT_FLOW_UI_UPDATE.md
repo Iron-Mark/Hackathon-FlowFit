@@ -49,7 +49,7 @@ Updated the Track tab workout flow with improved UI design:
 **Secondary Metrics (Compact Display):**
 - Heart Rate (bpm) with heart pulse icon
 - Calories (cal) with fire icon
-- Steps (steps) with walking icon - *Ready for Android integration*
+- Steps (steps) with walking icon, backed by the running session step stream
 
 **Control Buttons:**
 - Large Pause/Resume button (blue)
@@ -72,20 +72,17 @@ Updated the Track tab workout flow with improved UI design:
 - Larger current location marker (24px) with enhanced shadow
 - Better GPS waiting state with icon and message
 
-## Features Ready for Integration
+## Feature Integration Notes
 
 ### Step Counter
-The UI includes a steps metric display that's ready to receive data from the Android step counter layer. The placeholder shows `--` until integrated.
+The running session uses the phone accelerometer step counter service and stores
+step updates on the active workout session. Hardware accuracy still needs
+physical-device QA because emulator sensor streams are not reliable enough for
+release proof.
 
 **Integration Point:**
 ```dart
-_buildSmallMetric(
-  'Steps',
-  '--', // TODO: Integrate step counter from Android
-  'steps',
-  SolarIconsBold.walking,
-  const Color(0xFF3B82F6),
-),
+ref.watch(runningSessionProvider)?.steps
 ```
 
 ### Heart Rate Monitor
@@ -131,10 +128,10 @@ All UI elements now use:
 
 ## Next Steps
 
-1. **Integrate Android Step Counter:**
-   - Connect to Android's step detection API
-   - Update the steps metric in real-time
-   - Store step data in workout session
+1. **Physical Step Counter QA:**
+   - Validate phone accelerometer step counting on real Android hardware.
+   - Compare step totals against a reference device during a short walk/run.
+   - Confirm stored workout sessions retain step data after summary save.
 
 2. **Add Haptic Feedback:**
    - Vibrate on mood selection

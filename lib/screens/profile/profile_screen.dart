@@ -26,6 +26,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _profileImagePath;
   String? _profileImageUserId;
   String? _loadingProfileImageUserId;
+  bool _isShowingPhotoPicker = false;
+  bool _isPickingProfileImage = false;
+  bool _isRemovingProfilePhoto = false;
 
   /// Load profile image path from SharedPreferences
   ///
@@ -319,7 +322,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => _showPhotoPickerDialog(context),
+                    onTap:
+                        _isShowingPhotoPicker ||
+                            _isPickingProfileImage ||
+                            _isRemovingProfilePhoto
+                        ? null
+                        : () => _showPhotoPickerDialog(context),
                     child: Stack(
                       children: [
                         CircleAvatar(
@@ -730,6 +738,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     required ImageSource source,
     required String errorMessagePrefix,
   }) async {
+    if (_isPickingProfileImage || _isRemovingProfilePhoto) return;
+
+    setState(() {
+      _isPickingProfileImage = true;
+    });
+
     try {
       final imagePath = await (widget.pickProfileImage ?? _defaultPickImage)(
         source,
@@ -759,6 +773,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPickingProfileImage = false;
+        });
+      }
     }
   }
 
@@ -774,18 +794,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _removePhoto() async {
+    if (_isRemovingProfilePhoto || _isPickingProfileImage) return;
+
+    setState(() {
+      _isRemovingProfilePhoto = true;
+    });
+
     setState(() {
       _profileImagePath = null;
     });
-    // Clear from SharedPreferences
-    await _saveProfileImage(null);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile photo removed'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+
+    try {
+      // Clear from SharedPreferences
+      await _saveProfileImage(null);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo removed'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRemovingProfilePhoto = false;
+        });
+      }
     }
   }
 
@@ -861,120 +896,160 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showPhotoPickerDialog(BuildContext context) {
+  Future<void> _showPhotoPickerDialog(BuildContext context) async {
+    if (_isShowingPhotoPicker ||
+        _isPickingProfileImage ||
+        _isRemovingProfilePhoto) {
+      return;
+    }
+
+    setState(() {
+      _isShowingPhotoPicker = true;
+    });
+
     // Provide haptic feedback when opening photo picker
     // Requirements: 4.2
     HapticFeedback.lightImpact();
 
     final theme = Theme.of(context);
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (BuildContext sheetContext) {
+          return Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.3,
-                    ),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    'Change Profile Photo',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(
-                        alpha: 0.5,
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.3,
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      SolarIconsOutline.camera,
-                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  title: const Text('Take Photo'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImageFromCamera();
-                  },
-                ),
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(
-                        alpha: 0.5,
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      'Change Profile Photo',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      SolarIconsOutline.gallery,
-                      color: theme.colorScheme.primary,
                     ),
                   ),
-                  title: const Text('Choose from Gallery'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImageFromGallery();
-                  },
-                ),
-                if (_profileImagePath != null)
+                  const SizedBox(height: 20),
                   ListTile(
                     leading: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.5,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
-                        SolarIconsOutline.trashBinMinimalistic,
-                        color: Colors.red,
+                      child: Icon(
+                        SolarIconsOutline.camera,
+                        color: theme.colorScheme.primary,
                       ),
                     ),
-                    title: const Text(
-                      'Remove Photo',
-                      style: TextStyle(color: Colors.red),
+                    title: const Text('Take Photo'),
+                    onTap: () => _selectProfilePhotoSource(
+                      sheetContext,
+                      ImageSource.camera,
                     ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _removePhoto();
-                    },
                   ),
-                const SizedBox(height: 20),
-              ],
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.5,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        SolarIconsOutline.gallery,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    title: const Text('Choose from Gallery'),
+                    onTap: () => _selectProfilePhotoSource(
+                      sheetContext,
+                      ImageSource.gallery,
+                    ),
+                  ),
+                  if (_profileImagePath != null)
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          SolarIconsOutline.trashBinMinimalistic,
+                          color: Colors.red,
+                        ),
+                      ),
+                      title: const Text(
+                        'Remove Photo',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      onTap: () => _selectRemovePhoto(sheetContext),
+                    ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isShowingPhotoPicker = false;
+        });
+      }
+    }
+  }
+
+  void _selectProfilePhotoSource(
+    BuildContext sheetContext,
+    ImageSource source,
+  ) {
+    if (_isPickingProfileImage || _isRemovingProfilePhoto) return;
+
+    Navigator.pop(sheetContext);
+
+    switch (source) {
+      case ImageSource.camera:
+        _pickImageFromCamera();
+        return;
+      case ImageSource.gallery:
+        _pickImageFromGallery();
+        return;
+    }
+  }
+
+  void _selectRemovePhoto(BuildContext sheetContext) {
+    if (_isPickingProfileImage || _isRemovingProfilePhoto) return;
+
+    Navigator.pop(sheetContext);
+    _removePhoto();
   }
 
   /// Build sync status bar

@@ -319,6 +319,7 @@ void main() {
     final service = File(
       'lib/services/workout_session_service.dart',
     ).readAsStringSync();
+    final model = File('lib/models/workout_session.dart').readAsStringSync();
     final typeConstraint = RegExp(
       r'workout_type in \(([^)]+)\)',
       caseSensitive: false,
@@ -326,8 +327,11 @@ void main() {
 
     for (final type in ['running', 'walking', 'resistance']) {
       expect(typeConstraint, contains("'$type'"));
-      expect(service, contains("case '$type':"));
+      expect(model, contains("case '$type':"));
     }
+
+    expect(service, contains('static WorkoutSession parseWorkoutSession'));
+    expect(service, contains('return WorkoutSession.fromJson(json);'));
 
     for (final unsupportedType in ['cycling', 'yoga']) {
       expect(typeConstraint, isNot(contains("'$unsupportedType'")));

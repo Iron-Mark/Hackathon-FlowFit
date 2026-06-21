@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 /// Unified page header widget for all tab pages
-/// 
+///
 /// Features:
 /// - Consistent styling across all tabs
 /// - Page title display
 /// - Optional subtitle for additional context
 /// - No back button (tabs use bottom navigation)
-/// 
+///
 /// Usage:
 /// ```dart
 /// PageHeader(

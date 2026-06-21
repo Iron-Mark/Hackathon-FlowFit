@@ -59,7 +59,10 @@ class WellnessStateData {
     this.heartRate,
     this.motionMagnitude,
     this.confidence = 1.0,
-  }) : assert(confidence >= 0.0 && confidence <= 1.0, 'Confidence must be between 0 and 1');
+  }) : assert(
+         confidence >= 0.0 && confidence <= 1.0,
+         'Confidence must be between 0 and 1',
+       );
 
   /// Creates a copy with updated fields
   WellnessStateData copyWith({
@@ -118,6 +121,12 @@ class WellnessStateData {
 
   @override
   int get hashCode {
-    return Object.hash(state, timestamp, heartRate, motionMagnitude, confidence);
+    return Object.hash(
+      state,
+      timestamp,
+      heartRate,
+      motionMagnitude,
+      confidence,
+    );
   }
 }

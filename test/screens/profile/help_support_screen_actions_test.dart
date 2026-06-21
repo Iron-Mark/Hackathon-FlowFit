@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:flowfit/screens/profile/settings/general/help_support_screen.dart';
 import 'package:flutter/material.dart';
@@ -99,6 +101,36 @@ void main() {
       );
     },
   );
+
+  testWidgets('support email actions ignore duplicate taps while pending', (
+    tester,
+  ) async {
+    final launchedUris = <Uri>[];
+    final launchCompleter = Completer<bool>();
+
+    await tester.pumpWidget(
+      _harness(
+        launchSupportEmail: (uri) {
+          launchedUris.add(uri);
+          return launchCompleter.future;
+        },
+      ),
+    );
+
+    await tester.tap(find.text('Email Support'));
+    await tester.tap(find.text('Email Support'), warnIfMissed: false);
+    await tester.pump();
+
+    expect(launchedUris, hasLength(1));
+
+    launchCompleter.complete(true);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Message Support'));
+    await tester.pump();
+
+    expect(launchedUris, hasLength(2));
+  });
 
   testWidgets('integration FAQ only promises supported Samsung setup', (
     tester,

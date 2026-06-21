@@ -79,6 +79,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     await Future.delayed(widget.minimumDisplayDuration);
 
     if (!mounted) return;
+    if (!_isCurrentRoute) return;
 
     setState(() {
       _isRetrying = true;
@@ -90,6 +91,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       final route = await resolveRoute(ref);
 
       if (!mounted) return;
+      if (!_isCurrentRoute) return;
       Navigator.pushReplacementNamed(
         context,
         route.name,
@@ -126,6 +128,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     return SplashRoute('/age-gate', arguments: {'userId': user.id});
   }
+
+  bool get _isCurrentRoute => ModalRoute.of(context)?.isCurrent ?? true;
 
   @override
   Widget build(BuildContext context) {

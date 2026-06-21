@@ -18,6 +18,7 @@ class _SurveyActivityGoalsScreenState
     extends ConsumerState<SurveyActivityGoalsScreen> {
   String? _selectedActivityLevel;
   Set<String> _selectedGoals = {};
+  bool _isContinuing = false;
   final _logger = Logger('SurveyActivityGoalsScreen');
 
   final List<Map<String, dynamic>> _activityLevels = [
@@ -136,6 +137,8 @@ class _SurveyActivityGoalsScreenState
       _selectedActivityLevel != null && _selectedGoals.isNotEmpty;
 
   Future<void> _handleNext() async {
+    if (_isContinuing) return;
+
     // Capture context-dependent values BEFORE any async operations
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
@@ -162,51 +165,64 @@ class _SurveyActivityGoalsScreenState
       return;
     }
 
-    // Save data to survey notifier
-    final surveyNotifier = ref.read(surveyNotifierProvider.notifier);
-    await surveyNotifier.updateSurveyData(
-      'activityLevel',
-      _selectedActivityLevel,
-    );
-    await surveyNotifier.updateSurveyData('goals', _selectedGoals.toList());
+    setState(() => _isContinuing = true);
 
-    // Validate using the notifier's validation method
-    final validationError = surveyNotifier.validateActivityGoals();
-    if (validationError != null) {
+    try {
+      // Save data to survey notifier
+      final surveyNotifier = ref.read(surveyNotifierProvider.notifier);
+      await surveyNotifier.updateSurveyData(
+        'activityLevel',
+        _selectedActivityLevel,
+      );
+      await surveyNotifier.updateSurveyData('goals', _selectedGoals.toList());
+
+      // Validate using the notifier's validation method
+      final validationError = surveyNotifier.validateActivityGoals();
+      if (validationError != null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(validationError),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Incremental save: Save partial profile data to local storage
+      // This ensures data persists if user navigates away
+      // Requirement 1.1, 1.2: Save data locally on each step
+      if (userId != null) {
+        try {
+          final handler = await ref.read(
+            surveyCompletionHandlerProvider.future,
+          );
+          final surveyData = ref.read(surveyNotifierProvider).surveyData;
+
+          // Save partial profile data incrementally
+          // This won't clear survey state, just persists to profile storage
+          await handler.completeSurvey(userId, surveyData);
+          _logger.info('Incremental save successful for activity goals');
+        } catch (e, stackTrace) {
+          // Log error but don't block user from continuing
+          // Incremental save is best-effort
+          _logger.warning(
+            'Incremental save failed for activity goals',
+            error: e,
+            stackTrace: stackTrace,
+          );
+        }
+      }
+
+      // Navigate to next screen
+      if (!mounted) return;
+      Navigator.pushNamed(context, '/survey_daily_targets', arguments: args);
+    } finally {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(validationError), backgroundColor: Colors.red),
-        );
-      }
-      return;
-    }
-
-    // Incremental save: Save partial profile data to local storage
-    // This ensures data persists if user navigates away
-    // Requirement 1.1, 1.2: Save data locally on each step
-    if (userId != null) {
-      try {
-        final handler = await ref.read(surveyCompletionHandlerProvider.future);
-        final surveyData = ref.read(surveyNotifierProvider).surveyData;
-
-        // Save partial profile data incrementally
-        // This won't clear survey state, just persists to profile storage
-        await handler.completeSurvey(userId, surveyData);
-        _logger.info('Incremental save successful for activity goals');
-      } catch (e, stackTrace) {
-        // Log error but don't block user from continuing
-        // Incremental save is best-effort
-        _logger.warning(
-          'Incremental save failed for activity goals',
-          error: e,
-          stackTrace: stackTrace,
-        );
+        setState(() => _isContinuing = false);
       }
     }
-
-    // Navigate to next screen
-    if (!mounted) return;
-    Navigator.pushNamed(context, '/survey_daily_targets', arguments: args);
   }
 
   @override
@@ -385,7 +401,9 @@ class _SurveyActivityGoalsScreenState
               SizedBox(
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _canContinue ? _handleNext : null,
+                  onPressed: _canContinue && !_isContinuing
+                      ? _handleNext
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryBlue,
                     foregroundColor: Colors.white,
@@ -395,9 +413,12 @@ class _SurveyActivityGoalsScreenState
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  child: Text(
+                    _isContinuing ? 'Saving...' : 'Continue',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

@@ -167,6 +167,261 @@ void main() {
       expect(find.text('Sent!'), findsOneWidget);
     });
 
+    testWidgets('Send button ignores duplicate taps while sending', (
+      WidgetTester tester,
+    ) async {
+      final sendCompleter = Completer<bool>();
+      var sendCalls = 0;
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchDataChannel, (call) async {
+            switch (call.method) {
+              case 'checkPermission':
+                return 'granted';
+              case 'connectWatch':
+              case 'isWatchConnected':
+              case 'startHeartRate':
+                return true;
+              case 'stopHeartRate':
+              case 'disconnectWatch':
+                return null;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchSyncChannel, (call) async {
+            switch (call.method) {
+              case 'checkPhoneConnection':
+                return false;
+              case 'sendHeartRateToPhone':
+                sendCalls += 1;
+                return sendCompleter.future;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockStreamHandler(
+            heartRateEventChannel,
+            MockStreamHandler.inline(
+              onListen: (arguments, events) {
+                events.success({
+                  'bpm': 76,
+                  'timestamp': DateTime.now().millisecondsSinceEpoch,
+                  'status': 'active',
+                });
+              },
+            ),
+          );
+
+      await pumpWearHeartRateScreen(tester);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final sendButtonFinder = find.widgetWithText(ElevatedButton, 'Send');
+      await tester.tap(sendButtonFinder);
+      await tester.tap(sendButtonFinder);
+      await tester.pump();
+
+      expect(sendCalls, 1);
+      expect(find.text('Sending'), findsOneWidget);
+
+      sendCompleter.complete(true);
+      await tester.pump();
+
+      expect(find.text('Sent!'), findsOneWidget);
+    });
+
+    testWidgets('Stop button stops monitoring and disables sensor status', (
+      WidgetTester tester,
+    ) async {
+      var stopCalls = 0;
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchDataChannel, (call) async {
+            switch (call.method) {
+              case 'checkPermission':
+                return 'granted';
+              case 'connectWatch':
+              case 'isWatchConnected':
+              case 'startHeartRate':
+                return true;
+              case 'stopHeartRate':
+                stopCalls += 1;
+                return null;
+              case 'disconnectWatch':
+                return null;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockStreamHandler(
+            heartRateEventChannel,
+            MockStreamHandler.inline(
+              onListen: (arguments, events) {
+                events.success({
+                  'bpm': 79,
+                  'timestamp': DateTime.now().millisecondsSinceEpoch,
+                  'status': 'active',
+                });
+              },
+            ),
+          );
+
+      await pumpWearHeartRateScreen(tester);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.widgetWithText(ElevatedButton, 'Stop'), findsOneWidget);
+      expect(find.text('79'), findsWidgets);
+      expect(find.text('Active'), findsWidgets);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Stop'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(stopCalls, 1);
+      expect(find.widgetWithText(ElevatedButton, 'Start'), findsOneWidget);
+      expect(find.text('Stopped'), findsOneWidget);
+      expect(find.text('Off'), findsOneWidget);
+    });
+
+    testWidgets('late heart rate events are ignored after stop is requested', (
+      WidgetTester tester,
+    ) async {
+      final stopCompleter = Completer<void>();
+      late void Function(Object?) sendHeartRateEvent;
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchDataChannel, (call) async {
+            switch (call.method) {
+              case 'checkPermission':
+                return 'granted';
+              case 'connectWatch':
+              case 'isWatchConnected':
+              case 'startHeartRate':
+                return true;
+              case 'stopHeartRate':
+                await stopCompleter.future;
+                return null;
+              case 'disconnectWatch':
+                return null;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockStreamHandler(
+            heartRateEventChannel,
+            MockStreamHandler.inline(
+              onListen: (arguments, events) {
+                sendHeartRateEvent = events.success;
+                events.success({
+                  'bpm': 79,
+                  'timestamp': DateTime.now().millisecondsSinceEpoch,
+                  'status': 'active',
+                });
+              },
+            ),
+          );
+
+      await pumpWearHeartRateScreen(tester);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('79'), findsWidgets);
+      expect(find.text('Active'), findsWidgets);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Stop'));
+      await tester.pump();
+
+      sendHeartRateEvent({
+        'bpm': 103,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'status': 'active',
+      });
+      await tester.pump();
+
+      expect(find.text('103'), findsNothing);
+      expect(find.text('Stopping...'), findsOneWidget);
+      expect(find.text('Off'), findsOneWidget);
+
+      stopCompleter.complete();
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Stopped'), findsOneWidget);
+      expect(find.text('103'), findsNothing);
+    });
+
+    testWidgets('Send failure shows error and resets status after delay', (
+      WidgetTester tester,
+    ) async {
+      var sendCalls = 0;
+
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchDataChannel, (call) async {
+            switch (call.method) {
+              case 'checkPermission':
+                return 'granted';
+              case 'connectWatch':
+              case 'isWatchConnected':
+              case 'startHeartRate':
+                return true;
+              case 'stopHeartRate':
+              case 'disconnectWatch':
+                return null;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(watchSyncChannel, (call) async {
+            switch (call.method) {
+              case 'checkPhoneConnection':
+                return false;
+              case 'sendHeartRateToPhone':
+                sendCalls += 1;
+                return false;
+              default:
+                return null;
+            }
+          });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockStreamHandler(
+            heartRateEventChannel,
+            MockStreamHandler.inline(
+              onListen: (arguments, events) {
+                events.success({
+                  'bpm': 81,
+                  'timestamp': DateTime.now().millisecondsSinceEpoch,
+                  'status': 'active',
+                });
+              },
+            ),
+          );
+
+      await pumpWearHeartRateScreen(tester);
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Send'));
+      await tester.pump();
+
+      expect(sendCalls, 1);
+      expect(find.text('Failed'), findsOneWidget);
+      expect(find.text('Failed to send data to phone'), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(find.text('Active'), findsWidgets);
+      expect(find.text('Failed to send data to phone'), findsOneWidget);
+    });
+
     testWidgets('All interactive elements have sufficient padding', (
       WidgetTester tester,
     ) async {

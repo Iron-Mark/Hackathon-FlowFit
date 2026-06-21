@@ -73,6 +73,37 @@ void main() {
 
     expect(find.text('route:dashboard'), findsOneWidget);
   });
+
+  testWidgets('offstage splash does not replace a direct initial route', (
+    tester,
+  ) async {
+    var resolverCalled = false;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          initialRoute: '/login',
+          routes: {
+            '/': (_) => SplashScreen(
+              minimumDisplayDuration: Duration.zero,
+              resolveRoute: (_) async {
+                resolverCalled = true;
+                return const SplashRoute('/welcome');
+              },
+            ),
+            '/login': (_) => const Scaffold(body: Text('route:login')),
+            '/welcome': (_) => const Scaffold(body: Text('route:welcome')),
+          },
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(resolverCalled, isFalse);
+    expect(find.text('route:login'), findsOneWidget);
+    expect(find.text('route:welcome'), findsNothing);
+  });
 }
 
 Future<void> _pumpSplash(

@@ -5,7 +5,14 @@ import '../widgets/permission_status_widget.dart';
 /// Screen that demonstrates permission state UI updates
 /// Shows current permission status and provides controls for permission management
 class SensorPermissionScreen extends StatefulWidget {
-  const SensorPermissionScreen({super.key});
+  const SensorPermissionScreen({
+    super.key,
+    this.watchBridge,
+    this.disposeWatchBridge = false,
+  });
+
+  final WatchBridgeService? watchBridge;
+  final bool disposeWatchBridge;
 
   @override
   State<SensorPermissionScreen> createState() => _SensorPermissionScreenState();
@@ -13,16 +20,20 @@ class SensorPermissionScreen extends StatefulWidget {
 
 class _SensorPermissionScreenState extends State<SensorPermissionScreen> {
   late final WatchBridgeService _watchBridge;
+  late final bool _ownsWatchBridge;
 
   @override
   void initState() {
     super.initState();
-    _watchBridge = WatchBridgeService();
+    _ownsWatchBridge = widget.watchBridge == null;
+    _watchBridge = widget.watchBridge ?? WatchBridgeService();
   }
 
   @override
   void dispose() {
-    _watchBridge.dispose();
+    if (_ownsWatchBridge || widget.disposeWatchBridge) {
+      _watchBridge.dispose();
+    }
     super.dispose();
   }
 

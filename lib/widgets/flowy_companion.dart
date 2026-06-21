@@ -39,19 +39,13 @@ class _FlowyCompanionState extends State<FlowyCompanion>
     _floatingAnimation = Tween<double>(
       begin: -8.0,
       end: 8.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     // Subtle rotation animation for liveliness
     _rotationAnimation = Tween<double>(
       begin: -0.02,
       end: 0.02,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -127,10 +121,7 @@ class _FlowyCompanionState extends State<FlowyCompanion>
 class FlowyMini extends StatelessWidget {
   final double size;
 
-  const FlowyMini({
-    super.key,
-    this.size = 40,
-  });
+  const FlowyMini({super.key, this.size = 40});
 
   @override
   Widget build(BuildContext context) {

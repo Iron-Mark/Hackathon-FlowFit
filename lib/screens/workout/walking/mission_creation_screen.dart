@@ -38,6 +38,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
   double _distance = 500; // Default 500 meters
   double _radius = 100; // Default 100 meters
   bool _isLoadingLocation = true;
+  bool _isStartingMission = false;
 
   @override
   void initState() {
@@ -370,7 +371,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
             SizedBox(
               height: 48,
               child: ElevatedButton(
-                onPressed: _selectedLocation != null
+                onPressed: _selectedLocation != null && !_isStartingMission
                     ? () => _startMission(context)
                     : null,
                 child: const Text('Start Mission'),
@@ -383,7 +384,7 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
   }
 
   Future<void> _startMission(BuildContext context) async {
-    if (_selectedLocation == null) return;
+    if (_selectedLocation == null || _isStartingMission) return;
 
     // Create mission
     final mission = Mission(
@@ -401,6 +402,8 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
     );
 
     try {
+      setState(() => _isStartingMission = true);
+
       // Start walking session with mission
       await ref
           .read(walkingSessionProvider.notifier)
@@ -421,6 +424,10 @@ class _MissionCreationScreenState extends ConsumerState<MissionCreationScreen> {
         );
       }
       return;
+    } finally {
+      if (mounted) {
+        setState(() => _isStartingMission = false);
+      }
     }
 
     if (context.mounted) {

@@ -13,6 +13,8 @@ import '../../widgets/wellness/wellness_stats_card.dart';
 import '../../widgets/wellness/stress_alert_banner.dart';
 import '../../widgets/wellness/cardio_detection_banner.dart';
 import '../../widgets/wellness/wellness_debug_panel.dart';
+import '../../services/phone_step_counter_service.dart';
+import '../../services/wellness_state_service.dart';
 import 'wellness_onboarding_screen.dart';
 
 typedef WellnessOnboardingCompletionChecker = Future<bool> Function();
@@ -46,6 +48,8 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
   bool _showStressBanner = false;
   bool _showCardioBanner = false;
   DateTime? _lastStressAlert;
+  WellnessStateService? _wellnessStateService;
+  PhoneStepCounterService? _phoneStepCounterService;
 
   @override
   void initState() {
@@ -85,6 +89,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
         await widget.startMonitoring!();
       } else {
         final service = ref.read(wellnessStateServiceProvider);
+        _wellnessStateService = service;
         await service.startMonitoring();
       }
       debugPrint('WellnessTrackerPage: Wellness service started');
@@ -94,6 +99,7 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
         await widget.startStepCounting!();
       } else {
         final phoneStepCounter = ref.read(phoneStepCounterServiceProvider);
+        _phoneStepCounterService = phoneStepCounter;
         await phoneStepCounter.startCounting();
       }
       debugPrint('WellnessTrackerPage: Phone step counter started');
@@ -126,10 +132,12 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
           debugPrint('WellnessTrackerPage: stopMonitoring failed: $error');
         }),
       );
-    } else {
-      final service = ref.read(wellnessStateServiceProvider);
+    } else if (_wellnessStateService != null) {
       unawaited(
-        service.stopMonitoring().catchError((Object error, StackTrace stack) {
+        _wellnessStateService!.stopMonitoring().catchError((
+          Object error,
+          StackTrace stack,
+        ) {
           debugPrint('WellnessTrackerPage: stopMonitoring failed: $error');
         }),
       );
@@ -141,10 +149,9 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
           debugPrint('WellnessTrackerPage: stopCounting failed: $error');
         }),
       );
-    } else {
-      final phoneStepCounter = ref.read(phoneStepCounterServiceProvider);
+    } else if (_phoneStepCounterService != null) {
       unawaited(
-        phoneStepCounter.stopCounting().catchError((
+        _phoneStepCounterService!.stopCounting().catchError((
           Object error,
           StackTrace stack,
         ) {

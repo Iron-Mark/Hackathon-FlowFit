@@ -34,11 +34,7 @@ class HeartRatePoint {
 
   @override
   int get hashCode {
-    return Object.hash(
-      timestamp,
-      bpm,
-      Object.hashAll(ibiValues),
-    );
+    return Object.hash(timestamp, bpm, Object.hashAll(ibiValues));
   }
 
   bool _listEquals<T>(List<T>? a, List<T>? b) {

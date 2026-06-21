@@ -22,11 +22,16 @@ class WalkingRoute {
     required this.greenSpacePercentage,
     this.description,
     this.features = const [],
-  })  : assert(distance >= 0, 'Distance must be non-negative'),
-        assert(duration >= 0, 'Duration must be non-negative'),
-        assert(calmScore >= 0.0 && calmScore <= 1.0, 'Calm score must be between 0 and 1'),
-        assert(greenSpacePercentage >= 0.0 && greenSpacePercentage <= 1.0,
-            'Green space percentage must be between 0 and 1');
+  }) : assert(distance >= 0, 'Distance must be non-negative'),
+       assert(duration >= 0, 'Duration must be non-negative'),
+       assert(
+         calmScore >= 0.0 && calmScore <= 1.0,
+         'Calm score must be between 0 and 1',
+       ),
+       assert(
+         greenSpacePercentage >= 0.0 && greenSpacePercentage <= 1.0,
+         'Green space percentage must be between 0 and 1',
+       );
 
   /// Route difficulty level based on distance
   String get difficulty {
@@ -89,10 +94,12 @@ class WalkingRoute {
       id: json['id'] as String,
       name: json['name'] as String,
       routePoints: (json['route_points'] as List)
-          .map((point) => LatLng(
-                point['lat'] as double,
-                point['lng'] as double,
-              ))
+          .map(
+            (point) => LatLng(
+              (point['lat'] as num).toDouble(),
+              (point['lng'] as num).toDouble(),
+            ),
+          )
           .toList(),
       distance: (json['distance'] as num).toDouble(),
       duration: json['duration'] as int,
@@ -122,6 +129,13 @@ class WalkingRoute {
 
   @override
   int get hashCode {
-    return Object.hash(id, name, distance, duration, calmScore, greenSpacePercentage);
+    return Object.hash(
+      id,
+      name,
+      distance,
+      duration,
+      calmScore,
+      greenSpacePercentage,
+    );
   }
 }

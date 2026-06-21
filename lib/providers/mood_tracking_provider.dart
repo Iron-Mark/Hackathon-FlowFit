@@ -7,11 +7,7 @@ class MoodTrackingState {
   final MoodRating? postMood;
   final int? moodChange;
 
-  MoodTrackingState({
-    this.preMood,
-    this.postMood,
-    this.moodChange,
-  });
+  MoodTrackingState({this.preMood, this.postMood, this.moodChange});
 
   MoodTrackingState copyWith({
     MoodRating? preMood,
@@ -39,14 +35,11 @@ class MoodTrackingNotifier extends StateNotifier<MoodTrackingState> {
   /// Records post-workout mood and calculates change
   void selectPostMood(int moodValue) {
     final mood = MoodRating.fromValue(moodValue);
-    final change = state.preMood != null 
-        ? moodValue - state.preMood!.value 
+    final change = state.preMood != null
+        ? moodValue - state.preMood!.value
         : null;
-    
-    state = state.copyWith(
-      postMood: mood,
-      moodChange: change,
-    );
+
+    state = state.copyWith(postMood: mood, moodChange: change);
   }
 
   /// Calculates mood change from pre and post moods
@@ -62,6 +55,7 @@ class MoodTrackingNotifier extends StateNotifier<MoodTrackingState> {
 }
 
 /// Provider for mood tracking state
-final moodTrackingProvider = StateNotifierProvider<MoodTrackingNotifier, MoodTrackingState>(
-  (ref) => MoodTrackingNotifier(),
-);
+final moodTrackingProvider =
+    StateNotifierProvider<MoodTrackingNotifier, MoodTrackingState>(
+      (ref) => MoodTrackingNotifier(),
+    );

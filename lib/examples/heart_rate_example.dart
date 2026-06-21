@@ -14,18 +14,18 @@ class HeartRateExample extends StatefulWidget {
 
 class _HeartRateExampleState extends State<HeartRateExample> {
   final WatchBridgeService _watchBridge = WatchBridgeService();
-  
+
   bool _isConnected = false;
   bool _isTracking = false;
   HeartRateData? _latestHeartRate;
   String _statusMessage = 'Not connected';
-  
+
   @override
   void initState() {
     super.initState();
     _checkInitialState();
   }
-  
+
   Future<void> _checkInitialState() async {
     try {
       final permissionStatus = await _watchBridge.checkBodySensorPermission();
@@ -40,7 +40,7 @@ class _HeartRateExampleState extends State<HeartRateExample> {
       });
     }
   }
-  
+
   Future<void> _requestPermission() async {
     try {
       final granted = await _watchBridge.requestBodySensorPermission();
@@ -53,13 +53,13 @@ class _HeartRateExampleState extends State<HeartRateExample> {
       });
     }
   }
-  
+
   Future<void> _connect() async {
     try {
       setState(() {
         _statusMessage = 'Checking permissions...';
       });
-      
+
       // Check and request permission first
       final permissionStatus = await _watchBridge.checkPermission();
       if (permissionStatus != 'granted') {
@@ -71,11 +71,11 @@ class _HeartRateExampleState extends State<HeartRateExample> {
           return;
         }
       }
-      
+
       setState(() {
         _statusMessage = 'Connecting...';
       });
-      
+
       final connected = await _watchBridge.connectToWatch();
       setState(() {
         _isConnected = connected;
@@ -87,7 +87,7 @@ class _HeartRateExampleState extends State<HeartRateExample> {
       });
     }
   }
-  
+
   Future<void> _startTracking() async {
     if (!_isConnected) {
       setState(() {
@@ -95,7 +95,7 @@ class _HeartRateExampleState extends State<HeartRateExample> {
       });
       return;
     }
-    
+
     try {
       final started = await _watchBridge.startHeartRateTracking();
       if (started) {
@@ -103,7 +103,7 @@ class _HeartRateExampleState extends State<HeartRateExample> {
           _isTracking = true;
           _statusMessage = 'Tracking...';
         });
-        
+
         // Listen to heart rate stream
         _watchBridge.heartRateStream.listen(
           (heartRateData) {
@@ -129,7 +129,7 @@ class _HeartRateExampleState extends State<HeartRateExample> {
       });
     }
   }
-  
+
   Future<void> _stopTracking() async {
     try {
       await _watchBridge.stopHeartRateTracking();
@@ -143,7 +143,7 @@ class _HeartRateExampleState extends State<HeartRateExample> {
       });
     }
   }
-  
+
   Future<void> _disconnect() async {
     try {
       await _watchBridge.disconnectFromWatch();
@@ -159,13 +159,13 @@ class _HeartRateExampleState extends State<HeartRateExample> {
       });
     }
   }
-  
+
   @override
   void dispose() {
     _watchBridge.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,39 +185,34 @@ class _HeartRateExampleState extends State<HeartRateExample> {
             else
               const Text(
                 '--',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
               ),
-            
+
             const SizedBox(height: 8),
-            
-            const Text(
-              'BPM',
-              style: TextStyle(fontSize: 16),
-            ),
-            
+
+            const Text('BPM', style: TextStyle(fontSize: 16)),
+
             const SizedBox(height: 16),
-            
+
             // IBI values (if available)
-            if (_latestHeartRate != null && _latestHeartRate!.ibiValues.isNotEmpty)
+            if (_latestHeartRate != null &&
+                _latestHeartRate!.ibiValues.isNotEmpty)
               Text(
                 'IBI: ${_latestHeartRate!.ibiValues.length} values',
                 style: const TextStyle(fontSize: 12),
               ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Status message
             Text(
               _statusMessage,
               style: const TextStyle(fontSize: 12),
               textAlign: TextAlign.center,
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Control buttons
             Wrap(
               spacing: 8,
@@ -233,7 +228,9 @@ class _HeartRateExampleState extends State<HeartRateExample> {
                   child: const Text('Connect'),
                 ),
                 ElevatedButton(
-                  onPressed: _isConnected && !_isTracking ? _startTracking : null,
+                  onPressed: _isConnected && !_isTracking
+                      ? _startTracking
+                      : null,
                   child: const Text('Start'),
                 ),
                 ElevatedButton(

@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:solar_icons/solar_icons.dart';
 import '../models/tracked_data.dart';
+import '../services/database_service.dart';
 import '../services/phone_data_listener.dart';
 import '../services/heart_rate_data_manager.dart';
 import 'package:logger/logger.dart';
 
 class PhoneHomePage extends StatefulWidget {
-  const PhoneHomePage({super.key});
+  const PhoneHomePage({super.key, HeartRateDataStore? dataStore})
+    : _dataStore = dataStore;
+
+  final HeartRateDataStore? _dataStore;
 
   @override
   State<PhoneHomePage> createState() => _PhoneHomePageState();
@@ -23,6 +27,9 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
   TrackedData? _latestHeartRate;
   bool _isConnected = false;
   bool _isStartingListener = false;
+  bool _isFlushingData = false;
+  bool _isConfirmingClear = false;
+  bool _isClearingData = false;
   String _statusMessage = 'Waiting for watch data...';
   Map<String, dynamic> _statistics = {};
 
@@ -38,13 +45,14 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
   void _initializeServices() {
     // Initialize data manager
     _dataManager = HeartRateDataManager(
+      dbService: widget._dataStore,
       maxBufferSize: 100,
       maxDatabaseRecords: 10000,
       ibiHistorySize: 10,
     );
 
     // Initialize sync manager
-    _syncManager = DataSyncManager();
+    _syncManager = DataSyncManager(dbService: widget._dataStore);
     _syncManager.startPeriodicSync(interval: const Duration(minutes: 15));
 
     // Listen to data manager stream
@@ -106,6 +114,8 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
   }
 
   Future<void> _startListening() async {
+    if (_isStartingListener) return;
+
     if (mounted) {
       setState(() {
         _isStartingListener = true;
@@ -138,6 +148,7 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
       if (mounted) {
         setState(() {
           _heartRateHistory = recentData;
+          _statistics = _dataManager.getStatistics();
         });
         _logger.d('Loaded ${recentData.length} recent readings');
       }
@@ -173,6 +184,7 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
       body: RefreshIndicator(
         onRefresh: _refreshHistory,
         child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             // App Bar
             SliverAppBar.large(
@@ -268,60 +280,94 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
           if (_statistics['buffer_size'] != null &&
               _statistics['buffer_size'] > 0)
             FloatingActionButton.extended(
-              onPressed: () async {
-                await _dataManager.forceFlush();
-                await _refreshHistory();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Flushed ${_statistics['buffer_size']} records to database',
-                      ),
-                    ),
-                  );
-                }
-              },
+              onPressed: _isFlushingData
+                  ? null
+                  : () async {
+                      if (_isFlushingData) return;
+
+                      setState(() => _isFlushingData = true);
+                      try {
+                        final pendingRecords =
+                            _statistics['buffer_size'] as int? ?? 0;
+                        await _dataManager.forceFlush();
+                        await _refreshHistory();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Flushed $pendingRecords records to database',
+                              ),
+                            ),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isFlushingData = false);
+                        }
+                      }
+                    },
               heroTag: 'flush',
               icon: const Icon(SolarIconsBold.diskette),
-              label: Text('Save ${_statistics['buffer_size']}'),
+              label: Text(
+                _isFlushingData
+                    ? 'Saving...'
+                    : 'Save ${_statistics['buffer_size']}',
+              ),
               backgroundColor: colorScheme.secondary,
             ),
           const SizedBox(height: 8),
           // Clear button
           FloatingActionButton.extended(
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Clear All Data'),
-                  content: const Text(
-                    'This will clear all heart rate data. Continue?',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Clear'),
-                    ),
-                  ],
-                ),
-              );
+            onPressed: _isConfirmingClear || _isClearingData
+                ? null
+                : () async {
+                    if (_isConfirmingClear || _isClearingData) return;
 
-              if (confirm == true) {
-                await _dataManager.clearAllData();
-                setState(() {
-                  _heartRateHistory.clear();
-                  _latestHeartRate = null;
-                  _statusMessage = 'Cleared all data';
-                });
-              }
-            },
+                    setState(() => _isConfirmingClear = true);
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Clear All Data'),
+                        content: const Text(
+                          'This will clear all heart rate data. Continue?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Clear'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (!mounted) return;
+                    setState(() => _isConfirmingClear = false);
+
+                    if (confirm == true) {
+                      setState(() => _isClearingData = true);
+                      try {
+                        await _dataManager.clearAllData();
+                        if (!mounted) return;
+                        setState(() {
+                          _heartRateHistory.clear();
+                          _latestHeartRate = null;
+                          _statistics = _dataManager.getStatistics();
+                          _statusMessage = 'Cleared all data';
+                        });
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isClearingData = false);
+                        }
+                      }
+                    }
+                  },
             heroTag: 'clear',
             icon: const Icon(SolarIconsBold.trashBinMinimalistic),
-            label: const Text('Clear'),
+            label: Text(_isClearingData ? 'Clearing...' : 'Clear'),
           ),
         ],
       ),
@@ -346,9 +392,13 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
                   size: 32,
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  'Current Heart Rate',
-                  style: Theme.of(context).textTheme.titleLarge,
+                Expanded(
+                  child: Text(
+                    'Current Heart Rate',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
               ],
             ),
@@ -620,11 +670,15 @@ class _PhoneHomePageState extends State<PhoneHomePage> {
               children: [
                 Icon(SolarIconsBold.history, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  'Recent Readings',
-                  style: Theme.of(context).textTheme.titleLarge,
+                Expanded(
+                  child: Text(
+                    'Recent Readings',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text(
                   '${_heartRateHistory.length} readings',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

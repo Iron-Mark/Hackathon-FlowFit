@@ -24,6 +24,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isSubmittingLogin = false;
   bool _isResettingPassword = false;
 
   @override
@@ -52,15 +53,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    if (_isSubmittingLogin) return;
+
     // Validate form fields
     if (_formKey.currentState!.validate()) {
-      // Call authNotifier to sign in
-      await ref
-          .read(authNotifierProvider.notifier)
-          .signIn(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
+      setState(() => _isSubmittingLogin = true);
+
+      try {
+        // Call authNotifier to sign in
+        await ref
+            .read(authNotifierProvider.notifier)
+            .signIn(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            );
+      } finally {
+        if (mounted) {
+          setState(() => _isSubmittingLogin = false);
+        }
+      }
     }
   }
 
@@ -151,7 +162,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     // Listen to auth state changes
     final authState = ref.watch(authNotifierProvider);
-    final isLoading = authState.status == AuthStatus.loading;
+    final isLoading =
+        authState.status == AuthStatus.loading || _isSubmittingLogin;
 
     // Listen for auth state changes and navigate accordingly
     ref.listen<AuthState>(authNotifierProvider, (previous, next) async {
@@ -379,8 +391,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Sign Up Link
                 Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       const Text(
                         "Don't have an account? ",

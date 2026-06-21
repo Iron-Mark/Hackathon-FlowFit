@@ -6,8 +6,9 @@ class TimerService {
   int _elapsedSeconds = 0;
   bool _isRunning = false;
   bool _isPaused = false;
-  
-  final StreamController<int> _timerController = StreamController<int>.broadcast();
+
+  final StreamController<int> _timerController =
+      StreamController<int>.broadcast();
 
   /// Stream of elapsed seconds
   Stream<int> get timerStream => _timerController.stream;
@@ -53,7 +54,7 @@ class TimerService {
   /// Resumes the timer from paused state
   void resume() {
     if (!_isPaused) return;
-    
+
     _isPaused = false;
     start();
   }
@@ -91,8 +92,9 @@ class CountdownTimerService {
   Timer? _timer;
   int _remainingSeconds = 0;
   bool _isRunning = false;
-  
-  final StreamController<int> _timerController = StreamController<int>.broadcast();
+
+  final StreamController<int> _timerController =
+      StreamController<int>.broadcast();
 
   /// Stream of remaining seconds
   Stream<int> get timerStream => _timerController.stream;

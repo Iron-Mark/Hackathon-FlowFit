@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 import '../../../services/profile_goal_preferences.dart';
+import 'widgets/goal_save_button.dart';
 
 class FitnessGoalsScreen extends StatefulWidget {
   const FitnessGoalsScreen({super.key});
@@ -61,6 +62,8 @@ class _FitnessGoalsScreenState extends State<FitnessGoalsScreen> {
   }
 
   Future<void> _handleSave() async {
+    if (_isLoading) return;
+
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
@@ -371,36 +374,7 @@ class _FitnessGoalsScreenState extends State<FitnessGoalsScreen> {
               const SizedBox(height: 32),
 
               // Save Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _handleSave,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.onPrimary,
-                          ),
-                        ),
-                      )
-                    : const Text(
-                        'Save Goals',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
+              GoalSaveButton(isLoading: _isLoading, onPressed: _handleSave),
 
               const SizedBox(height: 20),
             ],

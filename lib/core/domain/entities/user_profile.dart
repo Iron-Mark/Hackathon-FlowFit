@@ -187,8 +187,8 @@ class UserProfile {
       gender: surveyData['gender'] as String?,
       height: (surveyData['height'] as num?)?.toDouble(),
       weight: (surveyData['weight'] as num?)?.toDouble(),
-      heightUnit: 'cm', // Default from survey
-      weightUnit: 'kg', // Default from survey
+      heightUnit: surveyData['heightUnit'] as String? ?? 'cm',
+      weightUnit: surveyData['weightUnit'] as String? ?? 'kg',
       activityLevel: surveyData['activityLevel'] as String?,
       goals: (surveyData['goals'] as List<dynamic>?)
           ?.map((e) => e.toString())

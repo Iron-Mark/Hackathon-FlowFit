@@ -85,9 +85,32 @@ void main() {
     );
     expect(find.text('Retry watch listener'), findsOneWidget);
   });
+
+  testWidgets('map action opens the mission route', (tester) async {
+    final listener = _FakeActivityWatchDataListener(startResults: [true]);
+
+    await tester.pumpWidget(
+      _harness(
+        listener,
+        routes: {
+          '/mission': (_) => const Scaffold(body: Text('route:mission-map')),
+        },
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Open Map'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:mission-map'), findsOneWidget);
+  });
 }
 
-Widget _harness(ActivityWatchDataListener listener) {
+Widget _harness(
+  ActivityWatchDataListener listener, {
+  Map<String, WidgetBuilder> routes = const {},
+}) {
   return provider.MultiProvider(
     providers: [
       provider.ChangeNotifierProvider<ActivityClassifierViewModel>(
@@ -101,6 +124,7 @@ Widget _harness(ActivityWatchDataListener listener) {
       provider.Provider<HeartBpmAdapter>(create: (_) => HeartBpmAdapter()),
     ],
     child: MaterialApp(
+      routes: routes,
       home: TrackerPage(
         watchDataListener: listener,
         initialAccelSource: AccelSource.watch,

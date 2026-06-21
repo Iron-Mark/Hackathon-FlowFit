@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flowfit/domain/entities/user.dart' as domain_user;
 import 'package:flowfit/domain/entities/user_profile.dart' as domain_profile;
 import 'package:flowfit/domain/exceptions/auth_exceptions.dart';
@@ -71,6 +73,46 @@ void main() {
 
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.text('Invalid email or password'), findsOneWidget);
+    });
+
+    testWidgets('INTEGRATION: Login ignores duplicate submit while pending', (
+      tester,
+    ) async {
+      final signInCompleter = Completer<void>();
+      final authRepository = _FakeAuthRepository(
+        signInCompleter: signInCompleter,
+      );
+
+      await _pumpLoginHarness(
+        tester,
+        authRepository: authRepository,
+        profileRepository: _FakeProfileRepository(
+          completedUsers: {'test-user'},
+        ),
+      );
+
+      await _enterLoginForm(
+        tester,
+        email: 'duplicate_login@flowfit.test',
+        password: 'TestPassword123!',
+      );
+
+      final loginButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Log In'),
+      );
+
+      loginButton.onPressed!();
+      loginButton.onPressed!();
+      await tester.pump();
+
+      expect(authRepository.signInCalls, 1);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      signInCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(authRepository.signInCalls, 1);
+      expect(find.text('Dashboard'), findsOneWidget);
     });
 
     testWidgets(
@@ -218,13 +260,18 @@ class _RouteMarker extends StatelessWidget {
 }
 
 class _FakeAuthRepository implements IAuthRepository {
-  _FakeAuthRepository({this.initialUser, Set<String>? invalidCredentialEmails})
-    : invalidCredentialEmails = invalidCredentialEmails ?? {},
-      currentUser = initialUser;
+  _FakeAuthRepository({
+    this.initialUser,
+    Set<String>? invalidCredentialEmails,
+    this.signInCompleter,
+  }) : invalidCredentialEmails = invalidCredentialEmails ?? {},
+       currentUser = initialUser;
 
   final domain_user.User? initialUser;
   final Set<String> invalidCredentialEmails;
+  final Completer<void>? signInCompleter;
   domain_user.User? currentUser;
+  int signInCalls = 0;
 
   @override
   Future<domain_user.User> signUp({
@@ -242,10 +289,13 @@ class _FakeAuthRepository implements IAuthRepository {
     required String email,
     required String password,
   }) async {
+    signInCalls++;
+
     if (invalidCredentialEmails.contains(email)) {
       throw InvalidCredentialsException();
     }
 
+    await signInCompleter?.future;
     currentUser = _testUser(email: email);
     return currentUser!;
   }

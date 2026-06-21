@@ -24,6 +24,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final _confirmationController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isConfirmingDelete = false;
   bool _confirmDelete = false;
 
   @override
@@ -34,6 +35,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   }
 
   Future<void> _handleDeleteAccount() async {
+    if (_isLoading || _isConfirmingDelete) return;
+
     if (!_confirmDelete) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -47,6 +50,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
     if (_formKey.currentState!.validate()) {
       // Show final confirmation dialog
+      setState(() => _isConfirmingDelete = true);
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -67,6 +71,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           ],
         ),
       );
+
+      if (!mounted) return;
+      setState(() => _isConfirmingDelete = false);
 
       if (confirmed == true && mounted) {
         setState(() => _isLoading = true);
@@ -433,7 +440,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
 
                 // Delete Account Button
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _handleDeleteAccount,
+                  onPressed: _isLoading || _isConfirmingDelete
+                      ? null
+                      : _handleDeleteAccount,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,

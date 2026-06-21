@@ -6,11 +6,41 @@ import '../../../models/workout_session.dart';
 import '../../../providers/walking_session_provider.dart';
 
 /// Active walking session screen with live metrics and session controls.
-class ActiveWalkingScreen extends ConsumerWidget {
+class ActiveWalkingScreen extends ConsumerStatefulWidget {
   const ActiveWalkingScreen({super.key});
 
+  static String _formatDuration(int seconds) {
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final remainingSeconds = seconds % 60;
+    if (hours > 0) {
+      return '$hours:${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+    }
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  static String _formatPace(WalkingSession session) {
+    if (session.currentDistance <= 0 || (session.durationSeconds ?? 0) <= 0) {
+      return '--';
+    }
+    final paceMinutes =
+        (session.durationSeconds! / 60) / session.currentDistance;
+    final minutes = paceMinutes.floor();
+    final seconds = ((paceMinutes - minutes) * 60).round();
+    return '$minutes:${seconds.toString().padLeft(2, '0')}/km';
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActiveWalkingScreen> createState() =>
+      _ActiveWalkingScreenState();
+}
+
+class _ActiveWalkingScreenState extends ConsumerState<ActiveWalkingScreen> {
+  bool _isConfirmingEndWorkout = false;
+  bool _isEndingWorkout = false;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final session = ref.watch(walkingSessionProvider);
 
@@ -58,7 +88,9 @@ class ActiveWalkingScreen extends ConsumerWidget {
                 Expanded(
                   child: _MetricCard(
                     label: 'Time',
-                    value: _formatDuration(session.durationSeconds ?? 0),
+                    value: ActiveWalkingScreen._formatDuration(
+                      session.durationSeconds ?? 0,
+                    ),
                     unit: '',
                     icon: Icons.timer_outlined,
                     color: const Color(0xFF2563EB),
@@ -113,7 +145,9 @@ class ActiveWalkingScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 FilledButton.tonalIcon(
-                  onPressed: () => _confirmEndWorkout(context, ref),
+                  onPressed: _isConfirmingEndWorkout || _isEndingWorkout
+                      ? null
+                      : _confirmEndWorkout,
                   icon: const Icon(Icons.stop_circle_outlined),
                   label: const Text('End'),
                   style: FilledButton.styleFrom(
@@ -128,31 +162,13 @@ class ActiveWalkingScreen extends ConsumerWidget {
     );
   }
 
-  static String _formatDuration(int seconds) {
-    final hours = seconds ~/ 3600;
-    final minutes = (seconds % 3600) ~/ 60;
-    final remainingSeconds = seconds % 60;
-    if (hours > 0) {
-      return '$hours:${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
-    }
-    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
-  }
+  Future<void> _confirmEndWorkout() async {
+    if (_isConfirmingEndWorkout || _isEndingWorkout) return;
 
-  static String _formatPace(WalkingSession session) {
-    if (session.currentDistance <= 0 || (session.durationSeconds ?? 0) <= 0) {
-      return '--';
-    }
-    final paceMinutes =
-        (session.durationSeconds! / 60) / session.currentDistance;
-    final minutes = paceMinutes.floor();
-    final seconds = ((paceMinutes - minutes) * 60).round();
-    return '$minutes:${seconds.toString().padLeft(2, '0')}/km';
-  }
+    setState(() {
+      _isConfirmingEndWorkout = true;
+    });
 
-  static Future<void> _confirmEndWorkout(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
     final shouldEnd = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -173,13 +189,28 @@ class ActiveWalkingScreen extends ConsumerWidget {
       ),
     );
 
-    if (shouldEnd != true || !context.mounted) return;
+    if (!mounted) return;
+    setState(() {
+      _isConfirmingEndWorkout = false;
+    });
+
+    if (shouldEnd == true) {
+      await _endWorkout();
+    }
+  }
+
+  Future<void> _endWorkout() async {
+    if (_isEndingWorkout) return;
+
+    setState(() {
+      _isEndingWorkout = true;
+    });
 
     final notifier = ref.read(walkingSessionProvider.notifier);
     try {
       await notifier.endSession();
     } catch (_) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -190,7 +221,7 @@ class ActiveWalkingScreen extends ConsumerWidget {
       );
     }
 
-    if (!context.mounted) return;
+    if (!mounted) return;
     Navigator.of(context).pushReplacementNamed('/workout/walking/summary');
   }
 }

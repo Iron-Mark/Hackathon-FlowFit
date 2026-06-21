@@ -25,6 +25,8 @@ class _NotificationPermissionScreenState
   bool _isRequestingPermission = false;
 
   Future<void> _handleTurnOn() async {
+    if (_isRequestingPermission) return;
+
     setState(() {
       _isRequestingPermission = true;
     });

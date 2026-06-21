@@ -18,7 +18,8 @@ class StateTransition {
 
   /// Whether this is a significant transition (not to/from unknown)
   bool get isSignificant {
-    return fromState != WellnessState.unknown && toState != WellnessState.unknown;
+    return fromState != WellnessState.unknown &&
+        toState != WellnessState.unknown;
   }
 
   /// Whether this transition indicates improvement

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
 import '../../core/domain/entities/user_profile.dart';
+import '../../core/utils/height_measurements.dart';
 
 /// ProfileView Widget - Displays user profile data
 ///
@@ -387,6 +388,9 @@ class ProfileView extends ConsumerWidget {
   String _formatHeight() {
     if (profile.height == null) return 'Not set';
     final unit = profile.heightUnit ?? 'cm';
+    if (unit == 'ft') {
+      return formatHeightMeasurement(profile.height!, unit);
+    }
     return '${profile.height!.toStringAsFixed(1)} $unit';
   }
 

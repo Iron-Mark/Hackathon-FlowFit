@@ -41,6 +41,65 @@ void main() {
       expect(find.text('Detections: 0'), findsOneWidget);
       expect(find.text('banana'), findsNothing);
     });
+
+    testWidgets('disabled pose mode cannot change detection mode', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_harness());
+
+      expect(find.text('Detection mode: object'), findsOneWidget);
+
+      await tester.tap(find.text('Pose unavailable'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Detection mode: object'), findsOneWidget);
+      expect(find.text('Detection mode: pose'), findsNothing);
+    });
+
+    testWidgets('detections render confidence chips', (tester) async {
+      await tester.pumpWidget(_harness());
+
+      await tester.tap(find.text('Emit detection'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Detections: 1'), findsOneWidget);
+      expect(find.text('banana'), findsOneWidget);
+      expect(find.text('88.0%'), findsOneWidget);
+    });
+
+    testWidgets('camera builder errors show retry and can recover', (
+      tester,
+    ) async {
+      var shouldThrow = true;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: YoloDebugScreen(
+            cameraBuilder: (context, detectionMode, cameraMode, onDetection) {
+              if (shouldThrow) {
+                throw StateError('camera unavailable');
+              }
+
+              return const Center(child: Text('Recovered camera'));
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('An Error Occurred'), findsOneWidget);
+      expect(find.textContaining('Camera error:'), findsOneWidget);
+      expect(find.textContaining('camera unavailable'), findsOneWidget);
+
+      shouldThrow = false;
+      await tester.tap(find.text('Try Again'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recovered camera'), findsOneWidget);
+      expect(find.text('An Error Occurred'), findsNothing);
+    });
   });
 }
 

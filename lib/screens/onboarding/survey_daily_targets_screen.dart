@@ -7,6 +7,7 @@ import '../../presentation/providers/profile_providers.dart'
     as profile_providers;
 import '../../widgets/survey_app_bar.dart';
 import '../../core/domain/entities/user_profile.dart';
+import '../../core/utils/height_measurements.dart';
 
 class SurveyDailyTargetsScreen extends ConsumerStatefulWidget {
   const SurveyDailyTargetsScreen({super.key});
@@ -112,8 +113,8 @@ class _SurveyDailyTargetsScreenState
     // Get user data
     final age = surveyData['age'] as int? ?? 25;
     final gender = surveyData['gender'] as String? ?? 'male';
-    final weight = surveyData['weight'] as double? ?? 70.0;
-    final height = surveyData['height'] as double? ?? 170.0;
+    final weight = _weightInKilograms(surveyData);
+    final height = _heightInCentimeters(surveyData);
     final activityLevel =
         surveyData['activityLevel'] as String? ?? 'moderately_active';
     final goals = surveyData['goals'] as List<dynamic>? ?? [];
@@ -165,6 +166,22 @@ class _SurveyDailyTargetsScreenState
     ref
         .read(surveyNotifierProvider.notifier)
         .updateSurveyData('dailyCalorieTarget', _targetCalories);
+  }
+
+  double _heightInCentimeters(Map<String, dynamic> surveyData) {
+    final height = (surveyData['height'] as num?)?.toDouble() ?? 170.0;
+    final unit = surveyData['heightUnit'] as String? ?? 'cm';
+    return heightInCentimeters(
+      height,
+      unit,
+      rawHeightInput: surveyData['heightInput'] as String?,
+    );
+  }
+
+  double _weightInKilograms(Map<String, dynamic> surveyData) {
+    final weight = (surveyData['weight'] as num?)?.toDouble() ?? 70.0;
+    final unit = surveyData['weightUnit'] as String? ?? 'kg';
+    return unit == 'lbs' ? weight * 0.45359237 : weight;
   }
 
   Future<void> _handleComplete() async {
@@ -375,6 +392,8 @@ class _SurveyDailyTargetsScreenState
     final gender = surveyData['gender'] as String? ?? 'male';
     final height = surveyData['height'] as double? ?? 0.0;
     final weight = surveyData['weight'] as double? ?? 0.0;
+    final heightUnit = surveyData['heightUnit'] as String? ?? 'cm';
+    final weightUnit = surveyData['weightUnit'] as String? ?? 'kg';
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const SurveyAppBar(
@@ -567,7 +586,7 @@ class _SurveyDailyTargetsScreenState
                             ),
                           ),
                           Text(
-                            '${height.toStringAsFixed(0)}cm • ${weight.toStringAsFixed(0)}kg',
+                            '${_formatMeasurement(height, heightUnit)} • ${_formatMeasurement(weight, weightUnit)}',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[700],
@@ -707,11 +726,15 @@ class _SurveyDailyTargetsScreenState
                           children: [
                             Icon(Icons.check_circle, size: 24),
                             SizedBox(width: 12),
-                            Text(
-                              'Complete & Start App',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                            Flexible(
+                              child: Text(
+                                'Complete & Start App',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
@@ -725,6 +748,22 @@ class _SurveyDailyTargetsScreenState
         ),
       ),
     );
+  }
+
+  String _formatMeasurement(double value, String unit) {
+    if (unit == 'ft') {
+      final surveyData = ref.read(surveyNotifierProvider).surveyData;
+      return formatHeightMeasurement(
+        value,
+        unit,
+        rawHeightInput: surveyData['heightInput'] as String?,
+      );
+    }
+
+    final displayValue = value == value.roundToDouble()
+        ? value.toStringAsFixed(0)
+        : value.toStringAsFixed(1);
+    return '$displayValue$unit';
   }
 
   Widget _buildDiscreteSliderSection({

@@ -4,7 +4,7 @@ import 'package:flowfit/core/domain/entities/heart_rate_point.dart';
 void main() {
   group('HeartRatePoint', () {
     late DateTime testTimestamp;
-    
+
     setUp(() {
       testTimestamp = DateTime(2024, 1, 1, 12, 0, 0);
     });

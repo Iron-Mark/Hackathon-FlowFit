@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 import '../../../services/profile_goal_preferences.dart';
+import 'widgets/goal_save_button.dart';
 
 class WeightGoalsScreen extends StatefulWidget {
   const WeightGoalsScreen({super.key});
@@ -52,6 +53,8 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
   }
 
   Future<void> _handleSave() async {
+    if (_isLoading) return;
+
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
@@ -153,6 +156,7 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
               TextFormField(
                 controller: _currentWeightController,
                 keyboardType: TextInputType.number,
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: 'Enter current weight',
                   suffixText: 'lbs',
@@ -192,6 +196,7 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
               TextFormField(
                 controller: _goalWeightController,
                 keyboardType: TextInputType.number,
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: 'Enter goal weight',
                   suffixText: 'lbs',
@@ -281,22 +286,27 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildSummaryItem(
-                          context,
-                          'Current',
-                          '${_currentWeightController.text} lbs',
+                        Expanded(
+                          child: _buildSummaryItem(
+                            context,
+                            'Current',
+                            '${_currentWeightController.text} lbs',
+                          ),
                         ),
-                        _buildSummaryItem(
-                          context,
-                          'Goal',
-                          '${_goalWeightController.text} lbs',
+                        Expanded(
+                          child: _buildSummaryItem(
+                            context,
+                            'Goal',
+                            '${_goalWeightController.text} lbs',
+                          ),
                         ),
-                        _buildSummaryItem(
-                          context,
-                          'To Lose',
-                          '${int.tryParse(_currentWeightController.text) != null && int.tryParse(_goalWeightController.text) != null ? (int.parse(_currentWeightController.text) - int.parse(_goalWeightController.text)).abs() : 0} lbs',
+                        Expanded(
+                          child: _buildSummaryItem(
+                            context,
+                            'To Lose',
+                            _formatWeightDifference(),
+                          ),
                         ),
                       ],
                     ),
@@ -307,36 +317,7 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
               const SizedBox(height: 32),
 
               // Save Button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _handleSave,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            theme.colorScheme.onPrimary,
-                          ),
-                        ),
-                      )
-                    : const Text(
-                        'Save Goals',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
+              GoalSaveButton(isLoading: _isLoading, onPressed: _handleSave),
 
               const SizedBox(height: 20),
             ],
@@ -346,12 +327,27 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
     );
   }
 
+  String _formatWeightDifference() {
+    final current = double.tryParse(_currentWeightController.text);
+    final goal = double.tryParse(_goalWeightController.text);
+    if (current == null || goal == null) {
+      return '0 lbs';
+    }
+
+    final difference = (current - goal).abs();
+    final formatted = difference == difference.roundToDouble()
+        ? difference.toStringAsFixed(0)
+        : difference.toStringAsFixed(1);
+    return '$formatted lbs';
+  }
+
   Widget _buildSummaryItem(BuildContext context, String label, String value) {
     final theme = Theme.of(context);
     return Column(
       children: [
         Text(
           label,
+          textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -359,6 +355,7 @@ class _WeightGoalsScreenState extends State<WeightGoalsScreen> {
         const SizedBox(height: 4),
         Text(
           value,
+          textAlign: TextAlign.center,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.primary,

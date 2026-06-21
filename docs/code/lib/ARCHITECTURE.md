@@ -89,9 +89,11 @@ Dependencies point inward:
 
 ### 5. Backend Integration
 
-- All backend integration points marked with `// TODO: Backend integration`
-- Mock repositories return realistic sample data
-- Easy to swap mock implementations with real backend services
+- Supabase is the maintained-fork backend for Auth and synced app tables.
+- Local repositories still keep deterministic sample/offline behavior where a
+  live backend is not required for widget tests.
+- Backend-dependent flows should expose repository/service seams so tests can
+  inject local fakes instead of requiring network credentials.
 
 ## Code Generation
 

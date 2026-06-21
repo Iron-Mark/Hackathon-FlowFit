@@ -145,6 +145,8 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
   }
 
   Future<void> _checkPermissionsAndWatch() async {
+    if (_isCheckingPermissions) return;
+
     setState(() {
       _isCheckingPermissions = true;
       _setupMessage = null;
@@ -163,11 +165,8 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
         _isCheckingPermissions = false;
       });
 
-      if (!status.isReady) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(status.message)));
-      }
+      // The setup page renders this message inline above the bottom action.
+      // Keeping it out of a bottom SnackBar leaves the retry CTA tappable.
     } catch (error) {
       if (!mounted) {
         return;
@@ -180,9 +179,6 @@ class _WellnessOnboardingScreenState extends State<WellnessOnboardingScreen> {
         _setupMessage = message;
         _isCheckingPermissions = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 

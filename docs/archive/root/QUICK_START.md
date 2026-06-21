@@ -283,7 +283,7 @@ if (totalRecords > maxDatabaseRecords) {
 ```dart
 // Uploads unsynced data every 15 minutes
 final unsyncedData = await _dbService.getUnsyncedData();
-// TODO: Upload to Supabase
+await _supabaseService.saveHeartRateDataBatch(payload);
 await _dbService.markAsSynced(ids);
 ```
 

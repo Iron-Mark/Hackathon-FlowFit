@@ -27,6 +27,8 @@ class ActiveRunningScreen extends ConsumerStatefulWidget {
 class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
   MapController? _mapController;
   bool _hasStartedDetection = false;
+  bool _isConfirmingEndWorkout = false;
+  bool _isEndingWorkout = false;
 
   // Sensor data collection for AI
   StreamSubscription? _sensorSubscription;
@@ -182,8 +184,14 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  void _showEndWorkoutDialog() {
-    showDialog(
+  Future<void> _showEndWorkoutDialog() async {
+    if (_isConfirmingEndWorkout || _isEndingWorkout) return;
+
+    setState(() {
+      _isConfirmingEndWorkout = true;
+    });
+
+    final shouldEnd = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('End Workout?'),
@@ -194,37 +202,48 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-
-              // End the session properly
-              final notifier = ref.read(runningSessionProvider.notifier);
-              try {
-                await notifier.endSession();
-              } catch (_) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(this.context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Workout ended, but sync failed. You can retry from summary.',
-                    ),
-                    backgroundColor: Colors.orange,
-                    duration: Duration(seconds: 3),
-                  ),
-                );
-              }
-
-              // Navigate to summary
-              if (!mounted) return;
-              Navigator.of(
-                this.context,
-              ).pushReplacementNamed('/workout/running/summary');
-            },
+            onPressed: () => Navigator.of(context).pop(true),
             child: const Text('End Workout'),
           ),
         ],
       ),
     );
+
+    if (!mounted) return;
+    setState(() {
+      _isConfirmingEndWorkout = false;
+    });
+
+    if (shouldEnd == true) {
+      await _endWorkout();
+    }
+  }
+
+  Future<void> _endWorkout() async {
+    if (_isEndingWorkout) return;
+
+    setState(() {
+      _isEndingWorkout = true;
+    });
+
+    final notifier = ref.read(runningSessionProvider.notifier);
+    try {
+      await notifier.endSession();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Workout ended, but sync failed. You can retry from summary.',
+          ),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed('/workout/running/summary');
   }
 
   void _showWorkoutMenu(dynamic session) {
@@ -642,7 +661,9 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
               ),
               const SizedBox(width: 12),
               ElevatedButton(
-                onPressed: _showEndWorkoutDialog,
+                onPressed: _isConfirmingEndWorkout || _isEndingWorkout
+                    ? null
+                    : _showEndWorkoutDialog,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,

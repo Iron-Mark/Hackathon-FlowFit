@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
 import '../../theme/app_theme.dart';
 import '../../presentation/providers/providers.dart';
+import '../../presentation/providers/profile_providers.dart'
+    as profile_providers;
 import '../../widgets/survey_app_bar.dart';
 
 class SurveyIntroScreen extends ConsumerStatefulWidget {
@@ -18,6 +20,7 @@ class _SurveyIntroScreenState extends ConsumerState<SurveyIntroScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
+  bool _isSkipping = false;
 
   @override
   void initState() {
@@ -348,12 +351,13 @@ class _SurveyIntroScreenState extends ConsumerState<SurveyIntroScreen>
                         width: double.infinity,
                         height: 56,
                         child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pushReplacementNamed(
-                              context,
-                              '/dashboard',
-                            );
-                          },
+                          onPressed: _isSkipping
+                              ? null
+                              : () => _skipWithSmartDefaults(
+                                  userId: userId,
+                                  displayName: displayName,
+                                  args: args,
+                                ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.grey[700],
                             side: BorderSide(
@@ -365,13 +369,21 @@ class _SurveyIntroScreenState extends ConsumerState<SurveyIntroScreen>
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: const Text(
-                            'I\'ll Do This Later →',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: _isSkipping
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'I\'ll Do This Later →',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -396,6 +408,70 @@ class _SurveyIntroScreenState extends ConsumerState<SurveyIntroScreen>
         ),
       ),
     );
+  }
+
+  Future<void> _skipWithSmartDefaults({
+    required String? userId,
+    required String displayName,
+    required Map<String, dynamic>? args,
+  }) async {
+    if (_isSkipping) return;
+
+    final effectiveUserId = args?['userId'] as String? ?? userId;
+    if (effectiveUserId == null || effectiveUserId.isEmpty) {
+      Navigator.pushReplacementNamed(context, '/dashboard');
+      return;
+    }
+
+    setState(() {
+      _isSkipping = true;
+    });
+
+    try {
+      final handler = await ref.read(
+        profile_providers.surveyCompletionHandlerProvider.future,
+      );
+      await handler.completeSurvey(
+        effectiveUserId,
+        _buildSmartDefaultSurveyData(displayName),
+      );
+      await ref.read(surveyNotifierProvider.notifier).resetSurvey();
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save smart defaults. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSkipping = false;
+        });
+      }
+    }
+  }
+
+  Map<String, dynamic> _buildSmartDefaultSurveyData(String displayName) {
+    return {
+      'fullName': displayName.trim().isEmpty ? 'FlowFit User' : displayName,
+      'age': 18,
+      'gender': 'other',
+      'height': 170.0,
+      'weight': 70.0,
+      'heightUnit': 'cm',
+      'weightUnit': 'kg',
+      'activityLevel': 'moderately_active',
+      'goals': const ['maintain_weight', 'improve_cardio'],
+      'dailyCalorieTarget': 2000,
+      'dailyStepsTarget': 10000,
+      'dailyActiveMinutesTarget': 30,
+      'dailyWaterTarget': 2.5,
+    };
   }
 
   Widget _buildFeature({

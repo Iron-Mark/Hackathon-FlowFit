@@ -420,7 +420,7 @@ class _BuddyCustomizationScreenState
                   : null,
               child: Container(
                 width: 80,
-                height: 80,
+                height: 88,
                 decoration: BoxDecoration(
                   color: isUnlocked ? Colors.white : Colors.grey[300],
                   borderRadius: BorderRadius.circular(16),
@@ -611,67 +611,73 @@ class _BuddyCustomizationScreenState
         final color = BuddyColors.getColor(colorName);
         final levelRequired = BuddyColors.getLevelRequirement(colorName);
 
-        return GestureDetector(
-          onTap: isUnlocked
-              ? () {
-                  setState(() {
-                    _selectedColor = colorName;
-                  });
-                }
-              : null,
-          child: Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: isUnlocked ? color : Colors.grey[300],
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSelected
-                    ? const Color(0xFF3B82F6)
-                    : Colors.transparent,
-                width: 3,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Stack(
-              children: [
-                if (isSelected)
-                  const Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Icon(
-                      Icons.check_circle,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                  ),
-                if (!isUnlocked)
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.lock, color: Colors.grey, size: 24),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Lvl $levelRequired',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w600,
-                          ),
+        return Semantics(
+          label: 'Buddy color ${BuddyColors.getDisplayName(colorName)}',
+          button: true,
+          selected: isSelected,
+          enabled: isUnlocked,
+          child: GestureDetector(
+            onTap: isUnlocked
+                ? () {
+                    setState(() {
+                      _selectedColor = colorName;
+                    });
+                  }
+                : null,
+            child: Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: isUnlocked ? color : Colors.grey[300],
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFF3B82F6)
+                      : Colors.transparent,
+                  width: 3,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                      ],
+                      ]
+                    : null,
+              ),
+              child: Stack(
+                children: [
+                  if (isSelected)
+                    const Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Icon(
+                        Icons.check_circle,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
-                  ),
-              ],
+                  if (!isUnlocked)
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.lock, color: Colors.grey, size: 24),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Lvl $levelRequired',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         );

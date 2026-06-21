@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flowfit/screens/home/widgets/recent_activity_section.dart';
 import 'package:flowfit/providers/dashboard_providers.dart';
 import 'package:flowfit/models/recent_activity.dart';
+import 'package:flowfit/models/mood_rating.dart';
 
 void main() {
   group('RecentActivitySection', () {
@@ -165,15 +166,49 @@ void main() {
       expect(find.text('Today'), findsOneWidget);
     });
 
-    testWidgets('opens activity details without requiring GoRouter', (
+    testWidgets(
+      'opens and closes activity details without requiring GoRouter',
+      (WidgetTester tester) async {
+        final activity = RecentActivity(
+          id: '1',
+          name: 'Morning Run',
+          type: 'run',
+          details: '3.2 miles • 30 min',
+          date: DateTime.now(),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: ActivityCard(activity: activity)),
+          ),
+        );
+
+        await tester.tap(find.byType(ActivityCard));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Date'), findsOneWidget);
+        expect(find.widgetWithText(FilledButton, 'Close'), findsOneWidget);
+
+        await tester.tap(find.widgetWithText(FilledButton, 'Close'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Date'), findsNothing);
+        expect(find.text('Morning Run'), findsOneWidget);
+      },
+    );
+
+    testWidgets('activity details include mood data and mood boost', (
       WidgetTester tester,
     ) async {
       final activity = RecentActivity(
         id: '1',
-        name: 'Morning Run',
+        name: 'Mood Run',
         type: 'run',
-        details: '3.2 miles • 30 min',
+        details: '2.1 miles • 22 min',
         date: DateTime.now(),
+        preMood: MoodRating.fromValue(2),
+        postMood: MoodRating.fromValue(5),
+        moodChange: 3,
       );
 
       await tester.pumpWidget(
@@ -185,8 +220,9 @@ void main() {
       await tester.tap(find.byType(ActivityCard));
       await tester.pumpAndSettle();
 
-      expect(find.text('Date'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Close'), findsOneWidget);
+      expect(find.text('Mood'), findsOneWidget);
+      expect(find.text('😕 to 💪'), findsOneWidget);
+      expect(find.text('Mood boost: +3 points 🚀'), findsWidgets);
     });
 
     testWidgets('uses correct icon and color for run type', (

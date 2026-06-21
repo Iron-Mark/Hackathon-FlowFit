@@ -77,8 +77,12 @@ class WellnessMonitoringService {
 
   /// Enable monitoring (user preference)
   Future<void> enableMonitoring() async {
-    await _prefs.setBool(_monitoringEnabledKey, true);
-    await startMonitoring();
+    try {
+      await startMonitoring();
+    } catch (_) {
+      await _prefs.setBool(_monitoringEnabledKey, false);
+      rethrow;
+    }
   }
 
   /// Disable monitoring (user preference)

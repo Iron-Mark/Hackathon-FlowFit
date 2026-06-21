@@ -134,7 +134,28 @@ class _RunningSummaryScreenState extends ConsumerState<RunningSummaryScreen> {
     if (session == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Workout Complete')),
-        body: const Center(child: Text('No session data available')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.route_outlined, size: 48),
+                const SizedBox(height: 16),
+                const Text(
+                  'No session data available',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
+                  child: const Text('Back to Dashboard'),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 

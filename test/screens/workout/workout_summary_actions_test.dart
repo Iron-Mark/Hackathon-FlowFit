@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flowfit/models/exercise_progress.dart';
 import 'package:flowfit/models/heart_rate_data.dart';
+import 'package:flowfit/models/mission.dart';
 import 'package:flowfit/models/resistance_session.dart';
 import 'package:flowfit/models/running_session.dart';
 import 'package:flowfit/models/sensor_batch.dart';
@@ -90,6 +91,33 @@ void main() {
     expect(find.text('route:running-share:run-1'), findsOneWidget);
   });
 
+  testWidgets('running summary empty state can return to dashboard', (
+    tester,
+  ) async {
+    final notifier = _EmptyRunningSessionNotifier();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [runningSessionProvider.overrideWith((ref) => notifier)],
+        child: MaterialApp(
+          initialRoute: '/summary',
+          routes: {
+            '/': (_) => const Scaffold(body: Text('route:root')),
+            '/summary': (_) => const RunningSummaryScreen(),
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No session data available'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Back to Dashboard'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:root'), findsOneWidget);
+  });
+
   testWidgets('walking summary saves workout before returning to first route', (
     tester,
   ) async {
@@ -122,6 +150,112 @@ void main() {
     expect(find.text('Workout saved successfully!'), findsOneWidget);
   });
 
+  testWidgets('walking summary empty state can return to dashboard', (
+    tester,
+  ) async {
+    final notifier = _EmptyWalkingSessionNotifier();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [walkingSessionProvider.overrideWith((ref) => notifier)],
+        child: MaterialApp(
+          initialRoute: '/summary',
+          routes: {
+            '/': (_) => const Scaffold(body: Text('route:root')),
+            '/summary': (_) => const WalkingSummaryScreen(),
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No session data available'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Back to Dashboard'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:root'), findsOneWidget);
+  });
+
+  testWidgets('walking summary ignores duplicate save taps while saving', (
+    tester,
+  ) async {
+    final saveCompleter = Completer<void>();
+    final sessionService = _FakeWorkoutSessionService(
+      saveCompleter: saveCompleter,
+    );
+    final notifier = _FakeWalkingSessionNotifier(_walkingSession());
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          walkingSessionProvider.overrideWith((ref) => notifier),
+          workoutSessionServiceProvider.overrideWithValue(sessionService),
+        ],
+        child: MaterialApp(
+          initialRoute: '/summary',
+          routes: {
+            '/': (_) => const Scaffold(body: Text('route:root')),
+            '/summary': (_) => const WalkingSummaryScreen(),
+          },
+        ),
+      ),
+    );
+
+    await tester.scrollUntilVisible(find.text('Save to History'), 300);
+    await tester.tap(find.text('Save to History'));
+    await tester.tap(find.text('Save to History'), warnIfMissed: false);
+    await tester.pump();
+
+    expect(sessionService.saveCalls, 1);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('route:root'), findsNothing);
+
+    saveCompleter.complete();
+    await tester.pumpAndSettle();
+
+    expect(sessionService.savedSessions, hasLength(1));
+    expect(find.text('route:root'), findsOneWidget);
+  });
+
+  testWidgets(
+    'walking summary creates the next mission from completed mission',
+    (tester) async {
+      final notifier = _FakeWalkingSessionNotifier(
+        _walkingSession(
+          mission: _mission(MissionType.sanctuary),
+          missionCompleted: true,
+        ),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            walkingSessionProvider.overrideWith((ref) => notifier),
+            gpsTrackingServiceProvider.overrideWithValue(
+              _NoopGpsTrackingService(),
+            ),
+          ],
+          child: MaterialApp(
+            initialRoute: '/summary',
+            routes: {
+              '/': (_) => const Scaffold(body: Text('route:root')),
+              '/summary': (_) => const WalkingSummaryScreen(),
+            },
+          ),
+        ),
+      );
+
+      await tester.scrollUntilVisible(find.text('Create Next Mission'), 300);
+      await tester.tap(find.text('Create Next Mission'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Create Mission'), findsOneWidget);
+      expect(find.text('Destination Walk'), findsOneWidget);
+    },
+  );
+
   testWidgets('resistance summary retries sync and returns to dashboard', (
     tester,
   ) async {
@@ -150,6 +284,69 @@ void main() {
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('Back to Dashboard'), 300);
+    await tester.tap(find.widgetWithText(FilledButton, 'Back to Dashboard'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('route:root'), findsOneWidget);
+  });
+
+  testWidgets(
+    'resistance summary retry failure keeps recovery action visible',
+    (tester) async {
+      final notifier = _FakeResistanceSessionNotifier(
+        _resistanceSession(),
+        throwOnRetry: true,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            resistanceSessionProvider.overrideWith((ref) => notifier),
+          ],
+          child: MaterialApp(
+            initialRoute: '/summary',
+            routes: {
+              '/': (_) => const Scaffold(body: Text('route:root')),
+              '/summary': (_) => const ResistanceSummaryScreen(),
+            },
+          ),
+        ),
+      );
+
+      await tester.scrollUntilVisible(find.text('Retry Sync'), 300);
+      await tester.tap(find.text('Retry Sync'));
+      await tester.pump();
+
+      expect(notifier.retryCalls, 1);
+      expect(
+        find.text('Workout sync failed. Check your connection and retry.'),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(OutlinedButton, 'Retry Sync'), findsOneWidget);
+      expect(find.text('route:root'), findsNothing);
+    },
+  );
+
+  testWidgets('resistance summary empty state can return to dashboard', (
+    tester,
+  ) async {
+    final notifier = _FakeResistanceSessionNotifier(null);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [resistanceSessionProvider.overrideWith((ref) => notifier)],
+        child: MaterialApp(
+          initialRoute: '/summary',
+          routes: {
+            '/': (_) => const Scaffold(body: Text('route:root')),
+            '/summary': (_) => const ResistanceSummaryScreen(),
+          },
+        ),
+      ),
+    );
+
+    expect(find.text('No completed workout available'), findsOneWidget);
+
     await tester.tap(find.widgetWithText(FilledButton, 'Back to Dashboard'));
     await tester.pumpAndSettle();
 
@@ -202,17 +399,33 @@ RunningSession _runningSession() {
   );
 }
 
-WalkingSession _walkingSession() {
+WalkingSession _walkingSession({
+  Mission? mission,
+  bool missionCompleted = false,
+}) {
   return WalkingSession(
     id: 'walk-1',
     userId: 'user-1',
     startTime: DateTime(2026, 1, 1),
-    mode: WalkingMode.free,
+    mode: mission == null ? WalkingMode.free : WalkingMode.mission,
     targetDuration: 30,
     durationSeconds: 900,
     currentDistance: 1.1,
     steps: 1500,
     caloriesBurned: 80,
+    mission: mission,
+    missionCompleted: missionCompleted,
+  );
+}
+
+Mission _mission(MissionType type) {
+  return Mission(
+    id: 'mission-1',
+    type: type,
+    targetLocation: const LatLng(14.5995, 120.9842),
+    targetDistance: type == MissionType.target ? 500 : null,
+    radius: type == MissionType.safetyNet ? 100 : null,
+    name: type.displayName,
   );
 }
 
@@ -240,7 +453,11 @@ ResistanceSession _resistanceSession() {
 }
 
 class _FakeWorkoutSessionService implements WorkoutSessionService {
+  _FakeWorkoutSessionService({this.saveCompleter});
+
+  final Completer<void>? saveCompleter;
   final List<WorkoutSession> savedSessions = [];
+  int saveCalls = 0;
 
   @override
   Future<String> createSession(WorkoutSession session) async => session.id;
@@ -265,6 +482,11 @@ class _FakeWorkoutSessionService implements WorkoutSessionService {
 
   @override
   Future<void> saveSession(WorkoutSession session) async {
+    saveCalls++;
+    final completer = saveCompleter;
+    if (completer != null) {
+      await completer.future;
+    }
     savedSessions.add(session);
   }
 
@@ -288,6 +510,20 @@ class _FakeRunningSessionNotifier extends RunningSessionNotifier {
   }
 }
 
+class _EmptyRunningSessionNotifier extends RunningSessionNotifier {
+  _EmptyRunningSessionNotifier()
+    : super(
+        gpsService: _NoopGpsTrackingService(),
+        timerService: _NoopTimerService(),
+        hrService: _NoopHeartRateService(),
+        calorieService: CalorieCalculatorService(),
+        sessionService: _FakeWorkoutSessionService(),
+        phoneStepCounterService: _NoopPhoneStepCounterService(),
+        phoneDataListener: _NoopPhoneDataListener(),
+        readCurrentUserId: () => 'user-1',
+      );
+}
+
 class _FakeWalkingSessionNotifier extends WalkingSessionNotifier {
   _FakeWalkingSessionNotifier(WalkingSession initial)
     : super(
@@ -302,24 +538,42 @@ class _FakeWalkingSessionNotifier extends WalkingSessionNotifier {
   }
 }
 
-class _FakeResistanceSessionNotifier extends ResistanceSessionNotifier {
-  _FakeResistanceSessionNotifier(ResistanceSession initial)
+class _EmptyWalkingSessionNotifier extends WalkingSessionNotifier {
+  _EmptyWalkingSessionNotifier()
     : super(
+        gpsService: _NoopGpsTrackingService(),
         timerService: _NoopTimerService(),
-        countdownService: _NoopCountdownTimerService(),
         hrService: _NoopHeartRateService(),
         calorieService: CalorieCalculatorService(),
         sessionService: _FakeWorkoutSessionService(),
         readCurrentUserId: () => 'user-1',
-      ) {
+      );
+}
+
+class _FakeResistanceSessionNotifier extends ResistanceSessionNotifier {
+  _FakeResistanceSessionNotifier(
+    ResistanceSession? initial, {
+    this.throwOnRetry = false,
+  }) : super(
+         timerService: _NoopTimerService(),
+         countdownService: _NoopCountdownTimerService(),
+         hrService: _NoopHeartRateService(),
+         calorieService: CalorieCalculatorService(),
+         sessionService: _FakeWorkoutSessionService(),
+         readCurrentUserId: () => 'user-1',
+       ) {
     state = initial;
   }
 
+  final bool throwOnRetry;
   int retryCalls = 0;
 
   @override
   Future<void> retrySaveSession() async {
     retryCalls++;
+    if (throwOnRetry) {
+      throw StateError('sync unavailable');
+    }
   }
 }
 

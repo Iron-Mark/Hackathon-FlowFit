@@ -20,6 +20,7 @@ class WalkingOptionsScreen extends ConsumerStatefulWidget {
 class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
   int _targetDuration = 30; // Default 30 minutes
   MissionType _selectedMissionType = MissionType.target;
+  bool _isStartingFreeWalk = false;
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +145,9 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: () => _startFreeWalk(context),
+                onPressed: _isStartingFreeWalk
+                    ? null
+                    : () => _startFreeWalk(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                 ),
@@ -192,9 +195,12 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            'Map Mission',
-                            style: theme.textTheme.titleLarge,
+                          Flexible(
+                            child: Text(
+                              'Map Mission',
+                              style: theme.textTheme.titleLarge,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           // NEW Badge
@@ -325,10 +331,14 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
   }
 
   Future<void> _startFreeWalk(BuildContext context) async {
+    if (_isStartingFreeWalk) return;
+
     // Get pre-mood from workout flow provider
     final preMood = ref.read(workoutFlowProvider).preMood;
 
     try {
+      setState(() => _isStartingFreeWalk = true);
+
       // Start free walk session
       await ref
           .read(walkingSessionProvider.notifier)
@@ -349,6 +359,10 @@ class _WalkingOptionsScreenState extends ConsumerState<WalkingOptionsScreen> {
         );
       }
       return;
+    } finally {
+      if (mounted) {
+        setState(() => _isStartingFreeWalk = false);
+      }
     }
 
     if (context.mounted) {

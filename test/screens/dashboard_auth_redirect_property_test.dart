@@ -300,11 +300,14 @@ class TestAuthRepository implements IAuthRepository {
 
   @override
   Future<User> signIn({required String email, required String password}) async {
-    throw UnimplementedError();
+    _mockUser = _fakeAuthUser(email: email);
+    return _mockUser!;
   }
 
   @override
-  Future<void> signOut() async {}
+  Future<void> signOut() async {
+    _mockUser = null;
+  }
 
   @override
   Future<User> signUp({
@@ -313,13 +316,24 @@ class TestAuthRepository implements IAuthRepository {
     required String fullName,
     Map<String, dynamic>? metadata,
   }) async {
-    throw UnimplementedError();
+    _mockUser = _fakeAuthUser(email: email, fullName: fullName);
+    return _mockUser!;
   }
 
   @override
   Stream<User?> authStateChanges() {
     return Stream.value(null);
   }
+}
+
+User _fakeAuthUser({required String email, String? fullName}) {
+  return User(
+    id: 'test-auth-user',
+    email: email,
+    fullName: fullName,
+    createdAt: DateTime.utc(2026),
+    emailConfirmedAt: DateTime.utc(2026),
+  );
 }
 
 class TestProfileNotifier extends ProfileNotifier {

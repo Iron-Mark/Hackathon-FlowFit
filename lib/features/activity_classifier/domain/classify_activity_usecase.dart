@@ -34,7 +34,9 @@ class ClassifyActivityUseCase {
     // and we purposely avoid invoking the ML model for performance and
     // because the model is trained for active/stressed detection only.
     final lastSample = buffer.last;
-    final double? lastBpm = lastSample.length >= 4 ? lastSample[3] as double? : null;
+    final double? lastBpm = lastSample.length >= 4
+        ? lastSample[3] as double?
+        : null;
     if (lastBpm != null && lastBpm < 85.0) {
       return Activity(
         label: 'Calm',

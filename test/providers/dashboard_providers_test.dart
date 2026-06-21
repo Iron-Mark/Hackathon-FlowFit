@@ -1,5 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flowfit/core/providers/repositories/heart_rate_repository_provider.dart'
+    as core_hrp;
+import 'package:flowfit/domain/entities/heart_rate_data.dart';
+import 'package:flowfit/domain/repositories/heart_rate_repository.dart';
 import 'package:flowfit/providers/dashboard_providers.dart';
 import 'package:flowfit/providers/activity_history_provider.dart';
 import 'package:flowfit/providers/running_session_provider.dart';
@@ -46,7 +50,13 @@ void main() {
     test(
       'dailyMoodProvider does not invent mood minutes when data is unavailable',
       () async {
-        final container = ProviderContainer();
+        final container = ProviderContainer(
+          overrides: [
+            core_hrp.heartRateRepositoryProvider.overrideWithValue(
+              const _FakeHeartRateRepository(),
+            ),
+          ],
+        );
         addTearDown(container.dispose);
 
         final mood = await container.read(dailyMoodProvider.future);
@@ -56,6 +66,22 @@ void main() {
         expect(mood.calmMinutes, 0);
       },
     );
+
+    test('dailyMoodProvider falls back when heart rate lookup fails', () async {
+      final container = ProviderContainer(
+        overrides: [
+          core_hrp.heartRateRepositoryProvider.overrideWithValue(
+            const _FailingHeartRateRepository(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final mood = await container.read(dailyMoodProvider.future);
+
+      expect(mood.stressMinutes, 0);
+      expect(mood.calmMinutes, 0);
+    });
 
     test('selectedNavIndexProvider starts at 0', () {
       final container = ProviderContainer();
@@ -226,5 +252,42 @@ class _FailingWorkoutSessionService extends _FakeWorkoutSessionService {
     WorkoutType? type,
   }) async {
     throw StateError('workout service unavailable');
+  }
+}
+
+class _FakeHeartRateRepository implements HeartRateRepository {
+  const _FakeHeartRateRepository();
+
+  @override
+  Stream<HeartRateData> get heartRateStream =>
+      const Stream<HeartRateData>.empty();
+
+  @override
+  Future<List<HeartRateData>> getHistoricalData({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    return [];
+  }
+
+  @override
+  Future<void> saveHeartRateData(HeartRateData data) async {}
+
+  @override
+  Future<void> startTracking() async {}
+
+  @override
+  Future<void> stopTracking() async {}
+}
+
+class _FailingHeartRateRepository extends _FakeHeartRateRepository {
+  const _FailingHeartRateRepository();
+
+  @override
+  Future<List<HeartRateData>> getHistoricalData({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    throw StateError('heart rate repository unavailable');
   }
 }

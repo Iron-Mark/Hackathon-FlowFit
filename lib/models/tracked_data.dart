@@ -4,10 +4,10 @@ import 'sensor_status.dart';
 /// Enhanced TrackedData model matching Kotlin implementation
 /// Includes HR, IBI, HRV, and SPO2 data
 class TrackedData {
-  final int hr;                    // Heart Rate (BPM)
-  final List<int> ibiValues;       // Inter-Beat Intervals (ms)
-  final double hrv;                // Heart Rate Variability (RMSSD in ms)
-  final int spo2;                  // Blood Oxygen (%)
+  final int hr; // Heart Rate (BPM)
+  final List<int> ibiValues; // Inter-Beat Intervals (ms)
+  final double hrv; // Heart Rate Variability (RMSSD in ms)
+  final int spo2; // Blood Oxygen (%)
   final DateTime timestamp;
   final SensorStatus status;
 
@@ -64,7 +64,9 @@ class TrackedData {
     // Parse IBI values
     final ibiList = json['ibi'] ?? json['ibiValues'] ?? [];
     final List<int> parsedIbiValues = ibiList is List
-        ? ibiList.map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0).toList()
+        ? ibiList
+              .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0)
+              .toList()
         : [];
 
     // Parse status

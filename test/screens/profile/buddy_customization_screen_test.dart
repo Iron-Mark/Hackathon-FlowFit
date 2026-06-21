@@ -77,6 +77,48 @@ void main() {
     expect(find.text('Customize Your Buddy'), findsOneWidget);
   });
 
+  testWidgets('Buddy customization tabs update saved visual selections', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final saved = <_SavedBuddyCustomization>[];
+
+    await tester.pumpWidget(
+      _harness(
+        profile: _profile(level: 10),
+        onSave: (userId, updates) async {
+          saved.add(_SavedBuddyCustomization(userId, updates));
+        },
+      ),
+    );
+    await tester.pump();
+
+    try {
+      await tester.tap(find.bySemanticsLabel('Buddy color Fresh Green'));
+    } finally {
+      semantics.dispose();
+    }
+    await tester.pump();
+    await tester.tap(find.text('Accessories'));
+    await tester.pump();
+    await tester.tap(find.text('Top Hat'));
+    await tester.pump();
+    await tester.tap(find.text('Background'));
+    await tester.pump();
+    await tester.tap(find.text('Sunset'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(TextButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(saved, hasLength(1));
+    expect(saved.single.updates['color'], 'green');
+    expect(saved.single.updates['accessories'], {
+      buddyAccessoryKey: 'hat',
+      buddyBackgroundKey: 'sunset',
+    });
+    expect(find.text('Root Route'), findsOneWidget);
+  });
+
   testWidgets('Buddy customization surfaces save failures with retry action', (
     tester,
   ) async {
@@ -130,6 +172,7 @@ Widget _harness({
 BuddyProfile _profile({
   String name = 'Buddy',
   String color = 'blue',
+  int level = 10,
   Map<String, dynamic>? accessories,
 }) {
   return BuddyProfile(
@@ -137,7 +180,7 @@ BuddyProfile _profile({
     userId: 'user-1',
     name: name,
     color: color,
-    level: 10,
+    level: level,
     xp: 900,
     accessories: accessories,
     createdAt: DateTime.utc(2026),

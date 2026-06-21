@@ -261,7 +261,16 @@ class _RunningSetupScreenState extends ConsumerState<RunningSetupScreen> {
     final theme = Theme.of(context);
 
     return GestureDetector(
-      onTap: () => setState(() => _goalType = type),
+      onTap: () {
+        setState(() {
+          _goalType = type;
+          if (type == GoalType.distance) {
+            _targetDistance = _targetDistance.clamp(1.0, 20.0);
+          } else {
+            _targetDuration = _targetDuration.clamp(5, 120);
+          }
+        });
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(

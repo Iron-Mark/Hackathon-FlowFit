@@ -3,8 +3,7 @@ import 'package:flowfit/features/activity_classifier/domain/activity.dart';
 import 'package:flowfit/features/activity_classifier/domain/classify_activity_usecase.dart';
 
 /// Mock implementation of ActivityClassifierRepository for testing
-class MockActivityClassifierRepository
-    implements ActivityClassifierRepository {
+class MockActivityClassifierRepository implements ActivityClassifierRepository {
   List<double>? nextPrediction;
   int callCount = 0;
 
@@ -59,10 +58,7 @@ void main() {
     test('validate buffer length requirement', () async {
       final emptyBuffer = <List<double>>[];
 
-      expect(
-        () => useCase.execute(emptyBuffer),
-        throwsA(isA<ArgumentError>()),
-      );
+      expect(() => useCase.execute(emptyBuffer), throwsA(isA<ArgumentError>()));
     });
 
     test('validate buffer must have 320 samples', () async {
@@ -70,8 +66,13 @@ void main() {
 
       expect(
         () => useCase.execute(shortBuffer),
-        throwsA(isA<ArgumentError>()
-            .having((e) => e.message, 'message', contains('320'))),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.message,
+            'message',
+            contains('320'),
+          ),
+        ),
       );
     });
 
@@ -83,15 +84,25 @@ void main() {
 
       expect(
         () => useCase.execute(invalidBuffer),
-        throwsA(isA<ArgumentError>()
-            .having((e) => e.message, 'message', contains('4'))),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.message,
+            'message',
+            contains('4'),
+          ),
+        ),
       );
     });
 
     test('classify activity successfully with valid buffer', () async {
       final validBuffer = List.generate(
         320,
-        (_) => [1.5, 2.3, 0.8, 90.0], // [accX, accY, accZ, bpm] - HR >= 85 to allow AI
+        (_) => [
+          1.5,
+          2.3,
+          0.8,
+          90.0,
+        ], // [accX, accY, accZ, bpm] - HR >= 85 to allow AI
       );
 
       mockRepository.nextPrediction = [0.1, 0.8, 0.1]; // Cardio is highest
@@ -128,10 +139,7 @@ void main() {
       final buffer = List.generate(320, (_) => [1.0, 2.0, 3.0, 120.0]);
       mockRepository.nextPrediction = null; // This will throw
 
-      expect(
-        () => useCase.execute(buffer),
-        throwsA(isA<StateError>()),
-      );
+      expect(() => useCase.execute(buffer), throwsA(isA<StateError>()));
     });
 
     test('short-circuit to Calm when bpm < 85', () async {
@@ -168,10 +176,7 @@ void main() {
         probabilities: [0.7, 0.2, 0.1],
       );
 
-      final updated = original.copyWith(
-        label: 'Cardio',
-        confidence: 0.8,
-      );
+      final updated = original.copyWith(label: 'Cardio', confidence: 0.8);
 
       expect(updated.label, equals('Cardio'));
       expect(updated.confidence, equals(0.8));

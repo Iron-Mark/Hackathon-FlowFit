@@ -263,6 +263,8 @@ void main() {
           'gender': 'female',
           'height': 170.0,
           'weight': 65.0,
+          'heightUnit': 'ft',
+          'weightUnit': 'lbs',
           'activityLevel': 'moderately_active',
           'goals': ['maintain_weight', 'improve_cardio'],
           'dailyCalorieTarget': 1900,
@@ -279,12 +281,25 @@ void main() {
         expect(profile.gender, 'female');
         expect(profile.height, 170.0);
         expect(profile.weight, 65.0);
-        expect(profile.heightUnit, 'cm');
-        expect(profile.weightUnit, 'kg');
+        expect(profile.heightUnit, 'ft');
+        expect(profile.weightUnit, 'lbs');
         expect(profile.activityLevel, 'moderately_active');
         expect(profile.goals, ['maintain_weight', 'improve_cardio']);
         expect(profile.isSynced, false);
         expect(profile.toSupabaseJson()['survey_completed'], isTrue);
+      });
+
+      test('defaults survey units when no unit selection is present', () {
+        final surveyData = {
+          'fullName': 'Default Units',
+          'height': 170.0,
+          'weight': 65.0,
+        };
+
+        final profile = UserProfile.fromSurveyData('user-789', surveyData);
+
+        expect(profile.heightUnit, 'cm');
+        expect(profile.weightUnit, 'kg');
       });
 
       test('handles partial survey data', () {

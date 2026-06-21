@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flowfit/core/exceptions/buddy_exceptions.dart';
 import 'package:flowfit/screens/onboarding/buddy_ready_screen.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,38 @@ void main() {
     );
 
     await tester.tap(find.text('START ADVENTURE!'));
+    await tester.pumpAndSettle();
+
+    expect(completionCalls, 1);
+    expect(find.text('route:dashboard'), findsOneWidget);
+  });
+
+  testWidgets('start adventure ignores duplicate taps while completing', (
+    tester,
+  ) async {
+    final completionCompleter = Completer<void>();
+    var completionCalls = 0;
+
+    await _pumpScreen(
+      tester,
+      completeOnboarding: ({required ref, required context}) {
+        completionCalls++;
+        return completionCompleter.future;
+      },
+    );
+
+    await tester.tap(find.text('START ADVENTURE!'));
+    await tester.pump();
+
+    expect(completionCalls, 1);
+    expect(find.text('LOADING...'), findsOneWidget);
+
+    await tester.tap(find.text('LOADING...'));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(completionCalls, 1);
+
+    completionCompleter.complete();
     await tester.pumpAndSettle();
 
     expect(completionCalls, 1);

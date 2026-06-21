@@ -30,6 +30,33 @@ void main() {
     expect(find.text('wellness onboarding opened'), findsOneWidget);
   });
 
+  testWidgets('settings action opens wellness settings route', (tester) async {
+    final prefs = await _mockPrefs();
+
+    await tester.pumpWidget(
+      _harness(
+        prefs: prefs,
+        page: WellnessTrackerPage(
+          hasCompletedOnboarding: () async => true,
+          startMonitoring: () async {},
+          startStepCounting: () async {},
+          stopMonitoring: () async {},
+          stopStepCounting: () async {},
+        ),
+        routes: {
+          '/wellness-settings': (_) =>
+              const Scaffold(body: Text('wellness settings opened')),
+        },
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.byIcon(Icons.settings));
+    await tester.pumpAndSettle();
+
+    expect(find.text('wellness settings opened'), findsOneWidget);
+  });
+
   testWidgets('unmount during onboarding check does not throw', (tester) async {
     final prefs = await _mockPrefs();
     final completion = Completer<bool>();
@@ -122,6 +149,56 @@ void main() {
     expect(startStepCountingCalls, 1);
   });
 
+  testWidgets('connection error back action returns to previous route', (
+    tester,
+  ) async {
+    final prefs = await _mockPrefs();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        child: MaterialApp(
+          routes: {
+            '/': (_) => Scaffold(
+              body: Center(
+                child: Builder(
+                  builder: (context) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pushNamed('/tracker');
+                      },
+                      child: const Text('Open tracker'),
+                    );
+                  },
+                ),
+              ),
+            ),
+            '/tracker': (_) => WellnessTrackerPage(
+              hasCompletedOnboarding: () async => true,
+              startMonitoring: () async {
+                throw StateError('watch unavailable');
+              },
+              startStepCounting: () async {},
+              stopMonitoring: () async {},
+              stopStepCounting: () async {},
+            ),
+          },
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Open tracker'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Connection Error'), findsOneWidget);
+
+    await tester.tap(find.text('Go Back'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open tracker'), findsOneWidget);
+    expect(find.text('Connection Error'), findsNothing);
+  });
+
   testWidgets('dispose runs injected cleanup actions', (tester) async {
     final prefs = await _mockPrefs();
     var stopMonitoringCalls = 0;
@@ -163,6 +240,7 @@ Future<SharedPreferences> _mockPrefs() async {
 Widget _harness({
   required SharedPreferences prefs,
   required WellnessTrackerPage page,
+  Map<String, WidgetBuilder> routes = const {},
 }) {
   return ProviderScope(
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
@@ -171,6 +249,7 @@ Widget _harness({
       routes: {
         '/wellness-onboarding': (_) =>
             const Scaffold(body: Text('wellness onboarding opened')),
+        ...routes,
       },
     ),
   );

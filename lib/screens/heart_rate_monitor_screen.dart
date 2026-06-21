@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers/providers.dart';
 
 /// Example screen showing how to use Riverpod providers
-/// 
+///
 /// This demonstrates the clean architecture with Riverpod state management.
 class HeartRateMonitorScreen extends ConsumerWidget {
   const HeartRateMonitorScreen({super.key});
@@ -12,10 +12,10 @@ class HeartRateMonitorScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the heart rate stream
     final heartRateAsync = ref.watch(currentHeartRateProvider);
-    
+
     // Watch the tracking state
     final isTracking = ref.watch(heartRateTrackingStateProvider);
-    
+
     // Watch the connection state
     final connectionAsync = ref.watch(watchConnectionStateProvider);
 
@@ -26,7 +26,9 @@ class HeartRateMonitorScreen extends ConsumerWidget {
           // Connection indicator
           connectionAsync.when(
             data: (isConnected) => Icon(
-              isConnected ? Icons.bluetooth_connected : Icons.bluetooth_disabled,
+              isConnected
+                  ? Icons.bluetooth_connected
+                  : Icons.bluetooth_disabled,
               color: isConnected ? Colors.green : Colors.grey,
             ),
             loading: () => const CircularProgressIndicator(),
@@ -45,9 +47,9 @@ class HeartRateMonitorScreen extends ConsumerWidget {
               loading: () => const CircularProgressIndicator(),
               error: (error, stack) => Text('Error: $error'),
             ),
-            
+
             const SizedBox(height: 40),
-            
+
             // Control buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -56,8 +58,8 @@ class HeartRateMonitorScreen extends ConsumerWidget {
                   onPressed: isTracking
                       ? null
                       : () => ref
-                          .read(heartRateTrackingStateProvider.notifier)
-                          .startTracking(),
+                            .read(heartRateTrackingStateProvider.notifier)
+                            .startTracking(),
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Start'),
                 ),
@@ -66,13 +68,11 @@ class HeartRateMonitorScreen extends ConsumerWidget {
                   onPressed: !isTracking
                       ? null
                       : () => ref
-                          .read(heartRateTrackingStateProvider.notifier)
-                          .stopTracking(),
+                            .read(heartRateTrackingStateProvider.notifier)
+                            .stopTracking(),
                   icon: const Icon(Icons.stop),
                   label: const Text('Stop'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                  ),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 ),
               ],
             ),
@@ -88,21 +88,12 @@ class HeartRateMonitorScreen extends ConsumerWidget {
         // BPM display
         Text(
           data.bpm?.toString() ?? '--',
-          style: const TextStyle(
-            fontSize: 72,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
         ),
-        const Text(
-          'BPM',
-          style: TextStyle(
-            fontSize: 24,
-            color: Colors.grey,
-          ),
-        ),
-        
+        const Text('BPM', style: TextStyle(fontSize: 24, color: Colors.grey)),
+
         const SizedBox(height: 20),
-        
+
         // Status indicator
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -118,9 +109,9 @@ class HeartRateMonitorScreen extends ConsumerWidget {
             ),
           ),
         ),
-        
+
         const SizedBox(height: 20),
-        
+
         // IBI count
         Text(
           'IBI Values: ${data.ibiValues.length}',

@@ -211,6 +211,7 @@ jobs:
           pwsh -NoProfile -File scripts/verify_web_deployment.ps1
           -BaseUrl '${{ steps.deployment.outputs.page_url }}'
           -SupportEmail "$env:FLOWFIT_SUPPORT_EMAIL"
+          -CompareBuildWebPath build/web
           -OutFile build/web-pages-deployment-verification.json
 
       - name: Upload GitHub Pages verification evidence

@@ -92,6 +92,7 @@ class WorkoutFlowNotifier extends StateNotifier<WorkoutFlowState> {
 }
 
 /// Provider for workout flow state
-final workoutFlowProvider = StateNotifierProvider<WorkoutFlowNotifier, WorkoutFlowState>(
-  (ref) => WorkoutFlowNotifier(),
-);
+final workoutFlowProvider =
+    StateNotifierProvider<WorkoutFlowNotifier, WorkoutFlowState>(
+      (ref) => WorkoutFlowNotifier(),
+    );

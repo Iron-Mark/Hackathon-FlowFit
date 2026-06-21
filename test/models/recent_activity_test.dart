@@ -64,7 +64,7 @@ void main() {
 
     test('accepts valid activity types', () {
       final now = DateTime.now();
-      
+
       expect(
         () => RecentActivity(
           id: '1',
@@ -112,7 +112,7 @@ void main() {
 
     test('asserts on invalid activity type', () {
       final now = DateTime.now();
-      
+
       expect(
         () => RecentActivity(
           id: '1',
@@ -127,7 +127,7 @@ void main() {
 
     test('asserts on future date', () {
       final future = DateTime.now().add(const Duration(days: 1));
-      
+
       expect(
         () => RecentActivity(
           id: '1',

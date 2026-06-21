@@ -50,6 +50,27 @@ void main() {
     expect(find.text('Grant Permission'), findsOneWidget);
   });
 
+  testWidgets('grant recovery button retries permission and shows child', (
+    tester,
+  ) async {
+    final permissions = _FakeWearPermissions(
+      statusResults: [ph.PermissionStatus.denied, ph.PermissionStatus.denied],
+      requestResults: [ph.PermissionStatus.denied, ph.PermissionStatus.granted],
+    );
+
+    await tester.pumpWidget(_harness(permissions));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Grant Permission'), findsOneWidget);
+
+    await tester.tap(find.text('Grant Permission'));
+    await tester.pumpAndSettle();
+
+    expect(permissions.checkCalls, 2);
+    expect(permissions.requestCalls, 2);
+    expect(find.text('wear content'), findsOneWidget);
+  });
+
   testWidgets('permission check failure shows visible feedback', (
     tester,
   ) async {
@@ -105,6 +126,29 @@ void main() {
 
     expect(permissions.openSettingsCalls, 1);
     expect(permissions.checkCalls, 2);
+    expect(find.text('wear content'), findsOneWidget);
+  });
+
+  testWidgets('foreground resume rechecks permission and shows child', (
+    tester,
+  ) async {
+    final permissions = _FakeWearPermissions(
+      statusResults: [ph.PermissionStatus.denied, ph.PermissionStatus.granted],
+      requestResults: [ph.PermissionStatus.denied],
+    );
+
+    await tester.pumpWidget(_harness(permissions));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Grant Permission'), findsOneWidget);
+    expect(permissions.checkCalls, 1);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(permissions.checkCalls, 2);
+    expect(permissions.requestCalls, 1);
     expect(find.text('wear content'), findsOneWidget);
   });
 }

@@ -85,7 +85,7 @@ routes: {
 - Password visibility toggles
 - Terms acceptance checkbox
 
-### ⏳ TODO (Future Enhancements)
+### Future Enhancements
 - Real Google/Apple OAuth provider flows
 - Biometric authentication
 - Remember me controls

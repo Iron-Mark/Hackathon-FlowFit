@@ -32,6 +32,7 @@ void main() {
   late String runPhoneScript;
   late String runPhoneBat;
   late String testPhoneBat;
+  late String webAppSmoke;
   late String webDeploymentVerifier;
   late String storeSubmissionChecklist;
   late String releaseReadinessRunbook;
@@ -117,6 +118,7 @@ void main() {
     runPhoneScript = File('scripts/run_phone.ps1').readAsStringSync();
     runPhoneBat = File('scripts/run_phone.bat').readAsStringSync();
     testPhoneBat = File('scripts/test-phone.bat').readAsStringSync();
+    webAppSmoke = File('scripts/verify_web_app_smoke.mjs').readAsStringSync();
     webDeploymentVerifier = File(
       'scripts/verify_web_deployment.ps1',
     ).readAsStringSync();
@@ -435,7 +437,7 @@ exit 1
     final tempDir = Directory.systemTemp.createTempSync(
       'flowfit_release_snapshot_remote_',
     );
-    const fakeToken = 'ghp_FAKE_TOKEN_FOR_SNAPSHOT_TEST';
+    const fakeToken = 'ghp_FAKE';
     try {
       final repoDir = Directory('${tempDir.path}${Platform.pathSeparator}repo')
         ..createSync();
@@ -917,6 +919,7 @@ storeFile=upload-keystore.jks
       releasePreflight,
       contains('Store artifact manifest verification, advisory mode'),
     );
+    expect(releasePreflight, contains('@(0, 1, 2)'));
     expect(releasePreflight, contains('build/store-release-artifacts.json'));
     expect(releasePreflight, contains('scripts/verify_store_artifacts.ps1'));
     expect(scriptsReadme, contains('verify_store_artifacts.ps1'));
@@ -2079,6 +2082,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
   test('web deployment verifier checks deployed compliance pages', () {
     expect(webDeploymentVerifier, contains('[string]\$BaseUrl'));
     expect(webDeploymentVerifier, contains('[switch]\$AllowInsecureLocalhost'));
+    expect(webDeploymentVerifier, contains('[string]\$CompareBuildWebPath'));
+    expect(webDeploymentVerifier, contains('Assert-DeployedAssetMatchesLocal'));
+    expect(webDeploymentVerifier, contains('deployed asset freshness'));
+    expect(webDeploymentVerifier, contains('Get-Sha256HexFromText'));
+    expect(webDeploymentVerifier, contains('Get-Sha256HexFromFile'));
     expect(webDeploymentVerifier, contains('Invoke-WebRequest'));
     expect(webDeploymentVerifier, contains('Resolve-IndexBaseUri'));
     expect(webDeploymentVerifier, contains('Assert-SupportEmail'));
@@ -2093,6 +2101,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(webDeploymentVerifier, contains('without reinstalling the app'));
     expect(webDeploymentVerifier, contains('ConvertTo-Json'));
     expect(webDeploymentVerifier, contains('[string]\$OutFile'));
+    expect(pagesWorkflow, contains('-CompareBuildWebPath build/web'));
   });
 
   test(
@@ -2123,15 +2132,194 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     );
   });
 
-  test('ci runs web static verifier against built web output', () {
+  test('web deployment verifier rejects stale deployed app assets', () async {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_web_deploy_compare_',
+    );
+    try {
+      final localBuild = Directory(
+        '${tempDir.path}${Platform.pathSeparator}web',
+      )..createSync(recursive: true);
+      File(
+        '${localBuild.path}${Platform.pathSeparator}index.html',
+      ).writeAsStringSync('<base href="/app/">');
+      File(
+        '${localBuild.path}${Platform.pathSeparator}flutter_bootstrap.js',
+      ).writeAsStringSync("import('./main.dart.js');");
+      File(
+        '${localBuild.path}${Platform.pathSeparator}main.dart.js',
+      ).writeAsStringSync('function localCurrentBuild() {}');
+
+      final result = await _runWebDeploymentVerifierAgainstFixture(
+        baseHref: '/app/',
+        compareBuildWebPath: localBuild.path,
+      );
+
+      expect(result.exitCode, isNot(0));
+      expect(
+        '${result.stdout}\n${result.stderr}',
+        contains('Compiled Flutter app deployed asset freshness'),
+      );
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('ci and preflight run web app smoke against built web output', () {
     expect(ciWorkflow, contains('--no-wasm-dry-run'));
     expect(ciWorkflow, contains('scripts/verify_web_deployment.ps1'));
     expect(ciWorkflow, contains('-AllowInsecureLocalhost'));
     expect(ciWorkflow, contains('web-static-ci-smoke.json'));
+    expect(ciWorkflow, contains('npm run web:smoke'));
+    expect(ciWorkflow, contains('web-app-smoke-ci.json'));
     expect(ciWorkflow, contains('python3 -m http.server'));
     expect(ciWorkflow, contains('Upload web static verification evidence'));
     expect(ciWorkflow, contains('flowfit-web-static-verification-smoke'));
     expect(ciWorkflow, isNot(contains('Verify web deployment smoke')));
+    expect(releasePreflight, contains('function Invoke-WebAppSmoke'));
+    expect(releasePreflight, contains('Node dependencies for web app smoke'));
+    expect(releasePreflight, contains('npm'));
+    expect(releasePreflight, contains('ci'));
+    expect(releasePreflight, contains('playwright'));
+    expect(releasePreflight, contains('install'));
+    expect(releasePreflight, contains('chromium'));
+    expect(releasePreflight, contains('Start-Process'));
+    expect(releasePreflight, contains('-WindowStyle Hidden'));
+    expect(releasePreflight, contains('npm'));
+    expect(releasePreflight, contains('run'));
+    expect(releasePreflight, contains('web:smoke'));
+    expect(releasePreflight, contains('web-app-smoke-preflight.json'));
+    expect(
+      releasePreflight.indexOf('Assert-WebCompliancePages'),
+      lessThan(releasePreflight.indexOf('Invoke-WebAppSmoke')),
+    );
+    expect(scriptsReadme, contains('verify_web_app_smoke.mjs'));
+    expect(
+      scriptsReadme,
+      contains('runs it locally after the JavaScript web build'),
+    );
+    expect(scriptsReadme, contains('survey intro'));
+    expect(scriptsReadme, contains('basic info to'));
+    expect(scriptsReadme, contains('measurements'));
+    expect(scriptsReadme, contains('Buddy welcome'));
+    expect(webAppSmoke, contains('#/survey_intro'));
+    expect(webAppSmoke, contains('#/survey_basic_info'));
+    expect(webAppSmoke, contains('#/survey_body_measurements'));
+    expect(webAppSmoke, contains('Survey basic info gender and Continue'));
+    expect(webAppSmoke, contains('#/buddy-welcome'));
+    expect(webAppSmoke, contains('#/buddy-intro'));
+    expect(webAppSmoke, contains('#/home'));
+    expect(webAppSmoke, contains('Clear All Data'));
+    expect(webAppSmoke, contains('/workout/select-type'));
+    expect(webAppSmoke, contains('#/workout/running/setup'));
+    expect(webAppSmoke, contains('#/workout/walking/options'));
+    expect(webAppSmoke, contains('#/workout/resistance/select-split'));
+    expect(webAppSmoke, contains('/settings'));
+    expect(webAppSmoke, contains('#/privacy-policy'));
+    expect(webAppSmoke, contains('#/notification-settings'));
+    expect(webAppSmoke, contains('/app-integration'));
+    expect(webAppSmoke, contains('#/wellness-onboarding'));
+    expect(webAppSmoke, contains('#/language-settings'));
+    expect(webAppSmoke, contains('#/unit-settings'));
+    expect(webAppSmoke, contains('#/delete-account'));
+    expect(webAppSmoke, contains('#/terms-of-service'));
+    expect(webAppSmoke, contains('#/help-support'));
+    expect(webAppSmoke, contains('#/about-us'));
+    expect(webAppSmoke, contains('/wellness-settings'));
+    expect(webAppSmoke, contains('/change-password'));
+    expect(
+      webAppSmoke,
+      contains('Settings Notification Reminder action reached'),
+    );
+    expect(webAppSmoke, contains('Settings App Integration action reached'));
+    expect(webAppSmoke, contains('Settings Language action reached'));
+    expect(webAppSmoke, contains('Settings Units action reached'));
+    expect(webAppSmoke, contains('Settings Delete Account action reached'));
+    expect(webAppSmoke, contains('/phone_heart_rate'));
+    expect(webAppSmoke, contains('/buddy-completion'));
+    expect(webAppSmoke, contains("status: 'PASS'"));
+    expect(webAppSmoke, contains("status: 'FAIL'"));
+    expect(webAppSmoke, contains('currentPage'));
+    expect(webAppSmoke, contains('screenshotPath'));
+    expect(webAppSmoke, contains('FlowFit web app smoke failed'));
+    expect(scriptsReadme, contains('phone home Clear dialog'));
+    expect(scriptsReadme, contains('workout'));
+    expect(scriptsReadme, contains('type actions'));
+    expect(scriptsReadme, contains('settings legal/support'));
+  });
+
+  test('ci runs offline app action smoke on Windows', () {
+    final offlineAppActionSmoke = File(
+      'scripts/verify_offline_app_actions.ps1',
+    ).readAsStringSync();
+
+    expect(ciWorkflow, contains('windows-action-smoke'));
+    expect(ciWorkflow, contains('runs-on: windows-latest'));
+    expect(ciWorkflow, contains('Windows Offline App Action Smoke'));
+    expect(ciWorkflow, contains('scripts/verify_offline_app_actions.ps1'));
+    expect(ciWorkflow, contains('-SkipPubGet'));
+    expect(scriptsReadme, contains('verify_offline_app_actions.ps1'));
+    expect(docsIndex, contains('verify_offline_app_actions.ps1'));
+    expect(offlineAppActionSmoke, contains('navigation_route_guard_test.dart'));
+    expect(
+      offlineAppActionSmoke,
+      contains('interactive_action_guard_test.dart'),
+    );
+    expect(
+      offlineAppActionSmoke,
+      contains('interactive_surface_coverage_guard_test.dart'),
+    );
+    expect(offlineAppActionSmoke, contains('auth_flow_test.dart'));
+    expect(offlineAppActionSmoke, contains('login_flow_test.dart'));
+    expect(
+      offlineAppActionSmoke,
+      contains('flowfit_phone_app_navigation_smoke_test.dart'),
+    );
+    expect(offlineAppActionSmoke, contains('loading_screen_test.dart'));
+    expect(
+      offlineAppActionSmoke,
+      contains('buddy_completion_screen_test.dart'),
+    );
+    expect(
+      offlineAppActionSmoke,
+      contains('tracker_page_watch_listener_test.dart'),
+    );
+    expect(offlineAppActionSmoke, contains('health_screen_actions_test.dart'));
+    expect(offlineAppActionSmoke, contains('cta_section_test.dart'));
+    expect(offlineAppActionSmoke, contains('home_header_test.dart'));
+    expect(
+      offlineAppActionSmoke,
+      contains('progress_screen_actions_test.dart'),
+    );
+    expect(offlineAppActionSmoke, contains('track_screen_actions_test.dart'));
+    expect(
+      offlineAppActionSmoke,
+      contains('heart_rate_watch_screen_test.dart'),
+    );
+    expect(offlineAppActionSmoke, contains('profile_photo_actions_test.dart'));
+    expect(offlineAppActionSmoke, contains('goal_save_button_test.dart'));
+    expect(
+      offlineAppActionSmoke,
+      contains('settings_screen_actions_test.dart'),
+    );
+    expect(offlineAppActionSmoke, contains('delete_account_flow_test.dart'));
+    expect(
+      offlineAppActionSmoke,
+      contains('active_workout_controls_test.dart'),
+    );
+    expect(
+      offlineAppActionSmoke,
+      contains('workout_type_selection_screen_test.dart'),
+    );
+    expect(
+      offlineAppActionSmoke,
+      contains('wellness_settings_screen_actions_test.dart'),
+    );
+    expect(offlineAppActionSmoke, contains('survey_back_navigation_test.dart'));
+    expect(
+      offlineAppActionSmoke,
+      contains('sensor_permission_rationale_screen_test.dart'),
+    );
   });
 
   test('ci installs Android SDK packages explicitly after setup-android', () {
@@ -3688,6 +3876,7 @@ try {
 Future<ProcessResult> _runWebDeploymentVerifierAgainstFixture({
   required String baseHref,
   String supportEmail = 'support@flowfit.com',
+  String compareBuildWebPath = '',
 }) async {
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   late final StreamSubscription<HttpRequest> subscription;
@@ -3749,7 +3938,7 @@ Profile &gt; Settings &gt; Delete Account
   });
 
   try {
-    return await Process.run('pwsh', [
+    final args = [
       '-NoProfile',
       '-File',
       'scripts/verify_web_deployment.ps1',
@@ -3760,7 +3949,12 @@ Profile &gt; Settings &gt; Delete Account
       '-AllowInsecureLocalhost',
       '-TimeoutSeconds',
       '5',
-    ]);
+    ];
+    if (compareBuildWebPath.isNotEmpty) {
+      args.addAll(['-CompareBuildWebPath', compareBuildWebPath]);
+    }
+
+    return await Process.run('pwsh', args);
   } finally {
     await subscription.cancel();
     await server.close(force: true);

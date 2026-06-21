@@ -5,27 +5,48 @@ import 'package:url_launcher/url_launcher.dart';
 
 typedef SupportEmailLauncher = Future<bool> Function(Uri uri);
 
-class HelpSupportScreen extends StatelessWidget {
+class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key, this.launchSupportEmail});
 
   final SupportEmailLauncher? launchSupportEmail;
+
+  @override
+  State<HelpSupportScreen> createState() => _HelpSupportScreenState();
+}
+
+class _HelpSupportScreenState extends State<HelpSupportScreen> {
+  bool _isLaunchingSupportEmail = false;
 
   Future<void> _openSupportEmail(
     BuildContext context, {
     required String subject,
     String body = '',
   }) async {
+    if (_isLaunchingSupportEmail) return;
+
     final uri = Uri(
       scheme: 'mailto',
       path: FlowFitRuntimeConfig.supportEmail,
       queryParameters: {'subject': subject, if (body.isNotEmpty) 'body': body},
     );
 
+    setState(() {
+      _isLaunchingSupportEmail = true;
+    });
+
     try {
-      final launched = await (launchSupportEmail ?? _launchSupportEmail)(uri);
+      final launched = await (widget.launchSupportEmail ?? _launchSupportEmail)(
+        uri,
+      );
       if (launched) return;
     } catch (_) {
       // Fall through to the in-app fallback below.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLaunchingSupportEmail = false;
+        });
+      }
     }
 
     if (!context.mounted) return;
@@ -287,7 +308,7 @@ class HelpSupportScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return InkWell(
-      onTap: onTap,
+      onTap: _isLaunchingSupportEmail ? null : onTap,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: const EdgeInsets.all(16),

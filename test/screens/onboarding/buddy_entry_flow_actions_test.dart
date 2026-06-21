@@ -1,8 +1,11 @@
 import 'package:flowfit/providers/buddy_onboarding_provider.dart';
 import 'package:flowfit/providers/buddy_offline_storage_provider.dart';
+import 'package:flowfit/screens/onboarding/buddy_color_selection_screen.dart';
+import 'package:flowfit/screens/onboarding/buddy_hatch_screen.dart';
 import 'package:flowfit/screens/onboarding/age_gate_screen.dart';
 import 'package:flowfit/screens/onboarding/buddy_intro_screen.dart';
 import 'package:flowfit/screens/onboarding/buddy_welcome_screen.dart';
+import 'package:flowfit/widgets/buddy_egg_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -110,6 +113,49 @@ void main() {
     expect(container.read(buddyOnboardingProvider).userName, 'Mark');
     expect(find.text('route:buddy-hatch'), findsOneWidget);
   });
+
+  testWidgets('Buddy hatch auto-advances to color selection', (tester) async {
+    await _pumpWithRoutes(
+      tester,
+      home: const BuddyHatchScreen(),
+      routes: {
+        '/buddy-color-selection': (_) =>
+            const Scaffold(body: Text('route:buddy-color-selection')),
+      },
+    );
+
+    expect(find.text('You found a baby whale!'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('route:buddy-color-selection'), findsOneWidget);
+  });
+
+  testWidgets('Buddy color selection enables hatch after picking a color', (
+    tester,
+  ) async {
+    final container = _buddyTestContainer();
+    addTearDown(container.dispose);
+
+    await _pumpBuddyColorSelection(tester, container);
+
+    final hatchButton = find.widgetWithText(ElevatedButton, 'Hatch egg');
+    expect(tester.widget<ElevatedButton>(hatchButton).onPressed, isNull);
+
+    await tester.tap(find.byType(BuddyEggWidget).at(3));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(container.read(buddyOnboardingProvider).selectedColor, 'purple');
+    expect(tester.widget<ElevatedButton>(hatchButton).onPressed, isNotNull);
+
+    await tester.tap(find.text('Hatch egg'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('route:buddy-naming'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpWithRoutes(
@@ -147,6 +193,31 @@ Future<void> _pumpBuddyIntro(
         routes: {
           '/buddy-hatch': (_) =>
               const Scaffold(body: Text('route:buddy-hatch')),
+        },
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
+Future<void> _pumpBuddyColorSelection(
+  WidgetTester tester,
+  ProviderContainer container,
+) async {
+  tester.view.physicalSize = const Size(430, 932);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+
+  await tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: MaterialApp(
+        home: const BuddyColorSelectionScreen(),
+        routes: {
+          '/buddy-naming': (_) =>
+              const Scaffold(body: Text('route:buddy-naming')),
         },
       ),
     ),
