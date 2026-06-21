@@ -249,6 +249,70 @@ try {
   await waitForText(page, 'Skip');
   recordStep('Buddy welcome primary action reached intro', '#/buddy-intro');
 
+  await gotoRoute(page, '/age-gate');
+  await waitForText(page, 'Welcome to FlowFit!');
+  await clickTextAnywhere(page, "I'm 7-12 years old");
+  await page.waitForURL(/#\/buddy-welcome/, { timeout: timeoutMs });
+  await enableFlutterSemantics(page);
+  await waitForTextMatch(page, /Meet Your\s+Fitness Buddy/i);
+  recordStep('Age gate kids action reached Buddy welcome', '#/buddy-welcome');
+
+  await gotoRoute(page, '/age-gate');
+  await waitForText(page, 'Welcome to FlowFit!');
+  await clickTextAnywhere(page, "I'm 13 or older");
+  await page.waitForURL(/#\/survey_intro/, { timeout: timeoutMs });
+  await enableFlutterSemantics(page);
+  await waitForText(page, 'Quick Setup');
+  recordStep('Age gate teen/adult action reached survey intro', '#/survey_intro');
+
+  const safeRouteEntryChecks = [
+    ['/survey_activity_goals', 'Activity & Goals', 'Survey activity goals route rendered'],
+    ['/survey_daily_targets', 'Your Daily Targets', 'Survey daily targets route rendered'],
+    ['/onboarding1', 'Track Your Heart Rate', 'Legacy onboarding route rendered'],
+    ['/weight-goals', 'Weight Goals', 'Weight goals route rendered'],
+    ['/fitness-goals', 'Fitness Goals', 'Fitness goals route rendered'],
+    ['/nutrition-goals', 'Nutrition Goals', 'Nutrition goals route rendered'],
+    ['/workout/running/summary', 'Back to Dashboard', 'Running summary empty route rendered'],
+    [
+      '/workout/running/share',
+      'No running session is available to share.',
+      'Running share guarded route rendered',
+    ],
+    ['/workout/walking/mission', 'Create Mission', 'Walking mission creation route rendered'],
+    ['/workout/walking/active', 'No active walking session', 'Walking active empty route rendered'],
+    ['/workout/walking/summary', 'Back to Dashboard', 'Walking summary empty route rendered'],
+    [
+      '/workout/resistance/active',
+      'No active resistance workout',
+      'Resistance active empty route rendered',
+    ],
+    [
+      '/workout/resistance/summary',
+      'No completed workout available',
+      'Resistance summary empty route rendered',
+    ],
+    ['/wellness-tracker', 'Welcome to Wellness Tracker', 'Wellness tracker route rendered'],
+    ['/buddy-color-selection', 'Choose your Whale Color!', 'Buddy color route rendered'],
+    [
+      '/buddy-naming',
+      'What do you want to name your baby whale?',
+      'Buddy naming route rendered',
+    ],
+    ['/goal-selection', 'What areas would you like support with?', 'Goal selection route rendered'],
+    ['/notification-permission', 'Maybe later', 'Notification permission route rendered'],
+    ['/buddy-ready', 'START ADVENTURE!', 'Buddy ready route rendered'],
+    ['/buddy_profile_setup', 'Tell Buddy about yourself!', 'Buddy profile setup route rendered'],
+    [
+      '/buddy-customization',
+      'Please log in to customize your Buddy',
+      'Buddy customization guarded route rendered',
+    ],
+  ];
+
+  for (const [route, expectedText, name] of safeRouteEntryChecks) {
+    await expectRouteText(page, route, expectedText, name);
+  }
+
   await gotoRoute(page, '/home');
   await waitForText(page, 'FlowFit');
   await waitForText(page, 'Current Heart Rate');
