@@ -177,7 +177,7 @@ function Assert-DeployedAssetMatchesLocal {
         [string]$Name,
         [Parameter(Mandatory = $true)]
         [string]$RemoteContent,
-        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
         [string]$LocalBuildWebPath,
         [Parameter(Mandatory = $true)]
         [string]$RelativePath
