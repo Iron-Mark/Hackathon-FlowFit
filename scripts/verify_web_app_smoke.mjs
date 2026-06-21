@@ -65,6 +65,17 @@ async function waitForTextMatch(page, matcher) {
   );
 }
 
+async function waitForAnyText(page, texts, timeout = timeoutMs) {
+  await page.waitForFunction(
+    (expectedTexts) =>
+      expectedTexts.some((expectedText) =>
+        document.body.innerText.includes(expectedText),
+      ),
+    texts,
+    { timeout },
+  );
+}
+
 async function clickText(page, text) {
   const button = page
     .locator('flt-semantics[role="button"]')
@@ -278,9 +289,15 @@ try {
       'No running session is available to share.',
       'Running share guarded route rendered',
     ],
+    ['/workout/walking/options', 'Choose Walking Mode', 'Walking options route rendered'],
     ['/workout/walking/mission', 'Create Mission', 'Walking mission creation route rendered'],
     ['/workout/walking/active', 'No active walking session', 'Walking active empty route rendered'],
     ['/workout/walking/summary', 'Back to Dashboard', 'Walking summary empty route rendered'],
+    [
+      '/workout/resistance/select-split',
+      'Choose Your Split',
+      'Resistance split selection route rendered',
+    ],
     [
       '/workout/resistance/active',
       'No active resistance workout',
@@ -292,6 +309,8 @@ try {
       'Resistance summary empty route rendered',
     ],
     ['/wellness-tracker', 'Welcome to Wellness Tracker', 'Wellness tracker route rendered'],
+    ['/wellness-onboarding', 'Welcome to Wellness Tracker', 'Wellness onboarding route rendered'],
+    ['/wellness-settings', 'Wellness Settings', 'Wellness settings route rendered'],
     ['/buddy-color-selection', 'Choose your Whale Color!', 'Buddy color route rendered'],
     [
       '/buddy-naming',
@@ -342,6 +361,20 @@ try {
   await waitForText(page, 'Choose Walking Mode');
   recordStep('Workout Walking action reached options route', '#/workout/walking/options');
 
+  await clickTextAnywhere(page, 'Sanctuary');
+  await waitForText(page, 'Reach a specific GPS coordinate');
+  await clickTextAnywhere(page, 'Create Mission');
+  await enableFlutterSemantics(page);
+  await waitForAnyText(
+    page,
+    ['Mission Name', 'Location unavailable', 'Start Mission'],
+    timeoutMs * 2,
+  );
+  recordStep(
+    'Walking mission type action reached mission form',
+    'Sanctuary -> MissionCreationScreen',
+  );
+
   await gotoRoute(page, '/workout/select-type');
   await clickTextAnywhere(page, 'Resistance Training');
   await page.waitForURL(/#\/workout\/resistance\/select-split/, {
@@ -352,6 +385,16 @@ try {
   recordStep(
     'Workout Resistance Training action reached split route',
     '#/workout/resistance/select-split',
+  );
+
+  await clickTextAnywhere(page, 'Upper Body');
+  await waitForText(page, 'Workout Settings');
+  await clickTextAnywhere(page, '60s');
+  await clickTextAnywhere(page, 'Start Workout');
+  await waitForText(page, 'Could not start resistance workout.');
+  recordStep(
+    'Resistance split controls reached guarded start error',
+    'Upper Body -> 60s -> Start Workout',
   );
 
   await gotoRoute(page, '/settings');
@@ -433,6 +476,19 @@ try {
   await enableFlutterSemantics(page);
   await waitForText(page, 'Meet the team behind FlowFit');
   recordStep('Settings About Us action reached about route', '#/about-us');
+
+  await gotoRoute(page, '/wellness-settings');
+  await waitForText(page, 'Wellness Settings');
+  await gotoRoute(page, '/wellness-onboarding');
+  await waitForText(page, 'Welcome to Wellness Tracker');
+  await clickText(page, 'Next');
+  await waitForText(page, 'Personalized Recommendations');
+  await clickText(page, 'Back');
+  await waitForText(page, 'Welcome to Wellness Tracker');
+  recordStep(
+    'Wellness onboarding carousel Next and Back actions responded',
+    '#/wellness-onboarding',
+  );
 
   await gotoRoute(page, '/wellness-settings');
   await waitForText(page, 'Wellness Settings');
