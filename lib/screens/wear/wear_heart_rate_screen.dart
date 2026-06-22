@@ -1,9 +1,16 @@
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wear_plus/wear_plus.dart';
-import 'dart:async';
-import '../../services/watch_bridge.dart';
+
 import '../../models/heart_rate_data.dart';
+import '../../models/sensor_error.dart';
+import '../../models/sensor_error_code.dart';
+import '../../models/sensor_status.dart';
+import '../../services/watch_bridge.dart';
 import 'sensor_permission_rationale_screen.dart';
 
 // WCAG 2.1 Level AA compliant color constants
@@ -53,12 +60,19 @@ class WearHeartRateScreen extends StatefulWidget {
 
 class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     with TickerProviderStateMixin {
+  static const String _simulatedFallbackMessage =
+      'Samsung Health service unavailable. Showing simulated BPM for emulator/dev.';
+  static const String _serviceUnavailableMessage =
+      'Samsung Health service unavailable. Use a supported Galaxy Watch for live heart rate.';
+
   final WatchBridgeService _watchBridge = WatchBridgeService();
 
   HeartRateData? _currentHeartRate;
   bool _isMonitoring = false;
   bool _isMonitoringBusy = false;
   bool _isConnected = false;
+  bool _isSimulatedFallbackAvailable = false;
+  bool _isSimulatedHeartRate = false;
   bool _isSending = false;
   String _statusMessage = 'Ready';
   bool _isAccelerometerActive = false;
@@ -69,6 +83,8 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   Map<String, dynamic>? _testModeData;
   Timer? _testModeTimer;
   Timer? _statusResetTimer;
+  Timer? _simulatedHeartRateTimer;
+  int _simulatedTick = 0;
 
   StreamSubscription? _heartRateSubscription;
   StreamSubscription? _transmissionSubscription;
@@ -138,6 +154,9 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
 
     setState(() {
       _statusMessage = 'Checking permissions...';
+      if (!_isMonitoring) {
+        _isSimulatedFallbackAvailable = false;
+      }
     });
 
     try {
@@ -193,7 +212,10 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         setState(() {
           _isConnected = false;
           _statusMessage = 'SDK unavailable';
-          _errorMessage = 'Samsung Health SDK not available on this device';
+          _isSimulatedFallbackAvailable = kDebugMode;
+          _errorMessage = kDebugMode
+              ? _simulatedFallbackMessage
+              : _serviceUnavailableMessage;
         });
         return;
       }
@@ -201,17 +223,52 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       if (!mounted) return;
       setState(() {
         _isConnected = true;
+        _isSimulatedFallbackAvailable = false;
+        _isSimulatedHeartRate = false;
         _statusMessage = 'Ready';
+        _errorMessage = null;
       });
     } catch (e) {
       if (!mounted) return;
+      final shouldUseSimulatedFallback = _canUseSimulatedFallback(e);
       setState(() {
         _isConnected = false;
-        _statusMessage = 'Error';
-        _errorMessage = 'Failed to connect to sensor service';
+        _isSimulatedFallbackAvailable = shouldUseSimulatedFallback;
+        _statusMessage = shouldUseSimulatedFallback
+            ? 'SDK unavailable'
+            : 'Error';
+        _errorMessage = shouldUseSimulatedFallback
+            ? _simulatedFallbackMessage
+            : _connectionErrorMessage(e);
       });
       debugPrint('Connection error: $e');
     }
+  }
+
+  bool _canUseSimulatedFallback(Object error) {
+    return kDebugMode && _isSamsungHealthServiceUnavailable(error);
+  }
+
+  bool _isSamsungHealthServiceUnavailable(Object error) {
+    if (error is SensorError) {
+      return error.code == SensorErrorCode.serviceUnavailable &&
+          ((error.details?.contains('com.samsung.android.service.health') ??
+                  false) ||
+              error.message.contains('Samsung Health service unavailable'));
+    }
+
+    final errorText = error.toString();
+    return errorText.contains('SERVICE_UNAVAILABLE') ||
+        errorText.contains('com.samsung.android.service.health') ||
+        errorText.contains('Samsung Health service unavailable');
+  }
+
+  String _connectionErrorMessage(Object error) {
+    if (_isSamsungHealthServiceUnavailable(error)) {
+      return _serviceUnavailableMessage;
+    }
+
+    return 'Failed to connect to sensor service';
   }
 
   Future<void> _toggleMonitoring() async {
@@ -238,10 +295,15 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       await _checkConnection();
       if (!mounted) return;
       if (!_isConnected) {
+        if (_isSimulatedFallbackAvailable) {
+          _startSimulatedMonitoring();
+          return;
+        }
+
         setState(() {
           _isMonitoringBusy = false;
           _statusMessage = 'Connection failed';
-          _errorMessage = 'Unable to connect to sensor service';
+          _errorMessage ??= 'Unable to connect to sensor service';
         });
         return;
       }
@@ -268,6 +330,8 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       setState(() {
         _isMonitoringBusy = false;
         _isMonitoring = true;
+        _isSimulatedFallbackAvailable = false;
+        _isSimulatedHeartRate = false;
         _isAccelerometerActive = true; // Accelerometer starts with heart rate
         _statusMessage = 'Monitoring';
         _errorMessage = null;
@@ -322,8 +386,66 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     }
   }
 
+  void _startSimulatedMonitoring() {
+    unawaited(_heartRateSubscription?.cancel());
+    _heartRateSubscription = null;
+    _simulatedHeartRateTimer?.cancel();
+    _simulatedTick = 0;
+
+    setState(() {
+      _isMonitoringBusy = false;
+      _isMonitoring = true;
+      _isSimulatedHeartRate = true;
+      _isAccelerometerActive = false;
+      _statusMessage = 'Simulated';
+      _errorMessage = _simulatedFallbackMessage;
+    });
+
+    _emitSimulatedHeartRate();
+    _simulatedHeartRateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _emitSimulatedHeartRate();
+    });
+  }
+
+  void _emitSimulatedHeartRate() {
+    if (!mounted || !_isSimulatedHeartRate) return;
+
+    _simulatedTick += 1;
+    final wave = math.sin(_simulatedTick / 3) * 6;
+    final variation = _simulatedTick.isEven ? 2 : -1;
+    final bpm = 74 + wave.round() + variation;
+
+    setState(() {
+      _currentHeartRate = HeartRateData(
+        bpm: bpm,
+        timestamp: DateTime.now(),
+        status: SensorStatus.active,
+      );
+      _statusMessage = 'Simulated';
+    });
+  }
+
+  void _stopSimulatedMonitoring() {
+    _simulatedHeartRateTimer?.cancel();
+    _simulatedHeartRateTimer = null;
+
+    setState(() {
+      _isMonitoringBusy = false;
+      _isMonitoring = false;
+      _isSimulatedHeartRate = false;
+      _isAccelerometerActive = false;
+      _statusMessage = 'Stopped';
+      _errorMessage = _simulatedFallbackMessage;
+    });
+  }
+
   Future<void> _stopMonitoring() async {
     if (_isMonitoringBusy) return;
+
+    if (_isSimulatedHeartRate) {
+      _stopSimulatedMonitoring();
+      return;
+    }
 
     try {
       setState(() {
@@ -364,7 +486,9 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   Future<void> _sendToPhone() async {
-    if (_isSending || _currentHeartRate == null) return;
+    if (_isSending || _currentHeartRate == null || _isSimulatedHeartRate) {
+      return;
+    }
 
     _statusResetTimer?.cancel();
     setState(() {
@@ -466,6 +590,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     _transmissionSubscription?.cancel();
     _testModeTimer?.cancel();
     _statusResetTimer?.cancel();
+    _simulatedHeartRateTimer?.cancel();
     _pulseController.dispose();
     _transmissionController.dispose();
     _watchBridge.dispose();
@@ -487,35 +612,42 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   Widget _buildActiveMode() {
+    final shouldShowFullError =
+        _errorMessage != null &&
+        !(_isSimulatedFallbackAvailable || _isSimulatedHeartRate);
+
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 8),
             _buildSensorStatus(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             if (_isTestMode) ...[
               _buildTestModeDisplay(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
             ] else ...[
               _buildBpmDisplay(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
             ],
             _buildStartButton(),
-            if (_currentHeartRate != null && !_isTestMode) ...[
+            if (_currentHeartRate != null &&
+                !_isTestMode &&
+                !_isSimulatedHeartRate) ...[
               const SizedBox(height: 8),
               _buildSendButton(),
             ],
-            const SizedBox(height: 8),
-            _buildTestModeToggle(),
-            if (_errorMessage != null) ...[
+            if (!_isSimulatedFallbackAvailable && !_isSimulatedHeartRate) ...[
+              const SizedBox(height: 8),
+              _buildTestModeToggle(),
+            ],
+            if (shouldShowFullError) ...[
               const SizedBox(height: 12),
               _buildErrorDisplay(),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             _buildStatusIndicator(),
             const SizedBox(height: 8),
           ],
@@ -554,7 +686,9 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
               scale: _transmissionAnimation.value,
               child: Icon(
                 Icons.sensors,
-                color: _isAccelerometerActive
+                color: _isSimulatedHeartRate
+                    ? WearColors.teal
+                    : _isAccelerometerActive
                     ? WearColors.primaryBlue
                     : Colors.grey,
                 size: 24,
@@ -564,7 +698,9 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         ),
         const SizedBox(width: 4),
         Text(
-          _isAccelerometerActive ? 'Active' : 'Off',
+          _isSimulatedHeartRate
+              ? 'Sim'
+              : (_isAccelerometerActive ? 'Active' : 'Off'),
           style: const TextStyle(
             fontSize: 14, // Meets minimum 14sp requirement
             color: Colors.white,
@@ -576,6 +712,8 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
 
   Widget _buildBpmDisplay() {
     final bpm = _currentHeartRate?.bpm;
+    final showServiceUnavailableNote =
+        _isSimulatedFallbackAvailable || _isSimulatedHeartRate;
 
     return AnimatedBuilder(
       animation: _pulseAnimation,
@@ -585,16 +723,18 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.favorite,
-                color: _isMonitoring ? Colors.red : Colors.grey.shade700,
-                size: 32,
-              ),
-              const SizedBox(height: 8),
+              if (!showServiceUnavailableNote) ...[
+                Icon(
+                  Icons.favorite,
+                  color: _isMonitoring ? Colors.red : Colors.grey.shade700,
+                  size: 32,
+                ),
+                const SizedBox(height: 8),
+              ],
               Text(
                 bpm != null ? '$bpm' : '--',
                 style: const TextStyle(
-                  fontSize: 48,
+                  fontSize: 44,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -607,6 +747,19 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
                   letterSpacing: 0,
                 ),
               ),
+              if (showServiceUnavailableNote) ...[
+                const SizedBox(height: 2),
+                const SizedBox(
+                  width: 180,
+                  child: Text(
+                    'Samsung Health service unavailable',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11, color: WearColors.teal),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -720,13 +873,18 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   /// Requirements: 5.5, 6.5 - Display error with retry option
   Widget _buildErrorDisplay() {
     final showRetry = _errorMessage?.contains('retry') ?? false;
+    final isSimulatedFallback =
+        _isSimulatedFallbackAvailable || _isSimulatedHeartRate;
+    final accentColor = isSimulatedFallback
+        ? WearColors.teal
+        : WearColors.errorRed;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: WearColors.errorRed.withValues(alpha: 0.2),
+        color: accentColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: WearColors.errorRed, width: 1),
+        border: Border.all(color: accentColor, width: 1),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -734,9 +892,9 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: WearColors.errorRed,
+              Icon(
+                isSimulatedFallback ? Icons.science : Icons.error_outline,
+                color: accentColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -747,7 +905,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
                     fontSize: 14, // Meets minimum 14sp requirement
                     color: Colors.white,
                   ),
-                  maxLines: 3,
+                  maxLines: 4,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -916,12 +1074,15 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
     Color statusColor = Colors.grey;
 
     // Determine status color based on state
-    if (_statusMessage == 'Sent!' || _statusMessage == 'Active') {
+    if (_statusMessage == 'Sent!' ||
+        _statusMessage == 'Active' ||
+        _statusMessage == 'Simulated') {
       // Success states use teal (Requirements: 4.4)
       statusColor = WearColors.teal;
     } else if (_statusMessage.contains('Error') ||
         _statusMessage.contains('Failed') ||
-        _statusMessage.contains('denied')) {
+        _statusMessage.contains('denied') ||
+        _statusMessage.contains('unavailable')) {
       // Error states use errorRed (Requirements: 4.5)
       statusColor = WearColors.errorRed;
     } else if (_isConnected && _isMonitoring) {

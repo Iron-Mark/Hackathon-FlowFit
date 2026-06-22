@@ -348,6 +348,46 @@ void main() {
         );
       });
 
+      test(
+        'does not retry when Samsung Health service package is missing',
+        () async {
+          var connectAttempts = 0;
+
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+              .setMockMethodCallHandler(methodChannel, (
+                MethodCall methodCall,
+              ) async {
+                if (methodCall.method == 'connectWatch') {
+                  connectAttempts += 1;
+                  throw PlatformException(
+                    code: 'SERVICE_UNAVAILABLE',
+                    message: 'Samsung Health service unavailable',
+                    details: 'com.samsung.android.service.health',
+                  );
+                }
+                return null;
+              });
+
+          await expectLater(
+            () => service.connectToWatch(),
+            throwsA(
+              isA<SensorError>()
+                  .having(
+                    (e) => e.code,
+                    'code',
+                    SensorErrorCode.serviceUnavailable,
+                  )
+                  .having(
+                    (e) => e.details,
+                    'details',
+                    contains('com.samsung.android.service.health'),
+                  ),
+            ),
+          );
+          expect(connectAttempts, 1);
+        },
+      );
+
       test('maps TIMEOUT to correct error code', () async {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(methodChannel, (

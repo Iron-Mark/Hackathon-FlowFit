@@ -442,6 +442,15 @@ class MainActivity: FlutterActivity() {
             )
             return
         }
+
+        if (!isSamsungHealthServiceAvailable()) {
+            result.error(
+                "SERVICE_UNAVAILABLE",
+                "Samsung Health service unavailable",
+                "com.samsung.android.service.health"
+            )
+            return
+        }
         
         try {
             // Use callback-based connection to wait for ConnectionListener
@@ -465,6 +474,15 @@ class MainActivity: FlutterActivity() {
                 "Failed to connect: ${e.message}",
                 null
             )
+        }
+    }
+
+    private fun isSamsungHealthServiceAvailable(): Boolean {
+        return try {
+            packageManager.getPackageInfo("com.samsung.android.service.health", 0)
+            true
+        } catch (e: PackageManager.NameNotFoundException) {
+            false
         }
     }
 

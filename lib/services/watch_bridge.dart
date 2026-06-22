@@ -593,6 +593,10 @@ class WatchBridgeService {
   /// Check if an error is retryable
   bool _isRetryableError(dynamic error) {
     if (error is SensorError) {
+      if (_isSamsungHealthServiceMissing(error)) {
+        return false;
+      }
+
       // Retry on connection failures, timeouts, and service unavailable
       return error.code == SensorErrorCode.connectionFailed ||
           error.code == SensorErrorCode.timeout ||
@@ -608,6 +612,12 @@ class WatchBridgeService {
 
     // Don't retry on other errors
     return false;
+  }
+
+  bool _isSamsungHealthServiceMissing(SensorError error) {
+    return error.code == SensorErrorCode.serviceUnavailable &&
+        (error.details?.contains('com.samsung.android.service.health') ??
+            false);
   }
 
   /// Map PlatformException to SensorError with appropriate error code
@@ -640,7 +650,9 @@ class WatchBridgeService {
     return SensorError(
       code: code,
       message: message,
-      details: '${e.code}: ${e.message}',
+      details: e.details == null
+          ? '${e.code}: ${e.message}'
+          : '${e.code}: ${e.message} (${e.details})',
     );
   }
 

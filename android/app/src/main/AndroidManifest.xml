@@ -110,6 +110,7 @@
             <data android:mimeType="text/plain"/>
         </intent>
         <!-- Query for Samsung Health Tracking Service -->
+        <package android:name="com.samsung.android.service.health" />
         <package android:name="com.samsung.android.service.health.tracking" />
     </queries>
 </manifest>
