@@ -7,11 +7,11 @@ void main() {
   test('auth redirect URLs use build-time mobile schemes by default', () {
     expect(
       FlowFitRuntimeConfig.authRedirectUrl(),
-      'com.oldstlabs.flowfit://auth-callback',
+      'com.msiazondev.flowfit://auth-callback',
     );
     expect(
       FlowFitRuntimeConfig.authRedirectUrl(isDevelopment: true),
-      'com.oldstlabs.flowfit.dev://auth-callback',
+      'com.msiazondev.flowfit.dev://auth-callback',
     );
   });
 

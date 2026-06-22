@@ -2,4 +2,4 @@
 //
 // Default to the maintained-fork namespace. Before App Store/TestFlight upload,
 // confirm this Bundle ID is owned by the selected Apple Developer team.
-FLOWFIT_IOS_BUNDLE_IDENTIFIER = com.oldstlabs.flowfit
+FLOWFIT_IOS_BUNDLE_IDENTIFIER = com.msiazondev.flowfit

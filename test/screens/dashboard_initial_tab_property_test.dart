@@ -355,12 +355,142 @@ void main() {
         await pumpDashboardRoute(tester);
       }
     });
+
+    testWidgets('Home Drink Water action opens Health tab and logs a serving', (
+      WidgetTester tester,
+    ) async {
+      final mockUser = User(
+        id: 'test-user-dashboard-water',
+        email: 'water@example.com',
+        fullName: 'Water User',
+        createdAt: DateTime.now(),
+      );
+      TestAuthRepository.setMockUser(mockUser);
+
+      final container = ProviderContainer(
+        overrides: [
+          authNotifierProvider.overrideWith((ref) {
+            return TestAuthNotifier(AuthState.authenticated(mockUser));
+          }),
+          profileNotifierProvider.overrideWith(
+            (ref, userId) => TestProfileNotifier(userId),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            initialRoute: '/dashboard',
+            routes: {
+              '/dashboard': (_) => const DashboardScreen(),
+              '/welcome': (_) => const Scaffold(body: Text('Welcome')),
+            },
+          ),
+        ),
+      );
+
+      await pumpDashboardRoute(tester);
+      await _scrollDashboardUntilVisible(tester, 'Drink Water');
+      await tester.tap(find.text('Drink Water'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final bottomNavBar = tester.widget<BottomNavigationBar>(
+        find.byType(BottomNavigationBar),
+      );
+      expect(bottomNavBar.currentIndex, 1);
+      expect(find.text('1.8 / 2.0 L'), findsOneWidget);
+      expect(
+        find.text('Added 250 ml of water to today\'s log.'),
+        findsOneWidget,
+      );
+
+      container.dispose();
+    });
+
+    testWidgets('Home Log Meal action opens Health tab with Add Food dialog', (
+      WidgetTester tester,
+    ) async {
+      final mockUser = User(
+        id: 'test-user-dashboard-meal',
+        email: 'meal@example.com',
+        fullName: 'Meal User',
+        createdAt: DateTime.now(),
+      );
+      TestAuthRepository.setMockUser(mockUser);
+
+      final container = ProviderContainer(
+        overrides: [
+          authNotifierProvider.overrideWith((ref) {
+            return TestAuthNotifier(AuthState.authenticated(mockUser));
+          }),
+          profileNotifierProvider.overrideWith(
+            (ref, userId) => TestProfileNotifier(userId),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            initialRoute: '/dashboard',
+            routes: {
+              '/dashboard': (_) => const DashboardScreen(),
+              '/welcome': (_) => const Scaffold(body: Text('Welcome')),
+            },
+          ),
+        ),
+      );
+
+      await pumpDashboardRoute(tester);
+      await _scrollDashboardUntilVisible(tester, 'Log Meal');
+      await tester.tap(find.text('Log Meal'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      final bottomNavBar = tester.widget<BottomNavigationBar>(
+        find.byType(BottomNavigationBar),
+      );
+      expect(bottomNavBar.currentIndex, 1);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Add Food'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(TextField, 'Food Name'), findsOneWidget);
+      expect(find.widgetWithText(TextField, 'Calories'), findsOneWidget);
+
+      container.dispose();
+    });
   });
 }
 
 Future<void> pumpDashboardRoute(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(seconds: 1));
+  await tester.pump();
+}
+
+Future<void> _scrollDashboardUntilVisible(
+  WidgetTester tester,
+  String label,
+) async {
+  await tester.scrollUntilVisible(
+    find.text(label),
+    300,
+    scrollable: find
+        .descendant(
+          of: find.byType(DashboardScreen),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
   await tester.pump();
 }
 

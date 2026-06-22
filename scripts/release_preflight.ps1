@@ -350,7 +350,7 @@ try {
     if ($IncludeReleaseSmoke) {
         $env:ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING = 'true'
         if ([string]::IsNullOrWhiteSpace($env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID)) {
-            $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
+            $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.msiazondev.flowfit'
         }
         if ([string]::IsNullOrWhiteSpace($env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME)) {
             $env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = $env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID

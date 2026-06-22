@@ -17,14 +17,14 @@ Go to: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_R
 
 **Add these Redirect URLs**:
 ```
-com.oldstlabs.flowfit://auth-callback
-com.oldstlabs.flowfit.dev://auth-callback
+com.msiazondev.flowfit://auth-callback
+com.msiazondev.flowfit.dev://auth-callback
 http://localhost:3000/**
 ```
 
 **Set Site URL to**:
 ```
-com.oldstlabs.flowfit://auth-callback
+com.msiazondev.flowfit://auth-callback
 ```
 
 ### 2. Update Email Template (1 min)
@@ -44,8 +44,8 @@ flutter run -d <your-device-id>
 
 # Test deep link opens app
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback" \
+  com.msiazondev.flowfit
 ```
 
 ## Testing Email Verification
@@ -62,8 +62,8 @@ adb shell am start -W -a android.intent.action.VIEW \
 ```bash
 # Simulate auth callback
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback?type=signup&token=test" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback?type=signup&token=test" \
+  com.msiazondev.flowfit
 
 # Watch logs
 adb logcat | grep -i "deep link\|auth"
@@ -92,7 +92,7 @@ Make sure you're passing `emailRedirectTo`:
 final response = await Supabase.instance.client.auth.signUp(
   email: email,
   password: password,
-  emailRedirectTo: 'com.oldstlabs.flowfit://auth-callback', // Add this!
+  emailRedirectTo: 'com.msiazondev.flowfit://auth-callback', // Add this!
 );
 ```
 
@@ -101,8 +101,8 @@ final response = await Supabase.instance.client.auth.signUp(
 ```bash
 # This should open your app
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback" \
+  com.msiazondev.flowfit
 ```
 
 If the app doesn't open, check AndroidManifest.xml.
@@ -131,7 +131,7 @@ If the app doesn't open, check AndroidManifest.xml.
 
 ### Before Production
 
-1. Confirm production package identity is `com.oldstlabs.flowfit`
+1. Confirm production package identity is `com.msiazondev.flowfit`
 2. Confirm deep link schemes match the production package
 3. Remove development schemes
 4. Test on multiple devices

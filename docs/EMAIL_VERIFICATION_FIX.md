@@ -76,7 +76,7 @@ await Supabase.instance.client.auth.resend(
 
 1. User signs up → Email sent
 2. User clicks email link on device
-3. Deep link opens app → `com.oldstlabs.flowfit://auth-callback?code=...`
+3. Deep link opens app → `com.msiazondev.flowfit://auth-callback?code=...`
 4. Supabase verifies user → `emailConfirmedAt` is set
 5. Auth state changes → `AuthChangeEvent.signedIn`
 6. **EmailVerificationScreen detects change** ✅
@@ -85,7 +85,7 @@ await Supabase.instance.client.auth.resend(
 ### Logs You'll See
 
 ```
-D/com.llfbandit.app_links: Handled intent: com.oldstlabs.flowfit://auth-callback?code=...
+D/com.llfbandit.app_links: Handled intent: com.msiazondev.flowfit://auth-callback?code=...
 I/flutter: supabase.supabase_flutter: INFO: handle deeplink uri
 I/flutter: Auth state changed: AuthChangeEvent.signedIn
 I/flutter: User signed in via deep link: user@example.com

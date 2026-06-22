@@ -80,9 +80,9 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `FLOWFIT_AUTH_SCHEME`, or matching Dart defines are still placeholders,
       examples, or smoke values.
 - [ ] If `FLOWFIT_ANDROID_APPLICATION_ID` differs from
-      `com.oldstlabs.flowfit`, confirm the release wrapper still passes Android
+      `com.msiazondev.flowfit`, confirm the release wrapper still passes Android
       manifest component checks; native component class names must stay fully
-      qualified under `com.oldstlabs.flowfit`.
+      qualified under `com.msiazondev.flowfit`.
 - [ ] Generate upload keystore and configure either ignored
       `android/key.properties` plus the referenced keystore, or CI/release env
       secrets `FLOWFIT_ANDROID_KEYSTORE_BASE64`,

@@ -209,7 +209,7 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
                     BuddyCelebrationAnimation(
                       child: BuddyCharacterWidget(color: buddyColor, size: 140),
                     ),
-                    // Heart emoji
+                    // Heart badge
                     Positioned(
                       bottom: -10,
                       right: -10,
@@ -219,7 +219,11 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
                           color: Colors.pink[50],
                           shape: BoxShape.circle,
                         ),
-                        child: const Text('❤️', style: TextStyle(fontSize: 32)),
+                        child: const Icon(
+                          Icons.favorite,
+                          color: Color(0xFFE91E63),
+                          size: 32,
+                        ),
                       ),
                     ),
                   ],
@@ -262,7 +266,7 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Let\'s swim together! 🌊',
+                      'Let\'s swim together!',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: const Color(0xFF7F8C8D),
@@ -296,7 +300,11 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('😍', style: TextStyle(fontSize: 28)),
+                        const Icon(
+                          Icons.sentiment_satisfied_alt,
+                          color: Color(0xFF4ECDC4),
+                          size: 28,
+                        ),
                         const SizedBox(width: 12),
                         Text(
                           '$buddyName gained +5.9 Compassion',

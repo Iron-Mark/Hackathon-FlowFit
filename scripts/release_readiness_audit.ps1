@@ -873,7 +873,7 @@ function Test-SupabaseConfig {
         return
     }
 
-    if ($content.Contains('com.oldstlabs.flowfit://auth-callback') -and $content.Contains('com.oldstlabs.flowfit.dev://auth-callback')) {
+    if ($content.Contains('com.msiazondev.flowfit://auth-callback') -and $content.Contains('com.msiazondev.flowfit.dev://auth-callback')) {
         Add-Pass 'Supabase maintained-fork redirect URLs' 'Local Supabase config includes maintained-fork mobile auth redirects.'
     } else {
         Add-Fail 'Supabase maintained-fork redirect URLs' 'Local Supabase config is missing maintained-fork mobile auth redirects.'
@@ -955,10 +955,10 @@ function Test-AndroidReleaseConfig {
     }
     Add-Pass 'Android Gradle release guard' 'Release signing, placeholder ID, and Dart auth-scheme guards are present.'
 
-    if ($buildFile.Contains('namespace = "com.oldstlabs.flowfit"') -and -not $buildFile.Contains('namespace = "com.example.flowfit"')) {
+    if ($buildFile.Contains('namespace = "com.msiazondev.flowfit"') -and -not $buildFile.Contains('namespace = "com.example.flowfit"')) {
         Add-Pass 'Android native namespace' 'Gradle namespace uses the maintained fork package.'
     } else {
-        Add-Fail 'Android native namespace' 'Gradle namespace must use com.oldstlabs.flowfit, not com.example.flowfit.'
+        Add-Fail 'Android native namespace' 'Gradle namespace must use com.msiazondev.flowfit, not com.example.flowfit.'
     }
 
     $kotlinRoot = Get-RepoPath 'android/app/src/main/kotlin'
@@ -970,12 +970,12 @@ function Test-AndroidReleaseConfig {
         )
     }
     if (
-        (Test-Path (Get-RepoPath 'android/app/src/main/kotlin/com/oldstlabs/flowfit/MainActivity.kt')) -and
+        (Test-Path (Get-RepoPath 'android/app/src/main/kotlin/com/msiazondev/flowfit/MainActivity.kt')) -and
         $legacyPackageSources.Count -eq 0
     ) {
-        Add-Pass 'Android Kotlin package namespace' 'Native Kotlin sources use com.oldstlabs.flowfit.'
+        Add-Pass 'Android Kotlin package namespace' 'Native Kotlin sources use com.msiazondev.flowfit.'
     } else {
-        Add-Fail 'Android Kotlin package namespace' 'Native Kotlin sources must live under and declare com.oldstlabs.flowfit.'
+        Add-Fail 'Android Kotlin package namespace' 'Native Kotlin sources must live under and declare com.msiazondev.flowfit.'
     }
 
     $mainManifest = Read-RepoText 'android/app/src/main/AndroidManifest.xml'
@@ -983,9 +983,9 @@ function Test-AndroidReleaseConfig {
     $manifestComponentIssues = New-Object System.Collections.Generic.List[string]
     $relativeComponents = New-Object System.Collections.Generic.List[string]
     $requiredManifestComponents = @(
-        'com.oldstlabs.flowfit.FlowFitApp',
-        'com.oldstlabs.flowfit.MainActivity',
-        'com.oldstlabs.flowfit.PhoneDataListenerService'
+        'com.msiazondev.flowfit.FlowFitApp',
+        'com.msiazondev.flowfit.MainActivity',
+        'com.msiazondev.flowfit.PhoneDataListenerService'
     )
 
     foreach ($manifest in @($mainManifest, $debugManifest)) {
@@ -1000,7 +1000,7 @@ function Test-AndroidReleaseConfig {
 
     foreach ($component in $requiredManifestComponents) {
         $simpleName = $component.Substring($component.LastIndexOf('.') + 1)
-        $componentPath = Get-RepoPath "android/app/src/main/kotlin/com/oldstlabs/flowfit/$simpleName.kt"
+        $componentPath = Get-RepoPath "android/app/src/main/kotlin/com/msiazondev/flowfit/$simpleName.kt"
         if (
             ($null -eq $mainManifest -or -not $mainManifest.Contains("android:name=`"$component`"")) -and
             ($null -eq $debugManifest -or -not $debugManifest.Contains("android:name=`"$component`""))

@@ -11,6 +11,14 @@ import 'package:flutter/material.dart';
 /// - Colors: Black, White, Blue (#3B82F6), Light Blue (#5DADE2), Cyan (#5DD9E2)
 
 class AppTheme {
+  static const List<String> fontFallbacks = [
+    'Roboto',
+    'Noto Sans',
+    'Segoe UI Emoji',
+    'Apple Color Emoji',
+    'Noto Color Emoji',
+  ];
+
   // Brand Colors
   static const Color primaryBlue = Color(0xFF3B82F6);
   static const Color lightBlue = Color(0xFF5DADE2);
@@ -39,7 +47,7 @@ class AppTheme {
     // fontFamily uses the 'family' value you register in `pubspec.yaml` fonts.
     // Example registration is shown in docs/ADD_CUSTOM_FONTS.md and pubspec.yaml
     fontFamily: 'GeneralSans',
-    fontFamilyFallback: const ['Roboto', 'Noto Sans'],
+    fontFamilyFallback: fontFallbacks,
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontSize: 57,
@@ -228,7 +236,7 @@ class AppTheme {
       onSurface: white,
     ),
     fontFamily: 'GeneralSans',
-    fontFamilyFallback: const ['Roboto', 'Noto Sans'],
+    fontFamilyFallback: fontFallbacks,
     textTheme: const TextTheme(
       displayLarge: TextStyle(
         fontSize: 57,

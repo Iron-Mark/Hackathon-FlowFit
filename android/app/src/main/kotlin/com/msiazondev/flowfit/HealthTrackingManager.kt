@@ -1,4 +1,4 @@
-package com.oldstlabs.flowfit
+package com.msiazondev.flowfit
 
 import android.content.Context
 import android.util.Log

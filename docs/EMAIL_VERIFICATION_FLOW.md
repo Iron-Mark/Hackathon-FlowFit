@@ -154,8 +154,8 @@ Confirm Your FlowFit Signup ⚡
 ```
 http://localhost:3000
 http://localhost:3000/auth/callback
-com.oldstlabs.flowfit://auth-callback
-com.oldstlabs.flowfit.dev://auth-callback
+com.msiazondev.flowfit://auth-callback
+com.msiazondev.flowfit.dev://auth-callback
 ```
 
 ### Email Template Location
@@ -210,7 +210,7 @@ supabase/email_templates/
 ```bash
 SUPABASE_URL=https://PROJECT_REF.supabase.co
 SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY
-FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit
+FLOWFIT_AUTH_SCHEME=com.msiazondev.flowfit
 ```
 
 ## 📊 Monitoring

@@ -1,6 +1,6 @@
 # Copy these into android/gradle.properties or pass them with -P for production builds.
-FLOWFIT_ANDROID_APPLICATION_ID=com.oldstlabs.flowfit
-FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit
+FLOWFIT_ANDROID_APPLICATION_ID=com.msiazondev.flowfit
+FLOWFIT_AUTH_SCHEME=com.msiazondev.flowfit
 
 # Local smoke builds only. Do not use for Play Store upload artifacts.
 FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=false

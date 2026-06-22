@@ -100,12 +100,12 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1 `
 2. Set production package/auth values in `android/gradle.properties`:
 
 ```properties
-FLOWFIT_ANDROID_APPLICATION_ID=com.oldstlabs.flowfit
-FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit
+FLOWFIT_ANDROID_APPLICATION_ID=com.msiazondev.flowfit
+FLOWFIT_AUTH_SCHEME=com.msiazondev.flowfit
 ```
 
 The Android manifest uses fully qualified native class names under
-`com.oldstlabs.flowfit`, so a maintainer-owned Play package can differ from the
+`com.msiazondev.flowfit`, so a maintainer-owned Play package can differ from the
 Kotlin namespace without breaking activity/application/service lookup. If the
 Play package changes, keep `FLOWFIT_AUTH_SCHEME` aligned with the Supabase
 redirect URL and rerun the Android release wrapper before upload.
@@ -121,7 +121,7 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1
    properties above; Flutter code reads these `--dart-define` values:
 
 ```powershell
-$authScheme = 'com.oldstlabs.flowfit'
+$authScheme = 'com.msiazondev.flowfit'
 $env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
 $env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
@@ -130,7 +130,7 @@ $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFi
 4. Add the production auth scheme to Supabase redirect URLs:
 
 ```text
-com.oldstlabs.flowfit://auth-callback
+com.msiazondev.flowfit://auth-callback
 ```
 
 5. Build the Play Store artifact:
@@ -152,8 +152,8 @@ the signing env secrets, then run the release wrapper instead of committing key
 material:
 
 ```powershell
-$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.msiazondev.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.msiazondev.flowfit'
 $env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
 $env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
@@ -183,10 +183,10 @@ For a local release smoke build without an upload keystore:
 
 ```powershell
 $env:ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING = 'true'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.msiazondev.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.msiazondev.flowfit'
 flutter build appbundle --release --no-pub `
-  --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit `
+  --dart-define=FLOWFIT_AUTH_SCHEME=com.msiazondev.flowfit `
   --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com `
   --dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit
 Remove-Item Env:\ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING
@@ -199,7 +199,7 @@ Remove-Item Env:\ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME
 1. Set production iOS bundle/auth values in `ios/Flutter/FlowFit.xcconfig`:
 
 ```xcconfig
-FLOWFIT_IOS_BUNDLE_IDENTIFIER = com.oldstlabs.flowfit
+FLOWFIT_IOS_BUNDLE_IDENTIFIER = com.msiazondev.flowfit
 ```
 
 2. Set the support inbox and optional Xcode export-options plist on the macOS
@@ -231,7 +231,7 @@ pwsh -NoProfile -File scripts/create_ios_export_options.ps1 `
 3. Add the production scheme to Supabase redirect URLs:
 
 ```text
-com.oldstlabs.flowfit://auth-callback
+com.msiazondev.flowfit://auth-callback
 ```
 
 Run final iOS artifact generation on macOS with PowerShell 7, Xcode, and Apple
@@ -273,7 +273,7 @@ Manual fallback:
 ```bash
 flutter build ipa --release \
   --export-options-plist=$HOME/export_options.plist \
-  --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit \
+  --dart-define=FLOWFIT_AUTH_SCHEME=com.msiazondev.flowfit \
   --dart-define=FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL \
   --dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=$FLOWFIT_PUBLIC_WEB_BASE_URL \
   --dart-define=SUPABASE_URL=$SUPABASE_URL \
@@ -557,6 +557,37 @@ The password stays local in ignored `.env`. Do not paste it into docs, chat,
 frontend env vars, `lib/secrets.dart`, Vercel public variables, or committed
 release env files.
 
+### Live Supabase App Smoke
+
+After the schema, lint, and advisors pass, verify the app-owned live data paths
+with a dedicated confirmed smoke test user. Use an address such as
+`maintainer+flowfit-smoke@example.com`; the script refuses non-smoke-shaped
+emails unless explicitly overridden. The smoke signs in with the publishable
+client key, then writes, reads, updates, and cleans up app-owned rows for:
+
+- `user_profiles` profile onboarding data
+- `buddy_profiles` Buddy onboarding data
+- `workout_sessions` workout create/update/list data
+- `heart_rate` watch/phone heart-rate compatibility data
+
+It does not use service-role keys and it does not delete the Supabase Auth user.
+It deletes the temporary app rows by default unless `-SkipCleanup` is supplied.
+
+```powershell
+$env:FLOWFIT_SMOKE_EMAIL = 'maintainer+flowfit-smoke@example.com'
+$env:FLOWFIT_SMOKE_PASSWORD = Read-Host 'Confirmed smoke user password'
+pwsh -NoProfile -File scripts/verify_supabase_app_smoke.ps1 `
+  -AllowExternalWrites `
+  -OutFile build/supabase-app-smoke.json
+Remove-Item Env:\FLOWFIT_SMOKE_EMAIL
+Remove-Item Env:\FLOWFIT_SMOKE_PASSWORD
+```
+
+You can also put `FLOWFIT_SMOKE_EMAIL` and `FLOWFIT_SMOKE_PASSWORD` in ignored
+`.env.release`, then pass `-EnvFile .env.release`. Keep this user disposable:
+the script may upsert profile and Buddy rows before cleanup, so do not point it
+at a personal or production user account.
+
 ## Store Privacy and Account Deletion
 
 Use `docs/PRIVACY_DATA_MAP.md` to complete Play Data safety and App Store
@@ -675,7 +706,7 @@ flutter build web --release --no-pub --no-wasm-dry-run
 
 # Requires android/key.properties, unless the smoke-only env var above is set.
 flutter build appbundle --release --no-pub `
-  --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit `
+  --dart-define=FLOWFIT_AUTH_SCHEME=com.msiazondev.flowfit `
   --dart-define=FLOWFIT_SUPPORT_EMAIL=REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL `
   --dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=$env:FLOWFIT_PUBLIC_WEB_BASE_URL `
   --dart-define=SUPABASE_URL=$env:SUPABASE_URL `
@@ -694,7 +725,7 @@ other, that they do not contain internal maintainer/store-review wording, and
 that release source does not reintroduce hard-coded example auth redirects or a
 public privileged deletion RPC. When `-IncludeReleaseSmoke` is set, the script
 also compiles the release App Bundle with maintained-fork package/auth values
-(`com.oldstlabs.flowfit`) and matching Dart auth-scheme defines unless the
+(`com.msiazondev.flowfit`) and matching Dart auth-scheme defines unless the
 caller has already provided production values. That artifact is compile evidence
 only, not a store or runnable production artifact unless real Supabase release
 defines and upload signing inputs are supplied.
@@ -741,7 +772,7 @@ release-readiness audit, builds the JS web artifact with `--no-wasm-dry-run`,
 builds Android phone/Wear debug APKs, and produces a debug-signed release App
 Bundle smoke artifact named `flowfit-release-smoke-not-for-store`. The CI
 release smoke uses
-`com.oldstlabs.flowfit` package/auth values plus matching Dart defines and
+`com.msiazondev.flowfit` package/auth values plus matching Dart defines and
 validation-shaped dummy Supabase client Dart defines, mirroring the local
 preflight. It also verifies the built public privacy and account-deletion pages,
 serves
@@ -754,9 +785,11 @@ compiles a separate Wasm smoke artifact under `build/web-wasm`, verifies
 `main.dart.wasm` and the public compliance pages are present there, and uploads
 it as `flowfit-web-wasm-smoke-not-for-store`. That keeps the normal JS web
 artifact as the default handoff while proving the Wasm backend still compiles.
-Before every Android build, CI clears Flutter's ignored
+Before every Android build, CI refreshes Flutter's ignored
 `android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java`
-file so a previous web/Wasm build cannot poison native Kotlin compilation.
+file by deleting any stale copy and rerunning `flutter pub get`. This prevents
+a previous web/Wasm build from poisoning native Kotlin compilation while still
+ensuring Android plugins are registered at runtime.
 
 That CI smoke App Bundle is not acceptable for Play Store upload. Store upload
 still requires the real upload keystore, production package/auth values, and

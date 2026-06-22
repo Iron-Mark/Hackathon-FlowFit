@@ -4,6 +4,7 @@ import '../../../models/resistance_session.dart';
 import '../../../models/exercise_progress.dart';
 import '../../../providers/resistance_session_provider.dart';
 import '../../../providers/workout_flow_provider.dart';
+import 'resistance_exercise_icons.dart';
 
 /// Split selection screen for resistance training
 /// Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6
@@ -125,7 +126,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
             _buildSplitCard(
               context,
               BodySplit.upper,
-              '💪',
+              Icons.fitness_center,
               const Color(0xFF3B82F6),
               const Color(0xFF2563EB),
               'Chest, Back, Shoulders, Arms',
@@ -139,7 +140,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
             _buildSplitCard(
               context,
               BodySplit.lower,
-              '🦵',
+              Icons.directions_run,
               const Color(0xFF8B5CF6),
               const Color(0xFF7C3AED),
               'Quads, Hamstrings, Glutes, Calves',
@@ -314,7 +315,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
   Widget _buildSplitCard(
     BuildContext context,
     BodySplit split,
-    String emoji,
+    IconData icon,
     Color color1,
     Color color2,
     String focus,
@@ -362,7 +363,7 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
             children: [
               Row(
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 32)),
+                  Icon(icon, color: Colors.white, size: 32),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -417,9 +418,10 @@ class _SplitSelectionScreenState extends ConsumerState<SplitSelectionScreen> {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       children: [
-                        Text(
-                          exercise.emoji,
-                          style: const TextStyle(fontSize: 20),
+                        Icon(
+                          resistanceExerciseIcon(exercise),
+                          color: Colors.white.withValues(alpha: 0.9),
+                          size: 20,
                         ),
                         const SizedBox(width: 8),
                         Expanded(

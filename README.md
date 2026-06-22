@@ -251,7 +251,7 @@ flowfit/
 │   ├── app/
 │   │   ├── libs/
 │   │   │   └── samsung-health-sensor-api-1.4.1.aar
-│   │   └── src/main/kotlin/com/oldstlabs/flowfit/
+│   │   └── src/main/kotlin/com/msiazondev/flowfit/
 │   │       ├── MainActivity.kt
 │   │       └── HealthTrackingManager.kt
 │   └── build.gradle.kts
@@ -454,7 +454,7 @@ adb -s 6ece264d logcat | findstr "FlowFit"
 adb devices
 
 # Uninstall
-adb -s 6ece264d uninstall com.oldstlabs.flowfit
+adb -s 6ece264d uninstall com.msiazondev.flowfit
 ```
 
 ---

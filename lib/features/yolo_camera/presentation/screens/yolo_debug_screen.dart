@@ -21,7 +21,7 @@ class YoloDebugScreen extends StatefulWidget {
 
 class _YoloDebugScreenState extends State<YoloDebugScreen>
     with WidgetsBindingObserver {
-  DetectionMode _detectionMode = DetectionMode.object;
+  final DetectionMode _detectionMode = DetectionMode.object;
   CameraMode _cameraMode = CameraMode.realtime;
   List<DetectionResult> _latestResults = [];
   String? _errorMessage;
@@ -243,34 +243,7 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: SegmentedButton<DetectionMode>(
-                  segments: const [
-                    ButtonSegment(
-                      value: DetectionMode.object,
-                      label: Text('Object'),
-                      icon: Icon(Icons.category),
-                    ),
-                    ButtonSegment(
-                      value: DetectionMode.pose,
-                      label: Text('Pose unavailable'),
-                      icon: Icon(Icons.accessibility_new),
-                      enabled: false,
-                    ),
-                  ],
-                  selected: {_detectionMode},
-                  onSelectionChanged: (Set<DetectionMode> newSelection) {
-                    setState(() {
-                      _detectionMode = newSelection.first;
-                      _latestResults = []; // Clear results on mode change
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
+          _buildDetectionModeStatus(),
           const SizedBox(height: 16),
           const Text(
             'Camera Mode',
@@ -303,6 +276,40 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetectionModeStatus() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black12),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.category, size: 20),
+          SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Object detection',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'YOLOv11s food model active',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -405,8 +412,7 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
               'Detection Modes:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            Text('• Object: YOLOv11s model'),
-            Text('• Pose: unavailable until a compatible pose model is added'),
+            Text('• Object detection: YOLOv11s food model'),
             SizedBox(height: 16),
             Text(
               'Camera Modes:',

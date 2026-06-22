@@ -9,7 +9,7 @@ Use this checklist after the release handoff in
 | --- | --- |
 | Source commit | `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` |
 | Release workflow/checklist docs | Tracked on `main`; use `git log -1 -- docs/release .github/workflows/android-production-release.yml` for the latest docs commit |
-| Android package ID | `com.oldstlabs.flowfit` |
+| Android package ID | `com.msiazondev.flowfit` |
 | AAB path | `build/app/outputs/bundle/release/app-release.aab` |
 | AAB SHA-256 | `e62358e4f3251e540e6742ccf4380ce2e276634a8f72287fb5832849fd3b1f10` |
 | Privacy URL | `https://iron-mark.github.io/Hackathon-FlowFit/privacy.html` |
@@ -59,7 +59,7 @@ support inbox evidence, release manifest, and rendered Supabase email templates.
 ## Play Console Setup
 
 - [ ] Create or open the Play Console app.
-- [ ] Confirm package name `com.oldstlabs.flowfit`.
+- [ ] Confirm package name `com.msiazondev.flowfit`.
 - [ ] Set app name: `FlowFit`.
 - [ ] Set default language.
 - [ ] Add category: Health & Fitness.

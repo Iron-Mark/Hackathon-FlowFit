@@ -44,8 +44,8 @@ npm run web:smoke -- --base-url http://127.0.0.1:8799 --out-file build\web-app-s
 
 ## Package Notes
 
-- Production Android package: `com.oldstlabs.flowfit`
-- Debug Android package: `com.oldstlabs.flowfit.dev`
+- Production Android package: `com.msiazondev.flowfit`
+- Debug Android package: `com.msiazondev.flowfit.dev`
 - Production auth scheme: configured through `FLOWFIT_AUTH_SCHEME`
 - Local `lib/secrets.dart` stays ignored; use `lib/secrets.dart.example` for
   the required shape.

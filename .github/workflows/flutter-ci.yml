@@ -239,14 +239,14 @@ jobs:
       - name: Android release App Bundle smoke build
         env:
           ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING: "true"
-          ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID: com.oldstlabs.flowfit
-          ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME: com.oldstlabs.flowfit
+          ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID: com.msiazondev.flowfit
+          ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME: com.msiazondev.flowfit
         shell: bash
         run: |
           rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
           flutter pub get
           flutter build appbundle --release --no-pub \
-            --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit \
+            --dart-define=FLOWFIT_AUTH_SCHEME=com.msiazondev.flowfit \
             --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com \
             --dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=https://iron-mark.github.io/Hackathon-FlowFit \
             --dart-define=SUPABASE_URL=https://abcdefghijklmnopqrst.supabase.co \

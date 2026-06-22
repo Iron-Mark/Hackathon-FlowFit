@@ -28,9 +28,9 @@ Non-secret release inputs recorded in `build/store-release-artifacts.json`:
 | Target | Android |
 | Support email | `marksiazon.dev@gmail.com` |
 | Public web base URL | `https://iron-mark.github.io/Hackathon-FlowFit` |
-| Android package ID | `com.oldstlabs.flowfit` |
-| Android auth scheme | `com.oldstlabs.flowfit` |
-| iOS bundle ID | `com.oldstlabs.flowfit` |
+| Android package ID | `com.msiazondev.flowfit` |
+| Android auth scheme | `com.msiazondev.flowfit` |
+| iOS bundle ID | `com.msiazondev.flowfit` |
 | Supabase client source | Local ignored `lib/secrets.dart` fallback or release env |
 
 Do not paste or commit Supabase publishable keys, DB passwords, service-role
@@ -50,8 +50,8 @@ The AAB was built by:
 ```powershell
 $env:FLOWFIT_SUPPORT_EMAIL='marksiazon.dev@gmail.com'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL='https://iron-mark.github.io/Hackathon-FlowFit'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID='com.oldstlabs.flowfit'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME='com.oldstlabs.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID='com.msiazondev.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME='com.msiazondev.flowfit'
 pwsh -NoProfile -File scripts\store_release_build.ps1 `
   -Target Android `
   -RunStrictAudit `
@@ -96,7 +96,7 @@ Remote CI verification:
 ## Google Play Store Steps
 
 1. Open Google Play Console and create or open the FlowFit app.
-2. Confirm the package name is `com.oldstlabs.flowfit`.
+2. Confirm the package name is `com.msiazondev.flowfit`.
 3. Upload `build/app/outputs/bundle/release/app-release.aab` to internal
    testing first.
 4. Confirm Play Console accepts the upload key and package ID.
@@ -133,8 +133,8 @@ Before public rollout:
 - Keep `build/supabase-email-templates/confirm_signup.txt` with the release
   evidence.
 - Confirm redirect URLs include:
-  - `com.oldstlabs.flowfit://auth-callback`
-  - `com.oldstlabs.flowfit.dev://auth-callback`
+  - `com.msiazondev.flowfit://auth-callback`
+  - `com.msiazondev.flowfit.dev://auth-callback`
   - `https://iron-mark.github.io/Hackathon-FlowFit`
 - Run Supabase advisors and DB lint after `SUPABASE_DB_PASSWORD` and
   Supabase CLI auth are available locally.

@@ -28,10 +28,10 @@ class YoloRepositoryImpl implements YoloRepository {
   Future<void> initPoseDetector() async {
     if (_poseDetector != null) return;
 
-    // Pose detection is unavailable until the bundled model matches the
-    // ultralytics_yolo pose output contract expected by the plugin.
+    // Pose mode remains disabled in the UI until this detector is wired to a
+    // model output contract supported by the active plugin.
     debugPrint(
-      'Pose detection unavailable: bundled YOLOv11n-pose output format is incompatible with the active plugin.',
+      'Pose detector skipped: bundled YOLOv11n-pose output format is incompatible with the active plugin.',
     );
     return;
   }

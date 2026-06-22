@@ -27,8 +27,8 @@ Test if the app opens with a deep link:
 
 ```bash
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback" \
+  com.msiazondev.flowfit
 ```
 
 **Expected Result**: FlowFit app should open
@@ -39,16 +39,16 @@ Simulate an auth callback with parameters:
 
 ```bash
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback?type=signup&token=test123" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback?type=signup&token=test123" \
+  com.msiazondev.flowfit
 ```
 
 ### Test Development Scheme
 
 ```bash
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit.dev://auth-callback?type=signup" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit.dev://auth-callback?type=signup" \
+  com.msiazondev.flowfit
 ```
 
 ## 3. Monitor App Logs
@@ -103,8 +103,8 @@ Look for successful authentication messages.
 
 ```bash
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback?error=invalid_token&error_description=Token%20expired" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback?error=invalid_token&error_description=Token%20expired" \
+  com.msiazondev.flowfit
 ```
 
 **Expected**: App should handle error gracefully
@@ -113,8 +113,8 @@ adb shell am start -W -a android.intent.action.VIEW \
 
 ```bash
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback" \
+  com.msiazondev.flowfit
 ```
 
 **Expected**: App should not crash
@@ -125,7 +125,7 @@ Check that your intent filter is registered:
 
 ```bash
 # Dump app info
-adb shell dumpsys package com.oldstlabs.flowfit | grep -A 20 "intent-filter"
+adb shell dumpsys package com.msiazondev.flowfit | grep -A 20 "intent-filter"
 ```
 
 **Look for**:
@@ -133,7 +133,7 @@ adb shell dumpsys package com.oldstlabs.flowfit | grep -A 20 "intent-filter"
 Action: "android.intent.action.VIEW"
 Category: "android.intent.category.DEFAULT"
 Category: "android.intent.category.BROWSABLE"
-Scheme: "com.oldstlabs.flowfit"
+Scheme: "com.msiazondev.flowfit"
 Host: "auth-callback"
 ```
 
@@ -141,8 +141,8 @@ Host: "auth-callback"
 
 FlowFit auth callbacks currently use custom URI schemes:
 
-- `com.oldstlabs.flowfit://auth-callback`
-- `com.oldstlabs.flowfit.dev://auth-callback`
+- `com.msiazondev.flowfit://auth-callback`
+- `com.msiazondev.flowfit.dev://auth-callback`
 
 Do not use `adb shell pm get-app-links` as pass/fail evidence for these callbacks. That command verifies HTTPS Android App Links, not custom schemes. Digital Asset Links files are only needed if FlowFit later adds HTTPS app links.
 
@@ -156,7 +156,7 @@ Do not use `adb shell pm get-app-links` as pass/fail evidence for these callback
 adb shell pm list packages | grep flowfit
 
 # Check if intent filter is registered
-adb shell dumpsys package com.oldstlabs.flowfit | grep -A 10 "intent-filter"
+adb shell dumpsys package com.msiazondev.flowfit | grep -A 10 "intent-filter"
 ```
 
 **Solution**:
@@ -172,7 +172,7 @@ adb shell dumpsys package com.oldstlabs.flowfit | grep -A 10 "intent-filter"
 - Try opening the link multiple times
 - Clear default app associations:
   ```bash
-  adb shell pm clear-package-preferred-activities com.oldstlabs.flowfit
+  adb shell pm clear-package-preferred-activities com.msiazondev.flowfit
   ```
 - For custom schemes (not HTTPS), this is expected behavior on first use
 
@@ -200,29 +200,29 @@ echo "Testing FlowFit Deep Links..."
 # Test 1: Basic deep link
 echo "Test 1: Basic deep link"
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback" \
+  com.msiazondev.flowfit
 sleep 2
 
 # Test 2: With parameters
 echo "Test 2: With auth parameters"
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback?type=signup&token=test123" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback?type=signup&token=test123" \
+  com.msiazondev.flowfit
 sleep 2
 
 # Test 3: Development scheme
 echo "Test 3: Development scheme"
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit.dev://auth-callback" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit.dev://auth-callback" \
+  com.msiazondev.flowfit
 sleep 2
 
 # Test 4: Error handling
 echo "Test 4: Error handling"
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback?error=test_error" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback?error=test_error" \
+  com.msiazondev.flowfit
 
 echo "Tests complete!"
 ```

@@ -110,7 +110,7 @@ The release smoke build sets Gradle property
 `FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true` through env var
 `ORG_GRADLE_PROJECT_FLOWFIT_ALLOW_DEBUG_RELEASE_SIGNING=true` temporarily.
 If production values are not already set, it also uses
-`com.oldstlabs.flowfit` package/auth defaults and matching Dart auth-scheme defines.
+`com.msiazondev.flowfit` package/auth defaults and matching Dart auth-scheme defines.
 It also passes `FLOWFIT_SUPPORT_EMAIL`, defaulting to `support@flowfit.com`
 when the environment does not override it. It passes validation-shaped dummy
 Supabase client values as Dart defines only for smoke coverage, so startup
@@ -597,8 +597,8 @@ $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFi
 # $env:FLOWFIT_WEB_BASE_HREF = '/Hackathon-FlowFit/'
 $env:SUPABASE_URL = 'https://PROJECT_REF.supabase.co'
 $env:SUPABASE_PUBLISHABLE_KEY = 'REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.oldstlabs.flowfit'
-$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.oldstlabs.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_ANDROID_APPLICATION_ID = 'com.msiazondev.flowfit'
+$env:ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME = 'com.msiazondev.flowfit'
 # Optional Android wrapper signing path for CI/ephemeral release machines:
 $env:FLOWFIT_ANDROID_KEYSTORE_BASE64 = 'REPLACE_WITH_BASE64_ENCODED_UPLOAD_KEYSTORE'
 $env:FLOWFIT_ANDROID_KEYSTORE_PASSWORD = 'REPLACE_WITH_UPLOAD_KEYSTORE_PASSWORD'
@@ -691,7 +691,7 @@ inputs, and strict-audit summary when `-RunStrictAudit` is used. When
 `-AllowDirty` is used, it also records the uncommitted status lines.
 For web releases, confirm the manifest includes both `flutter-web-build` and
 `flutter-web-release-zip`.
-Confirm `com.oldstlabs.flowfit` belongs to the maintainer's store accounts and
+Confirm `com.msiazondev.flowfit` belongs to the maintainer's store accounts and
 replace every `your-owned-domain.com`, `PROJECT_REF`, and
 `REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY` example before running the production
 wrapper. Production URLs must use a real HTTPS origin, not `.example`,
@@ -901,7 +901,7 @@ adb -s 6ece264d install -r build\app\outputs\flutter-apk\app-debug.apk
 flutter run -d 6ece264d
 
 # Uninstall
-adb -s 6ece264d uninstall com.oldstlabs.flowfit
+adb -s 6ece264d uninstall com.msiazondev.flowfit
 ```
 
 ### Phone Commands
@@ -1053,7 +1053,7 @@ You can create your own scripts based on these templates:
 @echo off
 echo Cleaning and reinstalling...
 flutter clean
-adb -s 6ece264d uninstall com.oldstlabs.flowfit
+adb -s 6ece264d uninstall com.msiazondev.flowfit
 flutter pub get
 flutter run -d 6ece264d
 ```

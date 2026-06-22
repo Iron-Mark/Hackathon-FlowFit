@@ -4,12 +4,12 @@ import 'package:flutter/foundation.dart';
 class FlowFitRuntimeConfig {
   static const String authScheme = String.fromEnvironment(
     'FLOWFIT_AUTH_SCHEME',
-    defaultValue: 'com.oldstlabs.flowfit',
+    defaultValue: 'com.msiazondev.flowfit',
   );
 
   static const String devAuthScheme = String.fromEnvironment(
     'FLOWFIT_DEV_AUTH_SCHEME',
-    defaultValue: 'com.oldstlabs.flowfit.dev',
+    defaultValue: 'com.msiazondev.flowfit.dev',
   );
 
   static const String supportEmail = String.fromEnvironment(

@@ -25,12 +25,33 @@ class GoalSelectionScreen extends ConsumerWidget {
     WellnessGoal(
       id: 'focus',
       title: 'Boost focus and productivity',
-      icon: '🎯',
+      icon: Icons.center_focus_strong,
+      iconLabel: 'Focus target',
     ),
-    WellnessGoal(id: 'hygiene', title: 'Stay fresh and clean', icon: '🪥'),
-    WellnessGoal(id: 'active', title: 'Be more active', icon: '👟'),
-    WellnessGoal(id: 'stress', title: 'Manage stress and anxiety', icon: '🏔️'),
-    WellnessGoal(id: 'social', title: 'Strengthen social skills', icon: '☎️'),
+    WellnessGoal(
+      id: 'hygiene',
+      title: 'Stay fresh and clean',
+      icon: Icons.spa_outlined,
+      iconLabel: 'Hygiene',
+    ),
+    WellnessGoal(
+      id: 'active',
+      title: 'Be more active',
+      icon: Icons.directions_walk,
+      iconLabel: 'Activity',
+    ),
+    WellnessGoal(
+      id: 'stress',
+      title: 'Manage stress and anxiety',
+      icon: Icons.self_improvement,
+      iconLabel: 'Stress support',
+    ),
+    WellnessGoal(
+      id: 'social',
+      title: 'Strengthen social skills',
+      icon: Icons.groups_outlined,
+      iconLabel: 'Social skills',
+    ),
   ];
 
   @override
@@ -99,9 +120,10 @@ class GoalSelectionScreen extends ConsumerWidget {
                               color: Colors.yellow[100],
                               shape: BoxShape.circle,
                             ),
-                            child: const Text(
-                              '💡',
-                              style: TextStyle(fontSize: 24),
+                            child: const Icon(
+                              Icons.lightbulb_outline,
+                              color: Color(0xFFF9A825),
+                              size: 24,
                             ),
                           ),
                         ),
@@ -207,12 +229,14 @@ class GoalSelectionScreen extends ConsumerWidget {
 class WellnessGoal {
   final String id;
   final String title;
-  final String icon;
+  final IconData icon;
+  final String iconLabel;
 
   const WellnessGoal({
     required this.id,
     required this.title,
     required this.icon,
+    required this.iconLabel,
   });
 }
 
@@ -270,10 +294,16 @@ class GoalCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Emoji icon
+              // Category icon
               Semantics(
-                label: _getEmojiLabel(goal.icon),
-                child: Text(goal.icon, style: const TextStyle(fontSize: 32)),
+                label: goal.iconLabel,
+                child: Icon(
+                  goal.icon,
+                  color: isSelected
+                      ? const Color(0xFF66BB6A)
+                      : const Color(0xFF4ECDC4),
+                  size: 32,
+                ),
               ),
               const SizedBox(width: 16),
               // Title
@@ -299,16 +329,5 @@ class GoalCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _getEmojiLabel(String emoji) {
-    const emojiLabels = {
-      '🎯': 'Target',
-      '🪥': 'Toothbrush',
-      '👟': 'Sneaker',
-      '🏔️': 'Mountain',
-      '☎️': 'Phone',
-    };
-    return emojiLabels[emoji] ?? 'Icon';
   }
 }

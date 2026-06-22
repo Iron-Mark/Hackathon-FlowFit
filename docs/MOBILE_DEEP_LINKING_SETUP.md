@@ -11,8 +11,8 @@ Deep linking allows email verification links to open directly in your mobile app
 ### Choose Your Deep Link URI
 
 For FlowFit, we'll use:
-- **Production**: `com.oldstlabs.flowfit://auth-callback`
-- **Development**: `com.oldstlabs.flowfit.dev://auth-callback`
+- **Production**: `com.msiazondev.flowfit://auth-callback`
+- **Development**: `com.msiazondev.flowfit.dev://auth-callback`
 
 ## 2. Android Configuration
 
@@ -41,7 +41,7 @@ Add an intent filter to your MainActivity to handle deep links:
         
         <!-- Production deep link -->
         <data
-            android:scheme="com.oldstlabs.flowfit"
+            android:scheme="com.msiazondev.flowfit"
             android:host="auth-callback" />
             
     </intent-filter>
@@ -49,7 +49,7 @@ Add an intent filter to your MainActivity to handle deep links:
 ```
 
 Use `android/app/src/debug/AndroidManifest.xml` for the development
-`com.oldstlabs.flowfit.dev://auth-callback` scheme. Do not package the
+`com.msiazondev.flowfit.dev://auth-callback` scheme. Do not package the
 development scheme in store release artifacts.
 
 ## 3. iOS Configuration (Future)
@@ -64,7 +64,7 @@ When you're ready to support iOS, add to `ios/Runner/Info.plist`:
         <string>Editor</string>
         <key>CFBundleURLSchemes</key>
         <array>
-            <string>com.oldstlabs.flowfit</string>
+            <string>com.msiazondev.flowfit</string>
         </array>
     </dict>
 </array>
@@ -76,14 +76,14 @@ When you're ready to support iOS, add to `ios/Runner/Info.plist`:
 
 1. Go to: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/url-configuration
 2. Add these URLs to **Redirect URLs**:
-   - `com.oldstlabs.flowfit://auth-callback`
-   - `com.oldstlabs.flowfit.dev://auth-callback` (for testing)
+   - `com.msiazondev.flowfit://auth-callback`
+   - `com.msiazondev.flowfit.dev://auth-callback` (for testing)
    - `http://localhost:3000/**` (for web testing)
 
 ### Update Site URL
 
 Set **Site URL** to your production deep link:
-- `com.oldstlabs.flowfit://auth-callback`
+- `com.msiazondev.flowfit://auth-callback`
 
 ## 5. Update Email Templates
 
@@ -152,7 +152,7 @@ Future<void> signUp(String email, String password) async {
   final response = await Supabase.instance.client.auth.signUp(
     email: email,
     password: password,
-    emailRedirectTo: 'com.oldstlabs.flowfit://auth-callback',
+    emailRedirectTo: 'com.msiazondev.flowfit://auth-callback',
   );
   
   if (response.user != null) {
@@ -215,7 +215,7 @@ class DeepLinkHandler {
 You can simulate a deep link without email:
 
 ```bash
-adb shell am start -W -a android.intent.action.VIEW -d "com.oldstlabs.flowfit://auth-callback?token=test&type=signup" com.oldstlabs.flowfit
+adb shell am start -W -a android.intent.action.VIEW -d "com.msiazondev.flowfit://auth-callback?token=test&type=signup" com.msiazondev.flowfit
 ```
 
 ### Test URL Pattern Matching
@@ -250,7 +250,7 @@ https://www.digitalocean.com/community/tools/glob
 
 Before going to production:
 
-- [ ] Confirm `com.oldstlabs.flowfit` is owned by the selected store accounts
+- [ ] Confirm `com.msiazondev.flowfit` is owned by the selected store accounts
 - [ ] Update deep link scheme to match production package
 - [ ] Set production Site URL in Supabase Dashboard
 - [ ] Remove development deep link schemes

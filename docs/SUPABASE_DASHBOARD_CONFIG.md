@@ -9,14 +9,14 @@ Quick reference for configuring your Supabase project for mobile deep linking.
 ### Site URL
 Set this to your primary deep link:
 ```
-com.oldstlabs.flowfit://auth-callback
+com.msiazondev.flowfit://auth-callback
 ```
 
 ### Redirect URLs
 Add these URLs (one per line):
 ```
-com.oldstlabs.flowfit://auth-callback
-com.oldstlabs.flowfit.dev://auth-callback
+com.msiazondev.flowfit://auth-callback
+com.msiazondev.flowfit.dev://auth-callback
 http://localhost:3000/**
 ```
 
@@ -103,7 +103,7 @@ redirect URLs so deep-link verification is exercised.
 
 1. **Add Test Redirect URLs**
    ```
-   com.oldstlabs.flowfit.dev://auth-callback
+   com.msiazondev.flowfit.dev://auth-callback
    http://localhost:3000/**
    ```
 

@@ -5,6 +5,7 @@ import '../../../models/exercise_progress.dart';
 import '../../../models/resistance_session.dart';
 import '../../../providers/resistance_session_provider.dart';
 import '../../../widgets/mood_transformation_card.dart';
+import 'resistance_exercise_icons.dart';
 
 class ResistanceSummaryScreen extends ConsumerWidget {
   const ResistanceSummaryScreen({super.key});
@@ -336,7 +337,11 @@ class _ExerciseSummaryRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(exercise.emoji, style: const TextStyle(fontSize: 22)),
+              Icon(
+                resistanceExerciseIcon(exercise),
+                color: const Color(0xFF7C3AED),
+                size: 22,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

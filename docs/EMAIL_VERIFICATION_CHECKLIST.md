@@ -15,10 +15,10 @@ Use this checklist to ensure everything is configured correctly.
 
 Go to: https://supabase.com/dashboard/project/REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF/auth/url-configuration
 
-- [ ] Set **Site URL** to: `com.oldstlabs.flowfit://auth-callback`
+- [ ] Set **Site URL** to: `com.msiazondev.flowfit://auth-callback`
 - [ ] Add to **Redirect URLs**:
-  - [ ] `com.oldstlabs.flowfit://auth-callback`
-  - [ ] `com.oldstlabs.flowfit.dev://auth-callback`
+  - [ ] `com.msiazondev.flowfit://auth-callback`
+  - [ ] `com.msiazondev.flowfit.dev://auth-callback`
   - [ ] `http://localhost:3000/**`
 
 ### 2. Email Templates
@@ -47,8 +47,8 @@ flutter run -d <device-id>
 
 # 2. Test deep link opens app
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback" \
+  com.msiazondev.flowfit
 ```
 
 **Expected**: App should open
@@ -85,8 +85,8 @@ adb logcat | grep -i "deep link\|auth\|flutter"
 **Test**:
 ```bash
 adb shell am start -W -a android.intent.action.VIEW \
-  -d "com.oldstlabs.flowfit://auth-callback" \
-  com.oldstlabs.flowfit
+  -d "com.msiazondev.flowfit://auth-callback" \
+  com.msiazondev.flowfit
 ```
 
 ### Issue: Email not sending
@@ -130,7 +130,7 @@ Test on:
 
 ## 🚀 Before Production
 
-- [ ] Confirm production package identity is `com.oldstlabs.flowfit`
+- [ ] Confirm production package identity is `com.msiazondev.flowfit`
 - [ ] Confirm deep link schemes match the production package
 - [ ] Remove development deep link schemes
 - [ ] Update Supabase redirect URLs for production

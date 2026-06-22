@@ -12,7 +12,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('YOLO Debug Info'), findsOneWidget);
-      expect(find.textContaining('Object: YOLOv11s model'), findsOneWidget);
+      expect(
+        find.textContaining('Object detection: YOLOv11s food model'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Pose'), findsNothing);
 
       await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
@@ -42,18 +46,16 @@ void main() {
       expect(find.text('banana'), findsNothing);
     });
 
-    testWidgets('disabled pose mode cannot change detection mode', (
+    testWidgets('only the working object detection mode is exposed', (
       tester,
     ) async {
       await tester.pumpWidget(_harness());
 
       expect(find.text('Detection mode: object'), findsOneWidget);
-
-      await tester.tap(find.text('Pose unavailable'), warnIfMissed: false);
-      await tester.pumpAndSettle();
-
+      expect(find.text('Object detection'), findsOneWidget);
+      expect(find.text('YOLOv11s food model active'), findsOneWidget);
+      expect(find.textContaining('Pose'), findsNothing);
       expect(find.text('Detection mode: object'), findsOneWidget);
-      expect(find.text('Detection mode: pose'), findsNothing);
     });
 
     testWidgets('detections render confidence chips', (tester) async {

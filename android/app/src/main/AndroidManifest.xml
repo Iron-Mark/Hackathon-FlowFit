@@ -26,7 +26,7 @@
     
     
     <application
-        android:name="com.oldstlabs.flowfit.FlowFitApp"
+        android:name="com.msiazondev.flowfit.FlowFitApp"
         android:label="FlowFit"
         android:icon="@mipmap/ic_launcher">
         
@@ -41,7 +41,7 @@
             android:value="false" />
         
         <activity
-            android:name="com.oldstlabs.flowfit.MainActivity"
+            android:name="com.msiazondev.flowfit.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:taskAffinity=""
@@ -90,7 +90,7 @@
             
         <!-- Data listener service for receiving data from watch -->
         <service
-            android:name="com.oldstlabs.flowfit.PhoneDataListenerService"
+            android:name="com.msiazondev.flowfit.PhoneDataListenerService"
             android:enabled="true"
             android:exported="true"
             android:permission="com.google.android.gms.permission.BIND_LISTENER_SERVICE">

@@ -11,8 +11,8 @@ Create a new Supabase project named `flowfit-dev`.
 - Keep email confirmation enabled so local smoke tests exercise the mobile
   redirect/deep-link path.
 - Redirect URLs:
-  - `com.oldstlabs.flowfit://auth-callback`
-  - `com.oldstlabs.flowfit.dev://auth-callback`
+  - `com.msiazondev.flowfit://auth-callback`
+  - `com.msiazondev.flowfit.dev://auth-callback`
 
 Do not use the old project ref `dnasghxxqwibwqnljvxr` for this recovery.
 

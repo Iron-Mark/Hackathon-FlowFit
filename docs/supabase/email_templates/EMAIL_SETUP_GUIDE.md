@@ -19,22 +19,22 @@ Add these redirect URLs to the **Redirect URLs** section:
 ```
 http://localhost:3000
 http://localhost:3000/auth/callback
-com.oldstlabs.flowfit://auth-callback
-com.oldstlabs.flowfit.dev://auth-callback
+com.msiazondev.flowfit://auth-callback
+com.msiazondev.flowfit.dev://auth-callback
 ```
 
 **For Production:**
 ```
 <FLOWFIT_PUBLIC_WEB_BASE_URL>
 <FLOWFIT_PUBLIC_WEB_BASE_URL>/auth/callback
-com.oldstlabs.flowfit://auth-callback
-com.oldstlabs.flowfit.dev://auth-callback
+com.msiazondev.flowfit://auth-callback
+com.msiazondev.flowfit.dev://auth-callback
 ```
 
 **For Mobile Deep Linking:**
 ```
-com.oldstlabs.flowfit://auth-callback
-com.oldstlabs.flowfit.dev://auth-callback
+com.msiazondev.flowfit://auth-callback
+com.msiazondev.flowfit.dev://auth-callback
 ```
 
 ### Step 3: Configure Email Templates

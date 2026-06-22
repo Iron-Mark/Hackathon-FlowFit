@@ -170,7 +170,7 @@ void main() {
       'ios/Runner.xcodeproj/project.pbxproj',
     ).readAsStringSync();
     androidMainActivity = File(
-      'android/app/src/main/kotlin/com/oldstlabs/flowfit/MainActivity.kt',
+      'android/app/src/main/kotlin/com/msiazondev/flowfit/MainActivity.kt',
     ).readAsStringSync();
     privacyDataMap = File('docs/PRIVACY_DATA_MAP.md').readAsStringSync();
     androidKotlinSources = Directory('android/app/src/main/kotlin')
@@ -189,20 +189,20 @@ void main() {
   });
 
   test('Android native namespace uses maintained fork package', () {
-    expect(gradleBuild, contains('namespace = "com.oldstlabs.flowfit"'));
-    expect(gradleBuild, contains('.orElse("com.oldstlabs.flowfit")'));
+    expect(gradleBuild, contains('namespace = "com.msiazondev.flowfit"'));
+    expect(gradleBuild, contains('.orElse("com.msiazondev.flowfit")'));
     expect(gradleBuild, isNot(contains('namespace = "com.example.flowfit"')));
     expect(readinessAudit, contains('Android native namespace'));
     expect(readinessAudit, contains('Android Kotlin package namespace'));
     expect(readinessAudit, contains('Android manifest app components'));
     expect(
       Directory(
-        'android/app/src/main/kotlin/com/oldstlabs/flowfit',
+        'android/app/src/main/kotlin/com/msiazondev/flowfit',
       ).existsSync(),
       isTrue,
     );
     for (final source in androidKotlinSources) {
-      expect(source, contains('package com.oldstlabs.flowfit'));
+      expect(source, contains('package com.msiazondev.flowfit'));
       expect(source, isNot(contains('package com.example.flowfit')));
     }
   });
@@ -213,7 +213,7 @@ void main() {
       r'android:name="\.(FlowFitApp|MainActivity|PhoneDataListenerService)"',
     ).allMatches(manifestContent);
     final declaredComponents = RegExp(
-      r'android:name="com\.oldstlabs\.flowfit\.(\w+)"',
+      r'android:name="com\.msiazondev\.flowfit\.(\w+)"',
     ).allMatches(manifestContent).map((match) => match.group(1)!).toSet();
 
     expect(androidMainManifest, isNot(contains('.SensorTrackingService')));
@@ -238,7 +238,7 @@ void main() {
     for (final component in declaredComponents) {
       expect(
         File(
-          'android/app/src/main/kotlin/com/oldstlabs/flowfit/$component.kt',
+          'android/app/src/main/kotlin/com/msiazondev/flowfit/$component.kt',
         ).existsSync(),
         isTrue,
         reason: '$component is declared as a native Android component',
@@ -791,7 +791,7 @@ storeFile=upload-keystore.jks
       expect(manualPlist, contains('<string>app-store-connect</string>'));
       expect(manualPlist, contains('<string>manual</string>'));
       expect(manualPlist, contains('<string>ABCDE12345</string>'));
-      expect(manualPlist, contains('<key>com.oldstlabs.flowfit</key>'));
+      expect(manualPlist, contains('<key>com.msiazondev.flowfit</key>'));
       expect(manualPlist, contains('<string>FlowFit App Store</string>'));
       expect(manualPlist, contains('<string>Apple Distribution</string>'));
 
@@ -1260,9 +1260,9 @@ storeFile=upload-keystore.jks
             'publicWebBaseUrl': 'https://iron-mark.github.io/Hackathon-FlowFit',
             'supabaseUrl': 'https://abcdefghijklmnop.supabase.co',
             'supabaseConfigSource': 'environment',
-            'androidApplicationId': 'com.oldstlabs.flowfit',
-            'androidAuthScheme': 'com.oldstlabs.flowfit',
-            'iosBundleIdentifier': 'com.oldstlabs.flowfit',
+            'androidApplicationId': 'com.msiazondev.flowfit',
+            'androidAuthScheme': 'com.msiazondev.flowfit',
+            'iosBundleIdentifier': 'com.msiazondev.flowfit',
             'webBuildBackend': 'javascript',
             'webBaseHref': '/Hackathon-FlowFit/',
           },
@@ -2014,7 +2014,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
 
   test('ci and preflight release smoke use maintained-fork package IDs', () {
     for (final source in [ciWorkflow, releasePreflight]) {
-      expect(source, contains('com.oldstlabs.flowfit'));
+      expect(source, contains('com.msiazondev.flowfit'));
       expect(source, isNot(contains('com.flowfit.smoke')));
     }
   });
@@ -2081,6 +2081,39 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       contains('--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL='),
     );
     expect(storeReleaseBuild, contains('Get-OptionalMapTileDartDefines'));
+  });
+
+  test('CI web builds pass Supabase client dart defines', () {
+    for (final command in _extractFlutterWebBuildCommands(ciWorkflow)) {
+      expect(
+        command,
+        contains('--dart-define=SUPABASE_URL='),
+        reason: 'Web smoke builds must render the real app, not setup guard.',
+      );
+      expect(
+        command,
+        contains('--dart-define=SUPABASE_PUBLISHABLE_KEY='),
+        reason: 'Web smoke builds must render the real app, not setup guard.',
+      );
+    }
+
+    expect(
+      _extractFlutterWebBuildCommands(ciWorkflow).length,
+      greaterThanOrEqualTo(2),
+      reason: 'Expected JavaScript and Wasm web build smoke commands in CI.',
+    );
+    expect(storeReleaseBuild, contains('--dart-define=SUPABASE_URL='));
+    expect(
+      storeReleaseBuild,
+      contains('--dart-define=SUPABASE_PUBLISHABLE_KEY='),
+    );
+    expect(pagesWorkflow, contains('SUPABASE_URL: \${{ vars.SUPABASE_URL }}'));
+    expect(
+      pagesWorkflow,
+      contains(
+        'SUPABASE_PUBLISHABLE_KEY: \${{ vars.SUPABASE_PUBLISHABLE_KEY }}',
+      ),
+    );
   });
 
   test('store release public web URL resolver validates behavior', () {
@@ -2510,7 +2543,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
   });
 
   test('agent guidance matches maintained fork backend and native package', () {
-    expect(copilotInstructions, contains('com.oldstlabs.flowfit'));
+    expect(copilotInstructions, contains('com.msiazondev.flowfit'));
     expect(copilotInstructions, contains('SUPABASE_PUBLISHABLE_KEY'));
     expect(copilotInstructions, contains('publishable key'));
     expect(copilotInstructions, contains('SupabaseService'));
@@ -3364,10 +3397,13 @@ function Resolve-DnsName {
   test(
     'recovered Supabase config only allows maintained-fork mobile redirects',
     () {
-      expect(supabaseConfig, contains('com.oldstlabs.flowfit://auth-callback'));
       expect(
         supabaseConfig,
-        contains('com.oldstlabs.flowfit.dev://auth-callback'),
+        contains('com.msiazondev.flowfit://auth-callback'),
+      );
+      expect(
+        supabaseConfig,
+        contains('com.msiazondev.flowfit.dev://auth-callback'),
       );
       expect(
         supabaseConfig,
@@ -3645,6 +3681,30 @@ function Resolve-DnsName {
       contains("Navigator.pushNamed(context, '/delete-account')"),
     );
   });
+}
+
+List<String> _extractFlutterWebBuildCommands(String workflow) {
+  final lines = const LineSplitter().convert(workflow);
+  final commands = <String>[];
+
+  for (var index = 0; index < lines.length; index += 1) {
+    final line = lines[index].trim();
+    if (!line.contains('flutter build web')) {
+      continue;
+    }
+
+    final commandParts = [line];
+    for (var next = index + 1; next < lines.length; next += 1) {
+      final continuation = lines[next].trim();
+      if (continuation.isEmpty || !continuation.startsWith('--')) {
+        break;
+      }
+      commandParts.add(continuation);
+    }
+    commands.add(commandParts.join(' '));
+  }
+
+  return commands;
 }
 
 ProcessResult _runPublicWebBaseUrlFixture() {

@@ -1,5 +1,5 @@
 param(
-    [string]$AndroidApplicationId = 'com.oldstlabs.flowfit',
+    [string]$AndroidApplicationId = 'com.msiazondev.flowfit',
     [string]$AndroidAuthScheme = '',
     [string]$AndroidDevAuthScheme = '',
     [string]$SupabaseUrl = '',

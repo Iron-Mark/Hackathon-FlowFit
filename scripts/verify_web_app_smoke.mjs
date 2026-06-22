@@ -158,6 +158,8 @@ try {
       consoleMessages.push({
         type: message.type(),
         text: message.text(),
+        pageUrl: page.url(),
+        previousStep: steps.at(-1)?.name ?? '',
         location: message.location(),
       });
     }

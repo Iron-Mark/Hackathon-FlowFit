@@ -11,7 +11,7 @@ plugins {
 
 val flowfitApplicationId = providers
     .gradleProperty("FLOWFIT_ANDROID_APPLICATION_ID")
-    .orElse("com.oldstlabs.flowfit")
+    .orElse("com.msiazondev.flowfit")
     .get()
 val flowfitAuthScheme = providers
     .gradleProperty("FLOWFIT_AUTH_SCHEME")
@@ -127,7 +127,7 @@ gradle.taskGraph.whenReady {
 }
 
 android {
-    namespace = "com.oldstlabs.flowfit"
+    namespace = "com.msiazondev.flowfit"
     compileSdk = 36  // Use Android 15 (API 36) - required by plugins
     ndkVersion = "28.0.13004108"  // Updated to match ultralytics_yolo requirement
 

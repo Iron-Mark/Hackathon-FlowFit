@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/exercise_progress.dart';
 import '../../../models/resistance_session.dart';
 import '../../../providers/resistance_session_provider.dart';
+import 'resistance_exercise_icons.dart';
 
 /// Active resistance workout screen with exercise progress and session controls.
 class ActiveResistanceScreen extends ConsumerStatefulWidget {
@@ -261,7 +262,11 @@ class _ExercisePanel extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Text(exercise.emoji, style: const TextStyle(fontSize: 34)),
+              Icon(
+                resistanceExerciseIcon(exercise),
+                color: const Color(0xFF7C3AED),
+                size: 34,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -363,7 +368,11 @@ class _ExerciseList extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  Text(exercise.emoji, style: const TextStyle(fontSize: 22)),
+                  Icon(
+                    resistanceExerciseIcon(exercise),
+                    color: const Color(0xFF7C3AED),
+                    size: 22,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(child: Text(exercise.exerciseName)),
                   Text(

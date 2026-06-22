@@ -55,7 +55,7 @@ void main() {
 
       expect(calls, hasLength(1));
       expect(calls.single.email, 'member@flowfit.test');
-      expect(calls.single.redirectTo, 'com.oldstlabs.flowfit://auth-callback');
+      expect(calls.single.redirectTo, 'com.msiazondev.flowfit://auth-callback');
       expect(
         find.text('Password reset email sent. Check your inbox.'),
         findsOneWidget,

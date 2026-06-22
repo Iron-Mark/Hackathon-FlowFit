@@ -6,12 +6,12 @@ This file gives concise, actionable guidance to AI coding agents working on Flow
 - FlowFit is a Flutter app with two entry points:
   - `lib/main_wear.dart` — Galaxy Watch (Wear OS) UI and sensors
   - `lib/main.dart` — Android Phone companion UI
-- The maintained-fork production Android package/auth scheme is `com.oldstlabs.flowfit`.
+- The maintained-fork production Android package/auth scheme is `com.msiazondev.flowfit`.
 - Native Android code handles Samsung Health SDK, then sends data to Flutter via MethodChannel/EventChannel:
   - Flutter -> Android MethodChannel (watch): `com.flowfit.watch/data`
   - Android -> Flutter EventChannel (watch heart rate): `com.flowfit.watch/heartrate`
   - Phone listener channels: `com.flowfit.phone/data` and `com.flowfit.phone/heartrate` (Flutter # side)
-- Native manager implementation is in `android/app/src/main/kotlin/com/oldstlabs/flowfit/HealthTrackingManager.kt` and the Flutter bridge is `lib/services/watch_bridge.dart`.
+- Native manager implementation is in `android/app/src/main/kotlin/com/msiazondev/flowfit/HealthTrackingManager.kt` and the Flutter bridge is `lib/services/watch_bridge.dart`.
 - Data flows:
   - Sensor reading (native Samsung Health) -> HealthTrackingManager -> EventChannel -> Flutter `WatchBridgeService` -> UI / Supabase
   - Watch messages can transfer via Wearable Data Layer to the Phone app which uses `PhoneDataListener` to receive data
@@ -43,7 +43,7 @@ This file gives concise, actionable guidance to AI coding agents working on Flow
 ## Key files to review before making changes
 - Flutter entry points: `lib/main.dart`, `lib/main_wear.dart`
 - Flutter bridging and services: `lib/services/watch_bridge.dart`, `lib/services/phone_data_listener.dart`, `lib/services/supabase_service.dart`
-- Android native integration: `android/app/src/main/kotlin/com/oldstlabs/flowfit/MainActivity.kt`, `HealthTrackingManager.kt`
+- Android native integration: `android/app/src/main/kotlin/com/msiazondev/flowfit/MainActivity.kt`, `HealthTrackingManager.kt`
 - Models: `lib/models/heart_rate_data.dart`, `lib/models/sensor_status.dart`, `lib/models/sensor_error.dart`
 - UI grouped by platform: `lib/screens/wear/` (watch) and `lib/screens/` (phone)
 - Tests: `test/services/watch_bridge_test.dart` (use as canonical example for mocking Method/Event channels)
@@ -118,7 +118,7 @@ Follow feature-first steps below as an alternative to the 'generic' flow above:
 
 ## Helpful examples
 - See `test/services/watch_bridge_test.dart` — canonical tests for method channel behavior and event streams.
-- See `android/app/src/main/kotlin/com/oldstlabs/flowfit/MainActivity.kt` — method names and EventChannel usage directly correspond to Flutter service methods.
+- See `android/app/src/main/kotlin/com/msiazondev/flowfit/MainActivity.kt` — method names and EventChannel usage directly correspond to Flutter service methods.
 
 ---
 If anything in these instructions is unclear, incomplete, or you want more examples (e.g., expand test examples or add CI steps), please ask and I will refine the file.

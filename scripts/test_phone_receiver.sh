@@ -7,7 +7,7 @@ echo "🔍 FlowFit Phone Receiver Test"
 echo "================================"
 echo ""
 
-APP_PACKAGE="${FLOWFIT_ANDROID_APPLICATION_ID:-com.oldstlabs.flowfit}"
+APP_PACKAGE="${FLOWFIT_ANDROID_APPLICATION_ID:-com.msiazondev.flowfit}"
 
 # Colors
 GREEN='\033[0;32m'

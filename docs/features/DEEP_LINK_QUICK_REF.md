@@ -8,13 +8,13 @@
 
 **Site URL**:
 ```
-com.oldstlabs.flowfit://auth-callback
+com.msiazondev.flowfit://auth-callback
 ```
 
 **Redirect URLs** (add all three):
 ```
-com.oldstlabs.flowfit://auth-callback
-com.oldstlabs.flowfit.dev://auth-callback
+com.msiazondev.flowfit://auth-callback
+com.msiazondev.flowfit.dev://auth-callback
 http://localhost:3000/**
 ```
 
@@ -25,7 +25,7 @@ http://localhost:3000/**
 flutter run -d <device-id>
 
 # Test deep link
-adb shell am start -W -a android.intent.action.VIEW -d "com.oldstlabs.flowfit://auth-callback" com.oldstlabs.flowfit
+adb shell am start -W -a android.intent.action.VIEW -d "com.msiazondev.flowfit://auth-callback" com.msiazondev.flowfit
 ```
 
 ### 3. Test Email Flow (3 minutes)
@@ -42,7 +42,7 @@ adb shell am start -W -a android.intent.action.VIEW -d "com.oldstlabs.flowfit://
 adb logcat | grep -i "deep link\|auth"
 
 # Check if app opens
-adb shell am start -W -a android.intent.action.VIEW -d "com.oldstlabs.flowfit://auth-callback" com.oldstlabs.flowfit
+adb shell am start -W -a android.intent.action.VIEW -d "com.msiazondev.flowfit://auth-callback" com.msiazondev.flowfit
 ```
 
 ## 📚 Full Documentation
