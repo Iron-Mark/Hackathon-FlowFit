@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.EventChannel
@@ -182,9 +183,9 @@ class MainActivity: FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         if (isWearDevice()) {
-            registerWearSafePlugins(flutterEngine)
+            registerWearPlugins(flutterEngine)
         } else {
-            super.configureFlutterEngine(flutterEngine)
+            registerPhonePlugins(flutterEngine)
         }
         
         // Samsung Health Sensor method channel
@@ -311,12 +312,86 @@ class MainActivity: FlutterActivity() {
         return packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
     }
 
-    private fun registerWearSafePlugins(flutterEngine: FlutterEngine) {
+    private fun registerPhonePlugins(flutterEngine: FlutterEngine) {
+        registerPlugin(flutterEngine, "app_links") {
+            com.llfbandit.app_links.AppLinksPlugin()
+        }
+        registerPlugin(flutterEngine, "camera_android") {
+            io.flutter.plugins.camera.CameraPlugin()
+        }
+        registerPlugin(flutterEngine, "flutter_local_notifications") {
+            com.dexterous.flutterlocalnotifications.FlutterLocalNotificationsPlugin()
+        }
+        registerPlugin(flutterEngine, "flutter_plugin_android_lifecycle") {
+            io.flutter.plugins.flutter_plugin_android_lifecycle.FlutterAndroidLifecyclePlugin()
+        }
+        registerPlugin(flutterEngine, "flutter_rotation_sensor") {
+            net.tlserver6y.flutter_rotation_sensor.FlutterRotationSensorPlugin()
+        }
+        registerPlugin(flutterEngine, "geolocator_android") {
+            com.baseflow.geolocator.GeolocatorPlugin()
+        }
+        registerPlugin(flutterEngine, "image_picker_android") {
+            io.flutter.plugins.imagepicker.ImagePickerPlugin()
+        }
+        registerPlugin(flutterEngine, "native_device_orientation") {
+            com.github.rmtmckenzie.native_device_orientation.NativeDeviceOrientationPlugin()
+        }
+        registerPlugin(flutterEngine, "package_info_plus") {
+            dev.fluttercommunity.plus.packageinfo.PackageInfoPlugin()
+        }
+        registerPlugin(flutterEngine, "path_provider_android") {
+            io.flutter.plugins.pathprovider.PathProviderPlugin()
+        }
+        registerPlugin(flutterEngine, "permission_handler_android") {
+            com.baseflow.permissionhandler.PermissionHandlerPlugin()
+        }
+        registerPlugin(flutterEngine, "sensors_plus") {
+            dev.fluttercommunity.plus.sensors.SensorsPlugin()
+        }
+        registerPlugin(flutterEngine, "share_plus") {
+            dev.fluttercommunity.plus.share.SharePlusPlugin()
+        }
+        registerPlugin(flutterEngine, "shared_preferences_android") {
+            io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin()
+        }
+        registerPlugin(flutterEngine, "sqflite_android") {
+            com.tekartik.sqflite.SqflitePlugin()
+        }
+        registerPlugin(flutterEngine, "ultralytics_yolo") {
+            com.ultralytics.yolo.YOLOPlugin()
+        }
+        registerPlugin(flutterEngine, "url_launcher_android") {
+            io.flutter.plugins.urllauncher.UrlLauncherPlugin()
+        }
+        registerPlugin(flutterEngine, "wakelock_plus") {
+            dev.fluttercommunity.plus.wakelock.WakelockPlusPlugin()
+        }
+        Log.i(TAG, "Registered phone-safe Flutter plugins")
+    }
+
+    private fun registerWearPlugins(flutterEngine: FlutterEngine) {
+        registerPlugin(flutterEngine, "permission_handler_android") {
+            com.baseflow.permissionhandler.PermissionHandlerPlugin()
+        }
+        registerPlugin(flutterEngine, "wear_plus") {
+            dev.rexios.wear_plus.WearPlugin()
+        }
+        registerPlugin(flutterEngine, "wearable_rotary") {
+            com.samsung.wearable_rotary.WearableRotaryPlugin()
+        }
+        Log.i(TAG, "Registered Wear Flutter plugins")
+    }
+
+    private fun registerPlugin(
+        flutterEngine: FlutterEngine,
+        pluginName: String,
+        factory: () -> FlutterPlugin,
+    ) {
         try {
-            flutterEngine.plugins.add(dev.rexios.wear_plus.WearPlugin())
-            Log.i(TAG, "Registered Wear-safe Flutter plugins")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error registering Wear-safe Flutter plugins", e)
+            flutterEngine.plugins.add(factory())
+        } catch (throwable: Throwable) {
+            Log.e(TAG, "Error registering Flutter plugin $pluginName", throwable)
         }
     }
 
@@ -661,7 +736,7 @@ class MainActivity: FlutterActivity() {
     // Support for rotary input (rotating bezel on Galaxy Watch)
     override fun onGenericMotionEvent(event: MotionEvent?): Boolean {
         return when {
-            WearableRotaryPlugin.onGenericMotionEvent(event) -> true
+            isWearDevice() && WearableRotaryPlugin.onGenericMotionEvent(event) -> true
             else -> super.onGenericMotionEvent(event)
         }
     }

@@ -33,7 +33,6 @@ dependencies:
   fl_chart: ^0.65.0 # Keep current - 1.x is major rewrite
   intl: ^0.18.1 # SAFE UPGRADE: Minor fixes
   provider: ^6.1.2 # SAFE UPGRADE: Bug fixes
-  wear: ^1.1.0
   wearable_rotary: ^2.0.3 # DISCONTINUED - consider removing if not used
   logger: ^2.4.0 # SAFE UPGRADE: Better logging
   ultralytics_yolo: ^0.1.25
