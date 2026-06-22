@@ -79,6 +79,41 @@ pwsh -NoProfile -File scripts\run_phone.ps1 -Device 6ece264d -EnvFile .env.relea
 
 ---
 
+### Android phone smoke: verify_android_phone_smoke.ps1
+**Purpose**: Repeatable connected-device smoke for the native Android phone
+app. It builds a configured debug APK, installs it on one connected phone or
+emulator, clears app state, launches `com.msiazondev.flowfit/.MainActivity`,
+checks the welcome/signup/login/legal UI actions with `uiautomator`, saves UI
+dumps/screenshots/logcat evidence, and fails on setup guard text or native
+Flutter plugin crash markers.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts\verify_android_phone_smoke.ps1
+```
+
+Use `-Device` when more than one Android target is connected:
+
+```powershell
+pwsh -NoProfile -File scripts\verify_android_phone_smoke.ps1 `
+  -Device emulator-5554 `
+  -EnvFile .env `
+  -OutFile build\android-phone-smoke-latest.json
+```
+
+The script resolves `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` from the
+environment, the optional `-EnvFile`, or ignored `lib/secrets.dart`, then passes
+them to Flutter as Dart defines. It records only the config source and Supabase
+project host in evidence; the publishable key is never written to the JSON
+artifact. By default it targets `android-x64` and expects the split APK at
+`build/app/outputs/flutter-apk/app-x86_64-debug.apk`, which is the normal
+emulator smoke path. Pass `-TargetPlatform android-arm64` for an ARM64 device.
+
+Use `-SkipBuild` only when the matching APK already exists from the same source
+and configuration.
+
+---
+
 ### 4. release_preflight.ps1
 **Purpose**: Repeatable local release-readiness gate for analyzer, tests, web,
 public privacy/account-deletion pages, release source safety, Android phone,

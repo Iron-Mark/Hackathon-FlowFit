@@ -44,6 +44,7 @@ try {
         'test/scripts/navigation_route_guard_test.dart',
         'test/scripts/interactive_action_guard_test.dart',
         'test/scripts/interactive_surface_coverage_guard_test.dart',
+        'test/scripts/android_phone_smoke_source_test.dart',
         'test/scripts/offline_action_verifier_manifest_test.dart',
         'test/routes/release_route_surface_test.dart',
         'test/routes/running_share_route_test.dart',
