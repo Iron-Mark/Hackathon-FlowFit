@@ -330,10 +330,16 @@ function Get-GradleExecutable {
     return $wrapperPath
 }
 
-function Remove-IgnoredGeneratedAndroidRegistrant {
+function Refresh-IgnoredGeneratedAndroidRegistrant {
     $generatedRegistrant = Join-Path $repoRoot 'android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java'
     if (Test-Path $generatedRegistrant) {
         Remove-Item -LiteralPath $generatedRegistrant -Force
+    }
+
+    Invoke-CheckedCommand 'Regenerate Android plugin registrant' @('flutter', 'pub', 'get')
+
+    if (-not (Test-Path $generatedRegistrant)) {
+        throw "Flutter did not regenerate Android plugin registrant: $generatedRegistrant"
     }
 }
 
@@ -343,7 +349,7 @@ function Invoke-ReleaseValidation {
     Invoke-CheckedCommand 'Flutter tests' @('flutter', 'test', '--reporter', 'compact')
 
     if ($Target -eq 'Android' -or $Target -eq 'All') {
-        Remove-IgnoredGeneratedAndroidRegistrant
+        Refresh-IgnoredGeneratedAndroidRegistrant
         Push-Location (Join-Path $repoRoot 'android')
         try {
             Invoke-CheckedCommand 'Android release lint' @(
@@ -885,7 +891,7 @@ function Invoke-AndroidReleaseBuild {
     $publicWebBaseUrl = Resolve-PublicWebBaseUrl -PublicWebBaseUrl $publicWebBaseUrl
     Assert-AndroidSigning
 
-    Remove-IgnoredGeneratedAndroidRegistrant
+    Refresh-IgnoredGeneratedAndroidRegistrant
     $androidBuildCommand = @(
         'flutter',
         'build',

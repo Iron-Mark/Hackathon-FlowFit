@@ -281,10 +281,16 @@ function Invoke-WebAppSmoke {
     }
 }
 
-function Remove-IgnoredGeneratedAndroidRegistrant {
+function Refresh-IgnoredGeneratedAndroidRegistrant {
     $generatedRegistrant = Join-Path $repoRoot 'android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java'
     if (Test-Path $generatedRegistrant) {
         Remove-Item -LiteralPath $generatedRegistrant -Force
+    }
+
+    Invoke-CheckedCommand 'Regenerate Android plugin registrant' @('flutter', 'pub', 'get')
+
+    if (-not (Test-Path $generatedRegistrant)) {
+        throw "Flutter did not regenerate Android plugin registrant: $generatedRegistrant"
     }
 }
 
@@ -335,9 +341,9 @@ try {
             )
             Assert-WebCompliancePages
         }
-        Remove-IgnoredGeneratedAndroidRegistrant
+        Refresh-IgnoredGeneratedAndroidRegistrant
         Invoke-CheckedCommand 'Android debug APK build' @('flutter', 'build', 'apk', '--debug', '--no-pub')
-        Remove-IgnoredGeneratedAndroidRegistrant
+        Refresh-IgnoredGeneratedAndroidRegistrant
         Invoke-CheckedCommand 'Wear OS debug APK build' @('flutter', 'build', 'apk', '--debug', '-t', 'lib/main_wear.dart', '--no-pub')
     }
 
@@ -356,7 +362,7 @@ try {
             $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
         }
 
-        Remove-IgnoredGeneratedAndroidRegistrant
+        Refresh-IgnoredGeneratedAndroidRegistrant
         Invoke-CheckedCommand 'Android release App Bundle smoke build, not for store upload' @(
             'flutter',
             'build',

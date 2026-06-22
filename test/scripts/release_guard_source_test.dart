@@ -250,15 +250,17 @@ void main() {
     expect(androidMainActivity, isNot(contains('GeneratedPluginRegistrant')));
   });
 
-  test('release scripts clear stale ignored Android plugin registrant', () {
+  test('release scripts refresh stale ignored Android plugin registrant', () {
     for (final source in [releasePreflight, storeReleaseBuild]) {
-      expect(source, contains('Remove-IgnoredGeneratedAndroidRegistrant'));
+      expect(source, contains('Refresh-IgnoredGeneratedAndroidRegistrant'));
       expect(
         source,
         contains(
           'android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java',
         ),
       );
+      expect(source, contains('Regenerate Android plugin registrant'));
+      expect(source, contains("'flutter', 'pub', 'get'"));
     }
   });
 
@@ -2381,6 +2383,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         'rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java',
       ),
     );
+    expect(ciWorkflow, contains('flutter pub get'));
   });
 
   test('ci frees disk before Android builds', () {

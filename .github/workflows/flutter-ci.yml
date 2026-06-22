@@ -226,12 +226,14 @@ jobs:
         shell: bash
         run: |
           rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          flutter pub get
           flutter build apk --debug --no-pub
 
       - name: Wear OS debug APK build
         shell: bash
         run: |
           rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          flutter pub get
           flutter build apk --debug -t lib/main_wear.dart --no-pub
 
       - name: Android release App Bundle smoke build
@@ -242,6 +244,7 @@ jobs:
         shell: bash
         run: |
           rm -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+          flutter pub get
           flutter build appbundle --release --no-pub \
             --dart-define=FLOWFIT_AUTH_SCHEME=com.oldstlabs.flowfit \
             --dart-define=FLOWFIT_SUPPORT_EMAIL=support@flowfit.com \
