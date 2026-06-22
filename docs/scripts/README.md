@@ -114,6 +114,40 @@ and configuration.
 
 ---
 
+### Android live auth smoke: verify_android_live_auth_smoke.ps1
+**Purpose**: Repeatable connected-emulator smoke for the real Supabase login
+path and first post-auth onboarding actions. It builds a configured debug APK,
+installs it, clears local app state, signs in with the ignored
+`FLOWFIT_SMOKE_EMAIL` / `FLOWFIT_SMOKE_PASSWORD` account, verifies the age gate,
+taps the 13+ onboarding path, opens `Quick Setup`, taps `Let's Personalize`,
+and verifies `Tell us about yourself`.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts\verify_android_live_auth_smoke.ps1 `
+  -Device emulator-5554 `
+  -EnvFile .env `
+  -OutFile build\android-live-auth-smoke-latest.json
+```
+
+The smoke account must be a dedicated disposable account whose email contains
+`flowfit-smoke`. The verifier records only a redacted email, the Supabase host,
+UI screenshots/dumps that are captured before credentials are typed or after
+login leaves the credential form, and logcat crash evidence. It never writes the
+Supabase publishable key or smoke password to the JSON artifact.
+
+If Android clipboard paste is unavailable and the password contains shell-active
+characters, use a strong ADB-safe smoke password made from letters, numbers,
+`@`, `.`, `_`, `+`, `-`, or `!`, then bootstrap the disposable user with
+`verify_supabase_app_smoke.ps1 -CreateSmokeUser`.
+
+Use `-SkipBuild` only when the matching APK already exists from the same source
+and configuration. The script clears local app data after the run by default;
+run the Supabase session cleanup query or live backend smoke afterward when you
+need server-side smoke sessions revoked immediately.
+
+---
+
 ### 4. release_preflight.ps1
 **Purpose**: Repeatable local release-readiness gate for analyzer, tests, web,
 public privacy/account-deletion pages, release source safety, Android phone,
