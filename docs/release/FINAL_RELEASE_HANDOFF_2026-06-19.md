@@ -140,11 +140,66 @@ Before public rollout:
   Supabase CLI auth are available locally.
 - Keep MCP in release read-only posture after migrations and advisor fixes.
 
+### Supabase DB Evidence Refresh - 2026-06-22
+
+The local DB password is stored only in ignored `.env` as
+`SUPABASE_DB_PASSWORD`. The file is ignored by `.gitignore`; do not commit or
+paste the value.
+
+The direct linked DB hostname was unreliable from this Windows environment, so
+the successful release-verification path used the Supabase pooler host for the
+project:
+
+| Field | Value |
+| --- | --- |
+| Project ref | `xhmkghwijqpvnbpeeckg` |
+| Project URL | `https://xhmkghwijqpvnbpeeckg.supabase.co` |
+| Pooler host | `aws-1-ap-southeast-1.pooler.supabase.com` |
+| Pooler port | `5432` |
+| Pooler user | `postgres.xhmkghwijqpvnbpeeckg` |
+| SSL mode | `require` |
+
+Successful commands, with the password percent-encoded locally and redacted from
+logs:
+
+```powershell
+$projectRef = 'xhmkghwijqpvnbpeeckg'
+$poolerHost = 'aws-1-ap-southeast-1.pooler.supabase.com'
+$dbPassword = (Get-Content -Raw .env |
+  Select-String -Pattern '(?m)^\s*SUPABASE_DB_PASSWORD\s*=\s*(.+?)\s*$').Matches[0].Groups[1].Value.Trim().Trim('"').Trim("'")
+$dbUrl = "postgresql://postgres.${projectRef}:$([uri]::EscapeDataString($dbPassword))@${poolerHost}:5432/postgres?sslmode=require"
+
+npx -y supabase@latest db lint `
+  --db-url $dbUrl `
+  --schema public `
+  --level warning `
+  --fail-on error `
+  --output-format json
+
+npx -y supabase@latest db advisors `
+  --db-url $dbUrl `
+  --type all `
+  --level warn `
+  --fail-on warn `
+  --output-format json
+```
+
+Result:
+
+- `supabase db lint`: passed, no schema errors.
+- `supabase db advisors`: passed, no warning or error findings.
+- `scripts/verify_supabase_backend.ps1 -Linked -Output json`: passed all 19
+  backend checks.
+- Strict release audit rerun:
+  `69 pass, 1 warn, 0 fail`. The only remaining warning is Docker CLI
+  availability on this Windows machine.
+- Non-secret evidence file:
+  `build/supabase-db-lint-advisors-current.json`.
+
 ## Known Remaining Blockers
 
-- `SUPABASE_DB_PASSWORD` and `SUPABASE_ACCESS_TOKEN` were not present in the
-  local process, so Supabase advisor and DB lint could not be run in this
-  pass.
+- Supabase DB lint/advisors are no longer blocked locally. They passed through
+  the project pooler host above using ignored `.env:SUPABASE_DB_PASSWORD`.
 - Docker CLI is unavailable on this machine, so local Docker-backed Supabase
   validation remains skipped.
 - iOS IPA generation requires macOS, Xcode, signing certificates, and

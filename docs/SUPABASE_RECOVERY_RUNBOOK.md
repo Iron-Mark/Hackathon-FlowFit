@@ -198,6 +198,42 @@ target a database URL from a secure local shell. The SQL returns one row per
 backend check with `status = pass` or `status = fail`; every row should pass
 before moving to release MCP `read_only=true`.
 
+For the current FlowFit project, this Windows environment can reach the
+Supabase pooler even when the direct linked DB hostname is unreliable. Keep the
+database password only in ignored `.env`:
+
+```env
+SUPABASE_DB_PASSWORD=REPLACE_WITH_LOCAL_DB_PASSWORD
+```
+
+Then run DB lint and advisors through the project pooler without printing the
+password:
+
+```powershell
+$projectRef = 'xhmkghwijqpvnbpeeckg'
+$poolerHost = 'aws-1-ap-southeast-1.pooler.supabase.com'
+$dbPassword = (Get-Content -Raw .env |
+  Select-String -Pattern '(?m)^\s*SUPABASE_DB_PASSWORD\s*=\s*(.+?)\s*$').Matches[0].Groups[1].Value.Trim().Trim('"').Trim("'")
+$dbUrl = "postgresql://postgres.${projectRef}:$([uri]::EscapeDataString($dbPassword))@${poolerHost}:5432/postgres?sslmode=require"
+
+npx -y supabase@latest db lint `
+  --db-url $dbUrl `
+  --schema public `
+  --level warning `
+  --fail-on error `
+  --output-format json
+
+npx -y supabase@latest db advisors `
+  --db-url $dbUrl `
+  --type all `
+  --level warn `
+  --fail-on warn `
+  --output-format json
+```
+
+Expected release-verification result: both commands return empty `results`
+arrays and exit `0`.
+
 If Supabase MCP is active instead, run
 `supabase/verification/verify_flowfit_backend.sql` through MCP `execute_sql`.
 You can also paste the same SQL into the dashboard SQL editor.

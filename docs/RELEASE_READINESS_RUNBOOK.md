@@ -26,6 +26,8 @@ App Store, and Flutter web deployment.
 Do not commit these files:
 
 - `lib/secrets.dart`
+- `.env` when it contains local-only database passwords such as
+  `SUPABASE_DB_PASSWORD`
 - `android/key.properties`
 - `android/upload-keystore.jks` or any `android/*.jks`
 - Apple signing certificates/profiles, `.p12`, `.mobileprovision`,
@@ -523,6 +525,37 @@ Minimum completion criteria before release:
   `FLOWFIT_PUBLIC_WEB_BASE_URL`.
 - App signup/login/onboarding/workout smoke flows have been tested against the
   live project.
+
+### Supabase DB Lint And Advisors
+
+For project `xhmkghwijqpvnbpeeckg`, use the pooler host below when
+`supabase db lint --linked` cannot reach the direct DB hostname from Windows:
+
+```powershell
+$projectRef = 'xhmkghwijqpvnbpeeckg'
+$poolerHost = 'aws-1-ap-southeast-1.pooler.supabase.com'
+$dbPassword = (Get-Content -Raw .env |
+  Select-String -Pattern '(?m)^\s*SUPABASE_DB_PASSWORD\s*=\s*(.+?)\s*$').Matches[0].Groups[1].Value.Trim().Trim('"').Trim("'")
+$dbUrl = "postgresql://postgres.${projectRef}:$([uri]::EscapeDataString($dbPassword))@${poolerHost}:5432/postgres?sslmode=require"
+
+npx -y supabase@latest db lint `
+  --db-url $dbUrl `
+  --schema public `
+  --level warning `
+  --fail-on error `
+  --output-format json
+
+npx -y supabase@latest db advisors `
+  --db-url $dbUrl `
+  --type all `
+  --level warn `
+  --fail-on warn `
+  --output-format json
+```
+
+The password stays local in ignored `.env`. Do not paste it into docs, chat,
+frontend env vars, `lib/secrets.dart`, Vercel public variables, or committed
+release env files.
 
 ## Store Privacy and Account Deletion
 

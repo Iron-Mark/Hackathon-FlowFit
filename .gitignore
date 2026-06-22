@@ -55,6 +55,7 @@ flutter_*.png
 
 # Secrets (if not already ignored)
 lib/secrets.dart
+.env
 .env.release
 .env.release.local
 .env.release.android-signing*
