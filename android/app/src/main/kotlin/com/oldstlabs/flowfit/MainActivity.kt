@@ -181,7 +181,11 @@ class MainActivity: FlutterActivity() {
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
-        super.configureFlutterEngine(flutterEngine)
+        if (isWearDevice()) {
+            registerWearSafePlugins(flutterEngine)
+        } else {
+            super.configureFlutterEngine(flutterEngine)
+        }
         
         // Samsung Health Sensor method channel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
@@ -301,6 +305,19 @@ class MainActivity: FlutterActivity() {
                 }
             }
         )
+    }
+
+    private fun isWearDevice(): Boolean {
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+    }
+
+    private fun registerWearSafePlugins(flutterEngine: FlutterEngine) {
+        try {
+            flutterEngine.plugins.add(dev.rexios.wear_plus.WearPlugin())
+            Log.i(TAG, "Registered Wear-safe Flutter plugins")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error registering Wear-safe Flutter plugins", e)
+        }
     }
 
     /**
