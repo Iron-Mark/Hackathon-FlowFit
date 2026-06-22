@@ -135,7 +135,16 @@ void main() {
       expect(navBarFinder, findsOneWidget);
 
       const items = ['Home', 'Health', 'Track', 'Progress', 'Profile'];
+      const expectedBodyTextByItem = <String, String>{
+        'Home': 'Start AI Workout',
+        'Health': 'Daily Log',
+        'Track': 'Time to Move!',
+        'Progress': 'Progress & Insights',
+        'Profile': 'Let\'s Get Started!',
+      };
+
       for (var i = 0; i < items.length; i++) {
+        final item = items[i];
         await tester.tap(find.text(items[i]));
         await tester.pump(const Duration(milliseconds: 100));
 
@@ -144,6 +153,11 @@ void main() {
           navBar.currentIndex,
           i,
           reason: '${items[i]} tab should be selected',
+        );
+        expect(
+          find.textContaining(expectedBodyTextByItem[item]!),
+          findsWidgets,
+          reason: '$item tab should render its expected screen body',
         );
       }
     });
