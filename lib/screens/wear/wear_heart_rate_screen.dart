@@ -486,7 +486,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   Future<void> _sendToPhone() async {
-    if (_isSending || _currentHeartRate == null || _isSimulatedHeartRate) {
+    if (_isSending || !_canSendCurrentHeartRate) {
       return;
     }
 
@@ -532,6 +532,13 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       }
       debugPrint('Send error: $e');
     }
+  }
+
+  bool get _canSendCurrentHeartRate {
+    return _currentHeartRate != null &&
+        !_isTestMode &&
+        !_isSimulatedHeartRate &&
+        !_isSimulatedFallbackAvailable;
   }
 
   /// Toggle test mode on/off
@@ -633,9 +640,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
               const SizedBox(height: 10),
             ],
             _buildStartButton(),
-            if (_currentHeartRate != null &&
-                !_isTestMode &&
-                !_isSimulatedHeartRate) ...[
+            if (_canSendCurrentHeartRate) ...[
               const SizedBox(height: 8),
               _buildSendButton(),
             ],

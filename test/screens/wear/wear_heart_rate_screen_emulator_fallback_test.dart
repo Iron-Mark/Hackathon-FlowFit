@@ -94,6 +94,18 @@ void main() {
       expect(find.text('Sim'), findsOneWidget);
       expect(find.text('--'), findsNothing);
       expect(find.text('Send'), findsNothing);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Stop'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('Stopped'), findsOneWidget);
+      expect(find.text('Start'), findsOneWidget);
+      expect(
+        find.textContaining('Samsung Health service unavailable'),
+        findsAtLeastNWidgets(1),
+      );
+      expect(find.text('Send'), findsNothing);
     },
   );
 }
