@@ -697,6 +697,7 @@ pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudi
 
 # Manual commands:
 flutter pub get
+pwsh -NoProfile -File scripts/verify_dart_format.ps1
 dart analyze --format=machine
 flutter analyze
 flutter test --reporter compact

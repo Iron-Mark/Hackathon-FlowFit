@@ -16,7 +16,7 @@
 |------|---------|
 | Install deps | `flutter pub get` |
 | Lint / analyze | `flutter analyze` |
-| Format | `dart format .` |
+| Format | `pwsh -NoProfile -File scripts/verify_dart_format.ps1` |
 | Run all tests | `flutter test` |
 | Run subset | `flutter test test/models/` |
 
@@ -61,4 +61,4 @@ The meaningful development loop is:
 5. `flutter build apk --debug --no-pub` — verify the Android phone path
 6. `flutter build apk --debug -t lib/main_wear.dart --no-pub` — verify the
    Wear OS path
-7. `dart format .` — check formatting
+7. `pwsh -NoProfile -File scripts/verify_dart_format.ps1` — check tracked Dart formatting

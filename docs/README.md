@@ -21,6 +21,7 @@ below are the current navigation surface.
 
 ```powershell
 flutter pub get
+pwsh -NoProfile -File scripts\verify_dart_format.ps1
 dart analyze --format=machine
 flutter analyze
 flutter test --reporter compact

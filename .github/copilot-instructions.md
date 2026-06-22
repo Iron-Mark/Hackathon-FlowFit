@@ -57,7 +57,7 @@ This file gives concise, actionable guidance to AI coding agents working on Flow
   - `flutter run -d <phone-device-id> -t lib/main.dart` or `scripts\run_phone.bat`
 - Build & install (automated): `scripts\build_and_install.bat`
 - Run unit tests: `flutter test` (or `flutter test test/services/watch_bridge_test.dart`) – tests rely on `TestDefaultBinaryMessengerBinding` for channel mocking
-- Static analysis: `flutter analyze` and code format with `dart format .`
+- Static analysis: `flutter analyze` and code format with `pwsh -NoProfile -File scripts/verify_dart_format.ps1`
 
 ### Testing guidance
 - Follow `test/services/watch_bridge_test.dart` as the canonical example for mocking MethodChannel and EventChannel interactions.
