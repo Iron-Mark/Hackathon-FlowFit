@@ -6,6 +6,7 @@ param(
     [string]$EnvFile = '',
     [string]$OutFile = 'build/supabase-app-smoke.json',
     [switch]$AllowExternalWrites,
+    [switch]$CreateSmokeUser,
     [switch]$AllowNonSmokeEmail,
     [switch]$AllowOverwriteExistingAppData,
     [switch]$SkipCleanup
@@ -122,10 +123,7 @@ function Assert-SmokeEmail {
     }
 
     $lower = $normalized.ToLowerInvariant()
-    $looksDedicated = (
-        $lower -match '^flowfit[-_.]?smoke[+_.-]?' -or
-        $lower -match '\+flowfit[-_.]?smoke@'
-    )
+    $looksDedicated = $lower -match '(^|[+._-])flowfit[-_.]?smoke([+._-]|@)'
 
     if (-not $AllowNonSmokeEmail -and -not $looksDedicated) {
         throw 'Refusing to write app smoke data for a non-dedicated email. Use an address such as maintainer+flowfit-smoke@example.com or pass -AllowNonSmokeEmail after confirming it is a disposable test account.'
@@ -152,7 +150,7 @@ function Assert-Password {
     param([Parameter(Mandatory = $true)][string]$Value)
 
     if ([string]::IsNullOrWhiteSpace($Value) -or $Value.Length -lt 8) {
-        throw 'FLOWFIT_SMOKE_PASSWORD must be set for an existing confirmed Supabase test user.'
+        throw 'FLOWFIT_SMOKE_PASSWORD must be set for an existing confirmed Supabase test user or a first-run disposable smoke user created with -CreateSmokeUser.'
     }
     return $Value
 }
@@ -246,6 +244,44 @@ function Get-RestHeaders {
         $headers[$key] = $ExtraHeaders[$key]
     }
     return $headers
+}
+
+function Invoke-PasswordGrant {
+    param(
+        [Parameter(Mandatory = $true)][hashtable]$Headers,
+        [Parameter(Mandatory = $true)][string]$Email,
+        [Parameter(Mandatory = $true)][string]$Password
+    )
+
+    return Invoke-JsonRequest `
+        -Method 'POST' `
+        -Uri "$script:ResolvedSupabaseUrl/auth/v1/token?grant_type=password" `
+        -Headers $Headers `
+        -Body @{
+            email = $Email
+            password = $Password
+        }
+}
+
+function Invoke-SmokeUserSignup {
+    param(
+        [Parameter(Mandatory = $true)][hashtable]$Headers,
+        [Parameter(Mandatory = $true)][string]$Email,
+        [Parameter(Mandatory = $true)][string]$Password
+    )
+
+    return Invoke-JsonRequest `
+        -Method 'POST' `
+        -Uri "$script:ResolvedSupabaseUrl/auth/v1/signup" `
+        -Headers $Headers `
+        -Body @{
+            email = $Email
+            password = $Password
+            data = @{
+                purpose = 'flowfit-live-smoke'
+                created_by = 'verify_supabase_app_smoke.ps1'
+            }
+        }
 }
 
 function Invoke-SupabaseRest {
@@ -378,21 +414,38 @@ try {
         apikey = $script:ResolvedPublishableKey
         Accept = 'application/json'
     }
-    $authResponse = Invoke-JsonRequest `
-        -Method 'POST' `
-        -Uri "$script:ResolvedSupabaseUrl/auth/v1/token?grant_type=password" `
-        -Headers $authHeaders `
-        -Body @{
-            email = $resolvedEmail
-            password = $resolvedPassword
+
+    try {
+        $authResponse = Invoke-PasswordGrant `
+            -Headers $authHeaders `
+            -Email $resolvedEmail `
+            -Password $resolvedPassword
+        $checks.Add([pscustomobject]@{ name = 'auth sign-in'; status = 'pass'; detail = 'Confirmed smoke user signed in.' })
+    } catch {
+        if (-not $CreateSmokeUser) {
+            throw
         }
+
+        $signupResponse = Invoke-SmokeUserSignup `
+            -Headers $authHeaders `
+            -Email $resolvedEmail `
+            -Password $resolvedPassword
+
+        $signupAccessToken = [string]$signupResponse.access_token
+        $signupUserId = [string]$signupResponse.user.id
+        if ([string]::IsNullOrWhiteSpace($signupAccessToken) -or [string]::IsNullOrWhiteSpace($signupUserId)) {
+            throw 'Smoke user signup did not return an access token. Supabase email confirmation is probably enabled. Confirm the smoke user email or temporarily disable confirmation, then rerun without -CreateSmokeUser.'
+        }
+
+        $authResponse = $signupResponse
+        $checks.Add([pscustomobject]@{ name = 'auth smoke user signup'; status = 'pass'; detail = 'Disposable smoke user created through Supabase client signup.' })
+    }
 
     $accessToken = [string]$authResponse.access_token
     $userId = [string]$authResponse.user.id
     if ([string]::IsNullOrWhiteSpace($accessToken) -or [string]::IsNullOrWhiteSpace($userId)) {
         throw 'Supabase sign-in did not return an access token and auth user id. Confirm the smoke user email first.'
     }
-    $checks.Add([pscustomobject]@{ name = 'auth sign-in'; status = 'pass'; detail = 'Confirmed smoke user signed in.' })
 
     Assert-SmokeOwnedExistingRows -AccessToken $accessToken -UserId $userId
     $checks.Add([pscustomobject]@{ name = 'existing row ownership guard'; status = 'pass'; detail = 'Existing app rows are absent or smoke-owned.' })

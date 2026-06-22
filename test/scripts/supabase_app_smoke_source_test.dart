@@ -18,6 +18,7 @@ void main() {
   test('live Supabase app smoke requires explicit external write approval', () {
     expect(script, contains('AllowExternalWrites'));
     expect(script, contains('This live smoke signs in and writes'));
+    expect(script, contains('CreateSmokeUser'));
     expect(script, contains('AllowNonSmokeEmail'));
     expect(script, contains('AllowOverwriteExistingAppData'));
     expect(script, contains('SkipCleanup'));
@@ -27,6 +28,8 @@ void main() {
 
   test('live Supabase app smoke uses client auth and never server keys', () {
     expect(script, contains('/auth/v1/token?grant_type=password'));
+    expect(script, contains('/auth/v1/signup'));
+    expect(script, contains('flowfit-live-smoke'));
     expect(script, contains('SUPABASE_PUBLISHABLE_KEY'));
     expect(script, contains('sb_publishable_'));
     expect(script, contains('service_role|sb_secret_'));
@@ -55,6 +58,7 @@ void main() {
   test('release docs expose the guarded live app smoke workflow', () {
     expect(releaseRunbook, contains('scripts/verify_supabase_app_smoke.ps1'));
     expect(releaseRunbook, contains('-AllowExternalWrites'));
+    expect(releaseRunbook, contains('-CreateSmokeUser'));
     expect(releaseRunbook, contains('dedicated confirmed smoke test user'));
     expect(releaseRunbook, contains('FLOWFIT_SMOKE_EMAIL'));
     expect(releaseRunbook, contains('FLOWFIT_SMOKE_PASSWORD'));
@@ -67,6 +71,7 @@ void main() {
       releaseEnvExample,
       contains('Optional live Supabase app smoke test credentials'),
     );
+    expect(releaseEnvExample, contains('CreateSmokeUser'));
     expect(releaseEnvExample, isNot(contains('service_role')));
     expect(releaseEnvExample, isNot(contains('sb_secret_')));
   });

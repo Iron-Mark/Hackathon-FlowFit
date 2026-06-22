@@ -573,6 +573,25 @@ client key, then writes, reads, updates, and cleans up app-owned rows for:
 It does not use service-role keys and it does not delete the Supabase Auth user.
 It deletes the temporary app rows by default unless `-SkipCleanup` is supplied.
 
+For the first local smoke on a new development project, you can create the
+dedicated disposable smoke user through the normal Supabase client signup path
+when email confirmation is temporarily disabled:
+
+```powershell
+$env:FLOWFIT_SMOKE_EMAIL = 'maintainer+flowfit-smoke@example.com'
+$env:FLOWFIT_SMOKE_PASSWORD = Read-Host 'Disposable smoke user password'
+pwsh -NoProfile -File scripts/verify_supabase_app_smoke.ps1 `
+  -AllowExternalWrites `
+  -CreateSmokeUser `
+  -OutFile build/supabase-app-smoke.json
+Remove-Item Env:\FLOWFIT_SMOKE_EMAIL
+Remove-Item Env:\FLOWFIT_SMOKE_PASSWORD
+```
+
+If signup does not return an access token, email confirmation is still enabled.
+Confirm that smoke user email in the inbox or temporarily disable confirmation
+for development, then rerun the smoke without `-CreateSmokeUser`.
+
 ```powershell
 $env:FLOWFIT_SMOKE_EMAIL = 'maintainer+flowfit-smoke@example.com'
 $env:FLOWFIT_SMOKE_PASSWORD = Read-Host 'Confirmed smoke user password'
