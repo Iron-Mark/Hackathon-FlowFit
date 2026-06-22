@@ -29,6 +29,8 @@ void main() {
   test('live Supabase app smoke uses client auth and never server keys', () {
     expect(script, contains('/auth/v1/token?grant_type=password'));
     expect(script, contains('/auth/v1/signup'));
+    expect(script, contains('/auth/v1/logout'));
+    expect(script, contains('Redact-SensitiveText'));
     expect(script, contains('flowfit-live-smoke'));
     expect(script, contains('SUPABASE_PUBLISHABLE_KEY'));
     expect(script, contains('sb_publishable_'));
@@ -49,6 +51,7 @@ void main() {
 
     expect(script, contains('profile onboarding upsert'));
     expect(script, contains('buddy onboarding upsert'));
+    expect(script, contains("buddyName = 'FlowFitSmokeBuddy'"));
     expect(script, contains('workout create update list'));
     expect(script, contains('heart rate insert list'));
     expect(script, contains("Method 'DELETE'"));

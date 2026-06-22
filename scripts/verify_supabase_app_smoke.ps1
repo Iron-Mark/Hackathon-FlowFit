@@ -160,45 +160,59 @@ function ConvertTo-JsonBody {
     return ($Value | ConvertTo-Json -Depth 12 -Compress)
 }
 
+function Redact-SensitiveText {
+    param([string]$Value)
+
+    if ([string]::IsNullOrEmpty($Value)) {
+        return $Value
+    }
+
+    $redacted = $Value
+    $redacted = $redacted -replace '(?i)("access_token"\s*:\s*")[^"]+(")', '$1<redacted>$2'
+    $redacted = $redacted -replace '(?i)("refresh_token"\s*:\s*")[^"]+(")', '$1<redacted>$2'
+    $redacted = $redacted -replace '(?i)("apikey"\s*:\s*")[^"]+(")', '$1<redacted>$2'
+    $redacted = $redacted -replace '(?i)(Bearer\s+)[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', '$1<redacted>'
+    return $redacted
+}
+
 function Invoke-JsonRequest {
     param(
         [Parameter(Mandatory = $true)][string]$Method,
         [Parameter(Mandatory = $true)][string]$Uri,
         [Parameter(Mandatory = $true)][hashtable]$Headers,
-        $Body = $null
+        $Body = $null,
+        [string]$Operation = ''
     )
 
-    try {
-        $args = @{
-            Method = $Method
-            Uri = $Uri
-            Headers = $Headers
-            ErrorAction = 'Stop'
-        }
-        if ($null -ne $Body) {
-            $args.Body = ConvertTo-JsonBody $Body
-            $args.ContentType = 'application/json'
-        }
-        return Invoke-RestMethod @args
-    } catch {
-        $message = $_.Exception.Message
-        $response = $_.Exception.Response
-        if ($null -ne $response) {
-            try {
-                $stream = $response.GetResponseStream()
-                if ($null -ne $stream) {
-                    $reader = New-Object System.IO.StreamReader($stream)
-                    $responseBody = $reader.ReadToEnd()
-                    if (-not [string]::IsNullOrWhiteSpace($responseBody)) {
-                        $message = "$message :: $responseBody"
-                    }
-                }
-            } catch {
-                # Keep the original request error.
-            }
-        }
-        throw $message
+    $args = @{
+        Method = $Method
+        Uri = $Uri
+        Headers = $Headers
+        ErrorAction = 'Stop'
+        SkipHttpErrorCheck = $true
     }
+    if ($null -ne $Body) {
+        $args.Body = ConvertTo-JsonBody $Body
+        $args.ContentType = 'application/json'
+    }
+
+    $response = Invoke-WebRequest @args
+    $statusCode = [int]$response.StatusCode
+    $responseBody = [string]$response.Content
+    if ($statusCode -ge 400) {
+        $operationPrefix = if ([string]::IsNullOrWhiteSpace($Operation)) { 'Supabase request' } else { $Operation }
+        $safeBody = Redact-SensitiveText -Value $responseBody
+        if ([string]::IsNullOrWhiteSpace($safeBody)) {
+            throw "$operationPrefix failed with HTTP $statusCode."
+        }
+        throw "$operationPrefix failed with HTTP $($statusCode): $safeBody"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($responseBody)) {
+        return $null
+    }
+
+    return $responseBody | ConvertFrom-Json
 }
 
 function Select-FirstRow {
@@ -257,6 +271,7 @@ function Invoke-PasswordGrant {
         -Method 'POST' `
         -Uri "$script:ResolvedSupabaseUrl/auth/v1/token?grant_type=password" `
         -Headers $Headers `
+        -Operation 'auth password grant' `
         -Body @{
             email = $Email
             password = $Password
@@ -274,6 +289,7 @@ function Invoke-SmokeUserSignup {
         -Method 'POST' `
         -Uri "$script:ResolvedSupabaseUrl/auth/v1/signup" `
         -Headers $Headers `
+        -Operation 'auth smoke user signup' `
         -Body @{
             email = $Email
             password = $Password
@@ -298,7 +314,7 @@ function Invoke-SupabaseRest {
         -PublishableKey $script:ResolvedPublishableKey `
         -AccessToken $AccessToken `
         -ExtraHeaders $ExtraHeaders
-    return Invoke-JsonRequest -Method $Method -Uri $uri -Headers $headers -Body $Body
+    return Invoke-JsonRequest -Method $Method -Uri $uri -Headers $headers -Body $Body -Operation "REST $Method $Path"
 }
 
 function Assert-SmokeOwnedExistingRows {
@@ -398,6 +414,7 @@ $resolvedEmail = Assert-SmokeEmail -Value $resolvedEmail
 $resolvedPassword = Assert-Password -Value $resolvedPassword
 
 $runId = "FlowFitSmoke$((Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'))$([System.Guid]::NewGuid().ToString('N').Substring(0, 8))"
+$buddyName = 'FlowFitSmokeBuddy'
 $workoutId = [System.Guid]::NewGuid().ToString()
 $heartRateId = [System.Guid]::NewGuid().ToString()
 $startedAt = (Get-Date).ToUniversalTime()
@@ -478,7 +495,7 @@ try {
         -ExtraHeaders @{ Prefer = 'resolution=merge-duplicates,return=representation' } `
         -Body @{
             user_id = $userId
-            name = $runId
+            name = $buddyName
             color = 'blue'
             level = 1
             xp = 0
@@ -486,7 +503,7 @@ try {
         }
     $buddy = Select-FirstRow $buddyRows
     Assert-FieldEquals -Actual $buddy.user_id -Expected $userId -Name 'buddy_profiles.user_id'
-    Assert-FieldEquals -Actual $buddy.name -Expected $runId -Name 'buddy_profiles.name'
+    Assert-FieldEquals -Actual $buddy.name -Expected $buddyName -Name 'buddy_profiles.name'
     Assert-FieldEquals -Actual $buddy.color -Expected 'blue' -Name 'buddy_profiles.color'
     $checks.Add([pscustomobject]@{ name = 'buddy onboarding upsert'; status = 'pass'; detail = 'buddy_profiles write/read passed through authenticated RLS.' })
 
@@ -564,6 +581,19 @@ try {
             } catch {
                 $cleanup.Add([pscustomobject]@{ table = $target.table; status = 'fail'; detail = $_.ToString() })
             }
+        }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($accessToken)) {
+        try {
+            $null = Invoke-JsonRequest `
+                -Method 'POST' `
+                -Uri "$script:ResolvedSupabaseUrl/auth/v1/logout" `
+                -Headers (Get-RestHeaders -PublishableKey $script:ResolvedPublishableKey -AccessToken $accessToken) `
+                -Operation 'auth sign-out'
+            $cleanup.Add([pscustomobject]@{ table = 'auth.sessions'; status = 'pass' })
+        } catch {
+            $cleanup.Add([pscustomobject]@{ table = 'auth.sessions'; status = 'fail'; detail = $_.ToString() })
         }
     }
 }
