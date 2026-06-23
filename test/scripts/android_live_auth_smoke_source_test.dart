@@ -65,6 +65,15 @@ void main() {
         'value redacted',
         'No shell command implementation',
         'exclamation mark',
+        'Invoke-SmokeBackendDataCleanup',
+        'Assert-SmokeProfileCompleted',
+        'Wait-ForUiScreen',
+        'post-auth-onboarding-entry',
+        '/auth/v1/token?grant_type=password',
+        '/auth/v1/logout',
+        'Redact-SensitiveText',
+        'could not get idle state',
+        'uiautomator dump file was not readable',
       ]) {
         expect(source, contains(token));
       }
@@ -92,6 +101,7 @@ void main() {
       'screencap',
       'input',
       'tap',
+      'swipe',
       'keyevent',
       '279',
     ]) {
@@ -109,6 +119,23 @@ void main() {
       'Quick Setup',
       "Let's Personalize",
       'Tell us about yourself',
+      'Male',
+      'Your measurements',
+      'Height',
+      'Weight',
+      '170',
+      '70',
+      'Activity & Goals',
+      'Sedentary',
+      "Invoke-TapText -Text 'Sedentary' -DumpPrefix 'survey-activity-sedentary' -Contains",
+      'Lose Weight',
+      "Invoke-TapText -Text 'Lose Weight' -DumpPrefix 'survey-goal-lose-weight' -Contains",
+      'Your Daily Targets',
+      'Complete & Start App',
+      'Wait-ForLogcatPattern',
+      '_HomeScreenState\\._subscribeToWatch',
+      'Home dashboard initialized after survey completion.',
+      'dashboard-after-survey',
       'Continue',
     ]) {
       expect(source, contains(text));

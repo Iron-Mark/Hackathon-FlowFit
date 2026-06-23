@@ -269,6 +269,264 @@ function Resolve-SmokeCredentials {
     }
 }
 
+function ConvertTo-JsonBody {
+    param([Parameter(Mandatory = $true)]$Value)
+    return ($Value | ConvertTo-Json -Depth 12 -Compress)
+}
+
+function Redact-SensitiveText {
+    param([string]$Value)
+
+    if ([string]::IsNullOrEmpty($Value)) {
+        return $Value
+    }
+
+    $redacted = $Value
+    $redacted = $redacted -replace '(?i)("access_token"\s*:\s*")[^"]+(")', '$1<redacted>$2'
+    $redacted = $redacted -replace '(?i)("refresh_token"\s*:\s*")[^"]+(")', '$1<redacted>$2'
+    $redacted = $redacted -replace '(?i)("apikey"\s*:\s*")[^"]+(")', '$1<redacted>$2'
+    $redacted = $redacted -replace '(?i)(Bearer\s+)[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', '$1<redacted>'
+    return $redacted
+}
+
+function Invoke-JsonRequest {
+    param(
+        [Parameter(Mandatory = $true)][string]$Method,
+        [Parameter(Mandatory = $true)][string]$Uri,
+        [Parameter(Mandatory = $true)][hashtable]$Headers,
+        $Body = $null,
+        [string]$Operation = ''
+    )
+
+    $args = @{
+        Method = $Method
+        Uri = $Uri
+        Headers = $Headers
+        ErrorAction = 'Stop'
+        SkipHttpErrorCheck = $true
+    }
+    if ($null -ne $Body) {
+        $args.Body = ConvertTo-JsonBody $Body
+        $args.ContentType = 'application/json'
+    }
+
+    $response = Invoke-WebRequest @args
+    $statusCode = [int]$response.StatusCode
+    $responseBody = [string]$response.Content
+    if ($statusCode -ge 400) {
+        $operationPrefix = if ([string]::IsNullOrWhiteSpace($Operation)) { 'Supabase request' } else { $Operation }
+        $safeBody = Redact-SensitiveText -Value $responseBody
+        if ([string]::IsNullOrWhiteSpace($safeBody)) {
+            throw "$operationPrefix failed with HTTP $statusCode."
+        }
+        throw "$operationPrefix failed with HTTP $($statusCode): $safeBody"
+    }
+
+    if ([string]::IsNullOrWhiteSpace($responseBody)) {
+        return $null
+    }
+
+    return $responseBody | ConvertFrom-Json
+}
+
+function Get-RestHeaders {
+    param(
+        [Parameter(Mandatory = $true)][string]$PublishableKey,
+        [Parameter(Mandatory = $true)][string]$AccessToken,
+        [hashtable]$ExtraHeaders = @{}
+    )
+
+    $headers = @{
+        apikey = $PublishableKey
+        Authorization = "Bearer $AccessToken"
+        Accept = 'application/json'
+    }
+    foreach ($key in $ExtraHeaders.Keys) {
+        $headers[$key] = $ExtraHeaders[$key]
+    }
+    return $headers
+}
+
+function Invoke-PasswordGrant {
+    param(
+        [Parameter(Mandatory = $true)]$Config,
+        [Parameter(Mandatory = $true)]$Credentials,
+        [Parameter(Mandatory = $true)][string]$Operation
+    )
+
+    return Invoke-JsonRequest `
+        -Method 'POST' `
+        -Uri "$($Config.Url.TrimEnd('/'))/auth/v1/token?grant_type=password" `
+        -Headers @{
+            apikey = $Config.PublishableKey
+            Accept = 'application/json'
+        } `
+        -Operation $Operation `
+        -Body @{
+            email = $Credentials.Email
+            password = $Credentials.Password
+        }
+}
+
+function Invoke-SupabaseRest {
+    param(
+        [Parameter(Mandatory = $true)]$Config,
+        [Parameter(Mandatory = $true)][string]$AccessToken,
+        [Parameter(Mandatory = $true)][string]$Method,
+        [Parameter(Mandatory = $true)][string]$Path,
+        [hashtable]$ExtraHeaders = @{},
+        $Body = $null,
+        [string]$Operation = ''
+    )
+
+    $operationName = if ([string]::IsNullOrWhiteSpace($Operation)) {
+        "REST $Method $Path"
+    } else {
+        $Operation
+    }
+
+    return Invoke-JsonRequest `
+        -Method $Method `
+        -Uri "$($Config.Url.TrimEnd('/'))/rest/v1/$Path" `
+        -Headers (Get-RestHeaders `
+            -PublishableKey $Config.PublishableKey `
+            -AccessToken $AccessToken `
+            -ExtraHeaders $ExtraHeaders) `
+        -Body $Body `
+        -Operation $operationName
+}
+
+function Select-FirstRow {
+    param($Rows)
+
+    if ($null -eq $Rows) {
+        return $null
+    }
+    if ($Rows -is [System.Array]) {
+        if ($Rows.Count -eq 0) {
+            return $null
+        }
+        return $Rows[0]
+    }
+    return $Rows
+}
+
+function Invoke-SmokeRestSignOut {
+    param(
+        [Parameter(Mandatory = $true)]$Config,
+        [Parameter(Mandatory = $true)][string]$AccessToken,
+        [Parameter(Mandatory = $true)][string]$Operation
+    )
+
+    Invoke-JsonRequest `
+        -Method 'POST' `
+        -Uri "$($Config.Url.TrimEnd('/'))/auth/v1/logout" `
+        -Headers (Get-RestHeaders `
+            -PublishableKey $Config.PublishableKey `
+            -AccessToken $AccessToken) `
+        -Operation $Operation | Out-Null
+}
+
+function Invoke-SmokeBackendDataCleanup {
+    param(
+        [Parameter(Mandatory = $true)]$Config,
+        [Parameter(Mandatory = $true)]$Credentials,
+        [Parameter(Mandatory = $true)][string]$Phase
+    )
+
+    $accessToken = ''
+    try {
+        $authResponse = Invoke-PasswordGrant `
+            -Config $Config `
+            -Credentials $Credentials `
+            -Operation "$Phase smoke cleanup auth"
+        $accessToken = [string]$authResponse.access_token
+        $userId = [string]$authResponse.user.id
+        if ([string]::IsNullOrWhiteSpace($accessToken) -or [string]::IsNullOrWhiteSpace($userId)) {
+            throw "$Phase smoke cleanup auth did not return an access token and user id."
+        }
+
+        foreach ($target in @(
+            @{ table = 'heart_rate'; filter = "user_id=eq.$userId" },
+            @{ table = 'workout_sessions'; filter = "user_id=eq.$userId" },
+            @{ table = 'buddy_profiles'; filter = "user_id=eq.$userId" },
+            @{ table = 'user_profiles'; filter = "user_id=eq.$userId" }
+        )) {
+            Invoke-SupabaseRest `
+                -Config $Config `
+                -AccessToken $accessToken `
+                -Method 'DELETE' `
+                -Path "$($target.table)?$($target.filter)" `
+                -ExtraHeaders @{ Prefer = 'return=minimal' } `
+                -Operation "$Phase smoke cleanup $($target.table)" | Out-Null
+        }
+
+        Add-Check -Name "supabase.$Phase.cleanupRows" -Status 'pass' -Detail 'Cleaned app-owned smoke rows with authenticated RLS.'
+        return $userId
+    } finally {
+        if (-not [string]::IsNullOrWhiteSpace($accessToken)) {
+            Invoke-SmokeRestSignOut `
+                -Config $Config `
+                -AccessToken $accessToken `
+                -Operation "$Phase smoke cleanup sign-out"
+        }
+    }
+}
+
+function Assert-SmokeProfileCompleted {
+    param(
+        [Parameter(Mandatory = $true)]$Config,
+        [Parameter(Mandatory = $true)]$Credentials
+    )
+
+    $accessToken = ''
+    try {
+        $authResponse = Invoke-PasswordGrant `
+            -Config $Config `
+            -Credentials $Credentials `
+            -Operation 'post-onboarding profile verification auth'
+        $accessToken = [string]$authResponse.access_token
+        $userId = [string]$authResponse.user.id
+        if ([string]::IsNullOrWhiteSpace($accessToken) -or [string]::IsNullOrWhiteSpace($userId)) {
+            throw 'Profile verification auth did not return an access token and user id.'
+        }
+
+        $profile = Select-FirstRow (Invoke-SupabaseRest `
+            -Config $Config `
+            -AccessToken $accessToken `
+            -Method 'GET' `
+            -Path "user_profiles?user_id=eq.$userId&select=user_id,gender,height,weight,activity_level,survey_completed,daily_calorie_target,daily_steps_target,daily_active_minutes_target,daily_water_target" `
+            -Operation 'post-onboarding profile verification read')
+
+        if ($null -eq $profile) {
+            throw 'Completed survey did not create a user_profiles row.'
+        }
+        if ($profile.user_id -ne $userId -or $profile.survey_completed -ne $true) {
+            throw 'Completed survey profile row did not match the authenticated user or was not marked complete.'
+        }
+        if (
+            [string]$profile.gender -ne 'male' -or
+            [double]$profile.height -le 0 -or
+            [double]$profile.weight -le 0 -or
+            [string]$profile.activity_level -ne 'sedentary' -or
+            [int]$profile.daily_steps_target -le 0 -or
+            [int]$profile.daily_active_minutes_target -le 0 -or
+            [double]$profile.daily_water_target -le 0
+        ) {
+            throw 'Completed survey profile row is missing expected survey fields.'
+        }
+
+        Add-Check -Name 'supabase.profileCompleted' -Status 'pass' -Detail 'Completed survey profile row exists and is marked complete.'
+    } finally {
+        if (-not [string]::IsNullOrWhiteSpace($accessToken)) {
+            Invoke-SmokeRestSignOut `
+                -Config $Config `
+                -AccessToken $accessToken `
+                -Operation 'post-onboarding profile verification sign-out'
+        }
+    }
+}
+
 function Resolve-AdbPath {
     $pathCommand = Get-Command adb -ErrorAction SilentlyContinue
     if ($pathCommand) {
@@ -408,9 +666,26 @@ function Save-UiDump {
     param([Parameter(Mandatory = $true)][string]$Name)
 
     $remotePath = '/sdcard/flowfit-live-auth-window.xml'
-    Invoke-Adb -Arguments @('shell', 'uiautomator', 'dump', $remotePath) | Out-Null
-    $cat = Invoke-Adb -Arguments @('exec-out', 'cat', $remotePath)
+    Invoke-Adb -Arguments @('shell', 'rm', '-f', $remotePath) -AllowFailure | Out-Null
+    $dump = Invoke-Adb -Arguments @('shell', 'uiautomator', 'dump', $remotePath) -AllowFailure
+    $dumpText = $dump.Output -join "`n"
+    if (
+        $dump.ExitCode -ne 0 -or
+        $dumpText -match 'ERROR|could not get idle state|No such file'
+    ) {
+        throw "uiautomator dump failed for $Name.`n$dumpText"
+    }
+
+    $cat = Invoke-Adb -Arguments @('exec-out', 'cat', $remotePath) -AllowFailure
     $xml = $cat.Output -join "`n"
+    if (
+        $cat.ExitCode -ne 0 -or
+        $xml -notmatch '<hierarchy\b' -or
+        $xml -match '^cat: .*No such file'
+    ) {
+        throw "uiautomator dump file was not readable for $Name."
+    }
+
     $localPath = Join-Path $artifactRoot "$Name.xml"
     Set-Content -LiteralPath $localPath -Value $xml -Encoding UTF8
     Add-Artifact -Name "uiDump.$Name" -Path $localPath
@@ -512,6 +787,65 @@ function Wait-ForUiText {
     throw "Timed out waiting for $Name UI text: $($missing -join ', ')"
 }
 
+function Wait-ForUiScreen {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][object[]]$Screens,
+        [string[]]$ForbiddenText = @()
+    )
+
+    $deadline = (Get-Date).AddSeconds($WaitTimeoutSeconds)
+    $lastMissing = @()
+    do {
+        $xml = Save-UiDump -Name $Name
+        $forbidden = @($ForbiddenText | Where-Object { Test-UiContains -Xml $xml -Text $_ })
+        if ($forbidden.Count -gt 0) {
+            Add-Check -Name "ui.$Name" -Status 'fail' -Detail "Forbidden text visible: $($forbidden -join ', ')"
+            throw "Forbidden auth/runtime text visible on $Name screen."
+        }
+
+        foreach ($screen in $Screens) {
+            $required = @($screen.RequiredText)
+            $missing = @($required | Where-Object { -not (Test-UiContains -Xml $xml -Text $_) })
+            if ($missing.Count -eq 0) {
+                Add-Check -Name "ui.$Name" -Status 'pass' -Detail "Matched $($screen.Name): $($required -join ', ')"
+                return [pscustomobject]@{
+                    Name = $screen.Name
+                    Xml = $xml
+                }
+            }
+            $lastMissing = @($lastMissing + "$($screen.Name): $($missing -join ', ')")
+        }
+
+        Start-Sleep -Milliseconds 750
+    } while ((Get-Date) -lt $deadline)
+
+    Add-Check -Name "ui.$Name" -Status 'fail' -Detail "No expected screen matched. Missing: $($lastMissing -join ' | ')"
+    throw "Timed out waiting for $Name expected UI screen."
+}
+
+function Wait-ForLogcatPattern {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Pattern,
+        [Parameter(Mandatory = $true)][string]$Detail
+    )
+
+    $deadline = (Get-Date).AddSeconds($WaitTimeoutSeconds)
+    do {
+        $logcat = Invoke-Adb -Arguments @('logcat', '-d', '-v', 'time') -AllowFailure
+        $logText = $logcat.Output -join "`n"
+        if ($logcat.ExitCode -eq 0 -and $logText -match $Pattern) {
+            Add-Check -Name $Name -Status 'pass' -Detail $Detail
+            return $logText
+        }
+        Start-Sleep -Milliseconds 1000
+    } while ((Get-Date) -lt $deadline)
+
+    Add-Check -Name $Name -Status 'fail' -Detail 'Expected Android logcat marker was not observed.'
+    throw "Timed out waiting for $Name logcat marker."
+}
+
 function Invoke-TapBounds {
     param(
         [Parameter(Mandatory = $true)]$Bounds,
@@ -523,21 +857,37 @@ function Invoke-TapBounds {
     Start-Sleep -Milliseconds 800
 }
 
+function Invoke-ScrollDown {
+    $x = [math]::Floor($script:screenSize.width / 2)
+    $startY = [math]::Floor($script:screenSize.height * 0.78)
+    $endY = [math]::Floor($script:screenSize.height * 0.28)
+    Invoke-Adb -Arguments @('shell', 'input', 'swipe', "$x", "$startY", "$x", "$endY", '350') | Out-Null
+    Start-Sleep -Milliseconds 650
+}
+
 function Invoke-TapText {
     param(
         [Parameter(Mandatory = $true)][string]$Text,
         [string]$DumpPrefix = 'tap',
-        [switch]$Contains
+        [switch]$Contains,
+        [int]$MaxScrolls = 0
     )
 
-    $xml = Save-UiDump -Name $DumpPrefix
-    $bounds = Get-UiTextBounds -Xml $xml -Text $Text -Contains:$Contains
-    if ($null -eq $bounds) {
-        Add-Check -Name "tap.$Text" -Status 'fail' -Detail 'Target text was not visible.'
-        throw "Could not find tappable UI text: $Text"
+    for ($attempt = 0; $attempt -le $MaxScrolls; $attempt += 1) {
+        $xml = Save-UiDump -Name "$DumpPrefix-$attempt"
+        $bounds = Get-UiTextBounds -Xml $xml -Text $Text -Contains:$Contains
+        if ($null -ne $bounds) {
+            Invoke-TapBounds -Bounds $bounds -Name $Text
+            return
+        }
+
+        if ($attempt -lt $MaxScrolls) {
+            Invoke-ScrollDown
+        }
     }
 
-    Invoke-TapBounds -Bounds $bounds -Name $Text
+    Add-Check -Name "tap.$Text" -Status 'fail' -Detail 'Target text was not visible.'
+    throw "Could not find tappable UI text: $Text"
 }
 
 function Get-InputTapPoint {
@@ -610,6 +960,30 @@ function Invoke-SensitiveTextEntry {
     Start-Sleep -Milliseconds 650
 }
 
+function Invoke-TextEntry {
+    param(
+        [Parameter(Mandatory = $true)]$Bounds,
+        [Parameter(Mandatory = $true)][string]$Value,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+
+    Invoke-TapBounds -Bounds $Bounds -Name "$Name field"
+    $adbText = ConvertTo-AdbInputText -Text $Value
+    if ($null -eq $adbText) {
+        Add-Check -Name "input.$Name" -Status 'fail' -Detail 'Value contains characters unsupported by adb input text.'
+        throw "Could not enter $Name with adb input text."
+    }
+
+    Invoke-Adb -Arguments @('shell', 'input', 'text', $adbText) | Out-Null
+    Add-Check -Name "input.$Name" -Status 'pass' -Detail "Entered $Name."
+    Start-Sleep -Milliseconds 650
+}
+
+function Invoke-HideKeyboard {
+    Invoke-Adb -Arguments @('shell', 'input', 'keyevent', 'BACK') -AllowFailure | Out-Null
+    Start-Sleep -Milliseconds 650
+}
+
 function Assert-UiNotContains {
     param(
         [Parameter(Mandatory = $true)][string]$Name,
@@ -669,6 +1043,7 @@ try {
     $credentials = Resolve-SmokeCredentials
     $script:smokeEmail = $credentials.RedactedEmail
     Add-Check -Name 'supabase.smokeCredentials' -Status 'pass' -Detail "Loaded dedicated smoke account $($credentials.RedactedEmail); password redacted."
+    Invoke-SmokeBackendDataCleanup -Config $config -Credentials $credentials -Phase 'preRun' | Out-Null
 
     $script:adbPath = Resolve-AdbPath
     $script:deviceSerial = Resolve-DeviceSerial -RequestedDevice $Device
@@ -751,25 +1126,81 @@ try {
     Invoke-SensitiveTextEntry -Bounds $passwordBounds -Value $credentials.Password -Name 'password'
     Invoke-TapBounds -Bounds $loginButtonBounds -Name 'Log In submit'
 
-    $ageGateXml = Wait-ForUiText `
-        -Name 'post-auth-age-gate' `
-        -RequiredText @('Welcome to FlowFit!', "I'm 13 or older", "I'm 7-12 years old") `
+    $postAuth = Wait-ForUiScreen `
+        -Name 'post-auth-onboarding-entry' `
+        -Screens @(
+            [pscustomobject]@{
+                Name = 'age-gate'
+                RequiredText = @('Welcome to FlowFit!', "I'm 13 or older", "I'm 7-12 years old")
+            },
+            [pscustomobject]@{
+                Name = 'survey-intro'
+                RequiredText = @('Quick Setup', "Let's Personalize")
+            }
+        ) `
         -ForbiddenText @('Invalid login credentials', 'Email not confirmed', 'Could not check onboarding status', 'FlowFit setup is incomplete')
-    Save-Screenshot -Name 'post-auth-age-gate'
 
-    Invoke-TapText -Text "I'm 13 or older" -DumpPrefix 'age-gate-13-plus' -Contains
-    Wait-ForUiText `
-        -Name 'survey-intro' `
-        -RequiredText @('Quick Setup', "Let's Personalize") `
-        -ForbiddenText @('Could not check onboarding status', 'FlowFit setup is incomplete') | Out-Null
-    Save-Screenshot -Name 'survey-intro'
+    if ($postAuth.Name -eq 'age-gate') {
+        Save-Screenshot -Name 'post-auth-age-gate'
+        Invoke-TapText -Text "I'm 13 or older" -DumpPrefix 'age-gate-13-plus' -Contains
+        Wait-ForUiText `
+            -Name 'survey-intro' `
+            -RequiredText @('Quick Setup', "Let's Personalize") `
+            -ForbiddenText @('Could not check onboarding status', 'FlowFit setup is incomplete') | Out-Null
+        Save-Screenshot -Name 'survey-intro'
+    } else {
+        Save-Screenshot -Name 'post-auth-survey-intro'
+    }
 
     Invoke-TapText -Text "Let's Personalize" -DumpPrefix 'survey-intro-personalize'
-    Wait-ForUiText `
+    $basicInfoXml = Wait-ForUiText `
         -Name 'survey-basic-info' `
         -RequiredText @('Tell us about yourself', 'Gender', 'Age', 'Continue') `
-        -ForbiddenText @('Could not check onboarding status', 'FlowFit setup is incomplete') | Out-Null
+        -ForbiddenText @('Could not check onboarding status', 'FlowFit setup is incomplete')
     Save-Screenshot -Name 'survey-basic-info'
+
+    Invoke-TapText -Text 'Male' -DumpPrefix 'survey-basic-info-male'
+    Invoke-TapText -Text 'Continue' -DumpPrefix 'survey-basic-info-continue' -MaxScrolls 1
+
+    $measurementsXml = Wait-ForUiText `
+        -Name 'survey-measurements' `
+        -RequiredText @('Your measurements', 'Height', 'Weight', 'Continue') `
+        -ForbiddenText @('Error:', 'FlowFit setup is incomplete')
+    Save-Screenshot -Name 'survey-measurements'
+
+    $heightBounds = Get-InputTapPoint -Xml $measurementsXml -HintText 'Enter height' -LabelText 'Height'
+    $weightBounds = Get-InputTapPoint -Xml $measurementsXml -HintText 'Enter weight' -LabelText 'Weight'
+    Invoke-TextEntry -Bounds $heightBounds -Value '170' -Name 'height'
+    Invoke-TextEntry -Bounds $weightBounds -Value '70' -Name 'weight'
+    Invoke-HideKeyboard
+    Invoke-TapText -Text 'Continue' -DumpPrefix 'survey-measurements-continue' -MaxScrolls 2
+
+    Wait-ForUiText `
+        -Name 'survey-activity-goals' `
+        -RequiredText @('Activity & Goals', 'Current Activity Level', 'Sedentary', 'Primary Fitness Goal') `
+        -ForbiddenText @('Please select your activity level', 'Please select at least one fitness goal', 'FlowFit setup is incomplete') | Out-Null
+    Save-Screenshot -Name 'survey-activity-goals'
+
+    Invoke-TapText -Text 'Sedentary' -DumpPrefix 'survey-activity-sedentary' -Contains
+    Invoke-TapText -Text 'Lose Weight' -DumpPrefix 'survey-goal-lose-weight' -Contains -MaxScrolls 4
+    Invoke-TapText -Text 'Continue' -DumpPrefix 'survey-activity-continue' -MaxScrolls 4
+
+    Wait-ForUiText `
+        -Name 'survey-daily-targets' `
+        -RequiredText @('Your Daily Targets', 'Personalized Goals', 'Calorie Target') `
+        -ForbiddenText @('Failed to save profile', 'FlowFit setup is incomplete') | Out-Null
+    Save-Screenshot -Name 'survey-daily-targets'
+
+    Invoke-TapText -Text 'Complete & Start App' -DumpPrefix 'survey-complete' -Contains -MaxScrolls 8
+    Start-Sleep -Seconds 2
+    Assert-SmokeProfileCompleted -Config $config -Credentials $credentials
+    Wait-ForLogcatPattern `
+        -Name 'dashboard-after-survey' `
+        -Pattern '(_HomeScreenState\._subscribeToWatch|Starting to listen for watch data|Listening started successfully)' `
+        -Detail 'Home dashboard initialized after survey completion.' | Out-Null
+    Save-Screenshot -Name 'dashboard-after-survey'
+
+    Invoke-SmokeBackendDataCleanup -Config $config -Credentials $credentials -Phase 'postRun' | Out-Null
 
     $logcat = Invoke-Adb -Arguments @('logcat', '-d', '-v', 'time')
     $logPath = Join-Path $artifactRoot 'logcat.txt'

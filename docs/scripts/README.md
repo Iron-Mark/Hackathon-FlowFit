@@ -120,7 +120,10 @@ path and first post-auth onboarding actions. It builds a configured debug APK,
 installs it, clears local app state, signs in with the ignored
 `FLOWFIT_SMOKE_EMAIL` / `FLOWFIT_SMOKE_PASSWORD` account, verifies the age gate,
 taps the 13+ onboarding path, opens `Quick Setup`, taps `Let's Personalize`,
-and verifies `Tell us about yourself`.
+completes the 13+ survey with stable smoke values, asserts the completed
+`user_profiles` row through authenticated RLS, verifies dashboard initialization
+with a fresh HomeScreen logcat marker and screenshot, then cleans the app-owned
+smoke rows so the next run starts from onboarding again.
 
 **Usage**:
 ```powershell
@@ -134,7 +137,8 @@ The smoke account must be a dedicated disposable account whose email contains
 `flowfit-smoke`. The verifier records only a redacted email, the Supabase host,
 UI screenshots/dumps that are captured before credentials are typed or after
 login leaves the credential form, and logcat crash evidence. It never writes the
-Supabase publishable key or smoke password to the JSON artifact.
+Supabase publishable key, access token, refresh token, or smoke password to the
+JSON artifact.
 
 If Android clipboard paste is unavailable and the password contains shell-active
 characters, use a strong ADB-safe smoke password made from letters, numbers,
@@ -142,9 +146,10 @@ characters, use a strong ADB-safe smoke password made from letters, numbers,
 `verify_supabase_app_smoke.ps1 -CreateSmokeUser`.
 
 Use `-SkipBuild` only when the matching APK already exists from the same source
-and configuration. The script clears local app data after the run by default;
-run the Supabase session cleanup query or live backend smoke afterward when you
-need server-side smoke sessions revoked immediately.
+and configuration. The script clears local app data after the run by default and
+cleans app-owned rows for the smoke user before and after the native flow. Run
+the Supabase session cleanup query or live backend smoke afterward when you need
+server-side auth sessions revoked immediately.
 
 ---
 

@@ -190,6 +190,8 @@ class _SurveyDailyTargetsScreenState
     final args =
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final userId = args?['userId'] as String?;
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     setState(() {
       _isSubmitting = true;
@@ -253,47 +255,31 @@ class _SurveyDailyTargetsScreenState
       if (savedSuccessfully) {
         // Clear survey state after successful save
         await surveyNotifier.resetSurvey();
+        if (!mounted) return;
 
         // Show success message
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Profile saved successfully!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('✅ Profile saved successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        final isFromEdit = args?['fromEdit'] as bool? ?? false;
+
+        if (isFromEdit) {
+          // Trigger profile refresh before navigating back.
+          ref.invalidate(profileNotifierProvider(userId));
+          ref.read(profileNotifierProvider(userId).notifier).loadProfile();
+          navigator.popUntil((route) => route.isFirst);
+        } else {
+          navigator.pushNamedAndRemoveUntil('/dashboard', (route) => false);
         }
-
-        // Navigate based on context
-        // If user came from profile edit (not from intro), go to profile tab
-        // If new user from intro, go to home tab
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) {
-            // Check if user came from intro screen or from edit profile
-            final isFromEdit = args?['fromEdit'] as bool? ?? false;
-
-            if (isFromEdit) {
-              // Trigger profile refresh before navigating back
-              ref.invalidate(profileNotifierProvider(userId));
-
-              // Also manually trigger a reload
-              ref.read(profileNotifierProvider(userId).notifier).loadProfile();
-
-              // Pop back to dashboard
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            } else {
-              // New user - navigate to dashboard and clear all previous routes
-              Navigator.of(
-                context,
-              ).pushNamedAndRemoveUntil('/dashboard', (route) => false);
-            }
-          }
-        });
       } else {
         // Show error with details
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          scaffoldMessenger.showSnackBar(
             SnackBar(
               content: Text(
                 'Failed to save profile. ${errorDetails ?? 'Please try again.'}',
@@ -318,7 +304,7 @@ class _SurveyDailyTargetsScreenState
           errorMessage = 'Request timed out. Your profile is saved locally.';
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
