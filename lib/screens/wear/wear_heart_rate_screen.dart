@@ -288,6 +288,11 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       _isMonitoringBusy = true;
     });
 
+    if (!_isConnected && _isSimulatedFallbackAvailable) {
+      _startSimulatedMonitoring();
+      return;
+    }
+
     if (!_isConnected) {
       setState(() {
         _statusMessage = 'Connecting...';
@@ -387,6 +392,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   void _startSimulatedMonitoring() {
+    debugPrint('FLOWFIT_WEAR_SIMULATED_FALLBACK_STARTED');
     unawaited(_heartRateSubscription?.cancel());
     _heartRateSubscription = null;
     _simulatedHeartRateTimer?.cancel();
@@ -426,6 +432,7 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
   }
 
   void _stopSimulatedMonitoring() {
+    debugPrint('FLOWFIT_WEAR_SIMULATED_FALLBACK_STOPPED');
     _simulatedHeartRateTimer?.cancel();
     _simulatedHeartRateTimer = null;
 

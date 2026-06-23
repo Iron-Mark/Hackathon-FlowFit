@@ -13,13 +13,18 @@ void main() {
     'com.flowfit.watch/transmission',
   );
 
+  var connectWatchCalls = 0;
+
   setUp(() {
+    connectWatchCalls = 0;
+
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(watchDataChannel, (call) async {
           switch (call.method) {
             case 'checkPermission':
               return 'granted';
             case 'connectWatch':
+              connectWatchCalls += 1;
               throw PlatformException(
                 code: 'SERVICE_UNAVAILABLE',
                 message: 'Samsung Health service unavailable',
@@ -84,12 +89,14 @@ void main() {
         findsAtLeastNWidgets(1),
       );
       expect(find.text('Start'), findsOneWidget);
+      expect(connectWatchCalls, 1);
 
       await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump(const Duration(seconds: 1));
 
+      expect(connectWatchCalls, 1);
       expect(find.text('Simulated'), findsOneWidget);
       expect(find.text('Sim'), findsOneWidget);
       expect(find.text('--'), findsNothing);
