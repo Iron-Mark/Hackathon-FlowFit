@@ -807,6 +807,16 @@ function Wait-ForAndroidRuntimeReady {
     throw "Android runtime services were not ready before timeout. $lastError"
 }
 
+function Invoke-AdbInstallStorageRecovery {
+    Invoke-Adb -Arguments @('uninstall', $packageName) -AllowFailure | Out-Null
+    Invoke-Adb -Arguments @('shell', 'pm', 'trim-caches', '999G') -AllowFailure | Out-Null
+
+    Add-Check `
+        -Name 'adb.install.storageRecovery' `
+        -Status 'warn' `
+        -Detail 'Install failed with INSTALL_FAILED_INSUFFICIENT_STORAGE; uninstalled the app and trimmed emulator caches before retrying.'
+}
+
 function Install-ApkWithRetry {
     param([Parameter(Mandatory = $true)][string]$Path)
 
@@ -830,6 +840,11 @@ function Install-ApkWithRetry {
             -Name "adb.install.retry$attempt" `
             -Status 'warn' `
             -Detail "APK install attempt $attempt failed with exit code $($install.ExitCode)."
+
+        if ($lastOutput -match 'INSTALL_FAILED_INSUFFICIENT_STORAGE') {
+            Invoke-AdbInstallStorageRecovery
+        }
+
         Start-Sleep -Seconds (2 * $attempt)
     }
 

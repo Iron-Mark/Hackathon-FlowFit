@@ -211,6 +211,21 @@ void main() {
     }
   });
 
+  test(
+    'Android live auth smoke recovers emulator storage before retrying install',
+    () {
+      for (final token in [
+        'INSTALL_FAILED_INSUFFICIENT_STORAGE',
+        'Invoke-AdbInstallStorageRecovery',
+        'adb.install.storageRecovery',
+        'uninstall',
+        'trim-caches',
+      ]) {
+        expect(source, contains(token));
+      }
+    },
+  );
+
   test('Android live auth smoke catches setup, auth, and native crashes', () {
     for (final token in [
       'FlowFit setup is incomplete',

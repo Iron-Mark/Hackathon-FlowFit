@@ -132,6 +132,8 @@ flow from the Profile tab, verifies the `buddy_profiles` row plus Buddy
 nickname, age, goal, notification, and kids-mode fields on `user_profiles`
 through authenticated RLS, then cleans the app-owned smoke rows so the next run
 starts from onboarding again.
+If an emulator reports `INSTALL_FAILED_INSUFFICIENT_STORAGE`, the installer
+uninstalls the app package, trims emulator caches, and retries before failing.
 
 **Usage**:
 ```powershell
