@@ -174,8 +174,8 @@ HeartRateData {
 ### Watch App Features
 
 1. **Clean Dashboard** (`lib/screens/wear/wear_dashboard.dart`)
-   - Single large "Heart Rate" button
-   - Minimal, focused design
+   - Compact shortcuts for Heart Rate, Workout, and Relax
+   - Minimal, focused design with ambient mode kept non-interactive
    - Optimized for small screens
 
 2. **Heart Rate Monitor** (`lib/screens/wear/wear_heart_rate_screen.dart`)
@@ -185,6 +185,11 @@ HeartRateData {
    - Real-time status indicator
    - Samsung Health SDK integration
    - IBI data collection
+
+3. **Workout and Relax Tools** (`lib/screens/wear/workout_screen.dart`, `lib/screens/wear/relax_screen.dart`)
+   - Local workout timer with BPM and calorie estimates
+   - Guided breathing session timer
+   - Directly reachable from the Wear dashboard
 
 ### Phone App Features
 

@@ -10,7 +10,7 @@
 
 ### 1. Simplified Dashboard
 **Removed:** 6-item scrollable menu with Activity, Steps, Workout, Sleep, Nutrition
-**Added:** Single large "Heart Rate" button - clean and focused
+**Added:** Compact Heart Rate, Workout, and Relax shortcuts - clean and focused
 
 ### 2. Cleaner Heart Rate Screen
 **Before:**
@@ -48,6 +48,14 @@ test-watch.bat
 - Wait for reading
 - Tap "SEND"
 - Check phone receives data
+
+# 4. Test local watch tools
+- Return to the dashboard
+- Tap "Workout"
+- Tap "Start", then "Stop"
+- Return to the dashboard
+- Tap "Relax"
+- Tap "Start", then "Pause"
 ```
 
 ## Troubleshooting

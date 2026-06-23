@@ -100,7 +100,7 @@ PhoneDataListener: Heart rate: 72 BPM
 ## UI Improvements
 
 ### New Clean Design
-- **Dashboard:** Single large "Heart Rate" button
+- **Dashboard:** Compact shortcuts for Heart Rate, Workout, and Relax
 - **Heart Rate Screen:** 
   - Large BPM display (56pt font)
   - Simple START/STOP button
@@ -108,10 +108,10 @@ PhoneDataListener: Heart rate: 72 BPM
   - Minimal status indicator
 
 ### Removed Clutter
-- No scrolling menu
-- No unrelated menu items on the watch-first heart-rate screen
+- No legacy six-item scrolling menu
+- Workout and Relax are direct tools instead of placeholder menu items
 - No complex status messages
-- Focus on core functionality
+- Focus on core watch functionality
 
 ## Performance Tips
 

@@ -36,12 +36,13 @@
 - Border radius: 24dp
 - Updated to use WearColors.primaryBlue for consistency
 
-#### 3. WearDashboard - Heart Rate Button
+#### 3. WearDashboard - Tool Shortcut Buttons
 **Location**: `lib/screens/wear/wear_dashboard.dart`
 
 **Status**: Already compliant ✅
-- Width: 140dp
-- Height: 56dp (Exceeds 48dp minimum)
+- Heart Rate, Workout, and Relax shortcuts
+- Width: 108dp
+- Height: 58dp (Exceeds 48dp minimum)
 
 #### 4. Error Display Widget
 **Location**: `lib/screens/wear/wear_heart_rate_screen.dart`

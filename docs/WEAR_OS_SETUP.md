@@ -34,28 +34,30 @@ Optimized for Samsung Galaxy Watch 6 (40mm) and other Wear OS 3+ devices with:
 - Transparent background mode for seamless round screens
 - Adaptive padding and layouts for different screen shapes
 
-### 3. Multi-Screen Dashboard
-The Wear OS app includes 4 swipeable screens:
+### 3. Dashboard Shortcuts
+The Wear OS app opens to a compact dashboard with direct shortcuts:
 
-#### Home Screen
-- App branding and quick stats overview
-- Heart rate, steps, and calories at a glance
-- Swipe gesture hint for navigation
+#### Heart Rate
+- Opens `wear_heart_rate_screen.dart`
+- Large BPM display
+- START/STOP tracking control
+- SEND action for phone handoff after a reading is available
+- Samsung Health service fallback in emulator/debug environments
 
-#### Heart Rate Screen
-- Large, centered heart rate display
-- Measure button for on-demand readings
-- Simplified view in ambient mode
+#### Workout
+- Opens `workout_screen.dart`
+- Local workout timer
+- BPM and calorie estimates
+- Large circular start/stop control
 
-#### Steps Screen
-- Step count with progress bar
-- Daily goal tracking (10,000 steps)
-- Visual progress indicator
+#### Relax
+- Opens `relax_screen.dart`
+- Guided breathing session timer
+- Animated active-mode background
+- Start/pause control
 
-#### Workout Screen
-- Quick workout start button
-- Last workout duration display
-- Optimized for small screen interaction
+Ambient mode keeps the dashboard non-interactive to reduce accidental input
+and battery use.
 
 ### 4. Additional Screens
 
