@@ -89,6 +89,7 @@ class _TrackerPageState extends State<TrackerPage> {
   bool _isStartingWatchListener = false;
   bool _watchListenerStarted = false;
   String? _watchListenerError;
+  String? _modelLoadError;
 
   @override
   void initState() {
@@ -120,7 +121,7 @@ class _TrackerPageState extends State<TrackerPage> {
 
       // Ensure model is loaded once at startup
       if (!_platformClassifier.isLoaded) {
-        _platformClassifier.loadModel();
+        unawaited(_loadActivityModel());
       }
 
       _startSensorSubscription();
@@ -133,6 +134,23 @@ class _TrackerPageState extends State<TrackerPage> {
       _subscribeWatchLive();
 
       _initialized = true;
+    }
+  }
+
+  Future<void> _loadActivityModel() async {
+    try {
+      await _platformClassifier.loadModel();
+      if (!mounted) return;
+      setState(() {
+        _modelLoadError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _modelLoadError =
+            'The TensorFlow Lite model could not be loaded. '
+            'Use simulation controls for display-only testing, then restart the app.';
+      });
     }
   }
 
@@ -461,6 +479,10 @@ class _TrackerPageState extends State<TrackerPage> {
             if (_watchListenerError != null) ...[
               const SizedBox(height: 8),
               _buildWatchListenerError(),
+            ],
+            if (_modelLoadError != null) ...[
+              const SizedBox(height: 8),
+              _buildModelLoadError(),
             ],
             const SizedBox(height: 16),
             // 1. The Result (Big Text)
@@ -995,6 +1017,47 @@ class _TrackerPageState extends State<TrackerPage> {
             onPressed: _isStartingWatchListener ? null : _retryWatchListener,
             icon: const Icon(Icons.refresh, size: 18),
             label: const Text('Retry watch listener'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModelLoadError() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Activity model unavailable',
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _modelLoadError!,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

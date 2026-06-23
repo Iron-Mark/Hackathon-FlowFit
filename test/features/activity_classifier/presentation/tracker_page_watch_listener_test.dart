@@ -105,11 +105,30 @@ void main() {
 
     expect(find.text('route:mission-map'), findsOneWidget);
   });
+
+  testWidgets('model load failure shows a visible recovery message', (
+    tester,
+  ) async {
+    final listener = _FakeActivityWatchDataListener(startResults: [true]);
+
+    await tester.pumpWidget(
+      _harness(listener, classifier: _FailingTFLiteActivityClassifier()),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Activity model unavailable'), findsOneWidget);
+    expect(
+      find.textContaining('The TensorFlow Lite model could not be loaded.'),
+      findsOneWidget,
+    );
+  });
 }
 
 Widget _harness(
   ActivityWatchDataListener listener, {
   Map<String, WidgetBuilder> routes = const {},
+  TFLiteActivityClassifier? classifier,
 }) {
   return provider.MultiProvider(
     providers: [
@@ -119,7 +138,7 @@ Widget _harness(
         ),
       ),
       provider.Provider<TFLiteActivityClassifier>.value(
-        value: _FakeTFLiteActivityClassifier(),
+        value: classifier ?? _FakeTFLiteActivityClassifier(),
       ),
       provider.Provider<HeartBpmAdapter>(create: (_) => HeartBpmAdapter()),
     ],
@@ -162,6 +181,21 @@ class _FakeActivityWatchDataListener implements ActivityWatchDataListener {
 
   void addHeartRateError(Object error) {
     _heartRateController.addError(error);
+  }
+}
+
+class _FailingTFLiteActivityClassifier extends TFLiteActivityClassifier {
+  @override
+  bool get isLoaded => false;
+
+  @override
+  Future<void> loadModel() async {
+    throw StateError('missing test model');
+  }
+
+  @override
+  Future<List<double>> predict(List<List<double>> buffer) async {
+    throw StateError('model was not loaded');
   }
 }
 
