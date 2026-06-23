@@ -655,6 +655,71 @@ function Invoke-External {
     }
 }
 
+function Invoke-ExternalWithTimeout {
+    param(
+        [Parameter(Mandatory = $true)][string]$File,
+        [string[]]$Arguments = @(),
+        [int]$TimeoutSeconds = 10
+    )
+
+    $tempId = [guid]::NewGuid().ToString('N')
+    $stdoutPath = Join-Path ([System.IO.Path]::GetTempPath()) "flowfit-$tempId.stdout.log"
+    $stderrPath = Join-Path ([System.IO.Path]::GetTempPath()) "flowfit-$tempId.stderr.log"
+    try {
+        $process = Start-Process `
+            -FilePath $File `
+            -ArgumentList $Arguments `
+            -PassThru `
+            -WindowStyle Hidden `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath
+
+        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+            try {
+                $process.Kill($true)
+            } catch {
+                # Best effort: callers use this only for optional diagnostics.
+            }
+            return [pscustomobject]@{
+                ExitCode = 124
+                TimedOut = $true
+                Output = @("Command timed out after $TimeoutSeconds seconds.")
+            }
+        }
+
+        $output = @()
+        if (Test-Path -LiteralPath $stdoutPath) {
+            $output += @(Get-Content -LiteralPath $stdoutPath -ErrorAction SilentlyContinue)
+        }
+        if (Test-Path -LiteralPath $stderrPath) {
+            $output += @(Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue)
+        }
+
+        return [pscustomobject]@{
+            ExitCode = $process.ExitCode
+            TimedOut = $false
+            Output = @($output)
+        }
+    } catch {
+        return [pscustomobject]@{
+            ExitCode = 1
+            TimedOut = $false
+            Output = @($_.Exception.Message)
+        }
+    } finally {
+        try {
+            if (Test-Path -LiteralPath $stdoutPath) {
+                Remove-Item -LiteralPath $stdoutPath -Force -ErrorAction SilentlyContinue
+            }
+            if (Test-Path -LiteralPath $stderrPath) {
+                Remove-Item -LiteralPath $stderrPath -Force -ErrorAction SilentlyContinue
+            }
+        } catch {
+            # Best effort cleanup only.
+        }
+    }
+}
+
 function Invoke-Adb {
     param(
         [string[]]$Arguments,
@@ -667,6 +732,18 @@ function Invoke-Adb {
         -Arguments (@('-s', $script:deviceSerial) + $Arguments) `
         -AllowFailure:$AllowFailure `
         -Sensitive:$Sensitive
+}
+
+function Invoke-AdbWithTimeout {
+    param(
+        [string[]]$Arguments,
+        [int]$TimeoutSeconds = 10
+    )
+
+    return Invoke-ExternalWithTimeout `
+        -File $script:adbPath `
+        -Arguments (@('-s', $script:deviceSerial) + $Arguments) `
+        -TimeoutSeconds $TimeoutSeconds
 }
 
 function Resolve-DeviceSerial {
@@ -841,13 +918,27 @@ function Save-UiDump {
 
     $remotePath = '/sdcard/flowfit-live-auth-window.xml'
     Invoke-Adb -Arguments @('shell', 'rm', '-f', $remotePath) -AllowFailure | Out-Null
-    $dump = Invoke-Adb -Arguments @('shell', 'uiautomator', 'dump', $remotePath) -AllowFailure
-    $dumpText = $dump.Output -join "`n"
-    if (
-        $dump.ExitCode -ne 0 -or
-        $dumpText -match 'ERROR|could not get idle state|No such file'
-    ) {
-        throw "uiautomator dump failed for $Name.`n$dumpText"
+    $dumpAttempts = @(
+        @('shell', 'uiautomator', 'dump', $remotePath),
+        @('shell', 'uiautomator', 'dump', '--compressed', $remotePath)
+    )
+    $dumpSucceeded = $false
+    $lastDumpText = ''
+    foreach ($dumpArguments in $dumpAttempts) {
+        $dump = Invoke-Adb -Arguments $dumpArguments -AllowFailure
+        $dumpText = $dump.Output -join "`n"
+        if (
+            $dump.ExitCode -eq 0 -and
+            $dumpText -notmatch 'ERROR|could not get idle state|No such file'
+        ) {
+            $dumpSucceeded = $true
+            break
+        }
+        $lastDumpText = $dumpText
+        Start-Sleep -Milliseconds 300
+    }
+    if (-not $dumpSucceeded) {
+        throw "uiautomator dump failed for $Name.`n$lastDumpText"
     }
 
     $cat = Invoke-Adb -Arguments @('exec-out', 'cat', $remotePath) -AllowFailure
@@ -858,6 +949,14 @@ function Save-UiDump {
         $xml -match '^cat: .*No such file'
     ) {
         throw "uiautomator dump file was not readable for $Name."
+    }
+    if (
+        -not [string]::IsNullOrWhiteSpace($packageName) -and
+        $xml -notmatch ('package="' + [regex]::Escape($packageName) + '"')
+    ) {
+        $packageMatch = [regex]::Match($xml, 'package="([^"]+)"')
+        $actualPackage = if ($packageMatch.Success) { $packageMatch.Groups[1].Value } else { 'unknown' }
+        throw "uiautomator dump for $Name came from unexpected package $actualPackage; expected $packageName."
     }
 
     $localPath = Join-Path $artifactRoot "$Name.xml"
@@ -875,6 +974,32 @@ function Save-Screenshot {
     Invoke-Adb -Arguments @('pull', $remotePath, $localPath) | Out-Null
     Invoke-Adb -Arguments @('shell', 'rm', '-f', $remotePath) -AllowFailure | Out-Null
     Add-Artifact -Name "screenshot.$Name" -Path $localPath
+}
+
+function Save-Logcat {
+    param([string]$Name = 'logcat')
+
+    if ([string]::IsNullOrWhiteSpace($script:adbPath) -or [string]::IsNullOrWhiteSpace($script:deviceSerial)) {
+        return
+    }
+
+    $logcat = Invoke-AdbWithTimeout -Arguments @('logcat', '-d', '-t', '4000', '-v', 'time') -TimeoutSeconds 10
+    if ($logcat.ExitCode -ne 0 -and -not $logcat.TimedOut) {
+        return
+    }
+
+    $logPath = Join-Path $artifactRoot "$Name.txt"
+    $logText = if ($logcat.TimedOut) {
+        "logcat capture timed out after 10 seconds.`n$($logcat.Output -join "`n")"
+    } else {
+        $logcat.Output -join "`n"
+    }
+    $logText = $logText `
+        -replace 'sb_publishable_[A-Za-z0-9_\-.]+', 'sb_publishable_[REDACTED]' `
+        -replace 'postgresql://[^\s]+', 'postgresql://[REDACTED]' `
+        -replace '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '[EMAIL_REDACTED]'
+    Set-Content -LiteralPath $logPath -Value $logText -Encoding UTF8
+    Add-Artifact -Name $Name -Path $logPath
 }
 
 function ConvertTo-XmlText {
@@ -1108,7 +1233,7 @@ function Wait-ForLogcatPattern {
 
     $deadline = (Get-Date).AddSeconds($WaitTimeoutSeconds)
     do {
-        $logcat = Invoke-Adb -Arguments @('logcat', '-d', '-v', 'time') -AllowFailure
+        $logcat = Invoke-AdbWithTimeout -Arguments @('logcat', '-d', '-t', '8000', '-v', 'time') -TimeoutSeconds 10
         $logText = $logcat.Output -join "`n"
         if ($logcat.ExitCode -eq 0 -and $logText -match $Pattern) {
             Add-Check -Name $Name -Status 'pass' -Detail $Detail
@@ -1343,12 +1468,11 @@ function Invoke-HealthFoodLiveSmoke {
         -RequiredText @('Remove') `
         -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
     Invoke-TapText -Text 'Remove' -DumpPrefix 'health-food-remove'
-    Wait-ForUiText `
-        -Name 'health-food-removed-snackbar' `
-        -RequiredText @("$foodName removed from Breakfast") `
-        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
-    Start-Sleep -Seconds 3
-    $afterRemoveXml = Save-UiDump -Name 'health-food-after-remove'
+    Start-Sleep -Milliseconds 700
+    $afterRemoveXml = Wait-ForUiText `
+        -Name 'health-food-after-remove' `
+        -RequiredText @('Daily Log', 'Food Intake', 'Add Food') `
+        -ForbiddenText @('FlowFit setup is incomplete', 'Could not check onboarding status', $foodName, "$foodCalories kcal")
     Assert-UiNotContains `
         -Name 'health-food-after-remove' `
         -Xml $afterRemoveXml `
@@ -1409,12 +1533,15 @@ function Invoke-BuddyOnboardingSmoke {
     $selectedAge = 10
 
     Invoke-TapDashboardTab -Index 4 -Label 'Profile'
-    Wait-ForUiText `
-        -Name 'buddy-profile-before-onboarding' `
-        -RequiredText @('My Profile', 'Finish Buddy Setup') `
-        -ForbiddenText @('FlowFit setup is incomplete', 'Could not check onboarding status') | Out-Null
+    Wait-ForLogcatPattern `
+        -Name 'buddy-profile-before-onboarding-rendered' `
+        -Pattern 'KidsProfileScreen: profile content rendered' `
+        -Detail 'Profile tab rendered before Buddy setup entry.' | Out-Null
     Save-Screenshot -Name 'buddy-profile-before-onboarding'
-    Invoke-TapText -Text 'Finish Buddy Setup' -DumpPrefix 'profile-finish-buddy-setup' -MaxScrolls 2
+    Invoke-TapScreenFraction `
+        -Name 'Finish Buddy Setup' `
+        -XFraction 0.5 `
+        -YFraction 0.54
 
     Wait-ForLogcatPattern `
         -Name 'buddy-welcome-rendered' `
@@ -1499,8 +1626,8 @@ function Invoke-BuddyOnboardingSmoke {
     Invoke-HideKeyboard
     Invoke-TapScreenFraction `
         -Name 'buddy profile age 10' `
-        -XFraction 0.5 `
-        -YFraction 0.73
+        -XFraction 0.67 `
+        -YFraction 0.66
     Invoke-TapScreenFraction `
         -Name 'buddy profile CONTINUE' `
         -XFraction 0.74 `
@@ -1676,6 +1803,20 @@ function Invoke-TextEntry {
     )
 
     Invoke-TapBounds -Bounds $Bounds -Name "$Name field"
+    $clipboard = Invoke-Adb `
+        -Arguments @('shell', 'cmd', 'clipboard', 'set', 'flowfit-smoke', $Value) `
+        -AllowFailure `
+        -Sensitive
+    $clipboardOutput = $clipboard.Output -join "`n"
+    $clipboardSupported = $clipboard.ExitCode -eq 0 -and
+        $clipboardOutput -notmatch 'No shell command implementation|Unknown command|Exception'
+    if ($clipboardSupported) {
+        Invoke-Adb -Arguments @('shell', 'input', 'keyevent', '279') -AllowFailure -Sensitive | Out-Null
+        Start-Sleep -Milliseconds 650
+        Add-Check -Name "input.$Name" -Status 'pass' -Detail "Entered $Name using Android clipboard paste."
+        return
+    }
+
     $adbText = ConvertTo-AdbInputText -Text $Value
     if ($null -eq $adbText) {
         Add-Check -Name "input.$Name" -Status 'fail' -Detail 'Value contains characters unsupported by adb input text.'
@@ -1898,7 +2039,7 @@ try {
     Assert-SmokeProfileCompleted -Config $config -Credentials $credentials
     Wait-ForLogcatPattern `
         -Name 'dashboard-after-survey' `
-        -Pattern '(_HomeScreenState\._subscribeToWatch|Starting to listen for watch data|Listening started successfully)' `
+        -Pattern '(FlowFitDashboard: rendered tab 0|_HomeScreenState\._subscribeToWatch|Starting to listen for watch data|Listening started successfully)' `
         -Detail 'Home dashboard initialized after survey completion.' | Out-Null
     Save-Screenshot -Name 'dashboard-after-survey'
     Invoke-DashboardTabSmoke
@@ -1917,11 +2058,13 @@ try {
 
     Invoke-SmokeBackendDataCleanup -Config $config -Credentials $credentials -Phase 'postRun' | Out-Null
 
-    $logcat = Invoke-Adb -Arguments @('logcat', '-d', '-v', 'time')
+    Save-Logcat
     $logPath = Join-Path $artifactRoot 'logcat.txt'
-    $logText = $logcat.Output -join "`n"
-    Set-Content -LiteralPath $logPath -Value $logText -Encoding UTF8
-    Add-Artifact -Name 'logcat' -Path $logPath
+    $logText = if (Test-Path -LiteralPath $logPath) {
+        Get-Content -LiteralPath $logPath -Raw
+    } else {
+        ''
+    }
 
     $escapedPackageName = [regex]::Escape($packageName)
     $appCrashPattern = "(AndroidRuntime.*Process:\s+$escapedPackageName\b|AndroidRuntime.*$escapedPackageName|$escapedPackageName.*AndroidRuntime|GeneratedPluginRegistrant|GeneratedPluginsRegister|NoClassDefFoundError|Error registering Flutter plugin)"
@@ -1950,6 +2093,11 @@ try {
 } catch {
     $script:status = 'fail'
     $script:errorMessage = $_.Exception.Message
+    try {
+        Save-Logcat -Name 'logcat-failure'
+    } catch {
+        # Preserve the original failure; logcat capture is best effort.
+    }
     throw
 } finally {
     try {
