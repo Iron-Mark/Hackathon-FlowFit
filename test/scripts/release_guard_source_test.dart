@@ -2238,7 +2238,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
               'serviceWorkerVersion: "deployed-build-version"; import("./main.dart.js");',
         );
 
-        expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+        expect(
+          result.exitCode,
+          0,
+          reason: '${result.stdout}\n${result.stderr}',
+        );
         expect(
           result.stdout,
           contains('Flutter bootstrap deployed asset freshness'),
