@@ -768,8 +768,15 @@ function Wait-ForUiText {
 
     $deadline = (Get-Date).AddSeconds($WaitTimeoutSeconds)
     $lastXml = ''
+    $lastDumpError = ''
     do {
-        $lastXml = Save-UiDump -Name $Name
+        try {
+            $lastXml = Save-UiDump -Name $Name
+        } catch {
+            $lastDumpError = $_.Exception.Message
+            Start-Sleep -Milliseconds 750
+            continue
+        }
         $missing = @($RequiredText | Where-Object { -not (Test-UiContains -Xml $lastXml -Text $_) })
         $forbidden = @($ForbiddenText | Where-Object { Test-UiContains -Xml $lastXml -Text $_ })
         if ($missing.Count -eq 0 -and $forbidden.Count -eq 0) {
@@ -783,8 +790,54 @@ function Wait-ForUiText {
         Start-Sleep -Milliseconds 750
     } while ((Get-Date) -lt $deadline)
 
-    Add-Check -Name "ui.$Name" -Status 'fail' -Detail "Missing text: $($missing -join ', ')"
-    throw "Timed out waiting for $Name UI text: $($missing -join ', ')"
+    $detail = if (-not [string]::IsNullOrWhiteSpace($lastDumpError)) {
+        "Missing text: $($missing -join ', '); last dump error: $lastDumpError"
+    } else {
+        "Missing text: $($missing -join ', ')"
+    }
+    Add-Check -Name "ui.$Name" -Status 'fail' -Detail $detail
+    throw "Timed out waiting for $Name UI text: $detail"
+}
+
+function Wait-ForUiTextWithDumpRetry {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][string[]]$RequiredText,
+        [string[]]$ForbiddenText = @()
+    )
+
+    $deadline = (Get-Date).AddSeconds($WaitTimeoutSeconds)
+    $missing = @()
+    $lastDumpError = ''
+    do {
+        try {
+            $xml = Save-UiDump -Name $Name
+        } catch {
+            $lastDumpError = $_.Exception.Message
+            Start-Sleep -Milliseconds 750
+            continue
+        }
+
+        $missing = @($RequiredText | Where-Object { -not (Test-UiContains -Xml $xml -Text $_) })
+        $forbidden = @($ForbiddenText | Where-Object { Test-UiContains -Xml $xml -Text $_ })
+        if ($missing.Count -eq 0 -and $forbidden.Count -eq 0) {
+            Add-Check -Name "ui.$Name" -Status 'pass' -Detail ($RequiredText -join ', ')
+            return $xml
+        }
+        if ($forbidden.Count -gt 0) {
+            Add-Check -Name "ui.$Name" -Status 'fail' -Detail "Forbidden text visible: $($forbidden -join ', ')"
+            throw "Forbidden auth/runtime text visible on $Name screen."
+        }
+        Start-Sleep -Milliseconds 750
+    } while ((Get-Date) -lt $deadline)
+
+    $detail = if (-not [string]::IsNullOrWhiteSpace($lastDumpError)) {
+        "Missing text: $($missing -join ', '); last dump error: $lastDumpError"
+    } else {
+        "Missing text: $($missing -join ', ')"
+    }
+    Add-Check -Name "ui.$Name" -Status 'fail' -Detail $detail
+    throw "Timed out waiting for $Name UI text: $detail"
 }
 
 function Wait-ForUiScreen {
@@ -796,8 +849,15 @@ function Wait-ForUiScreen {
 
     $deadline = (Get-Date).AddSeconds($WaitTimeoutSeconds)
     $lastMissing = @()
+    $lastDumpError = ''
     do {
-        $xml = Save-UiDump -Name $Name
+        try {
+            $xml = Save-UiDump -Name $Name
+        } catch {
+            $lastDumpError = $_.Exception.Message
+            Start-Sleep -Milliseconds 750
+            continue
+        }
         $forbidden = @($ForbiddenText | Where-Object { Test-UiContains -Xml $xml -Text $_ })
         if ($forbidden.Count -gt 0) {
             Add-Check -Name "ui.$Name" -Status 'fail' -Detail "Forbidden text visible: $($forbidden -join ', ')"
@@ -820,8 +880,13 @@ function Wait-ForUiScreen {
         Start-Sleep -Milliseconds 750
     } while ((Get-Date) -lt $deadline)
 
-    Add-Check -Name "ui.$Name" -Status 'fail' -Detail "No expected screen matched. Missing: $($lastMissing -join ' | ')"
-    throw "Timed out waiting for $Name expected UI screen."
+    $detail = if (-not [string]::IsNullOrWhiteSpace($lastDumpError)) {
+        "No expected screen matched. Missing: $($lastMissing -join ' | '); last dump error: $lastDumpError"
+    } else {
+        "No expected screen matched. Missing: $($lastMissing -join ' | ')"
+    }
+    Add-Check -Name "ui.$Name" -Status 'fail' -Detail $detail
+    throw "Timed out waiting for $Name expected UI screen. $detail"
 }
 
 function Wait-ForLogcatPattern {
@@ -857,6 +922,20 @@ function Invoke-TapBounds {
     Start-Sleep -Milliseconds 800
 }
 
+function Invoke-TapDashboardTab {
+    param(
+        [Parameter(Mandatory = $true)][int]$Index,
+        [Parameter(Mandatory = $true)][string]$Label
+    )
+
+    $tabCount = 5
+    $x = [math]::Floor($script:screenSize.width * (($Index + 0.5) / $tabCount))
+    $y = [math]::Floor($script:screenSize.height * 0.93)
+    Invoke-Adb -Arguments @('shell', 'input', 'tap', "$x", "$y") | Out-Null
+    Add-Check -Name "tap.dashboardTab.$Label" -Status 'pass' -Detail "Tapped dashboard tab $Label at $x,$y."
+    Start-Sleep -Milliseconds 900
+}
+
 function Invoke-ScrollDown {
     $x = [math]::Floor($script:screenSize.width / 2)
     $startY = [math]::Floor($script:screenSize.height * 0.78)
@@ -888,6 +967,60 @@ function Invoke-TapText {
 
     Add-Check -Name "tap.$Text" -Status 'fail' -Detail 'Target text was not visible.'
     throw "Could not find tappable UI text: $Text"
+}
+
+function Invoke-DashboardTabSmoke {
+    $tabs = @(
+        [pscustomobject]@{
+            Index = 1
+            Label = 'Health'
+            Name = 'dashboard-tab-health'
+            RequiredText = @('Daily Log', 'Food Intake', 'Add Food')
+            RenderLogPattern = ''
+        },
+        [pscustomobject]@{
+            Index = 2
+            Label = 'Track'
+            Name = 'dashboard-tab-track'
+            RequiredText = @('Time to Move!', 'AI Workout', 'Take a Walk', 'Log a Run')
+            RenderLogPattern = ''
+        },
+        [pscustomobject]@{
+            Index = 3
+            Label = 'Progress'
+            Name = 'dashboard-tab-progress'
+            RequiredText = @('Progress & Insights', 'Weekly Activity', 'Sleep Quality')
+            RenderLogPattern = ''
+        },
+        [pscustomobject]@{
+            Index = 4
+            Label = 'Profile'
+            Name = 'dashboard-tab-profile'
+            RequiredText = @()
+            RenderLogPattern = 'KidsProfileScreen: profile content rendered'
+        }
+    )
+
+    foreach ($tab in $tabs) {
+        Invoke-TapDashboardTab -Index $tab.Index -Label $tab.Label
+        Wait-ForLogcatPattern `
+            -Name "$($tab.Name)-selected" `
+            -Pattern "FlowFitDashboard: selected tab $($tab.Label) \($($tab.Index)\)" `
+            -Detail "Dashboard tab $($tab.Label) selection reached Flutter." | Out-Null
+        if ($tab.RequiredText.Count -gt 0) {
+            Wait-ForUiTextWithDumpRetry `
+                -Name $tab.Name `
+                -RequiredText $tab.RequiredText `
+                -ForbiddenText @('FlowFit setup is incomplete', 'Could not check onboarding status') | Out-Null
+        }
+        if (-not [string]::IsNullOrWhiteSpace($tab.RenderLogPattern)) {
+            Wait-ForLogcatPattern `
+                -Name "$($tab.Name)-rendered" `
+                -Pattern $tab.RenderLogPattern `
+                -Detail "Dashboard tab $($tab.Label) rendered its content widget." | Out-Null
+        }
+        Save-Screenshot -Name $tab.Name
+    }
 }
 
 function Get-InputTapPoint {
@@ -1199,6 +1332,7 @@ try {
         -Pattern '(_HomeScreenState\._subscribeToWatch|Starting to listen for watch data|Listening started successfully)' `
         -Detail 'Home dashboard initialized after survey completion.' | Out-Null
     Save-Screenshot -Name 'dashboard-after-survey'
+    Invoke-DashboardTabSmoke
 
     Invoke-SmokeBackendDataCleanup -Config $config -Credentials $credentials -Phase 'postRun' | Out-Null
 
@@ -1208,7 +1342,17 @@ try {
     Set-Content -LiteralPath $logPath -Value $logText -Encoding UTF8
     Add-Artifact -Name 'logcat' -Path $logPath
 
-    $crashPattern = '(GeneratedPluginRegistrant|GeneratedPluginsRegister|NoClassDefFoundError|FATAL EXCEPTION|Error registering Flutter plugin|AndroidRuntime.*com\.msiazondev\.flowfit|com\.msiazondev\.flowfit.*AndroidRuntime)'
+    $escapedPackageName = [regex]::Escape($packageName)
+    $appCrashPattern = "(AndroidRuntime.*Process:\s+$escapedPackageName\b|AndroidRuntime.*$escapedPackageName|$escapedPackageName.*AndroidRuntime|GeneratedPluginRegistrant|GeneratedPluginsRegister|NoClassDefFoundError|Error registering Flutter plugin)"
+    $ignoredUiAutomatorCrashPattern = '(?s)FATAL EXCEPTION: main.*?com\.android\.commands\.uiautomator\.Launcher'
+    $ignoredUiAutomatorCrashCount = ([regex]::Matches($logText, $ignoredUiAutomatorCrashPattern)).Count
+    if ($ignoredUiAutomatorCrashCount -gt 0) {
+        Add-Check `
+            -Name 'android.uiautomatorCrashMarkersIgnored' `
+            -Status 'pass' `
+            -Detail "Ignored $ignoredUiAutomatorCrashCount uiautomator dump crash marker(s) caused by the Android automation-service registration race."
+    }
+    $crashPattern = $appCrashPattern
     $markerCount = ([regex]::Matches($logText, $crashPattern)).Count
     Assert-Condition `
         -Condition ($markerCount -eq 0) `

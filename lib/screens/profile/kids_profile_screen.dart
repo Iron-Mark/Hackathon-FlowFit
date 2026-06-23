@@ -154,6 +154,11 @@ class KidsProfileScreen extends ConsumerWidget {
     bool isRealProfile,
     WidgetRef ref,
   ) {
+    assert(() {
+      debugPrint('KidsProfileScreen: profile content rendered');
+      return true;
+    }());
+
     // Calculate happiness and health from level and xp
     const happiness = 80;
     const health = 90;

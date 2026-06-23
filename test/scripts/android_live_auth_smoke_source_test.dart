@@ -68,12 +68,15 @@ void main() {
         'Invoke-SmokeBackendDataCleanup',
         'Assert-SmokeProfileCompleted',
         'Wait-ForUiScreen',
+        'Wait-ForUiTextWithDumpRetry',
         'post-auth-onboarding-entry',
         '/auth/v1/token?grant_type=password',
         '/auth/v1/logout',
         'Redact-SensitiveText',
         'could not get idle state',
         'uiautomator dump file was not readable',
+        'Invoke-DashboardTabSmoke',
+        'Invoke-TapDashboardTab',
       ]) {
         expect(source, contains(token));
       }
@@ -136,6 +139,20 @@ void main() {
       '_HomeScreenState\\._subscribeToWatch',
       'Home dashboard initialized after survey completion.',
       'dashboard-after-survey',
+      'dashboard-tab-health',
+      'dashboard-tab-track',
+      'dashboard-tab-progress',
+      'dashboard-tab-profile',
+      '-selected',
+      '-rendered',
+      'FlowFitDashboard: selected tab',
+      'KidsProfileScreen: profile content rendered',
+      'Daily Log',
+      'Food Intake',
+      'Time to Move!',
+      'AI Workout',
+      'Progress & Insights',
+      'Weekly Activity',
       'Continue',
     ]) {
       expect(source, contains(text));
@@ -159,6 +176,9 @@ void main() {
       'FATAL EXCEPTION',
       'Error registering Flutter plugin',
       'AndroidRuntime',
+      'Process:\\s+',
+      'android.uiautomatorCrashMarkersIgnored',
+      'com\\.android\\.commands\\.uiautomator\\.Launcher',
     ]) {
       expect(source, contains(token));
     }

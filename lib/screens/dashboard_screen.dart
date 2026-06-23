@@ -95,6 +95,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return null;
   }
 
+  void _handleTabTap(int index) {
+    const labels = ['Home', 'Health', 'Track', 'Progress', 'Profile'];
+    assert(() {
+      debugPrint('FlowFitDashboard: selected tab ${labels[index]} ($index)');
+      return true;
+    }());
+    setState(() => _currentIndex = index);
+  }
+
   void _checkAuthState() {
     final authState = ref.read(authNotifierProvider);
 
@@ -138,7 +147,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: _handleTabTap,
           type: BottomNavigationBarType.fixed,
           backgroundColor: theme.colorScheme.surface,
           selectedItemColor: theme.colorScheme.primary,

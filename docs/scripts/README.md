@@ -122,8 +122,11 @@ installs it, clears local app state, signs in with the ignored
 taps the 13+ onboarding path, opens `Quick Setup`, taps `Let's Personalize`,
 completes the 13+ survey with stable smoke values, asserts the completed
 `user_profiles` row through authenticated RLS, verifies dashboard initialization
-with a fresh HomeScreen logcat marker and screenshot, then cleans the app-owned
-smoke rows so the next run starts from onboarding again.
+with a fresh HomeScreen logcat marker and screenshot, taps the authenticated
+dashboard Health, Track, Progress, and Profile tabs, asserts the readable tab
+surfaces with UI dumps, uses Flutter log markers for the Profile tab where
+Android UI dumps can hit an idle-state limit, captures tab screenshots, then
+cleans the app-owned smoke rows so the next run starts from onboarding again.
 
 **Usage**:
 ```powershell
@@ -139,6 +142,10 @@ UI screenshots/dumps that are captured before credentials are typed or after
 login leaves the credential form, and logcat crash evidence. It never writes the
 Supabase publishable key, access token, refresh token, or smoke password to the
 JSON artifact.
+
+The logcat gate still fails on FlowFit app, AndroidRuntime package, and Flutter
+plugin crash markers. Known `uiautomator` dump process crashes from the Android
+automation-service registration race are recorded separately as ignored evidence.
 
 If Android clipboard paste is unavailable and the password contains shell-active
 characters, use a strong ADB-safe smoke password made from letters, numbers,
