@@ -4,6 +4,7 @@ import 'package:flowfit/features/wellness/presentation/maps_page.dart';
 import 'package:flowfit/features/wellness/services/geofence_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart' as maplat;
 import 'package:provider/provider.dart';
 
@@ -58,6 +59,60 @@ void main() {
     expect(repo.current.single.center.latitude, 14.5995);
     expect(repo.current.single.center.longitude, 120.9842);
     expect(find.text('Mission added'), findsOneWidget);
+  });
+
+  testWidgets('WellnessMapsPage falls back when startup location fails', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final originalGeolocator = GeolocatorPlatform.instance;
+    GeolocatorPlatform.instance = _ThrowingGeolocatorPlatform();
+    addTearDown(() => GeolocatorPlatform.instance = originalGeolocator);
+
+    final repo = InMemoryGeofenceRepository();
+    final service = GeofenceService(repository: repo);
+
+    addTearDown(service.dispose);
+    addTearDown(repo.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<GeofenceRepository>.value(value: repo),
+            ChangeNotifierProvider<GeofenceService>.value(value: service),
+          ],
+          child: const WellnessMapsPage(
+            enableLocationServices: true,
+            renderMapLayers: false,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.ensureVisible(find.text('Skip Tutorial'));
+    await tester.tap(find.text('Skip Tutorial'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithIcon(FloatingActionButton, Icons.add));
+    await tester.pump();
+
+    expect(find.text('Title'), findsOneWidget);
+    expect(find.text('Create'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Fallback sanctuary');
+    await tester.tap(find.text('Create'));
+    await tester.pump();
+
+    expect(repo.current, hasLength(1));
+    expect(repo.current.single.title, 'Fallback sanctuary');
+    expect(repo.current.single.center.latitude, 0);
+    expect(repo.current.single.center.longitude, 0);
   });
 
   testWidgets('WellnessMapsPage focuses and toggles a seeded mission', (
@@ -140,4 +195,13 @@ void main() {
 
     expect(find.text('Start'), findsNothing);
   });
+}
+
+class _ThrowingGeolocatorPlatform extends GeolocatorPlatform {
+  @override
+  Future<Position> getCurrentPosition({
+    LocationSettings? locationSettings,
+  }) async {
+    throw StateError('location unavailable');
+  }
 }

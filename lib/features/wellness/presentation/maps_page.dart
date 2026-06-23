@@ -38,6 +38,8 @@ class WellnessMapsPage extends StatefulWidget {
 }
 
 class _WellnessMapsPageState extends State<WellnessMapsPage> {
+  static const maplat.LatLng _fallbackInitialCenter = maplat.LatLng(0, 0);
+
   fm.MapController? _mapController;
   maplat.LatLng? _initialCenter;
   maplat.LatLng? _lastCenter;
@@ -59,6 +61,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
   double _focusedDistanceMeters = 0.0;
   Duration _focusedEta = Duration.zero;
   double _focusSpeedMps = 1.4; // default walking speed
+  bool _locationStartupFailed = false;
 
   GeofenceRepository _getRepo() {
     try {
@@ -112,6 +115,13 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
       await _subscribeToService(startMonitoring: true);
     } catch (e) {
       if (!mounted) return;
+      final fallbackCenter = _initialCenter ?? _fallbackInitialCenter;
+      setState(() {
+        _initialCenter = fallbackCenter;
+        _lastCenter = fallbackCenter;
+        _locationStartupFailed = true;
+      });
+      _mapController?.move(fallbackCenter, 16.0);
       await _subscribeToService(startMonitoring: false);
     }
   }
@@ -524,6 +534,31 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
           if (_showTutorial)
             MapTutorialOverlay(
               onDismiss: () => setState(() => _showTutorial = false),
+            ),
+
+          if (_locationStartupFailed)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Container(
+                  margin: const EdgeInsets.only(top: 72, left: 16, right: 72),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                    ),
+                  ),
+                  child: const Text(
+                    'Location unavailable. Map opened at the fallback center.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
             ),
         ],
       ),
