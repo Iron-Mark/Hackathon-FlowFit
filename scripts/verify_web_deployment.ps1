@@ -148,6 +148,17 @@ function Get-Sha256HexFromFile {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
+function Normalize-FlutterBootstrapForComparison {
+    param([Parameter(Mandatory = $true)][string]$Content)
+
+    $serviceWorkerVersionPattern = "serviceWorkerVersion\s*:\s*['`"][^'`"]*['`"]"
+    return [regex]::Replace(
+        $Content,
+        $serviceWorkerVersionPattern,
+        'serviceWorkerVersion:"[generated]"'
+    )
+}
+
 function Resolve-CompareBuildWebPath {
     param([string]$Path)
 
@@ -193,14 +204,23 @@ function Assert-DeployedAssetMatchesLocal {
         return
     }
 
-    $remoteHash = Get-Sha256HexFromText -Content $RemoteContent
-    $localHash = Get-Sha256HexFromFile -Path $localPath
+    $comparisonDetail = ''
+    if ($RelativePath -eq 'flutter_bootstrap.js') {
+        $localContent = Get-Content -LiteralPath $localPath -Raw
+        $remoteHash = Get-Sha256HexFromText -Content (Normalize-FlutterBootstrapForComparison -Content $RemoteContent)
+        $localHash = Get-Sha256HexFromText -Content (Normalize-FlutterBootstrapForComparison -Content $localContent)
+        $comparisonDetail = ' after normalizing generated serviceWorkerVersion'
+    } else {
+        $remoteHash = Get-Sha256HexFromText -Content $RemoteContent
+        $localHash = Get-Sha256HexFromFile -Path $localPath
+    }
+
     if ($remoteHash -ne $localHash) {
-        Add-Fail "$Name deployed asset freshness" "Deployed $RelativePath hash $remoteHash does not match local build hash $localHash."
+        Add-Fail "$Name deployed asset freshness" "Deployed $RelativePath hash $remoteHash does not match local build hash $localHash$comparisonDetail."
         return
     }
 
-    Add-Pass "$Name deployed asset freshness" "Deployed $RelativePath matches the local build hash $localHash."
+    Add-Pass "$Name deployed asset freshness" "Deployed $RelativePath matches the local build hash $localHash$comparisonDetail."
 }
 
 function Resolve-IndexBaseUri {

@@ -2209,6 +2209,46 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     }
   });
 
+  test(
+    'web deployment verifier ignores generated bootstrap service worker version',
+    () async {
+      final tempDir = Directory.systemTemp.createTempSync(
+        'flowfit_web_deploy_compare_',
+      );
+      try {
+        final localBuild = Directory(
+          '${tempDir.path}${Platform.pathSeparator}web',
+        )..createSync(recursive: true);
+        File(
+          '${localBuild.path}${Platform.pathSeparator}index.html',
+        ).writeAsStringSync('<base href="/app/">');
+        File(
+          '${localBuild.path}${Platform.pathSeparator}flutter_bootstrap.js',
+        ).writeAsStringSync(
+          'serviceWorkerVersion: "local-build-version"; import("./main.dart.js");',
+        );
+        File(
+          '${localBuild.path}${Platform.pathSeparator}main.dart.js',
+        ).writeAsStringSync('function main() {}');
+
+        final result = await _runWebDeploymentVerifierAgainstFixture(
+          baseHref: '/app/',
+          compareBuildWebPath: localBuild.path,
+          bootstrapContent:
+              'serviceWorkerVersion: "deployed-build-version"; import("./main.dart.js");',
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
+        expect(
+          result.stdout,
+          contains('Flutter bootstrap deployed asset freshness'),
+        );
+      } finally {
+        tempDir.deleteSync(recursive: true);
+      }
+    },
+  );
+
   test('ci and preflight run web app smoke against built web output', () {
     expect(ciWorkflow, contains('--no-wasm-dry-run'));
     expect(ciWorkflow, contains('scripts/verify_web_deployment.ps1'));
@@ -3949,6 +3989,7 @@ Future<ProcessResult> _runWebDeploymentVerifierAgainstFixture({
   required String baseHref,
   String supportEmail = 'support@flowfit.com',
   String compareBuildWebPath = '',
+  String bootstrapContent = "import('./main.dart.js');",
 }) async {
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
   late final StreamSubscription<HttpRequest> subscription;
@@ -3975,7 +4016,7 @@ Future<ProcessResult> _runWebDeploymentVerifierAgainstFixture({
 ''');
       case '/app/flutter_bootstrap.js':
         response.headers.contentType = ContentType('application', 'javascript');
-        response.write("import('./main.dart.js');");
+        response.write(bootstrapContent);
       case '/app/main.dart.js':
         response.headers.contentType = ContentType('application', 'javascript');
         response.write('function main() {}');
