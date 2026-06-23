@@ -362,6 +362,26 @@ function Assert-FieldEquals {
     }
 }
 
+function Assert-RowCount {
+    param(
+        $Rows,
+        [Parameter(Mandatory = $true)][int]$Expected,
+        [Parameter(Mandatory = $true)][string]$Name
+    )
+
+    $actual = if ($null -eq $Rows) {
+        0
+    } elseif ($Rows -is [System.Array]) {
+        $Rows.Count
+    } else {
+        1
+    }
+
+    if ($actual -ne $Expected) {
+        throw "Expected $Name to return $Expected row(s), got $actual."
+    }
+}
+
 Import-EnvFile -Path $EnvFile
 
 if (-not $AllowExternalWrites) {
@@ -542,7 +562,31 @@ try {
     Assert-FieldEquals -Actual $updatedWorkout.id -Expected $workoutId -Name 'workout_sessions.updated.id'
     Assert-FieldEquals -Actual $updatedWorkout.status -Expected 'completed' -Name 'workout_sessions.updated.status'
     Assert-FieldEquals -Actual $updatedWorkout.duration_seconds -Expected 60 -Name 'workout_sessions.duration_seconds'
-    $checks.Add([pscustomobject]@{ name = 'workout create update list'; status = 'pass'; detail = 'workout_sessions insert/update/read passed through authenticated RLS.' })
+
+    $listedWorkoutRows = Invoke-SupabaseRest `
+        -Method 'GET' `
+        -Path "workout_sessions?user_id=eq.$userId&id=eq.$workoutId&select=id,user_id,workout_type,status,duration_seconds,current_distance&order=start_time.desc" `
+        -AccessToken $accessToken
+    Assert-RowCount -Rows $listedWorkoutRows -Expected 1 -Name 'workout_sessions list before delete'
+    $listedWorkout = Select-FirstRow $listedWorkoutRows
+    Assert-FieldEquals -Actual $listedWorkout.id -Expected $workoutId -Name 'workout_sessions.listed.id'
+    Assert-FieldEquals -Actual $listedWorkout.status -Expected 'completed' -Name 'workout_sessions.listed.status'
+
+    $deletedWorkoutRows = Invoke-SupabaseRest `
+        -Method 'DELETE' `
+        -Path "workout_sessions?id=eq.$workoutId&select=id" `
+        -AccessToken $accessToken `
+        -ExtraHeaders @{ Prefer = 'return=representation' }
+    Assert-RowCount -Rows $deletedWorkoutRows -Expected 1 -Name 'workout_sessions delete'
+    $deletedWorkout = Select-FirstRow $deletedWorkoutRows
+    Assert-FieldEquals -Actual $deletedWorkout.id -Expected $workoutId -Name 'workout_sessions.deleted.id'
+
+    $postDeleteWorkoutRows = Invoke-SupabaseRest `
+        -Method 'GET' `
+        -Path "workout_sessions?id=eq.$workoutId&select=id" `
+        -AccessToken $accessToken
+    Assert-RowCount -Rows $postDeleteWorkoutRows -Expected 0 -Name 'workout_sessions list after delete'
+    $checks.Add([pscustomobject]@{ name = 'workout create update list delete'; status = 'pass'; detail = 'workout_sessions insert/update/list/delete passed through authenticated RLS.' })
 
     $heartRows = Invoke-SupabaseRest `
         -Method 'POST' `

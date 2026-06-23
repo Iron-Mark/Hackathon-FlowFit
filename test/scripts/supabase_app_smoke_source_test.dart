@@ -52,7 +52,9 @@ void main() {
     expect(script, contains('profile onboarding upsert'));
     expect(script, contains('buddy onboarding upsert'));
     expect(script, contains("buddyName = 'FlowFitSmokeBuddy'"));
-    expect(script, contains('workout create update list'));
+    expect(script, contains('workout create update list delete'));
+    expect(script, contains('Assert-RowCount'));
+    expect(script, contains('workout_sessions list after delete'));
     expect(script, contains('heart rate insert list'));
     expect(script, contains("Method 'DELETE'"));
     expect(script, contains('SUPABASE_APP_SMOKE_OK'));

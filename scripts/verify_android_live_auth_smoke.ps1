@@ -527,12 +527,87 @@ function Assert-SmokeProfileCompleted {
     }
 }
 
-function Resolve-AdbPath {
-    $pathCommand = Get-Command adb -ErrorAction SilentlyContinue
-    if ($pathCommand) {
-        return $pathCommand.Source
-    }
+function Assert-SmokeBuddyCompleted {
+    param(
+        [Parameter(Mandatory = $true)]$Config,
+        [Parameter(Mandatory = $true)]$Credentials,
+        [Parameter(Mandatory = $true)][string]$ExpectedName,
+        [Parameter(Mandatory = $true)][string]$ExpectedColor,
+        [Parameter(Mandatory = $true)][string]$ExpectedNickname,
+        [Parameter(Mandatory = $true)][int]$ExpectedAge,
+        [Parameter(Mandatory = $true)][string]$ExpectedGoal,
+        [Parameter(Mandatory = $true)][bool]$ExpectedNotificationsEnabled
+    )
 
+    $accessToken = ''
+    try {
+        $authResponse = Invoke-PasswordGrant `
+            -Config $Config `
+            -Credentials $Credentials `
+            -Operation 'post-buddy verification auth'
+        $accessToken = [string]$authResponse.access_token
+        $userId = [string]$authResponse.user.id
+        if ([string]::IsNullOrWhiteSpace($accessToken) -or [string]::IsNullOrWhiteSpace($userId)) {
+            throw 'Buddy verification auth did not return an access token and user id.'
+        }
+
+        $buddy = Select-FirstRow (Invoke-SupabaseRest `
+            -Config $Config `
+            -AccessToken $accessToken `
+            -Method 'GET' `
+            -Path "buddy_profiles?user_id=eq.$userId&select=user_id,name,color,level,xp,unlocked_colors" `
+            -Operation 'post-buddy verification buddy read')
+
+        if ($null -eq $buddy) {
+            throw 'Completed Buddy onboarding did not create a buddy_profiles row.'
+        }
+        $unlockedColors = @($buddy.unlocked_colors)
+        if (
+            $buddy.user_id -ne $userId -or
+            [string]$buddy.name -ne $ExpectedName -or
+            [string]$buddy.color -ne $ExpectedColor -or
+            [int]$buddy.level -ne 1 -or
+            [int]$buddy.xp -ne 0 -or
+            ($unlockedColors -notcontains $ExpectedColor)
+        ) {
+            throw 'Completed Buddy profile row did not match expected live-smoke values.'
+        }
+
+        $profile = Select-FirstRow (Invoke-SupabaseRest `
+            -Config $Config `
+            -AccessToken $accessToken `
+            -Method 'GET' `
+            -Path "user_profiles?user_id=eq.$userId&select=user_id,nickname,age,is_kids_mode,wellness_goals,notifications_enabled,survey_completed" `
+            -Operation 'post-buddy verification profile read')
+
+        if ($null -eq $profile) {
+            throw 'Completed Buddy onboarding did not leave a user_profiles row.'
+        }
+        $wellnessGoals = @($profile.wellness_goals)
+        if (
+            $profile.user_id -ne $userId -or
+            [string]$profile.nickname -ne $ExpectedNickname -or
+            [int]$profile.age -ne $ExpectedAge -or
+            $profile.is_kids_mode -ne $true -or
+            $profile.survey_completed -ne $true -or
+            $profile.notifications_enabled -ne $ExpectedNotificationsEnabled -or
+            ($wellnessGoals -notcontains $ExpectedGoal)
+        ) {
+            throw 'Completed Buddy user profile fields did not match expected live-smoke values.'
+        }
+
+        Add-Check -Name 'supabase.buddyCompleted' -Status 'pass' -Detail 'Buddy profile row and Buddy user profile fields passed through authenticated RLS.'
+    } finally {
+        if (-not [string]::IsNullOrWhiteSpace($accessToken)) {
+            Invoke-SmokeRestSignOut `
+                -Config $Config `
+                -AccessToken $accessToken `
+                -Operation 'post-buddy verification sign-out'
+        }
+    }
+}
+
+function Resolve-AdbPath {
     foreach ($rootName in @('ANDROID_HOME', 'ANDROID_SDK_ROOT', 'LOCALAPPDATA')) {
         $rootValue = [Environment]::GetEnvironmentVariable($rootName)
         if ([string]::IsNullOrWhiteSpace($rootValue)) {
@@ -547,6 +622,11 @@ function Resolve-AdbPath {
         if (Test-Path -LiteralPath $candidate) {
             return (Resolve-Path -LiteralPath $candidate).Path
         }
+    }
+
+    $pathCommand = Get-Command adb -ErrorAction SilentlyContinue
+    if ($pathCommand) {
+        return $pathCommand.Source
     }
 
     throw 'adb was not found on PATH or under ANDROID_HOME / ANDROID_SDK_ROOT / LOCALAPPDATA Android SDK paths.'
@@ -618,6 +698,100 @@ function Get-AdbShellText {
 
     $result = Invoke-Adb -Arguments (@('shell') + $Arguments)
     return (($result.Output -join "`n").Trim())
+}
+
+function Wait-ForAndroidRuntimeReady {
+    $deadline = (Get-Date).AddSeconds([Math]::Max($WaitTimeoutSeconds, 90))
+    $lastError = ''
+
+    do {
+        $services = Invoke-Adb -Arguments @('shell', 'service', 'list') -AllowFailure
+        $screen = Invoke-Adb -Arguments @('shell', 'wm', 'size') -AllowFailure
+        $serviceText = $services.Output -join "`n"
+        $screenText = $screen.Output -join "`n"
+
+        if (
+            $services.ExitCode -eq 0 -and
+            $screen.ExitCode -eq 0 -and
+            $serviceText -match '\bactivity:' -and
+            $serviceText -match '\bpackage:' -and
+            $serviceText -match '\bwindow:' -and
+            $screenText -match 'Physical size:\s*\d+x\d+'
+        ) {
+            Add-Check -Name 'adb.runtimeReady' -Status 'pass' -Detail 'Android activity, package, and window services are ready.'
+            return
+        }
+
+        $lastError = "serviceExit=$($services.ExitCode); wmExit=$($screen.ExitCode); wm=$screenText"
+        Start-Sleep -Seconds 2
+    } while ((Get-Date) -lt $deadline)
+
+    Add-Check -Name 'adb.runtimeReady' -Status 'fail' -Detail $lastError
+    throw "Android runtime services were not ready before timeout. $lastError"
+}
+
+function Install-ApkWithRetry {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    $lastOutput = ''
+    foreach ($attempt in 1..3) {
+        Wait-ForAndroidRuntimeReady
+        $install = Invoke-Adb `
+            -Arguments @('install', '--no-streaming', '-r', '-d', $Path) `
+            -AllowFailure
+        $lastOutput = $install.Output -join "`n"
+
+        if ($install.ExitCode -eq 0) {
+            Add-Check `
+                -Name 'adb.install' `
+                -Status 'pass' `
+                -Detail "Installed debug APK on attempt $attempt."
+            return
+        }
+
+        Add-Check `
+            -Name "adb.install.retry$attempt" `
+            -Status 'warn' `
+            -Detail "APK install attempt $attempt failed with exit code $($install.ExitCode)."
+        Start-Sleep -Seconds (2 * $attempt)
+    }
+
+    throw "$script:adbPath -s $script:deviceSerial install --no-streaming -r -d $Path failed after 3 attempts.`n$lastOutput"
+}
+
+function Start-AppWithRetry {
+    $lastOutput = ''
+    foreach ($attempt in 1..3) {
+        Wait-ForAndroidRuntimeReady
+        $launch = Invoke-Adb `
+            -Arguments @(
+                'shell',
+                'am',
+                'start',
+                '-W',
+                '-a',
+                'android.intent.action.MAIN',
+                '-c',
+                'android.intent.category.LAUNCHER',
+                '-n',
+                $mainActivity
+            ) `
+            -AllowFailure
+        $lastOutput = $launch.Output -join "`n"
+
+        if ($launch.ExitCode -eq 0 -and $lastOutput -match 'Status:\s+ok') {
+            Add-Check -Name 'adb.launchStatus' -Status 'pass' -Detail "am start -W returned Status: ok on attempt $attempt."
+            return
+        }
+
+        Add-Check `
+            -Name "adb.launch.retry$attempt" `
+            -Status 'warn' `
+            -Detail "App launch attempt $attempt failed with exit code $($launch.ExitCode)."
+        Start-Sleep -Seconds (2 * $attempt)
+    }
+
+    throw "Android launch did not report Status: ok after 3 attempts.`n$lastOutput"
 }
 
 function Update-DeviceInfo {
@@ -757,6 +931,42 @@ function Get-UiTextBounds {
         centerX = [math]::Floor(($left + $right) / 2)
         centerY = [math]::Floor(($top + $bottom) / 2)
     }
+}
+
+function Get-ClosestUiTextBounds {
+    param(
+        [Parameter(Mandatory = $true)][string]$Xml,
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][int]$TargetY
+    )
+
+    $escaped = [regex]::Escape($Text)
+    $pattern = '<node\b(?=[^>]*(?:text|content-desc)="' + $escaped + '")(?=[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]")[^>]*>'
+    $matches = [regex]::Matches($Xml, $pattern)
+    if ($matches.Count -eq 0) {
+        return $null
+    }
+
+    $bounds = @(
+        foreach ($match in $matches) {
+            $left = [int]$match.Groups[1].Value
+            $top = [int]$match.Groups[2].Value
+            $right = [int]$match.Groups[3].Value
+            $bottom = [int]$match.Groups[4].Value
+            $centerY = [math]::Floor(($top + $bottom) / 2)
+            [pscustomobject]@{
+                left = $left
+                top = $top
+                right = $right
+                bottom = $bottom
+                centerX = [math]::Floor(($left + $right) / 2)
+                centerY = $centerY
+                distance = [math]::Abs($centerY - $TargetY)
+            }
+        }
+    )
+
+    return $bounds | Sort-Object distance | Select-Object -First 1
 }
 
 function Wait-ForUiText {
@@ -922,6 +1132,44 @@ function Invoke-TapBounds {
     Start-Sleep -Milliseconds 800
 }
 
+function Invoke-TapScreenFraction {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][double]$XFraction,
+        [Parameter(Mandatory = $true)][double]$YFraction
+    )
+
+    $x = [math]::Floor($script:screenSize.width * $XFraction)
+    $y = [math]::Floor($script:screenSize.height * $YFraction)
+    Invoke-Adb -Arguments @('shell', 'input', 'tap', "$x", "$y") | Out-Null
+    Add-Check -Name "tap.$Name" -Status 'pass' -Detail "Tapped $Name at $x,$y."
+    Start-Sleep -Milliseconds 900
+}
+
+function Invoke-TextEntryAtScreenFraction {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][double]$XFraction,
+        [Parameter(Mandatory = $true)][double]$YFraction,
+        [Parameter(Mandatory = $true)][string]$Value
+    )
+
+    Invoke-TapScreenFraction `
+        -Name "$Name field" `
+        -XFraction $XFraction `
+        -YFraction $YFraction
+
+    $adbText = ConvertTo-AdbInputText -Text $Value
+    if ($null -eq $adbText) {
+        Add-Check -Name "input.$Name" -Status 'fail' -Detail 'Value contains characters unsupported by adb input text.'
+        throw "Could not enter $Name with adb input text."
+    }
+
+    Invoke-Adb -Arguments @('shell', 'input', 'text', $adbText) | Out-Null
+    Add-Check -Name "input.$Name" -Status 'pass' -Detail "Entered $Name."
+    Start-Sleep -Milliseconds 650
+}
+
 function Invoke-TapDashboardTab {
     param(
         [Parameter(Mandatory = $true)][int]$Index,
@@ -952,20 +1200,40 @@ function Invoke-TapText {
         [int]$MaxScrolls = 0
     )
 
-    for ($attempt = 0; $attempt -le $MaxScrolls; $attempt += 1) {
-        $xml = Save-UiDump -Name "$DumpPrefix-$attempt"
+    $deadline = (Get-Date).AddSeconds($WaitTimeoutSeconds)
+    $scrollsPerformed = 0
+    $attempt = 0
+    $lastDumpError = ''
+    do {
+        try {
+            $xml = Save-UiDump -Name "$DumpPrefix-$attempt"
+        } catch {
+            $lastDumpError = $_.Exception.Message
+            $attempt += 1
+            Start-Sleep -Milliseconds 750
+            continue
+        }
         $bounds = Get-UiTextBounds -Xml $xml -Text $Text -Contains:$Contains
         if ($null -ne $bounds) {
             Invoke-TapBounds -Bounds $bounds -Name $Text
             return
         }
 
-        if ($attempt -lt $MaxScrolls) {
+        if ($scrollsPerformed -lt $MaxScrolls) {
             Invoke-ScrollDown
+            $scrollsPerformed += 1
+        } else {
+            Start-Sleep -Milliseconds 750
         }
-    }
+        $attempt += 1
+    } while ((Get-Date) -lt $deadline)
 
-    Add-Check -Name "tap.$Text" -Status 'fail' -Detail 'Target text was not visible.'
+    $detail = if (-not [string]::IsNullOrWhiteSpace($lastDumpError)) {
+        "Target text was not visible; last dump error: $lastDumpError"
+    } else {
+        'Target text was not visible.'
+    }
+    Add-Check -Name "tap.$Text" -Status 'fail' -Detail $detail
     throw "Could not find tappable UI text: $Text"
 }
 
@@ -1023,11 +1291,296 @@ function Invoke-DashboardTabSmoke {
     }
 }
 
+function Invoke-HealthFoodLiveSmoke {
+    $foodName = 'LiveSnack'
+    $foodCalories = '123'
+
+    Invoke-TapDashboardTab -Index 1 -Label 'Health'
+    Wait-ForUiText `
+        -Name 'health-food-before' `
+        -RequiredText @('Daily Log', 'Food Intake', 'Add Food') `
+        -ForbiddenText @('FlowFit setup is incomplete', 'Could not check onboarding status') | Out-Null
+    Save-Screenshot -Name 'health-food-before'
+
+    Invoke-TapText -Text 'Add Food' -DumpPrefix 'health-add-food'
+    $dialogXml = Wait-ForUiText `
+        -Name 'health-add-food-dialog' `
+        -RequiredText @('Add Food', 'Cancel', 'Add') `
+        -ForbiddenText @('FlowFit setup is incomplete')
+
+    $foodNameBounds = Get-InputTapPoint -Xml $dialogXml -HintText 'e.g., Banana' -LabelText 'Food Name' -FieldIndex 0
+    Invoke-TextEntry -Bounds $foodNameBounds -Value $foodName -Name 'health food name'
+    Invoke-HideKeyboard
+
+    $dialogAfterNameXml = Wait-ForUiText `
+        -Name 'health-add-food-dialog-after-name' `
+        -RequiredText @('Add Food', 'Cancel', 'Add') `
+        -ForbiddenText @('FlowFit setup is incomplete')
+    $caloriesBounds = Get-InputTapPoint -Xml $dialogAfterNameXml -HintText 'e.g., 105' -LabelText 'Calories' -FieldIndex 1
+    Invoke-TextEntry -Bounds $caloriesBounds -Value $foodCalories -Name 'health food calories'
+    Invoke-HideKeyboard
+    Invoke-TapText -Text 'Add' -DumpPrefix 'health-add-food-submit'
+
+    $addedXml = Wait-ForUiText `
+        -Name 'health-food-added' `
+        -RequiredText @($foodName, "$foodCalories kcal") `
+        -ForbiddenText @('FlowFit setup is incomplete')
+    Save-Screenshot -Name 'health-food-added'
+
+    $foodBounds = Get-UiTextBounds -Xml $addedXml -Text $foodName
+    if ($null -eq $foodBounds) {
+        Add-Check -Name 'ui.health-food-added-row' -Status 'fail' -Detail 'Could not locate added food row bounds.'
+        throw 'Could not locate added food row bounds.'
+    }
+    $foodActionBounds = Get-ClosestUiTextBounds -Xml $addedXml -Text 'Food actions' -TargetY $foodBounds.centerY
+    if ($null -eq $foodActionBounds) {
+        Add-Check -Name 'ui.health-food-actions-row' -Status 'fail' -Detail 'Could not locate added food row action button.'
+        throw 'Could not locate added food row action button.'
+    }
+    Invoke-TapBounds -Bounds $foodActionBounds -Name 'Food actions for LiveSnack'
+    Wait-ForUiText `
+        -Name 'health-food-actions-menu' `
+        -RequiredText @('Remove') `
+        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
+    Invoke-TapText -Text 'Remove' -DumpPrefix 'health-food-remove'
+    Wait-ForUiText `
+        -Name 'health-food-removed-snackbar' `
+        -RequiredText @("$foodName removed from Breakfast") `
+        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
+    Start-Sleep -Seconds 3
+    $afterRemoveXml = Save-UiDump -Name 'health-food-after-remove'
+    Assert-UiNotContains `
+        -Name 'health-food-after-remove' `
+        -Xml $afterRemoveXml `
+        -ForbiddenText @($foodName, "$foodCalories kcal")
+    Save-Screenshot -Name 'health-food-after-remove'
+}
+
+function Invoke-TrackRouteLiveSmoke {
+    Invoke-TapDashboardTab -Index 2 -Label 'Track'
+    Wait-ForUiText `
+        -Name 'track-before-route-actions' `
+        -RequiredText @('Time to Move!', 'AI Workout', 'Take a Walk', 'Log a Run') `
+        -ForbiddenText @('FlowFit setup is incomplete', 'Could not check onboarding status') | Out-Null
+    Save-Screenshot -Name 'track-before-route-actions'
+
+    Invoke-TapText -Text 'AI Workout' -DumpPrefix 'track-ai-workout' -Contains
+    Wait-ForUiText `
+        -Name 'track-ai-workout-opened' `
+        -RequiredText @('Activity AI Classifier', 'Galaxy Watch') `
+        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
+    Save-Screenshot -Name 'track-ai-workout-opened'
+    Invoke-Adb -Arguments @('shell', 'input', 'keyevent', 'BACK') -AllowFailure | Out-Null
+    Wait-ForUiText `
+        -Name 'track-after-ai-back' `
+        -RequiredText @('Time to Move!', 'AI Workout', 'Take a Walk', 'Log a Run') `
+        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
+
+    Invoke-TapText -Text 'Take a Walk' -DumpPrefix 'track-take-walk' -Contains
+    Wait-ForUiText `
+        -Name 'track-walking-options-opened' `
+        -RequiredText @('Choose Walking Mode', 'Free Walk', 'Start Free Walk', 'Create Mission') `
+        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
+    Save-Screenshot -Name 'track-walking-options-opened'
+    Invoke-Adb -Arguments @('shell', 'input', 'keyevent', 'BACK') -AllowFailure | Out-Null
+    Wait-ForUiText `
+        -Name 'track-after-walk-back' `
+        -RequiredText @('Time to Move!', 'AI Workout', 'Take a Walk', 'Log a Run') `
+        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
+
+    Invoke-TapText -Text 'Log a Run' -DumpPrefix 'track-log-run' -Contains
+    Wait-ForUiText `
+        -Name 'track-running-setup-opened' `
+        -RequiredText @('Running Setup', 'Set Your Goal', 'Start Running') `
+        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
+    Save-Screenshot -Name 'track-running-setup-opened'
+    Invoke-Adb -Arguments @('shell', 'input', 'keyevent', 'BACK') -AllowFailure | Out-Null
+    Wait-ForUiText `
+        -Name 'track-after-run-back' `
+        -RequiredText @('Time to Move!', 'AI Workout', 'Take a Walk', 'Log a Run') `
+        -ForbiddenText @('FlowFit setup is incomplete') | Out-Null
+}
+
+function Invoke-BuddyOnboardingSmoke {
+    $buddyName = 'FlowFitSmokeBuddy'
+    $nickname = 'SmokeKid'
+    $selectedColor = 'purple'
+    $selectedGoal = 'active'
+    $selectedAge = 10
+
+    Invoke-TapDashboardTab -Index 4 -Label 'Profile'
+    Wait-ForUiText `
+        -Name 'buddy-profile-before-onboarding' `
+        -RequiredText @('My Profile', 'Finish Buddy Setup') `
+        -ForbiddenText @('FlowFit setup is incomplete', 'Could not check onboarding status') | Out-Null
+    Save-Screenshot -Name 'buddy-profile-before-onboarding'
+    Invoke-TapText -Text 'Finish Buddy Setup' -DumpPrefix 'profile-finish-buddy-setup' -MaxScrolls 2
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-welcome-rendered' `
+        -Pattern 'BuddyWelcomeScreen: rendered' `
+        -Detail 'Buddy welcome screen rendered after Profile setup entry.' | Out-Null
+    Save-Screenshot -Name 'buddy-welcome'
+    Invoke-TapScreenFraction `
+        -Name "buddy welcome LET'S GO" `
+        -XFraction 0.5 `
+        -YFraction 0.88
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-intro-rendered' `
+        -Pattern 'BuddyIntroScreen: rendered' `
+        -Detail 'Buddy intro screen rendered.' | Out-Null
+    Save-Screenshot -Name 'buddy-intro'
+    Invoke-TextEntryAtScreenFraction `
+        -Name 'buddy friend name' `
+        -XFraction 0.5 `
+        -YFraction 0.74 `
+        -Value $nickname
+    Invoke-HideKeyboard
+    Wait-ForLogcatPattern `
+        -Name 'buddy-intro-name-entered' `
+        -Pattern 'BuddyIntroScreen: rendered nameEmpty=false' `
+        -Detail 'Buddy intro accepted the smoke child name.' | Out-Null
+    Invoke-TapScreenFraction `
+        -Name 'buddy intro NEXT' `
+        -XFraction 0.5 `
+        -YFraction 0.88
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-hatch-rendered' `
+        -Pattern 'BuddyHatchScreen: rendered' `
+        -Detail 'Buddy hatch screen rendered.' | Out-Null
+    Save-Screenshot -Name 'buddy-hatch'
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-color-selection-rendered' `
+        -Pattern 'BuddyColorSelectionScreen: rendered' `
+        -Detail 'Buddy color selection screen rendered.' | Out-Null
+    Save-Screenshot -Name 'buddy-color-selection'
+    Invoke-TapScreenFraction `
+        -Name 'purple color egg' `
+        -XFraction 0.31 `
+        -YFraction 0.77
+    Wait-ForLogcatPattern `
+        -Name 'buddy-color-purple-selected' `
+        -Pattern 'BuddyColorSelectionScreen: rendered selectedColor=purple' `
+        -Detail 'Buddy color selection accepted the purple smoke color.' | Out-Null
+    Invoke-TapScreenFraction `
+        -Name 'Hatch egg' `
+        -XFraction 0.5 `
+        -YFraction 0.88
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-naming-rendered' `
+        -Pattern 'BuddyNamingScreen: rendered selectedColor=purple' `
+        -Detail 'Buddy naming screen rendered with the selected smoke color.' | Out-Null
+    Save-Screenshot -Name 'buddy-naming'
+    Invoke-TextEntryAtScreenFraction `
+        -Name 'buddy name' `
+        -XFraction 0.5 `
+        -YFraction 0.51 `
+        -Value $buddyName
+    Invoke-HideKeyboard
+    Invoke-TapScreenFraction `
+        -Name "buddy naming THAT'S PERFECT" `
+        -XFraction 0.5 `
+        -YFraction 0.88
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-profile-setup-rendered' `
+        -Pattern "BuddyProfileSetupScreen: rendered buddy=$buddyName" `
+        -Detail 'Buddy profile setup screen rendered with the smoke Buddy name.' | Out-Null
+    Save-Screenshot -Name 'buddy-profile-setup'
+    Invoke-TextEntryAtScreenFraction `
+        -Name 'buddy profile nickname' `
+        -XFraction 0.5 `
+        -YFraction 0.55 `
+        -Value $nickname
+    Invoke-HideKeyboard
+    Invoke-TapScreenFraction `
+        -Name 'buddy profile age 10' `
+        -XFraction 0.5 `
+        -YFraction 0.73
+    Invoke-TapScreenFraction `
+        -Name 'buddy profile CONTINUE' `
+        -XFraction 0.74 `
+        -YFraction 0.88
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-goal-selection-rendered' `
+        -Pattern 'GoalSelectionScreen: rendered' `
+        -Detail 'Buddy goal selection screen rendered.' | Out-Null
+    Save-Screenshot -Name 'buddy-goal-selection'
+    Invoke-TapScreenFraction `
+        -Name 'Be more active goal' `
+        -XFraction 0.5 `
+        -YFraction 0.61
+    Wait-ForLogcatPattern `
+        -Name 'buddy-goal-active-selected' `
+        -Pattern 'GoalSelectionScreen: rendered selectedGoals=.*active' `
+        -Detail 'Buddy goal selection accepted the active smoke goal.' | Out-Null
+    Invoke-TapScreenFraction `
+        -Name 'buddy goal NEXT' `
+        -XFraction 0.5 `
+        -YFraction 0.88
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-notification-permission-rendered' `
+        -Pattern "NotificationPermissionScreen: rendered buddy=$buddyName" `
+        -Detail 'Buddy notification permission screen rendered.' | Out-Null
+    Save-Screenshot -Name 'buddy-notification-permission'
+    Invoke-TapScreenFraction `
+        -Name 'buddy notification Maybe later' `
+        -XFraction 0.5 `
+        -YFraction 0.88
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-ready-rendered' `
+        -Pattern "BuddyReadyScreen: rendered buddy=$buddyName" `
+        -Detail 'Buddy ready screen rendered.' | Out-Null
+    Save-Screenshot -Name 'buddy-ready'
+    Invoke-TapScreenFraction `
+        -Name 'buddy ready START ADVENTURE' `
+        -XFraction 0.5 `
+        -YFraction 0.88
+
+    Wait-ForLogcatPattern `
+        -Name 'buddy-ready-save-completed' `
+        -Pattern 'BuddyReadyScreen: onboarding saved' `
+        -Detail 'Buddy onboarding save completed before dashboard navigation.' | Out-Null
+    Wait-ForLogcatPattern `
+        -Name 'dashboard-after-buddy-rendered' `
+        -Pattern '(?s)BuddyReadyScreen: onboarding saved.*FlowFitDashboard: rendered tab 0' `
+        -Detail 'Dashboard rendered after Buddy onboarding completion.' | Out-Null
+    Save-Screenshot -Name 'dashboard-after-buddy'
+
+    Invoke-TapDashboardTab -Index 4 -Label 'Profile'
+    Wait-ForLogcatPattern `
+        -Name 'dashboard-tab-profile-after-buddy-selected' `
+        -Pattern 'FlowFitDashboard: selected tab Profile \(4\)' `
+        -Detail 'Dashboard Profile tab selection after Buddy completion reached Flutter.' | Out-Null
+    Wait-ForLogcatPattern `
+        -Name 'dashboard-tab-profile-after-buddy-rendered' `
+        -Pattern "KidsProfileScreen: profile content rendered buddy=$buddyName real=true" `
+        -Detail 'Profile tab rendered the completed Buddy profile after onboarding.' | Out-Null
+    Save-Screenshot -Name 'dashboard-tab-profile-after-buddy'
+
+    return [pscustomobject]@{
+        BuddyName = $buddyName
+        Nickname = $nickname
+        Age = $selectedAge
+        Color = $selectedColor
+        Goal = $selectedGoal
+        NotificationsEnabled = $false
+    }
+}
+
 function Get-InputTapPoint {
     param(
         [Parameter(Mandatory = $true)][string]$Xml,
         [Parameter(Mandatory = $true)][string]$HintText,
-        [Parameter(Mandatory = $true)][string]$LabelText
+        [Parameter(Mandatory = $true)][string]$LabelText,
+        [int]$FieldIndex = -1
     )
 
     $hintBounds = Get-UiTextBounds -Xml $Xml -Text $HintText -Contains
@@ -1037,7 +1590,29 @@ function Get-InputTapPoint {
 
     $labelBounds = Get-UiTextBounds -Xml $Xml -Text $LabelText
     if ($null -eq $labelBounds) {
-        throw "Could not locate input field by hint or label: $HintText"
+        if ($FieldIndex -ge 0) {
+            $fieldMatches = [regex]::Matches(
+                $Xml,
+                '<node\b(?=[^>]*class="android\.widget\.EditText")(?=[^>]*clickable="true")(?=[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]")[^>]*>'
+            )
+            if ($fieldMatches.Count -gt $FieldIndex) {
+                $fieldMatch = $fieldMatches[$FieldIndex]
+                $left = [int]$fieldMatch.Groups[1].Value
+                $top = [int]$fieldMatch.Groups[2].Value
+                $right = [int]$fieldMatch.Groups[3].Value
+                $bottom = [int]$fieldMatch.Groups[4].Value
+                return [pscustomobject]@{
+                    left = $left
+                    top = $top
+                    right = $right
+                    bottom = $bottom
+                    centerX = [math]::Floor(($left + $right) / 2)
+                    centerY = [math]::Floor(($top + $bottom) / 2)
+                }
+            }
+        }
+
+        throw "Could not locate input field by hint, label, or edit-field index: $HintText"
     }
 
     return [pscustomobject]@{
@@ -1128,8 +1703,8 @@ function Assert-UiNotContains {
     Assert-Condition `
         -Condition ($found.Count -eq 0) `
         -Name "uiAbsent.$Name" `
-        -Failure "Forbidden setup/auth text visible: $($found -join ', ')" `
-        -Detail 'No setup/auth guard text visible.'
+        -Failure "Forbidden UI text visible: $($found -join ', ')" `
+        -Detail 'Forbidden UI text was absent.'
 }
 
 function Write-Evidence {
@@ -1180,6 +1755,7 @@ try {
 
     $script:adbPath = Resolve-AdbPath
     $script:deviceSerial = Resolve-DeviceSerial -RequestedDevice $Device
+    Wait-ForAndroidRuntimeReady
     Update-DeviceInfo
     Add-Check -Name 'adb.device' -Status 'pass' -Detail "$($script:deviceInfo.model) Android $($script:deviceInfo.androidRelease)"
 
@@ -1209,8 +1785,7 @@ try {
         -Failure "Expected APK does not exist: $apk" `
         -Detail $apk
 
-    Invoke-Adb -Arguments @('install', '-r', '-d', $apk) | Out-Null
-    Add-Check -Name 'adb.install' -Status 'pass' -Detail 'Installed debug APK.'
+    Install-ApkWithRetry -Path $apk
 
     if (-not $KeepAppData) {
         Invoke-Adb -Arguments @('shell', 'pm', 'clear', $packageName) | Out-Null
@@ -1221,13 +1796,7 @@ try {
     Invoke-Adb -Arguments @('shell', 'wm', 'dismiss-keyguard') -AllowFailure | Out-Null
     Invoke-Adb -Arguments @('logcat', '-c') | Out-Null
 
-    $launch = Invoke-Adb -Arguments @('shell', 'am', 'start', '-W', '-n', $mainActivity)
-    $launchText = $launch.Output -join "`n"
-    Assert-Condition `
-        -Condition ($launchText -match 'Status:\s+ok') `
-        -Name 'adb.launchStatus' `
-        -Failure "Android launch did not report Status: ok.`n$launchText" `
-        -Detail 'am start -W returned Status: ok.'
+    Start-AppWithRetry
 
     Start-Sleep -Seconds 3
 
@@ -1333,6 +1902,18 @@ try {
         -Detail 'Home dashboard initialized after survey completion.' | Out-Null
     Save-Screenshot -Name 'dashboard-after-survey'
     Invoke-DashboardTabSmoke
+    Invoke-HealthFoodLiveSmoke
+    Invoke-TrackRouteLiveSmoke
+    $buddySmoke = Invoke-BuddyOnboardingSmoke
+    Assert-SmokeBuddyCompleted `
+        -Config $config `
+        -Credentials $credentials `
+        -ExpectedName $buddySmoke.BuddyName `
+        -ExpectedColor $buddySmoke.Color `
+        -ExpectedNickname $buddySmoke.Nickname `
+        -ExpectedAge $buddySmoke.Age `
+        -ExpectedGoal $buddySmoke.Goal `
+        -ExpectedNotificationsEnabled $buddySmoke.NotificationsEnabled
 
     Invoke-SmokeBackendDataCleanup -Config $config -Credentials $credentials -Phase 'postRun' | Out-Null
 
