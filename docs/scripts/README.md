@@ -167,6 +167,28 @@ server-side auth sessions revoked immediately.
 
 ---
 
+### Wear emulator smoke: verify_wear_emulator_smoke.ps1
+**Purpose**: Repeatable Wear OS emulator smoke for the watch entrypoint. It
+builds `lib/main_wear.dart`, installs the debug APK, grants sensor permissions
+when the emulator allows it, launches `com.msiazondev.flowfit/.MainActivity`,
+checks the Wear dashboard instead of the phone onboarding UI, taps `Heart Rate`,
+verifies the emulator/dev Samsung Health fallback, starts simulated BPM, stops
+monitoring, and saves UI dumps, screenshots, logcat, and JSON evidence.
+
+**Usage**:
+```powershell
+pwsh -NoProfile -File scripts\verify_wear_emulator_smoke.ps1 `
+  -Device emulator-5554 `
+  -OutFile build\wear-emulator-smoke-latest.json
+```
+
+Use `-SkipBuild` only when the matching split APK already exists from
+`lib/main_wear.dart`. The emulator smoke proves the Wear UI and debug fallback;
+it does not prove live Samsung Health sensor readings, which still require a
+supported physical Galaxy Watch.
+
+---
+
 ### 4. release_preflight.ps1
 **Purpose**: Repeatable local release-readiness gate for analyzer, tests, web,
 public privacy/account-deletion pages, release source safety, Android phone,
