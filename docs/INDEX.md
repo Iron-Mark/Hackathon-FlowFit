@@ -65,6 +65,10 @@ Technical implementation details and verification:
   - Current Android Play Store candidate artifact path, SHA-256 hash, size,
     source commit, strict audit result, and store handoff steps
 
+- **release/APP_HEALTH_VERIFICATION_REFRESH_2026-06-24.md**
+  - Latest maintained-fork app-health evidence for current `main`: live
+    Supabase, live web, Android emulator, Wear emulator, and remote CI
+
 - **release/PLAY_STORE_RELEASE_NOTES_AND_QA_2026-06-19.md**
   - Play Store release notes, listing copy, QA evidence, and real-device
     internal testing checklist

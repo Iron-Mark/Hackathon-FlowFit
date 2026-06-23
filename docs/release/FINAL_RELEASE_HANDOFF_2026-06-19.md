@@ -93,6 +93,16 @@ Remote CI verification:
 | Flutter Web Pages for the latest web-relevant commit | Success | `f8321f9f29d49b9d6b0686ffb96e496ef8c37208` | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27812413448> |
 | Flutter CI for the protected-release-workflow docs commit | Success | `a28f5c507f5b6c73928902e0d527f602a52ef877` | <https://github.com/Iron-Mark/Hackathon-FlowFit/actions/runs/27815624424> |
 
+Current app-health refresh:
+
+- See `docs/release/APP_HEALTH_VERIFICATION_REFRESH_2026-06-24.md` for the
+  latest maintained-fork verification on commit
+  `ad0cd01f6935244b2382f1bd7b0e5875671f0c15`.
+- The 2026-06-24 refresh includes live Supabase backend verification, Supabase
+  DB lint/advisors, live Supabase app smoke, live deployed web checks, Android
+  phone emulator smoke, Android live-auth emulator smoke, Wear emulator smoke,
+  and successful remote Flutter CI/Web Pages runs for the current branch.
+
 ## Google Play Store Steps
 
 1. Open Google Play Console and create or open the FlowFit app.
@@ -204,10 +214,9 @@ Result:
 ## Known Remaining Blockers
 
 - Supabase DB lint/advisors are no longer blocked locally. They passed through
-  the project pooler host above using ignored `.env:SUPABASE_DB_PASSWORD`.
-- Supabase hosted Auth still has 2 advisor warnings that require dashboard or
-  plan-level action before final production hardening: leaked-password
-  protection and additional MFA options.
+  the project pooler host using ignored `.env:SUPABASE_DB_PASSWORD`.
+- The 2026-06-24 refresh reran Supabase advisors with `--fail-on warn` and
+  reported no issues found.
 - Docker CLI is unavailable on this machine, so local Docker-backed Supabase
   validation remains skipped.
 - iOS IPA generation requires macOS, Xcode, signing certificates, and
