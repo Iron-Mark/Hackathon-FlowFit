@@ -120,6 +120,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final theme = Theme.of(context);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final screens = _getScreens();
+    assert(() {
+      debugPrint('FlowFitDashboard: rendered tab $_currentIndex');
+      return true;
+    }());
 
     // Listen for auth state changes
     ref.listen(authNotifierProvider, (previous, next) {

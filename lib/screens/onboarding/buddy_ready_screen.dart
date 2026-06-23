@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../presentation/providers/providers.dart';
 import '../../providers/buddy_onboarding_provider.dart';
+import '../../providers/buddy_profile_provider.dart';
 import '../../widgets/buddy_character_widget.dart';
 import '../../widgets/buddy_celebration_animation.dart';
 import '../../widgets/onboarding_button.dart';
@@ -72,11 +74,20 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
     if (_isLoading) return;
 
     setState(() => _isLoading = true);
+    assert(() {
+      debugPrint('BuddyReadyScreen: completing onboarding');
+      return true;
+    }());
 
     try {
       final completeOnboarding =
           widget.completeOnboarding ?? _completeSupabaseOnboarding;
       await completeOnboarding(ref: ref, context: context);
+      assert(() {
+        debugPrint('BuddyReadyScreen: onboarding saved');
+        return true;
+      }());
+      _invalidateCompletedProfileProviders(ref);
 
       if (mounted) {
         // Navigate to dashboard
@@ -87,6 +98,12 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
         );
       }
     } on BuddySaveException catch (e) {
+      assert(() {
+        debugPrint(
+          'BuddyReadyScreen: onboarding save failed BuddySaveException',
+        );
+        return true;
+      }());
       // Handle offline save gracefully
       if (e.savedLocally) {
         // Saved offline successfully - show success message and continue
@@ -131,6 +148,10 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
         }
       }
     } on BuddyException catch (e) {
+      assert(() {
+        debugPrint('BuddyReadyScreen: onboarding save failed ${e.runtimeType}');
+        return true;
+      }());
       if (mounted) {
         setState(() => _isLoading = false);
 
@@ -147,6 +168,10 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
         );
       }
     } catch (e) {
+      assert(() {
+        debugPrint('BuddyReadyScreen: onboarding save failed ${e.runtimeType}');
+        return true;
+      }());
       if (mounted) {
         setState(() => _isLoading = false);
 
@@ -184,12 +209,37 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
     await ref.read(buddyOnboardingProvider.notifier).completeOnboarding(userId);
   }
 
+  void _invalidateCompletedProfileProviders(WidgetRef ref) {
+    final String? userId;
+    try {
+      userId = Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return;
+    }
+
+    if (userId == null) return;
+
+    ref.invalidate(buddyProfileProvider(userId));
+    ref.invalidate(buddyProfileNotifierProvider(userId));
+    ref.invalidate(profileNotifierProvider(userId));
+    assert(() {
+      debugPrint('BuddyReadyScreen: invalidated completed profile providers');
+      return true;
+    }());
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = ref.watch(buddyOnboardingProvider);
     final buddyName = state.buddyName ?? 'Bubbles';
     final buddyColor = BuddyColors.getColor(state.selectedColor ?? 'blue');
+    assert(() {
+      debugPrint(
+        'BuddyReadyScreen: rendered buddy=$buddyName loading=$_isLoading',
+      );
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD),

@@ -67,6 +67,10 @@ class _NotificationPermissionScreenState
     final theme = Theme.of(context);
     final state = ref.watch(buddyOnboardingProvider);
     final buddyName = state.buddyName ?? 'Bubbles';
+    assert(() {
+      debugPrint('NotificationPermissionScreen: rendered buddy=$buddyName');
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD),

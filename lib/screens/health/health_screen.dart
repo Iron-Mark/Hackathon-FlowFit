@@ -991,24 +991,32 @@ class _AddFoodDialogState extends State<_AddFoodDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Food Name',
-              hintText: 'e.g., Banana',
+          Semantics(
+            label: 'Food Name',
+            textField: true,
+            child: TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Food Name',
+                hintText: 'e.g., Banana',
+              ),
+              autofocus: true,
             ),
-            autofocus: true,
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _caloriesController,
-            decoration: const InputDecoration(
-              labelText: 'Calories',
-              hintText: 'e.g., 105',
-              suffixText: 'kcal',
+          Semantics(
+            label: 'Calories',
+            textField: true,
+            child: TextField(
+              controller: _caloriesController,
+              decoration: const InputDecoration(
+                labelText: 'Calories',
+                hintText: 'e.g., 105',
+                suffixText: 'kcal',
+              ),
+              keyboardType: TextInputType.number,
+              onSubmitted: (_) => _submit(),
             ),
-            keyboardType: TextInputType.number,
-            onSubmitted: (_) => _submit(),
           ),
         ],
       ),

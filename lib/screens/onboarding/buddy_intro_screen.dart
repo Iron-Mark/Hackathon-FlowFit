@@ -55,6 +55,10 @@ class _BuddyIntroScreenState extends ConsumerState<BuddyIntroScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isNameEmpty = _nameController.text.trim().isEmpty;
+    assert(() {
+      debugPrint('BuddyIntroScreen: rendered nameEmpty=$isNameEmpty');
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD),

@@ -17,6 +17,10 @@ class BuddyWelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    assert(() {
+      debugPrint('BuddyWelcomeScreen: rendered');
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD), // FlowFit light gray

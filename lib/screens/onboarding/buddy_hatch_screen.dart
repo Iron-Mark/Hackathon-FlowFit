@@ -61,6 +61,10 @@ class _BuddyHatchScreenState extends ConsumerState<BuddyHatchScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    assert(() {
+      debugPrint('BuddyHatchScreen: rendered');
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD),

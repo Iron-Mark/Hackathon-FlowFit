@@ -62,6 +62,12 @@ class GoalSelectionScreen extends ConsumerWidget {
     final buddyColor = state.selectedColor != null
         ? _getColorFromKey(state.selectedColor!)
         : const Color(0xFF4ECDC4);
+    assert(() {
+      debugPrint(
+        'GoalSelectionScreen: rendered selectedGoals=${selectedGoals.join(',')}',
+      );
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: Colors.white,

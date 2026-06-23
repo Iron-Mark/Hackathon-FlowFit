@@ -155,7 +155,10 @@ class KidsProfileScreen extends ConsumerWidget {
     WidgetRef ref,
   ) {
     assert(() {
-      debugPrint('KidsProfileScreen: profile content rendered');
+      debugPrint(
+        'KidsProfileScreen: profile content rendered '
+        'buddy=${buddyProfile.name} real=$isRealProfile',
+      );
       return true;
     }());
 

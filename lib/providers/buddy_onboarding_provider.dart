@@ -11,6 +11,7 @@ import 'buddy_offline_storage_provider.dart';
 Map<String, dynamic> buildBuddyUserProfileUpsertPayload({
   required String userId,
   String? nickname,
+  int? age,
   List<String>? wellnessGoals,
   bool? notificationsEnabled,
 }) {
@@ -23,6 +24,10 @@ Map<String, dynamic> buildBuddyUserProfileUpsertPayload({
   final trimmedNickname = nickname?.trim();
   if (trimmedNickname != null && trimmedNickname.isNotEmpty) {
     payload['nickname'] = trimmedNickname;
+  }
+
+  if (age != null) {
+    payload['age'] = age;
   }
 
   if (wellnessGoals != null && wellnessGoals.isNotEmpty) {
@@ -42,6 +47,8 @@ Map<String, dynamic> buildBuddyUserProfileUpsertPayload({
 /// validates user input, and persists data to Supabase when complete.
 /// Includes error handling, retry logic, and offline support.
 class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
+  static const _supabaseOperationTimeout = Duration(seconds: 12);
+
   final SupabaseClient? _supabase;
   final Uuid _uuid;
   final BuddyOfflineStorage? _offlineStorage;
@@ -202,7 +209,11 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
   Future<bool> _isNetworkAvailable() async {
     try {
       // Try a simple query to check connectivity
-      await _client.from(SupabaseTables.buddyProfiles).select('id').limit(1);
+      await _client
+          .from(SupabaseTables.buddyProfiles)
+          .select('id')
+          .limit(1)
+          .timeout(_supabaseOperationTimeout);
       return true;
     } catch (e) {
       return false;
@@ -270,6 +281,7 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
         await _updateUserProfile(
           userId,
           state.userNickname ?? state.userName,
+          age: state.userAge,
           wellnessGoals: state.selectedGoals,
           notificationsEnabled: state.notificationsGranted,
         );
@@ -381,6 +393,7 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
       await _updateUserProfile(
         pendingProfile.userId,
         onboardingState.userNickname ?? onboardingState.userName,
+        age: onboardingState.userAge,
         wellnessGoals: onboardingState.selectedGoals,
         notificationsEnabled: onboardingState.notificationsGranted,
       );
@@ -402,13 +415,15 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
   Future<void> _saveBuddyProfile(BuddyProfile profile) async {
     await _client
         .from(SupabaseTables.buddyProfiles)
-        .upsert(profile.toJson(), onConflict: 'user_id');
+        .upsert(profile.toJson(), onConflict: 'user_id')
+        .timeout(_supabaseOperationTimeout);
   }
 
   /// Update user profile with nickname and kids mode flag
   Future<void> _updateUserProfile(
     String userId,
     String? nickname, {
+    int? age,
     List<String>? wellnessGoals,
     bool? notificationsEnabled,
   }) async {
@@ -418,11 +433,13 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
           buildBuddyUserProfileUpsertPayload(
             userId: userId,
             nickname: nickname,
+            age: age,
             wellnessGoals: wellnessGoals,
             notificationsEnabled: notificationsEnabled,
           ),
           onConflict: 'user_id',
-        );
+        )
+        .timeout(_supabaseOperationTimeout);
   }
 
   /// Reset the onboarding state

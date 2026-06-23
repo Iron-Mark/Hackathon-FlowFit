@@ -95,6 +95,10 @@ class _BuddyNamingScreenState extends ConsumerState<BuddyNamingScreen> {
     final onboardingState = ref.watch(buddyOnboardingProvider);
     final selectedColorKey = onboardingState.selectedColor ?? 'blue';
     final selectedColor = BuddyColors.getColor(selectedColorKey);
+    assert(() {
+      debugPrint('BuddyNamingScreen: rendered selectedColor=$selectedColorKey');
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: Colors.white,

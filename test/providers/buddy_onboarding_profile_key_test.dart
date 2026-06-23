@@ -38,6 +38,7 @@ void main() {
     final payload = buildBuddyUserProfileUpsertPayload(
       userId: 'auth-user-1',
       nickname: 'Alex',
+      age: 10,
       wellnessGoals: const ['move_more', 'sleep_better'],
       notificationsEnabled: true,
     );
@@ -45,6 +46,7 @@ void main() {
     expect(payload, {
       'user_id': 'auth-user-1',
       'nickname': 'Alex',
+      'age': 10,
       'is_kids_mode': true,
       'survey_completed': true,
       'wellness_goals': ['move_more', 'sleep_better'],
@@ -55,6 +57,7 @@ void main() {
   test('Buddy onboarding user profile payload can restore offline state', () {
     const savedState = BuddyOnboardingState(
       userName: 'Jordan',
+      userAge: 9,
       selectedGoals: ['focus'],
       notificationsGranted: false,
     );
@@ -62,12 +65,14 @@ void main() {
     final payload = buildBuddyUserProfileUpsertPayload(
       userId: 'auth-user-2',
       nickname: savedState.userNickname ?? savedState.userName,
+      age: savedState.userAge,
       wellnessGoals: savedState.selectedGoals,
       notificationsEnabled: savedState.notificationsGranted,
     );
 
     expect(payload['user_id'], 'auth-user-2');
     expect(payload['nickname'], 'Jordan');
+    expect(payload['age'], 9);
     expect(payload['is_kids_mode'], isTrue);
     expect(payload['survey_completed'], isTrue);
     expect(payload['wellness_goals'], ['focus']);
@@ -83,6 +88,7 @@ void main() {
         source,
         contains('onboardingState.userNickname ?? onboardingState.userName'),
       );
+      expect(source, contains('age: onboardingState.userAge'));
       expect(source, contains('await _updateUserProfile('));
 
       final updateIndex = source.indexOf('await _updateUserProfile(');

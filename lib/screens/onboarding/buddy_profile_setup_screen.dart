@@ -57,6 +57,10 @@ class _BuddyProfileSetupScreenState
     final selectedColorKey = onboardingState.selectedColor ?? 'blue';
     final selectedColor = BuddyColors.getColor(selectedColorKey);
     final buddyName = onboardingState.buddyName ?? 'Buddy';
+    assert(() {
+      debugPrint('BuddyProfileSetupScreen: rendered buddy=$buddyName');
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: Colors.white,

@@ -83,6 +83,12 @@ class _BuddyColorSelectionScreenState
     final selectedColor = selectedColorKey != null
         ? colorOptions[selectedColorKey] ?? colorOptions['gray']!
         : colorOptions['gray']!;
+    assert(() {
+      debugPrint(
+        'BuddyColorSelectionScreen: rendered selectedColor=$selectedColorKey',
+      );
+      return true;
+    }());
 
     return Scaffold(
       backgroundColor: Colors.white,
