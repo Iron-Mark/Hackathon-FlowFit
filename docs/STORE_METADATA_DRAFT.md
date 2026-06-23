@@ -113,7 +113,8 @@ credentials, debug labels, staging project refs, or private user data.
 - [ ] On Windows, Android and web targets pass separately; iOS IPA generation is
       deferred to the macOS/Xcode build host.
 - [ ] GitHub CI passes on the release branch.
-- [x] Supabase advisors have no unresolved high-risk findings.
+- [ ] Supabase Auth advisor warnings are resolved or explicitly accepted for
+      release: leaked-password protection and additional MFA options.
       Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.
 - [ ] Supabase redirect URLs include Android, iOS, and web production origins.
 - [x] Public `privacy.html` loads from the deployed HTTPS origin.

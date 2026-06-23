@@ -20,8 +20,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       If production verification through MCP is unavoidable, use temporary
       owner-approved read-only MCP access only, avoid user-data queries, and
       remove `.mcp.json` after capturing release evidence.
-- [x] Supabase advisors have no unresolved high-risk security/performance
-      findings.
+- [ ] Supabase Auth advisor warnings are resolved or explicitly accepted for
+      release: leaked-password protection and additional MFA options.
 - [x] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
       `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
       returns only passing backend verification rows.

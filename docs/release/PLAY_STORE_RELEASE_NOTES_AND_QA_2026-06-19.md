@@ -113,8 +113,11 @@ Run this after uploading the AAB to Play Console internal testing.
 
 These checks require release Supabase credentials or dashboard access:
 
-- [x] Supabase advisors have no unresolved high-risk findings.
+- [ ] Supabase Auth advisor warnings are resolved or explicitly accepted for
+      release: leaked-password protection and additional MFA options.
 - [x] `supabase db lint --linked` or equivalent advisor/lint command passes.
+- [x] Supabase advisors were run against the intended project with 0 error
+      findings and 2 Auth warnings.
 - [x] `scripts/verify_supabase_backend.ps1 -Linked` passes against the release
       project.
       Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.

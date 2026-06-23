@@ -187,7 +187,12 @@ npx -y supabase@latest db advisors `
 Result:
 
 - `supabase db lint`: passed, no schema errors.
-- `supabase db advisors`: passed, no warning or error findings.
+- `supabase db advisors`: completed with 2 Auth security warnings and 0 error
+  findings:
+  - `auth_leaked_password_protection`: enable leaked-password protection if the
+    Supabase plan supports it.
+  - `auth_insufficient_mfa_options`: enable/offer additional MFA options if the
+    Supabase plan and product policy allow it.
 - `scripts/verify_supabase_backend.ps1 -Linked -Output json`: passed all 19
   backend checks.
 - Strict release audit rerun:
@@ -200,6 +205,9 @@ Result:
 
 - Supabase DB lint/advisors are no longer blocked locally. They passed through
   the project pooler host above using ignored `.env:SUPABASE_DB_PASSWORD`.
+- Supabase hosted Auth still has 2 advisor warnings that require dashboard or
+  plan-level action before final production hardening: leaked-password
+  protection and additional MFA options.
 - Docker CLI is unavailable on this machine, so local Docker-backed Supabase
   validation remains skipped.
 - iOS IPA generation requires macOS, Xcode, signing certificates, and

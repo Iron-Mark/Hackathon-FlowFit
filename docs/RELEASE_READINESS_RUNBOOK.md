@@ -501,7 +501,10 @@ Minimum completion criteria before release:
 - `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
   `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
   returns only passing backend verification rows.
-- Advisors have no unresolved high-risk security/performance findings.
+- Supabase DB lint has no schema errors, and Supabase advisor warnings are
+  either resolved or explicitly accepted for release. Current 2026-06-23
+  evidence still has Auth warnings for leaked-password protection and
+  additional MFA options.
 - After migrations/advisors are complete, `.mcp.json` includes
   `read_only=true` for release verification. Use:
   `pwsh -NoProfile -File scripts/configure_supabase_mcp.ps1 -ProjectRef '<project-ref>' -ReleaseReadOnly`.
