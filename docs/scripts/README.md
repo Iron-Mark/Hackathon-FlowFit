@@ -125,8 +125,13 @@ completes the 13+ survey with stable smoke values, asserts the completed
 with a fresh HomeScreen logcat marker and screenshot, taps the authenticated
 dashboard Health, Track, Progress, and Profile tabs, asserts the readable tab
 surfaces with UI dumps, uses Flutter log markers for the Profile tab where
-Android UI dumps can hit an idle-state limit, captures tab screenshots, then
-cleans the app-owned smoke rows so the next run starts from onboarding again.
+Android UI dumps can hit an idle-state limit, captures tab screenshots, adds
+and removes a smoke food item from the Health tab, opens AI Workout, Take a
+Walk, and Log a Run from the Track tab, completes the authenticated Buddy setup
+flow from the Profile tab, verifies the `buddy_profiles` row plus Buddy
+nickname, age, goal, notification, and kids-mode fields on `user_profiles`
+through authenticated RLS, then cleans the app-owned smoke rows so the next run
+starts from onboarding again.
 
 **Usage**:
 ```powershell

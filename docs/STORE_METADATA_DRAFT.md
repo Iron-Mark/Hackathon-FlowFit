@@ -113,12 +113,14 @@ credentials, debug labels, staging project refs, or private user data.
 - [ ] On Windows, Android and web targets pass separately; iOS IPA generation is
       deferred to the macOS/Xcode build host.
 - [ ] GitHub CI passes on the release branch.
-- [ ] Supabase advisors have no unresolved high-risk findings.
+- [x] Supabase advisors have no unresolved high-risk findings.
+      Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.
 - [ ] Supabase redirect URLs include Android, iOS, and web production origins.
-- [ ] Public `privacy.html` loads from the deployed HTTPS origin.
-- [ ] Public `account-deletion.html` loads from the deployed HTTPS origin.
-- [ ] `build/web-deployment-verification.json` shows the deployed web base URL,
+- [x] Public `privacy.html` loads from the deployed HTTPS origin.
+- [x] Public `account-deletion.html` loads from the deployed HTTPS origin.
+- [x] `build/web-deployment-verification.json` shows the deployed web base URL,
       public compliance pages, support inbox, and manifest all pass.
+      Evidence from 2026-06-23: `build/web-deployment-verification.json`.
 - [ ] Android AAB is signed with the upload key, not debug signing.
 - [ ] iOS archive/IPA is signed with the Apple Developer team and provisioning
       profile, and the manifest includes `ios-app-store-ipa`.

@@ -109,14 +109,15 @@ Run this after uploading the AAB to Play Console internal testing.
 - [ ] Submit one deletion request with a throwaway test account.
 - [ ] Confirm the app signs out and does not recreate app-owned rows.
 
-## Supabase QA Still Needed
+## Supabase QA Evidence And Remaining Work
 
 These checks require release Supabase credentials or dashboard access:
 
-- [ ] Supabase advisors have no unresolved high-risk findings.
-- [ ] `supabase db lint --linked` or equivalent advisor/lint command passes.
-- [ ] `scripts/verify_supabase_backend.ps1 -Linked` passes against the release
+- [x] Supabase advisors have no unresolved high-risk findings.
+- [x] `supabase db lint --linked` or equivalent advisor/lint command passes.
+- [x] `scripts/verify_supabase_backend.ps1 -Linked` passes against the release
       project.
+      Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.
 - [ ] Auth email templates are copied into Supabase dashboard.
 - [ ] Auth redirect URLs include Android and web production URLs.
 - [ ] One live signup/login/onboarding/workout path passes against the release

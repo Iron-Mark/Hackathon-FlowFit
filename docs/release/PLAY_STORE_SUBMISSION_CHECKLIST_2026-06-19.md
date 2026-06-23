@@ -151,7 +151,8 @@ testing.
 Do not promote beyond internal testing until:
 
 - [ ] Internal testing smoke passes on a real Android device.
-- [ ] Supabase advisors and DB lint are run against the intended project.
+- [x] Supabase advisors and DB lint are run against the intended project.
+      Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.
 - [ ] Supabase Auth email templates are copied to the dashboard.
 - [ ] Supabase redirect URLs include Android and web production URLs.
 - [ ] Play Console accepts the AAB signature and package ID.

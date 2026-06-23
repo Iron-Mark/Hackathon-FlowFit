@@ -20,11 +20,12 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       If production verification through MCP is unavoidable, use temporary
       owner-approved read-only MCP access only, avoid user-data queries, and
       remove `.mcp.json` after capturing release evidence.
-- [ ] Supabase advisors have no unresolved high-risk security/performance
+- [x] Supabase advisors have no unresolved high-risk security/performance
       findings.
-- [ ] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
+- [x] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
       `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
       returns only passing backend verification rows.
+      Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.
 - [ ] Supabase Auth confirm-signup email templates are rendered with
       `scripts/render_supabase_email_templates.ps1 -SupportEmailVerified` and
       `build/supabase-email-templates/confirm_signup.html` is copied into the
@@ -200,10 +201,11 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `pwsh -NoProfile -File scripts/verify_store_artifacts.ps1 -Strict -RequireArtifact flutter-web-build,flutter-web-release-zip -RequireWebBackend javascript -RequireStrictAudit -RequireCurrentCommit`
       or use `-RequireWebBackend wasm` for a WebAssembly release, then archive
       `build/store-release-artifact-verification.json`.
-- [ ] Confirm `/privacy.html` and `/account-deletion.html` load on the deployed
+- [x] Confirm `/privacy.html` and `/account-deletion.html` load on the deployed
       origin.
-- [ ] Run `scripts/verify_web_deployment.ps1` against the deployed HTTPS
+- [x] Run `scripts/verify_web_deployment.ps1` against the deployed HTTPS
       origin and archive `build/web-deployment-verification.json`.
+      Evidence from 2026-06-23: `build/web-deployment-verification.json`.
 - [ ] Configure production Supabase redirect URLs for the web origin.
 - [ ] Smoke signup/login/onboarding/workout flow on deployed URL.
 - [ ] Decide whether JS or Wasm is the release target. Current repo is JS-ready

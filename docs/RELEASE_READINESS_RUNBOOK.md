@@ -567,7 +567,7 @@ client key, then writes, reads, updates, and cleans up app-owned rows for:
 
 - `user_profiles` profile onboarding data
 - `buddy_profiles` Buddy onboarding data
-- `workout_sessions` workout create/update/list data
+- `workout_sessions` workout create/update/list/delete data
 - `heart_rate` watch/phone heart-rate compatibility data
 
 It does not use service-role keys and it does not delete the Supabase Auth user.
