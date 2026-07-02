@@ -397,12 +397,18 @@ in release variable or store-build commands. DNS MX status is recorded in the
 JSON summary when local DNS tooling is available, but it is not a substitute for
 the received external test email.
 
-`scripts/release_readiness_audit.ps1` requires
-`build/support-inbox-verification.json` in strict mode before accepting
-`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. If that file
-is missing or records DNS failure, including Null MX, advisory audit reports the
-support inbox as a warning so local preflight can continue, while strict audit
-keeps the gate failing.
+`scripts/release_readiness_audit.ps1` also checks the authenticated in-app
+support request path: `Help & Support` must submit to `public.support_requests`,
+the migration must enable RLS, and the live app smoke must prove
+support-request create/read/delete through authenticated RLS. When that app
+support path is present, missing or weak support-inbox receipt metadata remains
+a store/contact warning instead of an app-support blocker. DNS failure,
+including Null MX, is still strict because the configured public contact address
+would not be deliverable.
+
+Keep using `build/support-inbox-verification.json` before setting
+`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. That flag is
+for the external public inbox, not for the in-app support queue.
 
 ### GitHub Pages Deployment
 

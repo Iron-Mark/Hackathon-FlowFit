@@ -437,6 +437,7 @@ $runId = "FlowFitSmoke$((Get-Date).ToUniversalTime().ToString('yyyyMMddHHmmss'))
 $buddyName = 'FlowFitSmokeBuddy'
 $workoutId = [System.Guid]::NewGuid().ToString()
 $heartRateId = [System.Guid]::NewGuid().ToString()
+$supportRequestId = [System.Guid]::NewGuid().ToString()
 $startedAt = (Get-Date).ToUniversalTime()
 $endedAt = $startedAt.AddMinutes(1)
 $epochMillis = [int64](([DateTimeOffset]$startedAt).ToUnixTimeMilliseconds())
@@ -606,10 +607,44 @@ try {
     Assert-FieldEquals -Actual $heartRate.id -Expected $heartRateId -Name 'heart_rate.id'
     Assert-FieldEquals -Actual $heartRate.bpm -Expected 72 -Name 'heart_rate.bpm'
     $checks.Add([pscustomobject]@{ name = 'heart rate insert list'; status = 'pass'; detail = 'heart_rate insert/read passed through authenticated RLS.' })
+
+    $supportRows = Invoke-SupabaseRest `
+        -Method 'POST' `
+        -Path 'support_requests?select=id,user_id,category,subject,status,app_surface' `
+        -AccessToken $accessToken `
+        -ExtraHeaders @{ Prefer = 'return=representation' } `
+        -Body @{
+            id = $supportRequestId
+            user_id = $userId
+            user_email = $resolvedEmail
+            category = 'support'
+            subject = 'FlowFit smoke support request'
+            message = "Support smoke request for $runId"
+            app_surface = 'verify_supabase_app_smoke'
+        }
+    $supportRequest = Select-FirstRow $supportRows
+    Assert-FieldEquals -Actual $supportRequest.id -Expected $supportRequestId -Name 'support_requests.id'
+    Assert-FieldEquals -Actual $supportRequest.category -Expected 'support' -Name 'support_requests.category'
+    Assert-FieldEquals -Actual $supportRequest.status -Expected 'open' -Name 'support_requests.status'
+
+    $listedSupportRows = Invoke-SupabaseRest `
+        -Method 'GET' `
+        -Path "support_requests?id=eq.$supportRequestId&user_id=eq.$userId&select=id,user_id,category,subject,status" `
+        -AccessToken $accessToken
+    Assert-RowCount -Rows $listedSupportRows -Expected 1 -Name 'support_requests list before delete'
+
+    $deletedSupportRows = Invoke-SupabaseRest `
+        -Method 'DELETE' `
+        -Path "support_requests?id=eq.$supportRequestId&select=id" `
+        -AccessToken $accessToken `
+        -ExtraHeaders @{ Prefer = 'return=representation' }
+    Assert-RowCount -Rows $deletedSupportRows -Expected 1 -Name 'support_requests delete'
+    $checks.Add([pscustomobject]@{ name = 'support request create read delete'; status = 'pass'; detail = 'support_requests insert/read/delete passed through authenticated RLS.' })
 } finally {
     if (-not [string]::IsNullOrWhiteSpace($accessToken) -and -not [string]::IsNullOrWhiteSpace($userId) -and -not $SkipCleanup) {
         $cleanupAttempted = $true
         foreach ($target in @(
+            @{ table = 'support_requests'; filter = "id=eq.$supportRequestId" },
             @{ table = 'heart_rate'; filter = "id=eq.$heartRateId" },
             @{ table = 'workout_sessions'; filter = "id=eq.$workoutId" },
             @{ table = 'buddy_profiles'; filter = "user_id=eq.$userId" },

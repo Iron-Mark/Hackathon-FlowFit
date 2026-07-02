@@ -2903,7 +2903,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     }
   });
 
-  test('strict audit requires confirmed support inbox evidence', () {
+  test('strict audit warns on missing support inbox evidence', () {
     final tempDir = Directory.systemTemp.createTempSync(
       'flowfit_missing_support_evidence_audit_',
     );
@@ -2944,7 +2944,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       expect(audit.exitCode, isNot(0));
       expect(
         '${audit.stdout}\n${audit.stderr}',
-        contains('[FAIL] Production support inbox'),
+        contains('[WARN] Production support inbox'),
+      );
+      expect(
+        '${audit.stdout}\n${audit.stderr}',
+        isNot(contains('[FAIL] Production support inbox')),
       );
       expect(
         '${audit.stdout}\n${audit.stderr}',
@@ -2955,7 +2959,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     }
   });
 
-  test('strict audit rejects weak confirmed support inbox receipt evidence', () {
+  test('strict audit warns on weak confirmed support inbox receipt evidence', () {
     final tempDir = Directory.systemTemp.createTempSync(
       'flowfit_weak_support_receipt_audit_',
     );
@@ -3014,7 +3018,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       final missingReceiptAudit = runAudit(missingReceipt);
       final missingReceiptOutput =
           '${missingReceiptAudit.stdout}\n${missingReceiptAudit.stderr}';
-      expect(missingReceiptAudit.exitCode, isNot(0));
+      expect(missingReceiptOutput, contains('[WARN] Production support inbox'));
+      expect(
+        missingReceiptOutput,
+        isNot(contains('[FAIL] Production support inbox')),
+      );
       expect(missingReceiptOutput, contains('missing inboundReceipt details'));
 
       final selfSent = File(
@@ -3038,7 +3046,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
 
       final selfSentAudit = runAudit(selfSent);
       final selfSentOutput = '${selfSentAudit.stdout}\n${selfSentAudit.stderr}';
-      expect(selfSentAudit.exitCode, isNot(0));
+      expect(selfSentOutput, contains('[WARN] Production support inbox'));
+      expect(
+        selfSentOutput,
+        isNot(contains('[FAIL] Production support inbox')),
+      );
       expect(selfSentOutput, contains('must come from an external sender'));
     } finally {
       tempDir.deleteSync(recursive: true);

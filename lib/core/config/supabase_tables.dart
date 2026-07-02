@@ -4,5 +4,6 @@ abstract final class SupabaseTables {
   static const String buddyProfiles = 'buddy_profiles';
   static const String workoutSessions = 'workout_sessions';
   static const String heartRate = 'heart_rate';
+  static const String supportRequests = 'support_requests';
   static const String accountDeletionRequests = 'account_deletion_requests';
 }

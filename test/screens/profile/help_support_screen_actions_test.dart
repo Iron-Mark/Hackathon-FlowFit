@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:flowfit/screens/profile/settings/general/help_support_screen.dart';
+import 'package:flowfit/services/support_request_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -31,58 +32,62 @@ void main() {
     expect(launchedUris.single.queryParameters.containsKey('body'), isFalse);
   });
 
-  testWidgets('Message Support opens a prefilled support email', (
+  testWidgets('Message Support submits an in-app support request', (
     tester,
   ) async {
-    final launchedUris = <Uri>[];
+    SupportRequestDraft? submittedDraft;
 
     await tester.pumpWidget(
       _harness(
-        launchSupportEmail: (uri) async {
-          launchedUris.add(uri);
-          return true;
+        submitSupportRequest: (draft) async {
+          submittedDraft = draft;
+          return 'support-request-id';
         },
       ),
     );
 
     await tester.tap(find.text('Message Support'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(launchedUris, hasLength(1));
-    expect(
-      launchedUris.single.queryParameters['subject'],
-      'FlowFit support request',
+    expect(find.text('Send support request'), findsOneWidget);
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Message'),
+      'I need help with my FlowFit account.',
     );
-    expect(
-      launchedUris.single.queryParameters['body'],
-      startsWith('Hi FlowFit support,'),
-    );
+    await tester.tap(find.text('Send'));
+    await tester.pumpAndSettle();
+
+    expect(submittedDraft, isNotNull);
+    expect(submittedDraft?.category, 'support');
+    expect(submittedDraft?.subject, 'FlowFit support request');
+    expect(submittedDraft?.message, 'I need help with my FlowFit account.');
+    expect(find.text('Support request sent.'), findsOneWidget);
   });
 
-  testWidgets('Report a Bug opens a bug report email template', (tester) async {
-    final launchedUris = <Uri>[];
+  testWidgets('Report a Bug submits an in-app bug report template', (
+    tester,
+  ) async {
+    SupportRequestDraft? submittedDraft;
 
     await tester.pumpWidget(
       _harness(
-        launchSupportEmail: (uri) async {
-          launchedUris.add(uri);
-          return true;
+        submitSupportRequest: (draft) async {
+          submittedDraft = draft;
+          return 'bug-request-id';
         },
       ),
     );
 
     await tester.tap(find.text('Report a Bug'));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    expect(launchedUris, hasLength(1));
-    expect(
-      launchedUris.single.queryParameters['subject'],
-      'FlowFit bug report',
-    );
-    expect(
-      launchedUris.single.queryParameters['body'],
-      contains('Steps to reproduce:'),
-    );
+    await tester.tap(find.text('Send'));
+    await tester.pumpAndSettle();
+
+    expect(submittedDraft, isNotNull);
+    expect(submittedDraft?.category, 'bug');
+    expect(submittedDraft?.subject, 'FlowFit bug report');
+    expect(submittedDraft?.message, contains('Steps to reproduce:'));
   });
 
   testWidgets(
@@ -126,7 +131,7 @@ void main() {
     launchCompleter.complete(true);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Message Support'));
+    await tester.tap(find.text('Email Support'));
     await tester.pump();
 
     expect(launchedUris, hasLength(2));
@@ -155,7 +160,7 @@ void main() {
 
     await tester.ensureVisible(find.text('Support Channel'));
 
-    expect(find.text('Email support'), findsOneWidget);
+    expect(find.text('In-app requests'), findsOneWidget);
     expect(find.textContaining('Mon-Fri'), findsNothing);
     expect(find.textContaining('EST'), findsNothing);
   });
@@ -178,8 +183,15 @@ void main() {
   });
 }
 
-Widget _harness({required SupportEmailLauncher launchSupportEmail}) {
+Widget _harness({
+  SupportEmailLauncher? launchSupportEmail,
+  SupportRequestSubmitter? submitSupportRequest,
+}) {
   return MaterialApp(
-    home: HelpSupportScreen(launchSupportEmail: launchSupportEmail),
+    home: HelpSupportScreen(
+      launchSupportEmail: launchSupportEmail ?? (_) async => true,
+      submitSupportRequest:
+          submitSupportRequest ?? (_) async => 'support-request-id',
+    ),
   );
 }

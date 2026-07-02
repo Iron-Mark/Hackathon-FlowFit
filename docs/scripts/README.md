@@ -360,14 +360,18 @@ Write a JSON evidence artifact for release handoff:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
 ```
 
-The strict audit requires confirmed support inbox evidence at
-`build/support-inbox-verification.json` before accepting
-`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. In advisory
-mode, DNS failures such as Null MX are warnings so local preflight can continue
-through code and build checks. In strict mode, missing evidence or failed DNS /
-inbound evidence keeps the support inbox gate failing. Use
-`-SupportInboxEvidencePath ''` only for isolated script tests that intentionally
-ignore local evidence.
+The strict audit also verifies the in-app support request path: the Flutter Help
+& Support screen must submit through `SupabaseTables.supportRequests`, the
+support request migration must enable authenticated RLS, and app smoke evidence
+should include support request create/read/delete. With that app path present,
+missing or weak `build/support-inbox-verification.json` receipt metadata is a
+store/contact warning, not an app-support blocker. DNS failures such as Null MX
+still fail strict mode because the configured public support address is not
+deliverable. Use `-SupportInboxEvidencePath ''` only for isolated script tests
+that intentionally ignore local evidence.
+
+Use `-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true` only after
+the configured external support inbox is confirmed separately.
 
 Strict mode also validates the native Android live-auth E2E smoke evidence at
 `build/android-live-auth-smoke-latest.json`. That smoke must pass the real

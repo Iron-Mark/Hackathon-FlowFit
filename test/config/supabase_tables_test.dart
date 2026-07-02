@@ -9,6 +9,7 @@ void main() {
     expect(SupabaseTables.buddyProfiles, 'buddy_profiles');
     expect(SupabaseTables.workoutSessions, 'workout_sessions');
     expect(SupabaseTables.heartRate, 'heart_rate');
+    expect(SupabaseTables.supportRequests, 'support_requests');
     expect(SupabaseTables.accountDeletionRequests, 'account_deletion_requests');
   });
 
@@ -22,7 +23,7 @@ void main() {
             .expand((file) {
               final source = file.readAsStringSync();
               final matches = RegExp(
-                r"\.from\('(?:user_profiles|buddy_profiles|workout_sessions|heart_rate|account_deletion_requests)'\)",
+                r"\.from\('(?:user_profiles|buddy_profiles|workout_sessions|heart_rate|support_requests|account_deletion_requests)'\)",
               ).allMatches(source);
 
               return matches.map((match) => '${file.path}:${match.group(0)}');
