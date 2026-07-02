@@ -30,6 +30,10 @@ flutter build apk --debug -t lib\main_wear.dart --no-pub
 flutter build web --release --no-pub
 ```
 
+The full Flutter test suite is serialized through the repo-level
+`dart_test.yaml` so the documented `flutter test --reporter compact` command is
+deterministic for the heavier widget and integration-style tests.
+
 For the fast offline button, route, and feature-action smoke:
 
 ```powershell

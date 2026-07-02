@@ -133,6 +133,12 @@ jobs:
             echo "SUPABASE_URL must be a Supabase project URL." >&2
             exit 1
           fi
+          supabase_host="${SUPABASE_URL,,}"
+          supabase_host="${supabase_host#https://}"
+          if ! getent ahosts "${supabase_host}" >/dev/null; then
+            echo "SUPABASE_URL host does not resolve. Confirm the Supabase project exists and is not paused or deleted." >&2
+            exit 1
+          fi
           if [[ "${SUPABASE_PUBLISHABLE_KEY}" != sb_publishable_* ]]; then
             echo "SUPABASE_PUBLISHABLE_KEY must be a publishable client key." >&2
             exit 1

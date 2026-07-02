@@ -275,7 +275,7 @@ pwsh -NoProfile -File scripts/verify_offline_app_actions.ps1 -SkipPubGet
 ```
 
 This script runs the static route/action guards, interactive surface coverage
-guard, and focused Flutter widget smokes for welcome/login/signup/splash,
+guard, and focused Flutter widget smokes for landing, welcome/login/signup/splash,
 production route-table navigation, auth/login flows, onboarding, home
 CTA/header actions, profile/settings, delete-account flow, dashboard, activity
 classifier navigation, health, phone, Wear, wellness/maps, workout, mood,
@@ -299,16 +299,17 @@ Serve `build/web` first, for example:
 python -m http.server 8791 --bind 127.0.0.1 --directory build\web
 ```
 
-The smoke enables Flutter semantics in Chromium, verifies the welcome/signup
-and login route actions, then covers survey intro to basic info, basic info to
-measurements, Buddy welcome to Buddy intro, phone home Clear dialog, workout
-type actions, settings legal/support/account actions, notification preferences,
-app integration to Wellness setup, language and unit preference routes, the
-Wellness Settings privacy action, the phone heart-rate route, and the Buddy
-completion entry surface. It writes JSON evidence with pass counts, console
-warnings/errors, and failed request counts. Expected local WebGL warnings from
-headless software rendering are recorded, but console errors or failed network
-requests fail the smoke.
+The smoke enables Flutter semantics in Chromium, verifies the marketing landing
+page at `/`, verifies the welcome/signup and login route actions, then covers
+survey intro to basic info, basic info to measurements, Buddy welcome to Buddy
+intro, phone home Clear dialog, workout type actions, settings legal/support/account
+actions, notification preferences, app integration to Wellness setup, language
+and unit preference routes, the Wellness Settings
+privacy action, the phone heart-rate route, and the Buddy completion entry
+surface. It writes JSON evidence with pass counts, console warnings/errors, and
+failed request counts. Expected local WebGL warnings from headless software
+rendering are recorded, but console errors or failed network requests fail the
+smoke.
 
 ---
 
@@ -341,6 +342,14 @@ Strict mode defaults to release MCP posture and expects `read_only=true` after
 migrations and advisors are complete. The script never prints Supabase keys or
 signing passwords.
 
+For configured Supabase client URLs and the project ref in `.mcp.json`, the
+audit resolves the project host. Advisory runs warn on DNS failures; strict
+runs fail on nonresolving hosts so stale URLs or MCP project refs cannot pass
+release handoff merely because their shape looks valid. DNS reachability is
+only a host-level guard; migrations plus backend/app smokes remain the runtime
+proof. Use `-SkipSupabaseReachabilityCheck` only for isolated script tests or
+offline diagnostics, not for release evidence.
+
 Use `-McpMode Recovery` to force the write-capable migration posture, or
 `-McpMode Release` to force the read-only verification posture. The default
 `-McpMode Auto` chooses `Recovery` for advisory runs and `Release` for
@@ -359,6 +368,13 @@ through code and build checks. In strict mode, missing evidence or failed DNS /
 inbound evidence keeps the support inbox gate failing. Use
 `-SupportInboxEvidencePath ''` only for isolated script tests that intentionally
 ignore local evidence.
+
+Strict mode also validates the native Android live-auth E2E smoke evidence at
+`build/android-live-auth-smoke-latest.json`. That smoke must pass the real
+Supabase login, onboarding, dashboard, Health, Track, Buddy, cleanup, and
+Android crash-marker checks before the release audit can go green. Use
+`-AndroidLiveAuthEvidencePath ''` only for isolated script tests that
+intentionally ignore native E2E evidence.
 
 When the release web values live in GitHub repository variables, audit them
 directly without copying values into local files:
@@ -431,16 +447,19 @@ maintainer account.
 ```powershell
 pwsh -NoProfile -File scripts\verify_support_inbox.ps1 `
   -ConfirmedInbound `
-  -EvidenceNote 'Received external test email on 2026-06-15'
+  -ReceivedFrom 'friend@their-domain.com' `
+  -ReceivedAt '2026-07-02T08:00:00Z' `
+  -EvidenceNote 'Received external test email on 2026-07-02'
 ```
 
-`-EvidenceNote` is required with `-ConfirmedInbound`. The helper validates the
-email shape, inventories public/in-app references, checks MX records when local
-DNS tooling is available, and records the manual inbound confirmation. DNS
-status is written into the JSON summary; Null MX is treated as non-deliverable.
-The helper never sends email and DNS success does not prove inbox ownership by
-itself. Keep the received test email or mailbox screenshot as private release
-evidence.
+`-EvidenceNote`, `-ReceivedFrom`, and `-ReceivedAt` are required with
+`-ConfirmedInbound`; `-MessageId` is optional when the mail client exposes one.
+The helper validates the email shape, inventories public/in-app references,
+checks MX records when local DNS tooling is available, and records the manual
+inbound confirmation. DNS status is written into the JSON summary; Null MX is
+treated as non-deliverable. The helper never sends email and DNS success does
+not prove inbox ownership by itself. Keep the received test email or mailbox
+screenshot as private release evidence.
 
 ---
 
@@ -593,8 +612,9 @@ The helper validates `FLOWFIT_PUBLIC_WEB_BASE_URL`, optional
 `FLOWFIT_WEB_BASE_HREF`, `FLOWFIT_SUPPORT_EMAIL`,
 `FLOWFIT_SUPPORT_EMAIL_VERIFIED`, `SUPABASE_URL`, and
 `SUPABASE_PUBLISHABLE_KEY`, rejects placeholders, reserved/test-shaped values,
-secret/service-role Supabase keys, and the retired project ref, then calls
-`gh variable set`. It redacts the publishable key in all output. If
+secret/service-role Supabase keys, the retired project ref, and Supabase
+project hosts that do not resolve in DNS, then calls `gh variable set`. It
+redacts the publishable key in all output. If
 `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, the `-SupportEmailVerified` switch is
 required so the production web deploy cannot be enabled by accident.
 
@@ -770,8 +790,14 @@ the build and removes them before exit. It fails instead of overwriting an
 existing keystore file. Every target requires real Supabase client values from
 `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`, or the local fallback
 `lib/secrets.dart`; the wrapper passes those values to Flutter as
-`--dart-define` inputs and never writes them to the artifact manifest. Android,
-iOS, and web targets also pass `FLOWFIT_PUBLIC_WEB_BASE_URL` as a Dart define so
+`--dart-define` inputs and never writes them to the artifact manifest. The
+wrapper also resolves the Supabase project host before producing artifacts so a
+nonresolving stale, paused, deleted, or mistyped project URL fails before
+release builds are generated. Backend/app smokes are still required to prove
+the active project is migrated and serving traffic. Use
+`-SkipSupabaseReachabilityCheck` only for isolated script tests or offline
+diagnostics, not production artifact evidence. Android, iOS, and web
+targets also pass `FLOWFIT_PUBLIC_WEB_BASE_URL` as a Dart define so
 in-app help/legal links match the deployed public compliance pages. If
 `FLOWFIT_MAP_TILE_URL_TEMPLATE` and optional `FLOWFIT_MAP_TILE_SUBDOMAINS` are
 set, the wrapper passes them as Dart defines so workout and wellness maps use
@@ -900,9 +926,11 @@ deploys it, and verifies the deployed site with `scripts/verify_web_deployment.p
 It uploads the JSON verification evidence as `flowfit-github-pages-verification`.
 
 The workflow has a `deploy-ready` job. Pushes to `main` skip the production
-Pages deployment with a notice until the public web URL, Supabase variables,
-and verified support inbox status are configured. Manual dispatch uses the same
-gate. The workflow does not provide a fallback public URL; set
+Pages deployment with a notice only while the public web URL, Supabase
+variables, or verified support inbox status are not configured. Once those
+release variables are present, configured-but-invalid or nonresolving Supabase
+project hosts fail the workflow. Manual dispatch uses the same gate. The
+workflow does not provide a fallback public URL; set
 `FLOWFIT_PUBLIC_WEB_BASE_URL` before enabling deployment.
 
 Configure repository variables before dispatching it:
@@ -944,8 +972,10 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1 `
   -Force
 ```
 
-The helper rejects placeholder/example/smoke IDs and secret/service-role
-Supabase keys.
+The helper rejects placeholder/example/smoke IDs, secret/service-role Supabase
+keys, and Supabase project hosts that do not resolve in DNS before writing
+local release configuration. Use `-SkipSupabaseReachabilityCheck` only for
+isolated script tests or offline diagnostics.
 
 ---
 

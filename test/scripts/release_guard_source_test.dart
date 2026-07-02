@@ -555,6 +555,7 @@ exit 1
       );
       expect(gitignore, contains('.env.release.android-signing'));
       expect(gitignore, contains('.env.release.android-signing*'));
+      expect(gitignore, contains('.codex/'));
       expect(exportAndroidSigningEnv, contains('ANDROID_SIGNING_ENV_EXPORTED'));
       expect(exportAndroidSigningEnv, contains('git'));
       expect(exportAndroidSigningEnv, contains('check-ignore'));
@@ -1445,6 +1446,8 @@ storeFile=upload-keystore.jks
     expect(helper, contains('REPLACE_WITH'));
     expect(helper, contains('Assert-MapTileUrlTemplate'));
     expect(helper, contains('Assert-MapTileSubdomains'));
+    expect(helper, contains('System.Net.Dns'));
+    expect(helper, contains('SkipSupabaseReachabilityCheck'));
     expect(
       helper,
       contains('public OpenStreetMap tile servers for production traffic'),
@@ -1485,6 +1488,7 @@ storeFile=upload-keystore.jks
       'Iron-Mark/Hackathon-FlowFit',
       '-DryRun',
       '-SupportEmailVerified',
+      '-SkipSupabaseReachabilityCheck',
     ], environment: env);
 
     expect(dryRun.exitCode, 0, reason: '${dryRun.stdout}\n${dryRun.stderr}');
@@ -1929,6 +1933,9 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(storeReleaseBuild, contains('[switch]\$SkipValidation'));
     expect(storeReleaseBuild, contains('Invoke-ReleaseValidation'));
     expect(storeReleaseBuild, contains("dart', 'analyze', '--format=machine"));
+    expect(storeReleaseBuild, contains('Assert-SupabaseProjectReachability'));
+    expect(storeReleaseBuild, contains('System.Net.Dns'));
+    expect(storeReleaseBuild, contains('SkipSupabaseReachabilityCheck'));
     expect(
       storeReleaseBuild,
       contains("flutter', 'test', '--reporter', 'compact"),
@@ -2499,8 +2506,14 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       contains('production web deploy variables are not configured'),
     );
     expect(releaseReadinessRunbook, contains('deploy-ready'));
-    expect(releaseReadinessRunbook, contains('skips production GitHub Pages'));
-    expect(releaseReadinessRunbook, contains('deployment with a notice'));
+    expect(
+      releaseReadinessRunbook,
+      contains('deployment with a notice only while'),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('invalid or nonresolving Supabase project hosts fail'),
+    );
     expect(releaseReadinessRunbook, contains('readiness-only check'));
     expect(releaseReadinessRunbook, contains('limited to pushes on `main`'));
     expect(pagesWorkflow, contains('actions/configure-pages@v6'));
@@ -2535,6 +2548,25 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       contains(
         'SUPABASE_URL must not be a placeholder or retired FlowFit project URL.',
       ),
+    );
+    expect(pagesWorkflow, contains('getent ahosts'));
+    expect(pagesWorkflow, contains('SUPABASE_URL host does not resolve.'));
+    expect(
+      pagesWorkflow,
+      contains('::error::SUPABASE_URL host does not resolve.'),
+    );
+    expect(
+      pagesWorkflow,
+      isNot(
+        contains(
+          '::notice::Skipping GitHub Pages deployment because SUPABASE_URL host does not resolve.',
+        ),
+      ),
+    );
+    expect(androidProductionReleaseWorkflow, contains('getent ahosts'));
+    expect(
+      androidProductionReleaseWorkflow,
+      contains('SUPABASE_URL host does not resolve.'),
     );
     expect(pagesWorkflow, contains('publishable_key='));
     expect(
@@ -2624,6 +2656,8 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       '-SupportEmailVerified',
       '-SupportInboxEvidencePath',
       '',
+      '-AndroidLiveAuthEvidencePath',
+      '',
     ], environment: env);
 
     expect(audit.exitCode, isNot(0));
@@ -2649,6 +2683,8 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       '-Strict',
       '-SupportEmailVerified',
       '-SupportInboxEvidencePath',
+      '',
+      '-AndroidLiveAuthEvidencePath',
       '',
     ], environment: env);
 
@@ -2707,6 +2743,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
 {
   "supportEmail": "support@release.flowfit.app",
   "confirmedInbound": true,
+  "inboundReceipt": {
+    "receivedFrom": "launch.proof.sender@gmail.com",
+    "receivedAt": "2026-07-02T08:00:00Z",
+    "messageId": "flowfit-support-proof"
+  },
   "dnsMx": {
     "checked": true,
     "status": "pass",
@@ -2714,6 +2755,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
   }
 }
 ''');
+      final androidEvidence = _writeAndroidLiveAuthEvidence(tempDir);
 
       final env = Map<String, String>.from(Platform.environment)
         ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = ''
@@ -2737,6 +2779,9 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         mcpFile.path,
         '-SupportInboxEvidencePath',
         supportEvidence.path,
+        '-AndroidLiveAuthEvidencePath',
+        androidEvidence.path,
+        '-SkipSupabaseReachabilityCheck',
       ], environment: env);
 
       expect(audit.exitCode, 0, reason: '${audit.stdout}\n${audit.stderr}');
@@ -2815,6 +2860,8 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         advisoryMcpFile.path,
         '-SupportInboxEvidencePath',
         supportEvidence.path,
+        '-AndroidLiveAuthEvidencePath',
+        '',
       ], environment: env);
 
       expect(
@@ -2841,6 +2888,8 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         releaseMcpFile.path,
         '-SupportInboxEvidencePath',
         supportEvidence.path,
+        '-AndroidLiveAuthEvidencePath',
+        '',
       ], environment: env);
 
       expect(audit.exitCode, isNot(0));
@@ -2888,6 +2937,8 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         releaseMcpFile.path,
         '-SupportInboxEvidencePath',
         '${tempDir.path}${Platform.pathSeparator}missing-support-evidence.json',
+        '-AndroidLiveAuthEvidencePath',
+        '',
       ], environment: env);
 
       expect(audit.exitCode, isNot(0));
@@ -2899,6 +2950,177 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         '${audit.stdout}\n${audit.stderr}',
         contains('requires confirmed support inbox evidence'),
       );
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('strict audit rejects weak confirmed support inbox receipt evidence', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_weak_support_receipt_audit_',
+    );
+    try {
+      final releaseMcpFile = File(
+        '${tempDir.path}${Platform.pathSeparator}.mcp.release.json',
+      );
+      releaseMcpFile.writeAsStringSync(
+        '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true"}}}',
+      );
+
+      final env = Map<String, String>.from(Platform.environment)
+        ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = 'https://flowfit.app'
+        ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
+        ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
+        ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+        ..['SUPABASE_PUBLISHABLE_KEY'] =
+            'sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
+        ..['FLOWFIT_ANDROID_KEYSTORE_BASE64'] = 'ZmFrZS1rZXlzdG9yZQ=='
+        ..['FLOWFIT_ANDROID_KEYSTORE_PASSWORD'] = 'store-password'
+        ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
+        ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
+
+      ProcessResult runAudit(File supportEvidence) {
+        return Process.runSync('pwsh', [
+          '-NoProfile',
+          '-File',
+          'scripts/release_readiness_audit.ps1',
+          '-Strict',
+          '-SupportEmailVerified',
+          '-McpConfigPath',
+          releaseMcpFile.path,
+          '-SupportInboxEvidencePath',
+          supportEvidence.path,
+          '-AndroidLiveAuthEvidencePath',
+          '',
+          '-SkipSupabaseReachabilityCheck',
+        ], environment: env);
+      }
+
+      final missingReceipt = File(
+        '${tempDir.path}${Platform.pathSeparator}support-missing-receipt.json',
+      );
+      missingReceipt.writeAsStringSync('''
+{
+  "supportEmail": "support@release.flowfit.app",
+  "confirmedInbound": true,
+  "dnsMx": {
+    "checked": true,
+    "status": "pass",
+    "detail": "MX records found."
+  }
+}
+''');
+
+      final missingReceiptAudit = runAudit(missingReceipt);
+      final missingReceiptOutput =
+          '${missingReceiptAudit.stdout}\n${missingReceiptAudit.stderr}';
+      expect(missingReceiptAudit.exitCode, isNot(0));
+      expect(missingReceiptOutput, contains('missing inboundReceipt details'));
+
+      final selfSent = File(
+        '${tempDir.path}${Platform.pathSeparator}support-self-sent.json',
+      );
+      selfSent.writeAsStringSync('''
+{
+  "supportEmail": "support@release.flowfit.app",
+  "confirmedInbound": true,
+  "inboundReceipt": {
+    "receivedFrom": "support@release.flowfit.app",
+    "receivedAt": "2026-07-02T08:00:00Z"
+  },
+  "dnsMx": {
+    "checked": true,
+    "status": "pass",
+    "detail": "MX records found."
+  }
+}
+''');
+
+      final selfSentAudit = runAudit(selfSent);
+      final selfSentOutput = '${selfSentAudit.stdout}\n${selfSentAudit.stderr}';
+      expect(selfSentAudit.exitCode, isNot(0));
+      expect(selfSentOutput, contains('must come from an external sender'));
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
+  });
+
+  test('strict audit requires passing Android live-auth evidence', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_android_live_auth_evidence_audit_',
+    );
+    try {
+      final releaseMcpFile = File(
+        '${tempDir.path}${Platform.pathSeparator}.mcp.release.json',
+      );
+      releaseMcpFile.writeAsStringSync(
+        '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true"}}}',
+      );
+      final supportEvidence = File(
+        '${tempDir.path}${Platform.pathSeparator}support-evidence.json',
+      );
+      supportEvidence.writeAsStringSync('''
+{
+  "supportEmail": "support@release.flowfit.app",
+  "confirmedInbound": true,
+  "inboundReceipt": {
+    "receivedFrom": "launch.proof.sender@gmail.com",
+    "receivedAt": "2026-07-02T08:00:00Z",
+    "messageId": "flowfit-support-proof"
+  },
+  "dnsMx": {
+    "checked": true,
+    "status": "pass",
+    "detail": "MX records found."
+  }
+}
+''');
+
+      final env = Map<String, String>.from(Platform.environment)
+        ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = 'https://flowfit.app'
+        ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
+        ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
+        ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+        ..['SUPABASE_PUBLISHABLE_KEY'] =
+            'sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
+        ..['FLOWFIT_ANDROID_KEYSTORE_BASE64'] = 'ZmFrZS1rZXlzdG9yZQ=='
+        ..['FLOWFIT_ANDROID_KEYSTORE_PASSWORD'] = 'store-password'
+        ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
+        ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
+
+      ProcessResult runAudit(String androidEvidencePath) {
+        return Process.runSync('pwsh', [
+          '-NoProfile',
+          '-File',
+          'scripts/release_readiness_audit.ps1',
+          '-Strict',
+          '-SupportEmailVerified',
+          '-McpConfigPath',
+          releaseMcpFile.path,
+          '-SupportInboxEvidencePath',
+          supportEvidence.path,
+          '-AndroidLiveAuthEvidencePath',
+          androidEvidencePath,
+          '-SkipSupabaseReachabilityCheck',
+        ], environment: env);
+      }
+
+      final missingAudit = runAudit(
+        '${tempDir.path}${Platform.pathSeparator}missing-android-evidence.json',
+      );
+      final missingOutput = '${missingAudit.stdout}\n${missingAudit.stderr}';
+      expect(missingAudit.exitCode, isNot(0));
+      expect(missingOutput, contains('[FAIL] Android live-auth E2E smoke'));
+      expect(
+        missingOutput,
+        contains('requires native Android live-auth evidence'),
+      );
+
+      final androidEvidence = _writeAndroidLiveAuthEvidence(tempDir);
+      final passingAudit = runAudit(androidEvidence.path);
+      final passingOutput = '${passingAudit.stdout}\n${passingAudit.stderr}';
+      expect(passingAudit.exitCode, 0, reason: passingOutput);
+      expect(passingOutput, contains('[PASS] Android live-auth E2E smoke'));
     } finally {
       tempDir.deleteSync(recursive: true);
     }
@@ -2934,6 +3156,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     );
 
     expect(
+      readOnlyAudit.exitCode,
+      0,
+      reason: '${readOnlyAudit.stdout}\n${readOnlyAudit.stderr}',
+    );
+    expect(
       '${readOnlyAudit.stdout}\n${readOnlyAudit.stderr}',
       contains('[PASS] Supabase MCP release read-only'),
     );
@@ -2952,6 +3179,125 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(configureLocalRelease, contains(r'\.\.\.'));
     expect(storeReleaseBuild, contains(r'^sb_publishable_[A-Za-z0-9_-]{20,}$'));
     expect(readinessAudit, contains(r'^sb_publishable_[A-Za-z0-9_-]{20,}$'));
+  });
+
+  test('store release wrapper checks Supabase project reachability', () {
+    expect(storeReleaseBuild, contains('Assert-SupabaseProjectReachability'));
+    expect(
+      configureLocalRelease,
+      contains('Assert-SupabaseProjectReachability'),
+    );
+    expect(storeReleaseBuild, contains('System.Net.Dns'));
+    expect(configureLocalRelease, contains('System.Net.Dns'));
+    expect(storeReleaseBuild, contains('SkipSupabaseReachabilityCheck'));
+    expect(configureLocalRelease, contains('SkipSupabaseReachabilityCheck'));
+    expect(readinessAudit, contains('Store Supabase config guard'));
+    expect(readinessAudit, contains('project reachability'));
+    expect(
+      storeReleaseBuild,
+      contains("\$strictAuditCommand += '-SkipSupabaseReachabilityCheck'"),
+    );
+  });
+
+  test('release readiness audit checks Supabase project reachability', () {
+    expect(readinessAudit, contains('Test-SupabaseProjectReachability'));
+    expect(readinessAudit, contains('System.Net.Dns'));
+    expect(readinessAudit, contains('Supabase MCP project reachability'));
+    expect(readinessAudit, contains('Supabase release URL reachability'));
+    expect(readinessAudit, contains('Local Supabase URL reachability'));
+    expect(readinessAudit, contains('SkipSupabaseReachabilityCheck'));
+  });
+
+  test('strict audit fails DNS reachability but skip mode warns', () {
+    final tempDir = Directory.systemTemp.createTempSync(
+      'flowfit_supabase_dns_audit_',
+    );
+    try {
+      final mcpFile = File(
+        '${tempDir.path}${Platform.pathSeparator}.mcp.release.json',
+      );
+      mcpFile.writeAsStringSync(
+        '{"mcpServers":{"supabase":{"type":"http","url":"https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&features=database,docs,debugging,development&read_only=true"}}}',
+      );
+      final supportEvidence = File(
+        '${tempDir.path}${Platform.pathSeparator}support-evidence.json',
+      );
+      supportEvidence.writeAsStringSync('''
+{
+  "supportEmail": "support@release.flowfit.app",
+  "confirmedInbound": true,
+  "inboundReceipt": {
+    "receivedFrom": "launch.proof.sender@gmail.com",
+    "receivedAt": "2026-07-02T08:00:00Z",
+    "messageId": "flowfit-support-proof"
+  },
+  "dnsMx": {
+    "checked": true,
+    "status": "pass",
+    "detail": "MX records found."
+  }
+}
+''');
+      final androidEvidence = _writeAndroidLiveAuthEvidence(tempDir);
+
+      final env = Map<String, String>.from(Platform.environment)
+        ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = 'https://flowfit.app'
+        ..['FLOWFIT_SUPPORT_EMAIL'] = 'support@release.flowfit.app'
+        ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
+        ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
+        ..['SUPABASE_PUBLISHABLE_KEY'] =
+            'sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
+        ..['FLOWFIT_ANDROID_KEYSTORE_BASE64'] = 'ZmFrZS1rZXlzdG9yZQ=='
+        ..['FLOWFIT_ANDROID_KEYSTORE_PASSWORD'] = 'store-password'
+        ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
+        ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
+
+      ProcessResult runAudit({required bool skipReachability}) {
+        return Process.runSync('pwsh', [
+          '-NoProfile',
+          '-File',
+          'scripts/release_readiness_audit.ps1',
+          '-Strict',
+          '-SupportEmailVerified',
+          '-McpConfigPath',
+          mcpFile.path,
+          '-SupportInboxEvidencePath',
+          supportEvidence.path,
+          '-AndroidLiveAuthEvidencePath',
+          androidEvidence.path,
+          if (skipReachability) '-SkipSupabaseReachabilityCheck',
+        ], environment: env);
+      }
+
+      final dnsFailure = runAudit(skipReachability: false);
+      expect(dnsFailure.exitCode, isNot(0));
+      expect(
+        '${dnsFailure.stdout}\n${dnsFailure.stderr}',
+        contains('[FAIL] Supabase MCP project reachability'),
+      );
+      expect(
+        '${dnsFailure.stdout}\n${dnsFailure.stderr}',
+        contains('[FAIL] Supabase release URL reachability'),
+      );
+
+      final skipped = runAudit(skipReachability: true);
+      final skippedOutput = '${skipped.stdout}\n${skipped.stderr}';
+      expect(
+        skippedOutput,
+        contains('[WARN] Supabase MCP project reachability'),
+      );
+      expect(skippedOutput, contains('DNS reachability was skipped'));
+      expect(
+        skippedOutput,
+        isNot(contains('[FAIL] Supabase MCP project reachability')),
+      );
+      expect(
+        skippedOutput,
+        isNot(contains('[FAIL] Supabase release URL reachability')),
+      );
+    } finally {
+      tempDir.deleteSync(recursive: true);
+    }
   });
 
   test('runtime release guards reject ellipsis publishable keys', () {
@@ -2981,6 +3327,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       '-AllowDirty',
       '-SkipFlutterPubGet',
       '-SkipValidation',
+      '-SkipSupabaseReachabilityCheck',
     ], environment: env);
     expect(store.exitCode, isNot(0));
     final storeOutput = '${store.stdout}\n${store.stderr}'
@@ -3011,6 +3358,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         '-AllowDirty',
         '-SkipFlutterPubGet',
         '-SkipValidation',
+        '-SkipSupabaseReachabilityCheck',
       ], environment: env);
     }
 
@@ -3087,6 +3435,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     );
     expect(supportInboxVerifier, contains('ConfirmedInbound'));
     expect(supportInboxVerifier, contains('EvidenceNote is required'));
+    expect(supportInboxVerifier, contains('ReceivedFrom is required'));
+    expect(supportInboxVerifier, contains('ReceivedAt is required'));
+    expect(supportInboxVerifier, contains('inboundReceipt'));
+    expect(readinessAudit, contains('inboundReceipt.receivedFrom'));
+    expect(readinessAudit, contains('inboundReceipt.receivedAt'));
     expect(supportInboxVerifier, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
     expect(supportInboxVerifier, contains('Resolve-MxEvidence'));
     expect(supportInboxVerifier, contains('Null MX'));
@@ -3202,6 +3555,26 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(webDeploymentVerifier, contains(r'^[A-Za-z0-9._+-]+@[A-Za-z0-9]'));
   });
 
+  test('Android live-auth release evidence is part of strict audit', () {
+    expect(readinessAudit, contains('AndroidLiveAuthEvidencePath'));
+    expect(readinessAudit, contains('Get-AndroidLiveAuthEvidence'));
+    expect(readinessAudit, contains('Add-AndroidLiveAuthEvidenceIssue'));
+    expect(readinessAudit, contains('Test-AndroidLiveAuthEvidence'));
+    expect(readinessAudit, contains('supabase.postRun.cleanupRows'));
+    expect(readinessAudit, contains('android.logcatCrashMarkers'));
+    expect(readinessAudit, contains('adb.pmClear.after'));
+    expect(scriptsReadme, contains('android-live-auth-smoke-latest.json'));
+    expect(scriptsReadme, contains('-AndroidLiveAuthEvidencePath'));
+    expect(
+      releaseReadinessRunbook,
+      contains('verify_android_live_auth_smoke.ps1'),
+    );
+    expect(
+      releaseReadinessRunbook,
+      contains('android-live-auth-smoke-latest.json'),
+    );
+  });
+
   test('in-app help and legal surfaces use runtime release contact config', () {
     expect(flowFitRuntimeConfig, contains('FLOWFIT_SUPPORT_EMAIL'));
     expect(flowFitRuntimeConfig, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
@@ -3274,6 +3647,9 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     final missingNoteOut = File(
       'build/support-inbox-missing-note-$unique.json',
     );
+    final missingSenderOut = File(
+      'build/support-inbox-missing-sender-$unique.json',
+    );
     final confirmedOut = File('build/support-inbox-confirmed-$unique.json');
 
     try {
@@ -3330,6 +3706,26 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       );
       expect(missingNoteOut.existsSync(), isFalse);
 
+      final missingSender = Process.runSync('pwsh', [
+        '-NoProfile',
+        '-File',
+        'scripts/verify_support_inbox.ps1',
+        '-SupportEmail',
+        'support@flowfit.com',
+        '-ConfirmedInbound',
+        '-EvidenceNote',
+        'Received external test email during automated smoke coverage',
+        '-SkipDns',
+        '-OutFile',
+        missingSenderOut.path,
+      ]);
+      expect(missingSender.exitCode, isNot(0));
+      expect(
+        '${missingSender.stdout}\n${missingSender.stderr}',
+        contains('ReceivedFrom is required'),
+      );
+      expect(missingSenderOut.existsSync(), isFalse);
+
       final confirmed = Process.runSync('pwsh', [
         '-NoProfile',
         '-File',
@@ -3339,6 +3735,12 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         '-ConfirmedInbound',
         '-EvidenceNote',
         'Received external test email during automated smoke coverage',
+        '-ReceivedFrom',
+        'launch.proof.sender@gmail.com',
+        '-ReceivedAt',
+        '2026-07-02T08:00:00Z',
+        '-MessageId',
+        'flowfit-support-proof',
         '-SkipDns',
         '-OutFile',
         confirmedOut.path,
@@ -3365,8 +3767,18 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
         confirmedJson['evidenceNote'],
         'Received external test email during automated smoke coverage',
       );
+      final inboundReceipt =
+          confirmedJson['inboundReceipt'] as Map<String, dynamic>;
+      expect(inboundReceipt['receivedFrom'], 'launch.proof.sender@gmail.com');
+      expect(inboundReceipt['receivedAt'], '2026-07-02T08:00:00.0000000+00:00');
+      expect(inboundReceipt['messageId'], 'flowfit-support-proof');
     } finally {
-      for (final file in [inventoryOut, missingNoteOut, confirmedOut]) {
+      for (final file in [
+        inventoryOut,
+        missingNoteOut,
+        missingSenderOut,
+        confirmedOut,
+      ]) {
         if (file.existsSync()) {
           file.deleteSync();
         }
@@ -3420,6 +3832,8 @@ function Resolve-DnsName {
   -SupportEmail 'support@flowfit.com' `
   -ConfirmedInbound `
   -EvidenceNote 'Received external test email after mailbox setup' `
+  -ReceivedFrom 'launch.proof.sender@gmail.com' `
+  -ReceivedAt '2026-07-02T08:00:00Z' `
   -OutFile '${confirmedNullMxOut.path}'
 ''',
       ]);
@@ -4080,7 +4494,29 @@ Profile &gt; Settings &gt; Delete Account
 
 ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
   final tempDir = Directory.systemTemp.createTempSync('flowfit_mcp_audit_');
+  final androidDir = Directory('android');
+  final keyProperties = File(
+    '${androidDir.path}${Platform.pathSeparator}key.properties',
+  );
+  final createdKeyProperties = strict && !keyProperties.existsSync();
+  final signingFixtureName =
+      'flowfit-ci-upload-${DateTime.now().microsecondsSinceEpoch}-$pid.jks';
+  final signingFixture = File(
+    '${androidDir.path}${Platform.pathSeparator}$signingFixtureName',
+  );
+  var createdSigningFixture = false;
   try {
+    if (createdKeyProperties) {
+      signingFixture.writeAsStringSync('fake-keystore');
+      createdSigningFixture = true;
+      keyProperties.writeAsStringSync('''
+storeFile=$signingFixtureName
+storePassword=store-password
+keyAlias=upload
+keyPassword=key-password
+''');
+    }
+
     final mcpFile = File('${tempDir.path}${Platform.pathSeparator}.mcp.json');
     mcpFile.writeAsStringSync(
       '{"mcpServers":{"supabase":{"type":"http","url":"$url"}}}',
@@ -4092,6 +4528,11 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
 {
   "supportEmail": "support@release.flowfit.app",
   "confirmedInbound": true,
+  "inboundReceipt": {
+    "receivedFrom": "launch.proof.sender@gmail.com",
+    "receivedAt": "2026-07-02T08:00:00Z",
+    "messageId": "flowfit-support-proof"
+  },
   "dnsMx": {
     "checked": true,
     "status": "pass",
@@ -4099,6 +4540,7 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
   }
 }
 ''');
+    final androidEvidence = _writeAndroidLiveAuthEvidence(tempDir);
 
     final env = Map<String, String>.from(Platform.environment)
       ..['FLOWFIT_PUBLIC_WEB_BASE_URL'] = 'https://flowfit.app'
@@ -4106,7 +4548,11 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
       ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
       ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
       ..['SUPABASE_PUBLISHABLE_KEY'] =
-          'sb_publishable_abcdefghijklmnopqrstuvwxyz123456';
+          'sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
+      ..['FLOWFIT_ANDROID_KEYSTORE_BASE64'] = 'ZmFrZS1rZXlzdG9yZQ=='
+      ..['FLOWFIT_ANDROID_KEYSTORE_PASSWORD'] = 'store-password'
+      ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
+      ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
 
     return Process.runSync('pwsh', [
       '-NoProfile',
@@ -4116,10 +4562,60 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
       mcpFile.path,
       '-SupportInboxEvidencePath',
       if (strict) supportEvidence.path else '',
+      '-AndroidLiveAuthEvidencePath',
+      if (strict) androidEvidence.path else '',
+      '-SkipSupabaseReachabilityCheck',
       if (strict) '-Strict',
       if (strict) '-SupportEmailVerified',
     ], environment: env);
   } finally {
+    if (createdKeyProperties && keyProperties.existsSync()) {
+      keyProperties.deleteSync();
+    }
+    if (createdSigningFixture && signingFixture.existsSync()) {
+      signingFixture.deleteSync();
+    }
     tempDir.deleteSync(recursive: true);
   }
+}
+
+File _writeAndroidLiveAuthEvidence(
+  Directory tempDir, {
+  String supabaseProjectHost = 'abcdefghijklmnop.supabase.co',
+}) {
+  final file = File(
+    '${tempDir.path}${Platform.pathSeparator}android-live-auth-evidence.json',
+  );
+  final checkNames = [
+    'supabase.clientConfig',
+    'supabase.smokeCredentials',
+    'ui.welcome',
+    'ui.login-before-credentials',
+    'ui.post-auth-onboarding-entry',
+    'supabase.profileCompleted',
+    'dashboard-after-survey',
+    'ui.health-food-added',
+    'ui.health-food-after-remove',
+    'ui.track-ai-workout-opened',
+    'ui.track-walking-options-opened',
+    'ui.track-running-setup-opened',
+    'buddy-ready-save-completed',
+    'dashboard-after-buddy-rendered',
+    'supabase.buddyCompleted',
+    'supabase.postRun.cleanupRows',
+    'android.logcatCrashMarkers',
+    'adb.pmClear.after',
+  ];
+
+  const encoder = JsonEncoder.withIndent('  ');
+  file.writeAsStringSync(
+    encoder.convert({
+      'status': 'pass',
+      'supabaseProjectHost': supabaseProjectHost,
+      'checks': [
+        for (final name in checkNames) {'name': name, 'status': 'pass'},
+      ],
+    }),
+  );
+  return file;
 }

@@ -8,7 +8,9 @@ param(
     [string]$GitHubRepo = '',
     [string]$GitHubVariablesPath = '',
     [string]$SupportInboxEvidencePath = 'build/support-inbox-verification.json',
-    [string]$OutFile = ''
+    [string]$AndroidLiveAuthEvidencePath = 'build/android-live-auth-smoke-latest.json',
+    [string]$OutFile = '',
+    [switch]$SkipSupabaseReachabilityCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -393,6 +395,41 @@ function Test-SupabasePublishableKey {
     return $normalized -match '^sb_publishable_[A-Za-z0-9_-]{20,}$'
 }
 
+function Test-SupabaseProjectReachability {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$Url
+    )
+
+    if ($SkipSupabaseReachabilityCheck) {
+        Add-Warn $Name 'Supabase project DNS reachability was skipped. Use this only for isolated script tests or offline diagnostics, not release handoff.' -StrictFailure $false
+        return
+    }
+
+    $uri = $null
+    if (-not [System.Uri]::TryCreate($Url.Trim(), [System.UriKind]::Absolute, [ref]$uri)) {
+        return
+    }
+
+    $projectHost = $uri.Host
+    if ([string]::IsNullOrWhiteSpace($projectHost)) {
+        return
+    }
+
+    try {
+        $addresses = @([System.Net.Dns]::GetHostAddresses($projectHost))
+        if ($addresses.Count -gt 0) {
+            Add-Pass $Name "$projectHost resolves in DNS."
+        } else {
+            Add-Warn $Name "$projectHost did not return DNS addresses. Confirm the Supabase project exists and is not paused or deleted."
+        }
+    } catch {
+        Add-Warn $Name "$projectHost does not resolve in DNS. Confirm the Supabase project exists, is not paused or deleted, and that the release environment points at the current project."
+    }
+}
+
 function Test-PublicWebBaseUrl {
     param([string]$Value)
 
@@ -511,12 +548,15 @@ function Test-McpConfig {
         return
     }
 
-    if ($url -notmatch 'project_ref=') {
+    $projectRefMatch = [regex]::Match($url, '(^|[?&])project_ref=([^&]+)')
+    if (-not $projectRefMatch.Success) {
         Add-Fail 'Supabase MCP project scope' 'MCP URL is not scoped to a Supabase project_ref.'
     } elseif ($url.Contains('REPLACE_WITH_FLOWFIT_DEV_PROJECT_REF')) {
         Add-Warn 'Supabase MCP project scope' 'MCP project_ref still uses the placeholder project ref.'
     } else {
+        $projectRef = [System.Uri]::UnescapeDataString($projectRefMatch.Groups[2].Value)
         Add-Pass 'Supabase MCP project scope' 'MCP URL includes a project_ref.'
+        Test-SupabaseProjectReachability -Name 'Supabase MCP project reachability' -Url "https://$projectRef.supabase.co"
     }
 
     $hasReadOnly = $url -match '(^|[?&])read_only=true($|&)'
@@ -580,6 +620,7 @@ function Test-Secrets {
             Add-Fail 'Supabase release URL' 'SUPABASE_URL is missing, placeholder/test-shaped, or not a Supabase project URL.'
         } else {
             Add-Pass 'Supabase release URL' 'SUPABASE_URL is configured for release builds.'
+            Test-SupabaseProjectReachability -Name 'Supabase release URL reachability' -Url $envUrl
         }
         if ($envKey -match 'sb_secret_|service_role') {
             Add-Fail 'Supabase release publishable key' 'SUPABASE_PUBLISHABLE_KEY contains a secret/service-role credential.'
@@ -615,6 +656,7 @@ function Test-Secrets {
         Add-Warn 'Local Supabase URL' 'lib/secrets.dart does not contain a valid-looking Supabase project URL.'
     } else {
         Add-Pass 'Local Supabase URL' 'lib/secrets.dart contains a Supabase project URL.'
+        Test-SupabaseProjectReachability -Name 'Local Supabase URL reachability' -Url $urlMatch.Groups[1].Value
     }
 
     $keyMatch = [regex]::Match($secrets, "publishableKey\s*=\s*'([^']+)'")
@@ -691,6 +733,131 @@ function Add-SupportInboxEvidenceIssue {
     param([Parameter(Mandatory = $true)][string]$Detail)
 
     Add-Warn 'Production support inbox' $Detail
+}
+
+function Get-AndroidLiveAuthEvidence {
+    if ([string]::IsNullOrWhiteSpace($AndroidLiveAuthEvidencePath)) {
+        return $null
+    }
+
+    $content = Read-AuditText $AndroidLiveAuthEvidencePath
+    if ($null -eq $content) {
+        return $null
+    }
+
+    try {
+        return $content | ConvertFrom-Json
+    } catch {
+        Add-Fail 'Android live-auth E2E smoke' "Android live-auth evidence is not valid JSON: $AndroidLiveAuthEvidencePath."
+        return $null
+    }
+}
+
+function Add-AndroidLiveAuthEvidenceIssue {
+    param([Parameter(Mandatory = $true)][string]$Detail)
+
+    Add-Warn 'Android live-auth E2E smoke' $Detail
+}
+
+function Get-ExpectedSupabaseHost {
+    $envUrl = [Environment]::GetEnvironmentVariable('SUPABASE_URL')
+    if (-not [string]::IsNullOrWhiteSpace($envUrl)) {
+        try {
+            return ([System.Uri]$envUrl.Trim()).Host
+        } catch {
+            return ''
+        }
+    }
+
+    $secrets = Read-RepoText 'lib/secrets.dart'
+    if ($null -eq $secrets) {
+        return ''
+    }
+
+    $urlMatch = [regex]::Match($secrets, "url\s*=\s*'([^']+)'")
+    if (-not $urlMatch.Success) {
+        return ''
+    }
+
+    try {
+        return ([System.Uri]$urlMatch.Groups[1].Value.Trim()).Host
+    } catch {
+        return ''
+    }
+}
+
+function Test-AndroidLiveAuthEvidence {
+    $evidence = Get-AndroidLiveAuthEvidence
+    if ($null -eq $evidence) {
+        if ($Strict -and -not [string]::IsNullOrWhiteSpace($AndroidLiveAuthEvidencePath)) {
+            Add-AndroidLiveAuthEvidenceIssue "Strict release audit requires native Android live-auth evidence at $AndroidLiveAuthEvidencePath. Run scripts/verify_android_live_auth_smoke.ps1 after Supabase migrations and app smoke pass."
+        }
+        return
+    }
+
+    if ([string]$evidence.status -ne 'pass') {
+        Add-AndroidLiveAuthEvidenceIssue "Android live-auth smoke status is '$($evidence.status)', expected 'pass'."
+        return
+    }
+
+    $checks = @($evidence.checks)
+    if ($checks.Count -eq 0) {
+        Add-AndroidLiveAuthEvidenceIssue 'Android live-auth smoke evidence does not list checks.'
+        return
+    }
+
+    $failedChecks = @($checks | Where-Object { [string]$_.status -ne 'pass' })
+    if ($failedChecks.Count -gt 0) {
+        Add-AndroidLiveAuthEvidenceIssue "Android live-auth smoke evidence contains $($failedChecks.Count) non-passing check(s)."
+        return
+    }
+
+    $expectedHost = Get-ExpectedSupabaseHost
+    $evidenceHost = [string]$evidence.supabaseProjectHost
+    if (
+        -not [string]::IsNullOrWhiteSpace($expectedHost) -and
+        -not [string]::IsNullOrWhiteSpace($evidenceHost) -and
+        $evidenceHost.Trim() -ne $expectedHost.Trim()
+    ) {
+        Add-AndroidLiveAuthEvidenceIssue "Android live-auth evidence is for $evidenceHost, but this audit expects $expectedHost."
+        return
+    }
+
+    $checksByName = @{}
+    foreach ($check in $checks) {
+        $name = [string]$check.name
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            $checksByName[$name] = $check
+        }
+    }
+
+    $requiredChecks = @(
+        'supabase.clientConfig',
+        'supabase.smokeCredentials',
+        'ui.welcome',
+        'ui.login-before-credentials',
+        'ui.post-auth-onboarding-entry',
+        'supabase.profileCompleted',
+        'dashboard-after-survey',
+        'ui.health-food-added',
+        'ui.health-food-after-remove',
+        'ui.track-ai-workout-opened',
+        'ui.track-walking-options-opened',
+        'ui.track-running-setup-opened',
+        'buddy-ready-save-completed',
+        'dashboard-after-buddy-rendered',
+        'supabase.buddyCompleted',
+        'supabase.postRun.cleanupRows',
+        'android.logcatCrashMarkers',
+        'adb.pmClear.after'
+    )
+    $missingChecks = @($requiredChecks | Where-Object { -not $checksByName.ContainsKey($_) })
+    if ($missingChecks.Count -gt 0) {
+        Add-AndroidLiveAuthEvidenceIssue "Android live-auth smoke evidence is missing required check(s): $($missingChecks -join ', ')."
+        return
+    }
+
+    Add-Pass 'Android live-auth E2E smoke' "Native Android live-auth evidence passed $($checks.Count) checks."
 }
 
 function Test-SupabaseMigration {
@@ -1221,10 +1388,14 @@ function Test-IosReleaseConfig {
         Add-Fail 'iOS App Store wrapper' 'store_release_build.ps1 does not expose the iOS IPA/export-options release path.'
     }
 
-    if ($null -ne $releaseScript -and $releaseScript.Contains('Assert-SupabaseClientConfig')) {
-        Add-Pass 'Store Supabase config guard' 'store_release_build.ps1 validates production Supabase client config before building artifacts.'
+    if (
+        $null -ne $releaseScript -and
+        $releaseScript.Contains('Assert-SupabaseClientConfig') -and
+        $releaseScript.Contains('Assert-SupabaseProjectReachability')
+    ) {
+        Add-Pass 'Store Supabase config guard' 'store_release_build.ps1 validates production Supabase client config and project reachability before building artifacts.'
     } else {
-        Add-Fail 'Store Supabase config guard' 'store_release_build.ps1 does not require production Supabase client config before store builds.'
+        Add-Fail 'Store Supabase config guard' 'store_release_build.ps1 does not require production Supabase client config and project reachability before store builds.'
     }
 
     $gitignore = Read-RepoText '.gitignore'
@@ -1384,6 +1555,38 @@ function Test-WebAndStoreConfig {
             Add-SupportInboxEvidenceIssue "Support inbox evidence does not confirm inbound delivery for $expectedSupportEmail."
             return
         }
+
+        if ($supportEmailVerifiedForAudit -and [bool]$supportEvidence.confirmedInbound) {
+            $receipt = $supportEvidence.inboundReceipt
+            if ($null -eq $receipt) {
+                Add-SupportInboxEvidenceIssue 'Support inbox evidence is confirmed but missing inboundReceipt details from verify_support_inbox.ps1.'
+                return
+            }
+
+            $receivedFrom = [string]$receipt.receivedFrom
+            if ([string]::IsNullOrWhiteSpace($receivedFrom)) {
+                Add-SupportInboxEvidenceIssue 'Support inbox evidence is confirmed but missing inboundReceipt.receivedFrom.'
+                return
+            }
+            if ($receivedFrom.Trim().Equals($expectedSupportEmail, [System.StringComparison]::OrdinalIgnoreCase)) {
+                Add-SupportInboxEvidenceIssue 'Support inbox evidence must come from an external sender, not the support inbox itself.'
+                return
+            }
+
+            $receivedAt = [string]$receipt.receivedAt
+            [DateTimeOffset]$receivedAtOffset = [DateTimeOffset]::MinValue
+            if (
+                [string]::IsNullOrWhiteSpace($receivedAt) -or
+                -not [DateTimeOffset]::TryParse($receivedAt.Trim(), [ref]$receivedAtOffset)
+            ) {
+                Add-SupportInboxEvidenceIssue 'Support inbox evidence is confirmed but missing a parseable inboundReceipt.receivedAt timestamp.'
+                return
+            }
+            if ($receivedAtOffset.ToUniversalTime() -gt (Get-Date).ToUniversalTime().AddMinutes(10)) {
+                Add-SupportInboxEvidenceIssue 'Support inbox evidence receivedAt timestamp is in the future.'
+                return
+            }
+        }
     }
 
     if ($Strict -and -not $hasConfiguredSupportEmail) {
@@ -1444,6 +1647,7 @@ try {
     Test-SupabaseMigration
     Test-SupabaseConfig
     Test-AndroidReleaseConfig
+    Test-AndroidLiveAuthEvidence
     Test-IosReleaseConfig
     Test-WebAndStoreConfig
     Test-Tooling

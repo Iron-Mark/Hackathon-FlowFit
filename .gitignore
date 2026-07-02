@@ -52,8 +52,10 @@ nul
 *.log
 flutter_*.log
 flutter_*.png
+output/
 
 # Secrets (if not already ignored)
+.codex/
 lib/secrets.dart
 .env
 .env.release

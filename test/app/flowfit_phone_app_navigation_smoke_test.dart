@@ -130,6 +130,7 @@ void main() {
   }
 
   const routeEntryExpectations = <String, _RouteEntryExpectation>{
+    '/landing': _RouteEntryExpectation('Start in the browser'),
     '/welcome': _RouteEntryExpectation('Find Your Flow'),
     '/login': _RouteEntryExpectation('Welcome Back!'),
     '/signup': _RouteEntryExpectation('Create Your Account'),
@@ -243,6 +244,8 @@ const _routeEntrySmokeExemptions = <String>{
   // The root route is the app startup splash path. Dedicated splash tests cover
   // its auth/profile resolution instead of treating it as a static entry page.
   '/',
+  // The web app CTA uses this startup splash route before resolving auth state.
+  '/app',
   // Loading has a startup redirect timer that is covered by loading_screen_test.
   '/loading',
   // The route listens to Supabase auth state directly. Injected email

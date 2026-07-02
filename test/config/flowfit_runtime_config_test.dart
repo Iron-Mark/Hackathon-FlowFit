@@ -37,6 +37,13 @@ void main() {
     );
   });
 
+  test('APK download URL defaults to the maintained fork releases page', () {
+    expect(
+      FlowFitRuntimeConfig.apkDownloadUrl,
+      'https://github.com/Iron-Mark/Hackathon-FlowFit/releases/latest',
+    );
+  });
+
   test('map tiles default to a non-OSM provider with reusable subdomains', () {
     expect(
       FlowFitRuntimeConfig.mapTileUrlTemplate,

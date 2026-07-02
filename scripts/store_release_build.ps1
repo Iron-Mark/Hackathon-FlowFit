@@ -7,7 +7,8 @@ param(
     [switch]$SkipFlutterPubGet,
     [switch]$SkipValidation,
     [switch]$WebWasm,
-    [switch]$AllowDirty
+    [switch]$AllowDirty,
+    [switch]$SkipSupabaseReachabilityCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -529,6 +530,41 @@ function Assert-SupabasePublishableKey {
     }
 }
 
+function Assert-SupabaseProjectReachability {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Source,
+        [Parameter(Mandatory = $true)]
+        [string]$Url
+    )
+
+    if ($SkipSupabaseReachabilityCheck) {
+        Write-Warning "$Source Supabase URL DNS reachability was skipped. Use this only for isolated script tests or offline diagnostics, not release artifacts."
+        return
+    }
+
+    $uri = $null
+    if (-not [System.Uri]::TryCreate($Url.Trim(), [System.UriKind]::Absolute, [ref]$uri)) {
+        throw "$Source Supabase URL could not be parsed."
+    }
+
+    $projectHost = $uri.Host
+    if ([string]::IsNullOrWhiteSpace($projectHost)) {
+        throw "$Source Supabase URL must include a project host."
+    }
+
+    try {
+        $addresses = @([System.Net.Dns]::GetHostAddresses($projectHost))
+        if ($addresses.Count -gt 0) {
+            return
+        }
+    } catch {
+        throw "$Source Supabase URL host $projectHost does not resolve in DNS. Confirm the Supabase project exists, is not paused or deleted, and the release environment points at the current project."
+    }
+
+    throw "$Source Supabase URL host $projectHost did not return DNS addresses. Confirm the Supabase project exists and is not paused or deleted."
+}
+
 function Assert-Email {
     param(
         [Parameter(Mandatory = $true)]
@@ -585,6 +621,7 @@ function Assert-SupabaseClientValues {
         throw "$Source must provide a valid Supabase Project URL."
     }
     Assert-SupabasePublishableKey -Source "$Source Supabase publishable key" -Value $PublishableKey
+    Assert-SupabaseProjectReachability -Source $Source -Url $Url
 }
 
 function Assert-SupabaseClientConfig {
@@ -1043,6 +1080,9 @@ try {
         )
         if ($SupportEmailVerified) {
             $strictAuditCommand += '-SupportEmailVerified'
+        }
+        if ($SkipSupabaseReachabilityCheck) {
+            $strictAuditCommand += '-SkipSupabaseReachabilityCheck'
         }
 
         Invoke-CheckedCommand 'Strict release readiness audit' $strictAuditCommand

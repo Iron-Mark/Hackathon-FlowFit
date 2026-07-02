@@ -72,6 +72,9 @@ pwsh -NoProfile -File scripts/configure_local_release.ps1 `
   -Force
 ```
 
+The local release helper validates the Supabase project host before it writes
+`android/gradle.properties` or ignored `lib/secrets.dart`.
+
 ## Android Play Store Setup
 
 1. Use either an ignored local signing file or CI-safe signing env secrets:
@@ -355,7 +358,10 @@ pwsh -NoProfile -File scripts/verify_web_deployment.ps1 `
 The verifier checks the app shell, `manifest.json`, `privacy.html`, and
 `account-deletion.html`, enforces HTTPS for real deployments, validates the
 configured support inbox text, rejects internal maintainer/store-review terms,
-and writes JSON evidence for store handoff.
+and writes JSON evidence for store handoff. The Flutter web root renders the
+marketing landing page, while the app startup path remains available at
+`/#/app`; run `npm run web:smoke` against the deployed URL to browser-check that
+landing page and the high-value app routes.
 
 ### Support Inbox Verification
 
@@ -378,15 +384,18 @@ After sending and receiving an external test email, rerun:
 ```powershell
 pwsh -NoProfile -File scripts/verify_support_inbox.ps1 `
   -ConfirmedInbound `
-  -EvidenceNote 'Received external test email on 2026-06-15' `
+  -ReceivedFrom 'friend@their-domain.com' `
+  -ReceivedAt '2026-07-02T08:00:00Z' `
+  -EvidenceNote 'Received external test email on 2026-07-02' `
   -OutFile build/support-inbox-verification.json
 ```
 
-`-EvidenceNote` is required with `-ConfirmedInbound`. Archive the JSON evidence
-and private mailbox proof before using `-SupportEmailVerified` in release
-variable or store-build commands. DNS MX status is recorded in the JSON summary
-when local DNS tooling is available, but it is not a substitute for the received
-external test email.
+`-EvidenceNote`, `-ReceivedFrom`, and `-ReceivedAt` are required with
+`-ConfirmedInbound`; add `-MessageId` too if the mailbox exposes one. Archive
+the JSON evidence and private mailbox proof before using `-SupportEmailVerified`
+in release variable or store-build commands. DNS MX status is recorded in the
+JSON summary when local DNS tooling is available, but it is not a substitute for
+the received external test email.
 
 `scripts/release_readiness_audit.ps1` requires
 `build/support-inbox-verification.json` in strict mode before accepting
@@ -440,8 +449,8 @@ pwsh -NoProfile -File scripts/configure_github_release_variables.ps1 `
 ```
 
 The helper rejects placeholder/test-shaped values, secret/service-role Supabase
-keys, and the retired Supabase project ref. It redacts the publishable key in
-all output.
+keys, the retired Supabase project ref, and Supabase project hosts that do not
+resolve in DNS. It redacts the publishable key in all output.
 
 If a local `gh` command cannot read or write repository Actions variables
 because the active account is not the repo owner, pass the repo account token
@@ -463,11 +472,12 @@ The audit reports the imported repository-variable count but does not print
 Supabase keys.
 
 The workflow has a `deploy-ready` job. It skips production GitHub Pages
-deployment with a notice instead of failing pushes to `main` or manual
-dispatches until the public web URL, Supabase variables, and verified
-support-inbox flag are configured. The gate validates the Supabase URL shape,
-rejects the retired FlowFit project ref and placeholders, and allows only
-publishable client keys before publishing can run.
+deployment with a notice only while the public web URL, Supabase variables, or
+verified support-inbox flag are not configured. Once those release variables
+are present, invalid or nonresolving Supabase project hosts fail the workflow
+instead of silently skipping deployment. The gate validates the Supabase URL
+shape, rejects the retired FlowFit project ref and placeholders, resolves the
+project host, and allows only publishable client keys before publishing can run.
 
 The workflow also runs a readiness-only check on pull requests and pushes to
 `supabase/**` recovery branches. Those branch/PR runs can prove whether the
@@ -610,6 +620,26 @@ You can also put `FLOWFIT_SMOKE_EMAIL` and `FLOWFIT_SMOKE_PASSWORD` in ignored
 the script may upsert profile and Buddy rows before cleanup, so do not point it
 at a personal or production user account.
 
+### Native Android Live Auth Smoke
+
+After the linked Supabase backend and REST app smoke pass, run the native Android
+live-auth smoke on an emulator or test phone. This proves the user-visible phone
+MVP path against the real backend: login, 13+ age gate, survey onboarding,
+dashboard tabs, Health food add/remove, Track route actions, Buddy onboarding,
+authenticated Supabase row assertions, cleanup, and Android crash-marker checks.
+
+```powershell
+pwsh -NoProfile -File scripts/verify_android_live_auth_smoke.ps1 `
+  -Device emulator-5554 `
+  -EnvFile .env.release `
+  -OutFile build/android-live-auth-smoke-latest.json
+```
+
+Strict release audit validates
+`build/android-live-auth-smoke-latest.json` by default. Use
+`-AndroidLiveAuthEvidencePath ''` only for isolated script tests that
+intentionally ignore native E2E evidence.
+
 ## Store Privacy and Account Deletion
 
 Use `docs/PRIVACY_DATA_MAP.md` to complete Play Data safety and App Store
@@ -674,6 +704,10 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1
 # MCP posture, signing, public web URL, and support inbox decisions are in place:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict
 
+# Strict mode also resolves the configured Supabase project host. A stale,
+# paused, deleted, or mistyped project URL fails release handoff instead of only
+# passing shape validation.
+
 # Strict audit with JSON evidence for release handoff:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
 
@@ -697,6 +731,9 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -EnvFile .env.
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -ValidateOnly
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
 
+# Native Android live-auth E2E evidence for strict audit:
+pwsh -NoProfile -File scripts/verify_android_live_auth_smoke.ps1 -Device emulator-5554 -EnvFile .env.release -OutFile build/android-live-auth-smoke-latest.json
+
 # Full local gate, including release App Bundle smoke:
 pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke
 
@@ -713,6 +750,11 @@ pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudi
 
 # Or load production inputs from the ignored release env file:
 pwsh -NoProfile -File scripts/store_release_build.ps1 -Target All -RunStrictAudit -EnvFile .env.release -SupportEmailVerified
+
+# The production wrapper resolves the configured Supabase project host before
+# building artifacts; a nonresolving stale, paused, deleted, or mistyped
+# project URL fails before release outputs are produced. Backend/app smokes are
+# still required to prove the active project is migrated and serving traffic.
 
 # Use -SupportEmailVerified only after the configured support inbox is
 # owned by the maintainer and can receive privacy or account deletion requests.
