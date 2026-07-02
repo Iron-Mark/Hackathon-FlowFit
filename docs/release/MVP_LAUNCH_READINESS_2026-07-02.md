@@ -38,8 +38,9 @@ proof.
 | Android live-auth E2E smoke | `scripts/verify_android_live_auth_smoke.ps1 -Device emulator-5554 -EnvFile .env -OutFile build/android-live-auth-smoke-latest.json` | Passed 122 checks on `sdk_gphone64_x86_64` / Android 15: login, age gate, survey onboarding, dashboard tabs, Health food add/remove, Track routes, Buddy setup, Supabase row assertions, cleanup, and no AndroidRuntime crash markers. |
 | Strict release audit | `scripts/release_readiness_audit.ps1 -Strict -EnvFile .env -OutFile build/store-release-readiness-audit.json` | Refreshed after the in-app support queue migration: 76 pass, 2 warn, 0 fail. The remaining support inbox item is a store/contact warning, not the app-support path. |
 | GitHub-variable strict snapshot | `scripts/release_status_snapshot.ps1 -Repo Iron-Mark/Hackathon-FlowFit -PullRequest 15 -OutFile build/release-status-snapshot.md` | Snapshot refreshed for PR #15; GitHub-variable strict audit reports 77 pass, 2 warn, 0 fail, PR checks are green, and PR merge state is `CLEAN`. |
+| GitHub Pages app-web deploy gate | `.github/workflows/flutter-web-pages.yml` plus `scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail` | Updated so app-web deploy can proceed with a configured real support address and verified in-app support queue while external support inbox proof remains required for store submission artifacts. |
 | Store metadata | `scripts/verify_store_metadata.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit -OutFile build/store-metadata-verification.json` | Passed 48 checks, 0 warnings, 0 failures. |
-| Store artifact verification | `scripts/verify_store_artifacts.ps1 -Strict -RequireStrictAudit -RequireCurrentCommit` | 0 pass, 0 warn, 1 fail because `build/store-release-artifacts.json` does not exist yet. Final artifact generation is blocked until support inbox proof is complete. |
+| Store artifact verification | `scripts/verify_store_artifacts.ps1 -Strict -RequireStrictAudit -RequireCurrentCommit` | 0 pass, 0 warn, 1 fail because `build/store-release-artifacts.json` does not exist yet. Final Android/iOS store artifact generation remains blocked until support inbox proof is complete. |
 | Offline release preflight | `scripts/release_preflight.ps1 -IncludeReleaseSmoke` | Passed advisory audit, metadata advisory check, dependency install, analyzer, full Flutter tests, web JS build, local web smoke, Android debug build, Wear debug build, and Android release App Bundle smoke build. |
 | Full Flutter tests | `flutter test --reporter compact` | Passed locally after the support request UI/service changes. GitHub Actions run `28601898762` remains the green `main` baseline. |
 | Public web deployment | `scripts/verify_web_deployment.ps1 -BaseUrl https://iron-mark.github.io/Hackathon-FlowFit -SupportEmail marksiazon.dev@gmail.com -OutFile build/web-deployment-verification.json` | Passed 15 HTTP/content/compliance checks against GitHub Pages. |
@@ -100,6 +101,9 @@ proof.
 - No `build/store-release-artifacts.json` manifest exists yet, so strict store
   artifact verification is intentionally not claimed.
 - Gmail connector access is not part of the app-support evidence path.
+- GitHub Pages app-web deployment no longer depends on Gmail/inbox proof; it
+  uses the app-owned support queue and keeps external inbox proof scoped to
+  store submission artifacts.
 
 ## Launch Plan
 

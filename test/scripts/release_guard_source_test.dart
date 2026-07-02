@@ -2582,6 +2582,10 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(pagesWorkflow, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
     expect(
       pagesWorkflow,
+      isNot(contains(r'"${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&')),
+    );
+    expect(
+      pagesWorkflow,
       contains(r'support_email="${FLOWFIT_SUPPORT_EMAIL,,}"'),
     );
     expect(
@@ -2607,9 +2611,10 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(
       pagesWorkflow,
       contains(
-        'Set FLOWFIT_SUPPORT_EMAIL_VERIFIED=true only after the configured support inbox is receiving mail.',
+        'continuing web deploy because Help & Support uses the authenticated in-app support request queue',
       ),
     );
+    expect(pagesWorkflow, contains('-AllowUnverifiedWebSupportEmail'));
     expect(
       pagesWorkflow,
       contains('support@flowfit.com is the reserved source replacement token'),
@@ -3395,6 +3400,13 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(defaultInboxOutput, contains('support@flowfit.com'));
     expect(defaultInboxOutput, contains('reserved'));
     expect(defaultInboxOutput, contains('source replacement token'));
+    expect(storeReleaseBuild, contains('AllowUnverifiedWebSupportEmail'));
+    expect(
+      storeReleaseBuild,
+      contains(
+        'Keep -SupportEmailVerified required for store submission artifacts.',
+      ),
+    );
   });
 
   test('store release native manifests exclude development auth schemes', () {

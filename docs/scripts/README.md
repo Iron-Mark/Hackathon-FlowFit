@@ -921,20 +921,24 @@ For local smoke testing only, run a local static server for `build/web` and add
 ### GitHub Pages deployment workflow
 
 `.github/workflows/flutter-web-pages.yml` builds the production Flutter web
-artifact with `scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet`
-after the deploy-ready gate confirms the explicit public web URL, Supabase
-client variables, and `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. The gate validates
-the Supabase URL shape, rejects the retired FlowFit project ref and placeholders,
-and allows only publishable client keys. It uploads `build/web` to GitHub Pages,
-deploys it, and verifies the deployed site with `scripts/verify_web_deployment.ps1`.
-It uploads the JSON verification evidence as `flowfit-github-pages-verification`.
+artifact with
+`scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet -AllowUnverifiedWebSupportEmail`
+after the deploy-ready gate confirms the explicit public web URL, configured
+support email, and Supabase client variables. The gate validates the Supabase URL
+shape, rejects the retired FlowFit project ref and placeholders, and allows only
+publishable client keys. It uploads `build/web` to GitHub Pages, deploys it, and
+verifies the deployed site with `scripts/verify_web_deployment.ps1`. It uploads
+the JSON verification evidence as `flowfit-github-pages-verification`.
 
 The workflow has a `deploy-ready` job. Pushes to `main` skip the production
 Pages deployment with a notice only while the public web URL, Supabase
-variables, or verified support inbox status are not configured. Once those
-release variables are present, configured-but-invalid or nonresolving Supabase
-project hosts fail the workflow. Manual dispatch uses the same gate. The
-workflow does not provide a fallback public URL; set
+variables, or configured support email are not configured. It does not require
+`FLOWFIT_SUPPORT_EMAIL_VERIFIED=true` for the app-web deploy because Help &
+Support uses the authenticated in-app support request queue; keep that flag for
+store submission artifacts after external inbox proof. Once those release
+variables are present, configured-but-invalid or nonresolving Supabase project
+hosts fail the workflow. Manual dispatch uses the same gate. The workflow does
+not provide a fallback public URL; set
 `FLOWFIT_PUBLIC_WEB_BASE_URL` before enabling deployment.
 
 Configure repository variables before dispatching it:
@@ -945,10 +949,11 @@ Configure repository variables before dispatching it:
   web host path cannot be derived from `FLOWFIT_PUBLIC_WEB_BASE_URL`.
 - `SUPABASE_URL`.
 - `SUPABASE_PUBLISHABLE_KEY`.
-- `FLOWFIT_SUPPORT_EMAIL`, set to the verified deliverable support/privacy
-  inbox.
+- `FLOWFIT_SUPPORT_EMAIL`, set to the configured support/privacy inbox. It must
+  not be the reserved `support@flowfit.com` source token.
 - `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after that configured inbox
-  is receiving mail from outside the maintainer account.
+  is receiving mail from outside the maintainer account. This is required for
+  store submission artifacts, not for the app-web deploy path.
 
 If the repository has no Pages site yet, enable Settings > Pages > GitHub
 Actions as the source before expecting the workflow to publish.
