@@ -4494,7 +4494,29 @@ Profile &gt; Settings &gt; Delete Account
 
 ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
   final tempDir = Directory.systemTemp.createTempSync('flowfit_mcp_audit_');
+  final androidDir = Directory('android');
+  final keyProperties = File(
+    '${androidDir.path}${Platform.pathSeparator}key.properties',
+  );
+  final createdKeyProperties = strict && !keyProperties.existsSync();
+  final signingFixtureName =
+      'flowfit-ci-upload-${DateTime.now().microsecondsSinceEpoch}-$pid.jks';
+  final signingFixture = File(
+    '${androidDir.path}${Platform.pathSeparator}$signingFixtureName',
+  );
+  var createdSigningFixture = false;
   try {
+    if (createdKeyProperties) {
+      signingFixture.writeAsStringSync('fake-keystore');
+      createdSigningFixture = true;
+      keyProperties.writeAsStringSync('''
+storeFile=$signingFixtureName
+storePassword=store-password
+keyAlias=upload
+keyPassword=key-password
+''');
+    }
+
     final mcpFile = File('${tempDir.path}${Platform.pathSeparator}.mcp.json');
     mcpFile.writeAsStringSync(
       '{"mcpServers":{"supabase":{"type":"http","url":"$url"}}}',
@@ -4526,7 +4548,11 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
       ..['FLOWFIT_SUPPORT_EMAIL_VERIFIED'] = 'true'
       ..['SUPABASE_URL'] = 'https://abcdefghijklmnop.supabase.co'
       ..['SUPABASE_PUBLISHABLE_KEY'] =
-          'sb_publishable_abcdefghijklmnopqrstuvwxyz123456';
+          'sb_publishable_abcdefghijklmnopqrstuvwxyz123456'
+      ..['FLOWFIT_ANDROID_KEYSTORE_BASE64'] = 'ZmFrZS1rZXlzdG9yZQ=='
+      ..['FLOWFIT_ANDROID_KEYSTORE_PASSWORD'] = 'store-password'
+      ..['FLOWFIT_ANDROID_KEY_ALIAS'] = 'upload'
+      ..['FLOWFIT_ANDROID_KEY_PASSWORD'] = 'key-password';
 
     return Process.runSync('pwsh', [
       '-NoProfile',
@@ -4543,6 +4569,12 @@ ProcessResult _runAuditWithMcpConfig(String url, {bool strict = false}) {
       if (strict) '-SupportEmailVerified',
     ], environment: env);
   } finally {
+    if (createdKeyProperties && keyProperties.existsSync()) {
+      keyProperties.deleteSync();
+    }
+    if (createdSigningFixture && signingFixture.existsSync()) {
+      signingFixture.deleteSync();
+    }
     tempDir.deleteSync(recursive: true);
   }
 }
