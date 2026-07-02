@@ -10,10 +10,11 @@ is not final launch-ready while the production support inbox remains unverified.
 
 The linked Supabase project is reachable and reports `ACTIVE_HEALTHY`.
 Migrations are up to date, backend verification passes, the live app smoke
-passes against authenticated RLS, and GitHub CI is green for PR #13 on
-`184e5c37567ddc127be731824de384dcdb9d7dc9`. The strict release gate is down to
-one real failure: proof that the configured public support/privacy inbox can
-receive external mail.
+passes against authenticated RLS, and GitHub CI is green for the PR #13 head
+commit `184e5c37567ddc127be731824de384dcdb9d7dc9`. PR #13 was merged to
+`main` as merge commit `1c7db18a694c7d504547a3c90993e91e87e7cd7a`. The strict
+release gate is down to one real failure: proof that the configured public
+support/privacy inbox can receive external mail.
 
 Per the resumed instruction, the support-inbox proof blocker is being skipped
 for continued local/release work only. Do not call the MVP fully launch-ready,
@@ -24,7 +25,7 @@ confirmed and final store/account review steps are completed.
 
 | Area | Command | Result |
 | --- | --- | --- |
-| GitHub PR status | `gh pr view 13 --repo Iron-Mark/Hackathon-FlowFit --json ...` | PR #13, `[codex] Add FlowFit landing page and launch gates`, is ready for review (`isDraft=false`) on `codex/flowfit-landing-page` at commit `184e5c37567ddc127be731824de384dcdb9d7dc9`. |
+| GitHub PR status | `gh pr view 13 --repo Iron-Mark/Hackathon-FlowFit --json ...` | PR #13, `[codex] Add FlowFit landing page and launch gates`, merged to `main` at `2026-07-02T15:29:15Z` as `1c7db18a694c7d504547a3c90993e91e87e7cd7a`; its final head commit was `184e5c37567ddc127be731824de384dcdb9d7dc9`. |
 | GitHub Flutter CI | `gh run view 28600340969 --repo Iron-Mark/Hackathon-FlowFit --json status,conclusion,jobs,url` | Passed on commit `184e5c37567ddc127be731824de384dcdb9d7dc9`: Windows offline app action smoke, release readiness audit, release source safety, Dart format, analyzer, full Flutter tests, web JS build, web compliance/static smoke, web Wasm build, Android debug APK, Wear OS debug APK, and Android release App Bundle smoke build. |
 | GitHub Web Pages readiness | `gh run list --repo Iron-Mark/Hackathon-FlowFit --branch codex/flowfit-landing-page --limit 5 --json ...` | Workflow run `28600340886` passed the deploy-readiness check on commit `184e5c37567ddc127be731824de384dcdb9d7dc9`; the deployment job was skipped because this PR branch is not the production Pages deployment path. |
 | Supabase project inventory | `npx -y supabase@latest projects list --output json` | Linked project `xhmkghwijqpvnbpeeckg` / `flowfit` reports `ACTIVE_HEALTHY`. |
@@ -77,8 +78,9 @@ confirmed and final store/account review steps are completed.
 
 - GitHub release variables are present and `FLOWFIT_SUPPORT_EMAIL_VERIFIED` is
   set to `false`, matching current evidence.
-- GitHub PR #13 is ready for review and all required branch checks are green on
-  commit `184e5c37567ddc127be731824de384dcdb9d7dc9`.
+- GitHub PR #13 was merged into `main`, and all required branch checks were
+  green on its final head commit
+  `184e5c37567ddc127be731824de384dcdb9d7dc9`.
 - The Supabase publishable key is present in local/GitHub configuration and was
   not printed in logs or docs.
 - `.env` and `lib/secrets.dart` remain ignored local configuration surfaces.
