@@ -10,9 +10,8 @@ is not final launch-ready while the production support inbox remains unverified.
 
 The linked Supabase project is reachable and reports `ACTIVE_HEALTHY`.
 Migrations are up to date, backend verification passes, the live app smoke
-passes against authenticated RLS, and GitHub CI is green for the PR #13 head
-commit `184e5c37567ddc127be731824de384dcdb9d7dc9`. PR #13 was merged to
-`main` as merge commit `1c7db18a694c7d504547a3c90993e91e87e7cd7a`. The strict
+passes against authenticated RLS, and GitHub CI is green on `main` commit
+`1c7db18a694c7d504547a3c90993e91e87e7cd7a` after PR #13 merged. The strict
 release gate is down to one real failure: proof that the configured public
 support/privacy inbox can receive external mail.
 
@@ -26,6 +25,8 @@ confirmed and final store/account review steps are completed.
 | Area | Command | Result |
 | --- | --- | --- |
 | GitHub PR status | `gh pr view 13 --repo Iron-Mark/Hackathon-FlowFit --json ...` | PR #13, `[codex] Add FlowFit landing page and launch gates`, merged to `main` at `2026-07-02T15:29:15Z` as `1c7db18a694c7d504547a3c90993e91e87e7cd7a`; its final head commit was `184e5c37567ddc127be731824de384dcdb9d7dc9`. |
+| GitHub main Flutter CI | `gh run view 28601898762 --repo Iron-Mark/Hackathon-FlowFit --json status,conclusion,jobs,url` | Passed on `main` commit `1c7db18a694c7d504547a3c90993e91e87e7cd7a`: Windows offline app action smoke, release readiness audit, release source safety, Dart format, analyzer, full Flutter tests, web JS build, web compliance/static smoke, web Wasm build, Android debug APK, Wear OS debug APK, and Android release App Bundle smoke build. |
+| GitHub main Web Pages readiness | `gh run view 28601898718 --repo Iron-Mark/Hackathon-FlowFit --json status,conclusion,jobs,url` | Workflow passed on `main` commit `1c7db18a694c7d504547a3c90993e91e87e7cd7a`; `Check web deploy readiness` succeeded and `Build and Deploy Flutter Web` was skipped. |
 | GitHub Flutter CI | `gh run view 28600340969 --repo Iron-Mark/Hackathon-FlowFit --json status,conclusion,jobs,url` | Passed on commit `184e5c37567ddc127be731824de384dcdb9d7dc9`: Windows offline app action smoke, release readiness audit, release source safety, Dart format, analyzer, full Flutter tests, web JS build, web compliance/static smoke, web Wasm build, Android debug APK, Wear OS debug APK, and Android release App Bundle smoke build. |
 | GitHub Web Pages readiness | `gh run list --repo Iron-Mark/Hackathon-FlowFit --branch codex/flowfit-landing-page --limit 5 --json ...` | Workflow run `28600340886` passed the deploy-readiness check on commit `184e5c37567ddc127be731824de384dcdb9d7dc9`; the deployment job was skipped because this PR branch is not the production Pages deployment path. |
 | Supabase project inventory | `npx -y supabase@latest projects list --output json` | Linked project `xhmkghwijqpvnbpeeckg` / `flowfit` reports `ACTIVE_HEALTHY`. |
@@ -40,7 +41,7 @@ confirmed and final store/account review steps are completed.
 | Store metadata | `scripts/verify_store_metadata.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit -OutFile build/store-metadata-verification.json` | Passed 48 checks, 0 warnings, 0 failures. |
 | Store artifact verification | `scripts/verify_store_artifacts.ps1 -Strict -RequireStrictAudit -RequireCurrentCommit` | 0 pass, 0 warn, 1 fail because `build/store-release-artifacts.json` does not exist yet. Final artifact generation is blocked until support inbox proof is complete. |
 | Offline release preflight | `scripts/release_preflight.ps1 -IncludeReleaseSmoke` | Passed advisory audit, metadata advisory check, dependency install, analyzer, full Flutter tests, web JS build, local web smoke, Android debug build, Wear debug build, and Android release App Bundle smoke build. |
-| Full Flutter tests | GitHub Actions / Flutter CI run `28600340969`, step `Flutter tests` | Passed on commit `184e5c37567ddc127be731824de384dcdb9d7dc9` after support-proof schema hardening. |
+| Full Flutter tests | GitHub Actions / Flutter CI run `28601898762`, step `Flutter tests` | Passed on `main` commit `1c7db18a694c7d504547a3c90993e91e87e7cd7a` after support-proof schema hardening. |
 | Public web deployment | `scripts/verify_web_deployment.ps1 -BaseUrl https://iron-mark.github.io/Hackathon-FlowFit -SupportEmail marksiazon.dev@gmail.com -OutFile build/web-deployment-verification.json` | Passed 15 HTTP/content/compliance checks against GitHub Pages. |
 | Public web app smoke | `npm run web:smoke -- --base-url https://iron-mark.github.io/Hackathon-FlowFit --out-file build/web-app-smoke-public.json` | Passed 58 browser workflow checks, 8 Chromium/WebGL software-rendering warnings, 0 app console errors, 0 failed requests. |
 | Android phone emulator smoke | `scripts/verify_android_phone_smoke.ps1 -Device emulator-5554 -EnvFile .env -OutFile build/android-phone-smoke-latest.json` | Passed on `sdk_gphone64_x86_64` / Android 15 with 24 checks and no AndroidRuntime crash markers. |
@@ -78,9 +79,9 @@ confirmed and final store/account review steps are completed.
 
 - GitHub release variables are present and `FLOWFIT_SUPPORT_EMAIL_VERIFIED` is
   set to `false`, matching current evidence.
-- GitHub PR #13 was merged into `main`, and all required branch checks were
-  green on its final head commit
-  `184e5c37567ddc127be731824de384dcdb9d7dc9`.
+- GitHub PR #13 was merged into `main`; the post-merge `main` Flutter CI and
+  Web Pages readiness workflows are green on
+  `1c7db18a694c7d504547a3c90993e91e87e7cd7a`.
 - The Supabase publishable key is present in local/GitHub configuration and was
   not printed in logs or docs.
 - `.env` and `lib/secrets.dart` remain ignored local configuration surfaces.
