@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/services/support_request_service.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 typedef SupportEmailLauncher = Future<bool> Function(Uri uri);
+typedef SupportRequestSubmitter =
+    Future<String> Function(SupportRequestDraft draft);
 
 class HelpSupportScreen extends StatefulWidget {
-  const HelpSupportScreen({super.key, this.launchSupportEmail});
+  const HelpSupportScreen({
+    super.key,
+    this.launchSupportEmail,
+    this.submitSupportRequest,
+  });
 
   final SupportEmailLauncher? launchSupportEmail;
+  final SupportRequestSubmitter? submitSupportRequest;
 
   @override
   State<HelpSupportScreen> createState() => _HelpSupportScreenState();
@@ -16,6 +24,7 @@ class HelpSupportScreen extends StatefulWidget {
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
   bool _isLaunchingSupportEmail = false;
+  bool _isSubmittingSupportRequest = false;
 
   Future<void> _openSupportEmail(
     BuildContext context, {
@@ -62,6 +71,57 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   Future<bool> _launchSupportEmail(Uri uri) {
     return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _openSupportRequestForm(
+    BuildContext context, {
+    required String category,
+    required String subject,
+    String message = '',
+  }) async {
+    if (_isSubmittingSupportRequest) return;
+
+    final draft = await showDialog<SupportRequestDraft>(
+      context: context,
+      builder: (_) => _SupportRequestDialog(
+        category: category,
+        subject: subject,
+        message: message,
+      ),
+    );
+    if (draft == null) return;
+
+    setState(() {
+      _isSubmittingSupportRequest = true;
+    });
+
+    try {
+      final submitter =
+          widget.submitSupportRequest ?? SupportRequestService().submit;
+      await submitter(draft);
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Support request sent.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (error) {
+      if (!context.mounted) return;
+      final message = error is SupportRequestException
+          ? error.message
+          : 'Unable to send support request. Try Email Support.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmittingSupportRequest = false;
+        });
+      }
+    }
   }
 
   @override
@@ -166,13 +226,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   _buildActionItem(
                     context,
                     'Message Support',
-                    'Send a support request',
+                    'Send an in-app request',
                     SolarIconsOutline.chatRound,
                     Colors.green,
-                    () => _openSupportEmail(
+                    () => _openSupportRequestForm(
                       context,
+                      category: 'support',
                       subject: 'FlowFit support request',
-                      body: 'Hi FlowFit support,\n\n',
                     ),
                   ),
                   _buildDivider(theme),
@@ -182,10 +242,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     'Help us improve FlowFit',
                     SolarIconsOutline.bug,
                     Colors.orange,
-                    () => _openSupportEmail(
+                    () => _openSupportRequestForm(
                       context,
+                      category: 'bug',
                       subject: 'FlowFit bug report',
-                      body:
+                      message:
                           'What happened?\n\nSteps to reproduce:\n1. \n2. \n3. \n\nDevice/app details:\n',
                     ),
                   ),
@@ -284,7 +345,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     context,
                     SolarIconsOutline.clockCircle,
                     'Support Channel',
-                    'Email support',
+                    'In-app requests',
                   ),
                 ],
               ),
@@ -308,7 +369,9 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     final theme = Theme.of(context);
 
     return InkWell(
-      onTap: _isLaunchingSupportEmail ? null : onTap,
+      onTap: (_isLaunchingSupportEmail || _isSubmittingSupportRequest)
+          ? null
+          : onTap,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -420,6 +483,132 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
       indent: 16,
       endIndent: 16,
+    );
+  }
+}
+
+class _SupportRequestDialog extends StatefulWidget {
+  const _SupportRequestDialog({
+    required this.category,
+    required this.subject,
+    required this.message,
+  });
+
+  final String category;
+  final String subject;
+  final String message;
+
+  @override
+  State<_SupportRequestDialog> createState() => _SupportRequestDialogState();
+}
+
+class _SupportRequestDialogState extends State<_SupportRequestDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late String _selectedCategory;
+  late final TextEditingController _subjectController;
+  late final TextEditingController _messageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.category;
+    _subjectController = TextEditingController(text: widget.subject);
+    _messageController = TextEditingController(text: widget.message);
+  }
+
+  @override
+  void dispose() {
+    _subjectController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    Navigator.of(context).pop(
+      SupportRequestDraft(
+        category: _selectedCategory,
+        subject: _subjectController.text,
+        message: _messageController.text,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Send support request'),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                initialValue: _selectedCategory,
+                decoration: const InputDecoration(labelText: 'Request type'),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'support',
+                    child: Text('General support'),
+                  ),
+                  DropdownMenuItem(value: 'bug', child: Text('Bug report')),
+                  DropdownMenuItem(
+                    value: 'account',
+                    child: Text('Account help'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'privacy',
+                    child: Text('Privacy request'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _selectedCategory = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _subjectController,
+                maxLength: 160,
+                decoration: const InputDecoration(labelText: 'Subject'),
+                validator: (value) {
+                  final length = value?.trim().length ?? 0;
+                  if (length < 3) {
+                    return 'Subject must be at least 3 characters.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _messageController,
+                minLines: 4,
+                maxLines: 7,
+                maxLength: 4000,
+                decoration: const InputDecoration(labelText: 'Message'),
+                validator: (value) {
+                  final length = value?.trim().length ?? 0;
+                  if (length < 10) {
+                    return 'Message must be at least 10 characters.';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Send')),
+      ],
     );
   }
 }

@@ -3,6 +3,7 @@ param(
     [string]$Target = 'All',
     [switch]$RunStrictAudit,
     [switch]$SupportEmailVerified,
+    [switch]$AllowUnverifiedWebSupportEmail,
     [string]$EnvFile = '',
     [switch]$SkipFlutterPubGet,
     [switch]$SkipValidation,
@@ -240,6 +241,7 @@ function Get-ReleaseInputEvidence {
         androidAuthScheme = [Environment]::GetEnvironmentVariable('ORG_GRADLE_PROJECT_FLOWFIT_AUTH_SCHEME')
         iosBundleIdentifier = $iosBundleId
         webBuildBackend = if ($WebWasm) { 'wasm' } else { 'javascript' }
+        allowUnverifiedWebSupportEmail = [bool]$AllowUnverifiedWebSupportEmail
         webBaseHref = if ($null -ne $script:resolvedWebReleaseConfig) {
             $script:resolvedWebReleaseConfig.WebBaseHref
         } else {
@@ -586,7 +588,8 @@ function Assert-Email {
 function Assert-SupportEmailReleaseReadiness {
     param(
         [Parameter(Mandatory = $true)]
-        [string]$SupportEmail
+        [string]$SupportEmail,
+        [switch]$AllowUnverifiedAppWeb
     )
 
     Assert-Email 'FLOWFIT_SUPPORT_EMAIL' $SupportEmail
@@ -599,6 +602,10 @@ function Assert-SupportEmailReleaseReadiness {
     $verified = $SupportEmailVerified -or (
         [Environment]::GetEnvironmentVariable('FLOWFIT_SUPPORT_EMAIL_VERIFIED') -eq 'true'
     )
+    if (-not $verified -and $AllowUnverifiedAppWeb) {
+        Write-Warning 'Continuing web artifact build without external support inbox proof because the app-owned support request path is the MVP support surface. Keep -SupportEmailVerified required for store submission artifacts.'
+        return
+    }
     if (-not $verified) {
         throw 'FLOWFIT_SUPPORT_EMAIL_VERIFIED=true or -SupportEmailVerified is required after confirming the configured support inbox can receive external mail.'
     }
@@ -1023,7 +1030,7 @@ function Invoke-WebReleaseBuild {
     $supportEmail = Get-RequiredEnv 'FLOWFIT_SUPPORT_EMAIL' 'public web support and privacy contact'
     $publicWebBaseUrl = Get-RequiredEnv 'FLOWFIT_PUBLIC_WEB_BASE_URL' 'public privacy/account-deletion URLs'
 
-    Assert-SupportEmailReleaseReadiness -SupportEmail $supportEmail
+    Assert-SupportEmailReleaseReadiness -SupportEmail $supportEmail -AllowUnverifiedAppWeb:$AllowUnverifiedWebSupportEmail
     $script:resolvedWebReleaseConfig = Resolve-WebReleaseConfig -PublicWebBaseUrl $publicWebBaseUrl
     $publicWebBaseUrl = $script:resolvedWebReleaseConfig.PublicWebBaseUrl
     $webBaseHref = $script:resolvedWebReleaseConfig.WebBaseHref

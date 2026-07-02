@@ -2582,6 +2582,10 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(pagesWorkflow, contains('FLOWFIT_SUPPORT_EMAIL_VERIFIED'));
     expect(
       pagesWorkflow,
+      isNot(contains(r'"${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&')),
+    );
+    expect(
+      pagesWorkflow,
       contains(r'support_email="${FLOWFIT_SUPPORT_EMAIL,,}"'),
     );
     expect(
@@ -2607,9 +2611,10 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(
       pagesWorkflow,
       contains(
-        'Set FLOWFIT_SUPPORT_EMAIL_VERIFIED=true only after the configured support inbox is receiving mail.',
+        'continuing web deploy because Help & Support uses the authenticated in-app support request queue',
       ),
     );
+    expect(pagesWorkflow, contains('-AllowUnverifiedWebSupportEmail'));
     expect(
       pagesWorkflow,
       contains('support@flowfit.com is the reserved source replacement token'),
@@ -2903,7 +2908,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     }
   });
 
-  test('strict audit requires confirmed support inbox evidence', () {
+  test('strict audit warns on missing support inbox evidence', () {
     final tempDir = Directory.systemTemp.createTempSync(
       'flowfit_missing_support_evidence_audit_',
     );
@@ -2944,7 +2949,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       expect(audit.exitCode, isNot(0));
       expect(
         '${audit.stdout}\n${audit.stderr}',
-        contains('[FAIL] Production support inbox'),
+        contains('[WARN] Production support inbox'),
+      );
+      expect(
+        '${audit.stdout}\n${audit.stderr}',
+        isNot(contains('[FAIL] Production support inbox')),
       );
       expect(
         '${audit.stdout}\n${audit.stderr}',
@@ -2955,7 +2964,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     }
   });
 
-  test('strict audit rejects weak confirmed support inbox receipt evidence', () {
+  test('strict audit warns on weak confirmed support inbox receipt evidence', () {
     final tempDir = Directory.systemTemp.createTempSync(
       'flowfit_weak_support_receipt_audit_',
     );
@@ -3014,7 +3023,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       final missingReceiptAudit = runAudit(missingReceipt);
       final missingReceiptOutput =
           '${missingReceiptAudit.stdout}\n${missingReceiptAudit.stderr}';
-      expect(missingReceiptAudit.exitCode, isNot(0));
+      expect(missingReceiptOutput, contains('[WARN] Production support inbox'));
+      expect(
+        missingReceiptOutput,
+        isNot(contains('[FAIL] Production support inbox')),
+      );
       expect(missingReceiptOutput, contains('missing inboundReceipt details'));
 
       final selfSent = File(
@@ -3038,7 +3051,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
 
       final selfSentAudit = runAudit(selfSent);
       final selfSentOutput = '${selfSentAudit.stdout}\n${selfSentAudit.stderr}';
-      expect(selfSentAudit.exitCode, isNot(0));
+      expect(selfSentOutput, contains('[WARN] Production support inbox'));
+      expect(
+        selfSentOutput,
+        isNot(contains('[FAIL] Production support inbox')),
+      );
       expect(selfSentOutput, contains('must come from an external sender'));
     } finally {
       tempDir.deleteSync(recursive: true);
@@ -3383,6 +3400,13 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(defaultInboxOutput, contains('support@flowfit.com'));
     expect(defaultInboxOutput, contains('reserved'));
     expect(defaultInboxOutput, contains('source replacement token'));
+    expect(storeReleaseBuild, contains('AllowUnverifiedWebSupportEmail'));
+    expect(
+      storeReleaseBuild,
+      contains(
+        'Keep -SupportEmailVerified required for store submission artifacts.',
+      ),
+    );
   });
 
   test('store release native manifests exclude development auth schemes', () {

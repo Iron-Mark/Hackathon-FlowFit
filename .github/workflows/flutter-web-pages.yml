@@ -60,8 +60,7 @@ jobs:
           supabase_url="${SUPABASE_URL,,}"
           supabase_host="${supabase_url#https://}"
           publishable_key="${SUPABASE_PUBLISHABLE_KEY,,}"
-          if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&
-                -n "${FLOWFIT_PUBLIC_WEB_BASE_URL}" &&
+          if [[ -n "${FLOWFIT_PUBLIC_WEB_BASE_URL}" &&
                 "${FLOWFIT_PUBLIC_WEB_BASE_URL}" == https://* &&
                 "${public_web_base_url}" != *localhost* &&
                 "${public_web_base_url}" != *".example"* &&
@@ -150,8 +149,7 @@ jobs:
             exit 1
           fi
           if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" != "true" ]]; then
-            echo "Set FLOWFIT_SUPPORT_EMAIL_VERIFIED=true only after the configured support inbox is receiving mail." >&2
-            exit 1
+            echo "::notice::FLOWFIT_SUPPORT_EMAIL_VERIFIED is not true; continuing web deploy because Help & Support uses the authenticated in-app support request queue. Keep external inbox proof for store submission artifacts."
           fi
           if [[ -z "${FLOWFIT_SUPPORT_EMAIL}" ]]; then
             echo "FLOWFIT_SUPPORT_EMAIL repo variable is required and must point to a verified deliverable inbox." >&2
@@ -202,7 +200,11 @@ jobs:
 
       - name: Build production web artifact
         shell: pwsh
-        run: pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet
+        run: >
+          pwsh -NoProfile -File scripts/store_release_build.ps1
+          -Target Web
+          -SkipFlutterPubGet
+          -AllowUnverifiedWebSupportEmail
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6

@@ -397,20 +397,29 @@ in release variable or store-build commands. DNS MX status is recorded in the
 JSON summary when local DNS tooling is available, but it is not a substitute for
 the received external test email.
 
-`scripts/release_readiness_audit.ps1` requires
-`build/support-inbox-verification.json` in strict mode before accepting
-`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. If that file
-is missing or records DNS failure, including Null MX, advisory audit reports the
-support inbox as a warning so local preflight can continue, while strict audit
-keeps the gate failing.
+`scripts/release_readiness_audit.ps1` also checks the authenticated in-app
+support request path: `Help & Support` must submit to `public.support_requests`,
+the migration must enable RLS, and the live app smoke must prove
+support-request create/read/delete through authenticated RLS. When that app
+support path is present, missing or weak support-inbox receipt metadata remains
+a store/contact warning instead of an app-support blocker. DNS failure,
+including Null MX, is still strict because the configured public contact address
+would not be deliverable.
+
+Keep using `build/support-inbox-verification.json` before setting
+`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. That flag is
+for the external public inbox, not for the in-app support queue.
 
 ### GitHub Pages Deployment
 
 `.github/workflows/flutter-web-pages.yml` provides a concrete Flutter web
 deployment path for this fork. It builds with `scripts/store_release_build.ps1
--Target Web -SkipFlutterPubGet`, uploads `build/web` to GitHub Pages, deploys
-it, then runs `scripts/verify_web_deployment.ps1` against the deployed Pages
-URL and uploads `flowfit-github-pages-verification` evidence.
+-Target Web -SkipFlutterPubGet -AllowUnverifiedWebSupportEmail`, uploads
+`build/web` to GitHub Pages, deploys it, then runs
+`scripts/verify_web_deployment.ps1` against the deployed Pages URL and uploads
+`flowfit-github-pages-verification` evidence. This web-only exception is for the
+app-owned support MVP path; Android/iOS store artifact builds still require
+`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`.
 
 Configure these repository variables before running it:
 
@@ -884,8 +893,9 @@ upload signing, deployed web URL, and support inbox verification.
 
 `.github/workflows/flutter-web-pages.yml` is separate from CI because it is a
 deployment workflow. It requires GitHub Pages write permissions plus production
-Supabase repository variables, and it verifies the deployed public web URL after
-publish.
+Supabase repository variables and a configured support email, and it verifies
+the deployed public web URL after publish. External support inbox proof remains
+required for store submission artifacts, not for the app-web deploy path.
 
 Machine-level checks:
 
