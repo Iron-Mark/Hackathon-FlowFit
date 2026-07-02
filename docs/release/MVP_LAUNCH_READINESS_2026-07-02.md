@@ -1,7 +1,7 @@
 # FlowFit MVP Launch Readiness - 2026-07-02
 
-This snapshot records the current MVP release state after the resumed release
-readiness pass on `codex/flowfit-landing-page`.
+This snapshot records the current MVP release state after PR #13 merged and the
+follow-up evidence refresh on `codex/flowfit-launch-evidence-refresh`.
 
 ## Current Verdict
 
@@ -36,7 +36,7 @@ confirmed and final store/account review steps are completed.
 | Backend verification | `scripts/verify_supabase_backend.ps1 -Linked -Output json` | Passed 19 read-only schema/RLS/grant checks. |
 | Live app smoke | `scripts/verify_supabase_app_smoke.ps1 -EnvFile .env -AllowExternalWrites -OutFile build/supabase-app-smoke.json` | Passed 6 checks: auth sign-in, smoke row guard, profile upsert, buddy upsert, workout create/update/list/delete, and heart-rate insert/list. |
 | Android live-auth E2E smoke | `scripts/verify_android_live_auth_smoke.ps1 -Device emulator-5554 -EnvFile .env -OutFile build/android-live-auth-smoke-latest.json` | Passed 122 checks on `sdk_gphone64_x86_64` / Android 15: login, age gate, survey onboarding, dashboard tabs, Health food add/remove, Track routes, Buddy setup, Supabase row assertions, cleanup, and no AndroidRuntime crash markers. |
-| Strict release audit | `scripts/release_readiness_audit.ps1 -Strict -EnvFile .env -OutFile build/store-release-readiness-audit.json` | 71 pass, 1 warn, 1 fail. The fail is support-inbox proof. |
+| Strict release audit | `scripts/release_readiness_audit.ps1 -Strict -EnvFile .env -OutFile build/store-release-readiness-audit.json` | Refreshed at `2026-07-02T16:28:43Z`: 71 pass, 1 warn, 1 fail. The fail is support-inbox proof. |
 | GitHub-variable strict snapshot | `scripts/release_status_snapshot.ps1 -Repo Iron-Mark/Hackathon-FlowFit -OutFile build/release-status-snapshot.md` | Snapshot written; GitHub-variable strict audit reports 72 pass, 1 warn, 1 fail. |
 | Store metadata | `scripts/verify_store_metadata.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit -OutFile build/store-metadata-verification.json` | Passed 48 checks, 0 warnings, 0 failures. |
 | Store artifact verification | `scripts/verify_store_artifacts.ps1 -Strict -RequireStrictAudit -RequireCurrentCommit` | 0 pass, 0 warn, 1 fail because `build/store-release-artifacts.json` does not exist yet. Final artifact generation is blocked until support inbox proof is complete. |
@@ -44,6 +44,8 @@ confirmed and final store/account review steps are completed.
 | Full Flutter tests | GitHub Actions / Flutter CI run `28601898762`, step `Flutter tests` | Passed on `main` commit `1c7db18a694c7d504547a3c90993e91e87e7cd7a` after support-proof schema hardening. |
 | Public web deployment | `scripts/verify_web_deployment.ps1 -BaseUrl https://iron-mark.github.io/Hackathon-FlowFit -SupportEmail marksiazon.dev@gmail.com -OutFile build/web-deployment-verification.json` | Passed 15 HTTP/content/compliance checks against GitHub Pages. |
 | Public web app smoke | `npm run web:smoke -- --base-url https://iron-mark.github.io/Hackathon-FlowFit --out-file build/web-app-smoke-public.json` | Passed 58 browser workflow checks, 8 Chromium/WebGL software-rendering warnings, 0 app console errors, 0 failed requests. |
+| Local runnable web build | `flutter build web --release --no-pub` with ignored local Supabase client config passed as Dart defines | Built `build/web` locally on Flutter 3.41.9 stable / Dart 3.11.5. |
+| Local runnable web app smoke | `npm run web:smoke -- --base-url http://127.0.0.1:<local-port> --out-file build/web-app-smoke-local.json` | Passed 59 browser workflow checks against the locally served release web build, with 9 Chromium/WebGL software-rendering warnings, 0 app console errors, and 0 failed requests. |
 | Android phone emulator smoke | `scripts/verify_android_phone_smoke.ps1 -Device emulator-5554 -EnvFile .env -OutFile build/android-phone-smoke-latest.json` | Passed on `sdk_gphone64_x86_64` / Android 15 with 24 checks and no AndroidRuntime crash markers. |
 | Wear OS emulator smoke | `scripts/verify_wear_emulator_smoke.ps1 -OutFile build/wear-emulator-smoke-latest.json` | Passed on `sdk_gwear_x86_64` / Android 14 with 20 checks and no AndroidRuntime crash markers. |
 | Dart formatting | `scripts/verify_dart_format.ps1` | Passed for 463 tracked Dart files. |
@@ -61,6 +63,7 @@ confirmed and final store/account review steps are completed.
 | `build/store-release-artifact-verification.json` | Strict store artifact verification evidence; currently fails because no final store release artifact manifest has been generated. |
 | `build/web-deployment-verification.json` | Public GitHub Pages HTTP/content/compliance evidence. |
 | `build/web-app-smoke-public.json` | Public browser workflow smoke evidence. |
+| `build/web-app-smoke-local.json` | Local browser workflow smoke evidence against the locally served release web build. |
 | `build/web-app-smoke-preflight.json` | Local preflight browser workflow smoke evidence. |
 | `build/android-phone-smoke-latest.json` | Android phone emulator smoke evidence and artifact paths. |
 | `build/wear-emulator-smoke-latest.json` | Wear OS emulator smoke evidence and artifact paths. |
