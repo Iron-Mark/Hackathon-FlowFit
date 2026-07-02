@@ -4,7 +4,8 @@ param(
     [string]$AndroidDevAuthScheme = '',
     [string]$SupabaseUrl = '',
     [string]$SupabasePublishableKey = '',
-    [switch]$Force
+    [switch]$Force,
+    [switch]$SkipSupabaseReachabilityCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -44,6 +45,32 @@ function Assert-SupabasePublishableKey {
     }
 }
 
+function Assert-SupabaseProjectReachability {
+    param([Parameter(Mandatory = $true)][string]$Url)
+
+    if ($SkipSupabaseReachabilityCheck) {
+        Write-Warning 'SupabaseUrl DNS reachability was skipped. Use this only for isolated script tests or offline diagnostics, not local release configuration.'
+        return
+    }
+
+    $uri = $null
+    if (-not [System.Uri]::TryCreate($Url.Trim(), [System.UriKind]::Absolute, [ref]$uri)) {
+        throw 'SupabaseUrl could not be parsed.'
+    }
+
+    $projectHost = $uri.Host
+    try {
+        $addresses = @([System.Net.Dns]::GetHostAddresses($projectHost))
+        if ($addresses.Count -gt 0) {
+            return
+        }
+    } catch {
+        throw "SupabaseUrl host $projectHost does not resolve in DNS. Confirm the Supabase project exists and is not paused or deleted before writing local release config."
+    }
+
+    throw "SupabaseUrl host $projectHost did not return DNS addresses. Confirm the Supabase project exists and is not paused or deleted before writing local release config."
+}
+
 function Set-GradleProperty {
     param(
         [Parameter(Mandatory = $true)]
@@ -74,6 +101,23 @@ Assert-ProductionValue 'AndroidApplicationId' $AndroidApplicationId
 Assert-ProductionValue 'AndroidAuthScheme' $AndroidAuthScheme
 Assert-ProductionValue 'AndroidDevAuthScheme' $AndroidDevAuthScheme
 
+$hasSupabaseUrl = -not [string]::IsNullOrWhiteSpace($SupabaseUrl)
+$hasSupabaseKey = -not [string]::IsNullOrWhiteSpace($SupabasePublishableKey)
+if ($hasSupabaseUrl -xor $hasSupabaseKey) {
+    throw 'Provide both -SupabaseUrl and -SupabasePublishableKey, or omit both.'
+}
+
+if ($hasSupabaseUrl -and $hasSupabaseKey) {
+    Assert-ProductionValue 'SupabaseUrl' $SupabaseUrl
+    Assert-ProductionValue 'SupabasePublishableKey' $SupabasePublishableKey
+
+    if ($SupabaseUrl -notmatch '^https://[a-z0-9-]+\.supabase\.co$') {
+        throw 'SupabaseUrl must look like https://PROJECT_REF.supabase.co.'
+    }
+    Assert-SupabasePublishableKey -Value $SupabasePublishableKey
+    Assert-SupabaseProjectReachability -Url $SupabaseUrl
+}
+
 $gradlePropertiesPath = Join-Path $repoRoot 'android/gradle.properties'
 $lines = [System.Collections.Generic.List[string]]::new()
 if (Test-Path $gradlePropertiesPath) {
@@ -94,21 +138,7 @@ Set-GradleProperty -Name 'FLOWFIT_AUTH_SCHEME' -Value $AndroidAuthScheme
 Set-GradleProperty -Name 'FLOWFIT_DEV_AUTH_SCHEME' -Value $AndroidDevAuthScheme
 Set-Content -Path $gradlePropertiesPath -Value $lines
 
-$hasSupabaseUrl = -not [string]::IsNullOrWhiteSpace($SupabaseUrl)
-$hasSupabaseKey = -not [string]::IsNullOrWhiteSpace($SupabasePublishableKey)
-if ($hasSupabaseUrl -xor $hasSupabaseKey) {
-    throw 'Provide both -SupabaseUrl and -SupabasePublishableKey, or omit both.'
-}
-
 if ($hasSupabaseUrl -and $hasSupabaseKey) {
-    Assert-ProductionValue 'SupabaseUrl' $SupabaseUrl
-    Assert-ProductionValue 'SupabasePublishableKey' $SupabasePublishableKey
-
-    if ($SupabaseUrl -notmatch '^https://[a-z0-9-]+\.supabase\.co$') {
-        throw 'SupabaseUrl must look like https://PROJECT_REF.supabase.co.'
-    }
-    Assert-SupabasePublishableKey -Value $SupabasePublishableKey
-
     $secretsPath = Join-Path $repoRoot 'lib/secrets.dart'
     if ((Test-Path $secretsPath) -and -not $Force) {
         throw 'lib/secrets.dart already exists. Re-run with -Force to overwrite it.'

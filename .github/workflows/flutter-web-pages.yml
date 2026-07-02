@@ -58,6 +58,7 @@ jobs:
           support_email="${FLOWFIT_SUPPORT_EMAIL,,}"
           public_web_base_url="${FLOWFIT_PUBLIC_WEB_BASE_URL,,}"
           supabase_url="${SUPABASE_URL,,}"
+          supabase_host="${supabase_url#https://}"
           publishable_key="${SUPABASE_PUBLISHABLE_KEY,,}"
           if [[ "${FLOWFIT_SUPPORT_EMAIL_VERIFIED}" == "true" &&
                 -n "${FLOWFIT_PUBLIC_WEB_BASE_URL}" &&
@@ -81,7 +82,12 @@ jobs:
                 "${publishable_key}" != *your_* &&
                 "${publishable_key}" != *sb_secret* &&
                 "${publishable_key}" != *service_role* ]]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
+            if getent ahosts "${supabase_host}" >/dev/null; then
+              echo "ready=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::error::SUPABASE_URL host does not resolve. Confirm the Supabase project exists, is active, and release variables point at the current project."
+              exit 1
+            fi
             exit 0
           fi
 
@@ -169,6 +175,11 @@ jobs:
                 "${supabase_url}" == *replace_with* ||
                 "${supabase_url}" == *placeholder* ]]; then
             echo "SUPABASE_URL must not be a placeholder or retired FlowFit project URL." >&2
+            exit 1
+          fi
+          supabase_host="${supabase_url#https://}"
+          if ! getent ahosts "${supabase_host}" >/dev/null; then
+            echo "SUPABASE_URL host does not resolve. Confirm the Supabase project exists and is not paused or deleted." >&2
             exit 1
           fi
           if [[ -z "${SUPABASE_PUBLISHABLE_KEY}" ]]; then

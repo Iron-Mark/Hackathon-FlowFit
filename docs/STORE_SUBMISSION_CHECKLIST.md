@@ -60,9 +60,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] The source default `support@flowfit.com` has been replaced by a verified
       production support/privacy inbox in public pages and in-app copy. Run
       `pwsh -NoProfile -File scripts/verify_support_inbox.ps1`, then rerun with
-      `-ConfirmedInbound` and `-EvidenceNote` after receiving an external test
-      email. If DNS reports Null MX, configure a deliverable mailbox/MX host or
-      choose a different support address before store submission.
+      `-ConfirmedInbound`, `-ReceivedFrom`, `-ReceivedAt`, and `-EvidenceNote`
+      after receiving an external test email. If DNS reports Null MX, configure
+      a deliverable mailbox/MX host or choose a different support address before
+      store submission.
 - [ ] Location disclosures describe foreground-only wellness routes, walking
       paths, and geofence missions; release manifests must not request
       background location until native background geofencing is implemented.

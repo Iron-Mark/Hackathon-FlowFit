@@ -69,6 +69,10 @@ Technical implementation details and verification:
   - Latest maintained-fork app-health evidence for current `main`: live
     Supabase, live web, Android emulator, Wear emulator, and remote CI
 
+- **release/MVP_LAUNCH_READINESS_2026-07-02.md**
+  - Current MVP launch verdict, verified local gates, Supabase/support blockers,
+    and next release plan
+
 - **release/PLAY_STORE_RELEASE_NOTES_AND_QA_2026-06-19.md**
   - Play Store release notes, listing copy, QA evidence, and real-device
     internal testing checklist

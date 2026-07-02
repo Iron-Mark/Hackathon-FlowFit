@@ -2,7 +2,8 @@ param(
     [string]$Repo = 'Iron-Mark/Hackathon-FlowFit',
     [string]$EnvFile = '',
     [switch]$SupportEmailVerified,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$SkipSupabaseReachabilityCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -157,6 +158,28 @@ function Assert-SupabaseUrl {
     if ((Test-PlaceholderValue $Value) -or $Value -notmatch '^https://[a-z0-9-]+\.supabase\.co$') {
         throw 'SUPABASE_URL must be a real Supabase Project URL.'
     }
+
+    if ($SkipSupabaseReachabilityCheck) {
+        Write-Warning 'SUPABASE_URL DNS reachability was skipped. Use this only for isolated script tests or offline diagnostics, not release variable writes.'
+        return
+    }
+
+    $uri = $null
+    if (-not [System.Uri]::TryCreate($Value.Trim(), [System.UriKind]::Absolute, [ref]$uri)) {
+        throw 'SUPABASE_URL could not be parsed.'
+    }
+
+    $projectHost = $uri.Host
+    try {
+        $addresses = @([System.Net.Dns]::GetHostAddresses($projectHost))
+        if ($addresses.Count -gt 0) {
+            return
+        }
+    } catch {
+        throw "SUPABASE_URL host $projectHost does not resolve in DNS. Confirm the Supabase project exists and is not paused or deleted before writing GitHub release variables."
+    }
+
+    throw "SUPABASE_URL host $projectHost did not return DNS addresses. Confirm the Supabase project exists and is not paused or deleted before writing GitHub release variables."
 }
 
 function Assert-SupabasePublishableKey {

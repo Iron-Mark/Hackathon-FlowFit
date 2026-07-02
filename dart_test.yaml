@@ -1,0 +1,3 @@
+# Keep the full Flutter widget/integration-style suite deterministic on local
+# Windows machines and CI runners with many cores.
+concurrency: 1

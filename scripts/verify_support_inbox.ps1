@@ -4,6 +4,9 @@ param(
     [string]$OutFile = 'build/support-inbox-verification.json',
     [switch]$ConfirmedInbound,
     [string]$EvidenceNote = '',
+    [string]$ReceivedFrom = '',
+    [string]$ReceivedAt = '',
+    [string]$MessageId = '',
     [switch]$SkipDns
 )
 
@@ -67,6 +70,52 @@ function Assert-SupportEmail {
     }
 
     return $normalized
+}
+
+function Assert-InboundReceipt {
+    param(
+        [Parameter(Mandatory = $true)][string]$SupportEmail,
+        [string]$ReceivedFrom,
+        [string]$ReceivedAt,
+        [string]$MessageId = ''
+    )
+
+    if ([string]::IsNullOrWhiteSpace($ReceivedFrom)) {
+        throw 'ReceivedFrom is required with -ConfirmedInbound. Include the sender of the external test email.'
+    }
+
+    $sender = Assert-SupportEmail -Name 'ReceivedFrom' -Value $ReceivedFrom
+    if ($sender.Equals($SupportEmail, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw 'ReceivedFrom must be an external sender, not the support inbox itself.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ReceivedAt)) {
+        throw 'ReceivedAt is required with -ConfirmedInbound. Include the received timestamp for the external test email.'
+    }
+
+    [DateTimeOffset]$receivedAtOffset = [DateTimeOffset]::MinValue
+    if (-not [DateTimeOffset]::TryParse($ReceivedAt.Trim(), [ref]$receivedAtOffset)) {
+        throw 'ReceivedAt must be a parseable timestamp for the external test email.'
+    }
+
+    $receivedAtUtc = $receivedAtOffset.ToUniversalTime()
+    if ($receivedAtUtc -gt (Get-Date).ToUniversalTime().AddMinutes(10)) {
+        throw 'ReceivedAt cannot be in the future.'
+    }
+
+    $messageIdValue = $null
+    if (-not [string]::IsNullOrWhiteSpace($MessageId)) {
+        $messageIdValue = $MessageId.Trim()
+        if ($messageIdValue -match '[\r\n]') {
+            throw 'MessageId must be a single-line value.'
+        }
+    }
+
+    return [pscustomobject]@{
+        receivedFrom = $sender
+        receivedAt = $receivedAtUtc.ToString('o')
+        messageId = $messageIdValue
+    }
 }
 
 function Get-RepoRelativePath {
@@ -204,6 +253,10 @@ try {
     if ($ConfirmedInbound -and [string]::IsNullOrWhiteSpace($EvidenceNote)) {
         throw 'EvidenceNote is required with -ConfirmedInbound. Include the date/source of the external test email receipt.'
     }
+    $inboundReceipt = $null
+    if ($ConfirmedInbound) {
+        $inboundReceipt = Assert-InboundReceipt -SupportEmail $supportEmail -ReceivedFrom $ReceivedFrom -ReceivedAt $ReceivedAt -MessageId $MessageId
+    }
 
     $defaultSupportEmail = 'support@flowfit.com'
     $domain = ($supportEmail -split '@', 2)[1]
@@ -229,6 +282,7 @@ try {
         confirmedInbound = [bool]$ConfirmedInbound
         confirmedAt = $confirmedAt
         evidenceNote = $EvidenceNote
+        inboundReceipt = $inboundReceipt
         releaseVariable = [pscustomobject]@{
             name = 'FLOWFIT_SUPPORT_EMAIL_VERIFIED'
             valueWhenReady = $releaseVerifiedEnvValue
@@ -239,7 +293,7 @@ try {
         nextStep = if ($ConfirmedInbound) {
             "Set FLOWFIT_SUPPORT_EMAIL_VERIFIED=true with scripts/configure_github_release_variables.ps1 -SupportEmailVerified. DNS MX status recorded as $($mx.status)."
         } else {
-            'Send an external test email to the support inbox, confirm receipt, then rerun this script with -ConfirmedInbound.'
+            'Send an external test email to the support inbox, confirm receipt, then rerun this script with -ConfirmedInbound, -ReceivedFrom, -ReceivedAt, and -EvidenceNote.'
         }
     }
 
@@ -263,6 +317,10 @@ try {
     Write-Host "Support inbox evidence written: $(Get-RepoRelativePath $outPath)"
     Write-Host "Support email: $supportEmail"
     Write-Host "Inbound confirmation: $([bool]$ConfirmedInbound)"
+    if ($ConfirmedInbound) {
+        Write-Host "Inbound sender: $($inboundReceipt.receivedFrom)"
+        Write-Host "Inbound received at: $($inboundReceipt.receivedAt)"
+    }
     Write-Host "DNS MX status: $($mx.status)"
     if (-not $ConfirmedInbound) {
         Write-Host 'Manual inbound-mail confirmation is still required before setting FLOWFIT_SUPPORT_EMAIL_VERIFIED=true.'
