@@ -94,6 +94,8 @@ void main() {
   test('release route table keeps the public feature routes wired', () {
     const requiredReleaseRoutes = <String>{
       '/',
+      '/app',
+      '/landing',
       '/loading',
       '/welcome',
       '/login',

@@ -355,7 +355,10 @@ pwsh -NoProfile -File scripts/verify_web_deployment.ps1 `
 The verifier checks the app shell, `manifest.json`, `privacy.html`, and
 `account-deletion.html`, enforces HTTPS for real deployments, validates the
 configured support inbox text, rejects internal maintainer/store-review terms,
-and writes JSON evidence for store handoff.
+and writes JSON evidence for store handoff. The Flutter web root renders the
+marketing landing page, while the app startup path remains available at
+`/#/app`; run `npm run web:smoke` against the deployed URL to browser-check that
+landing page and the high-value app routes.
 
 ### Support Inbox Verification
 

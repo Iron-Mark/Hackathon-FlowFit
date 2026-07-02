@@ -112,6 +112,14 @@ FlowFit is a dual-platform fitness app that runs on:
    scripts\test-phone.bat
    ```
 
+### Web Landing Page
+
+Flutter web builds render the FlowFit marketing landing page at `/`. The app
+startup path is still available at `/#/app`, and direct app routes such as
+`/#/welcome` continue to work for smoke tests and previews. The landing page
+uses `FLOWFIT_APK_DOWNLOAD_URL` for its APK CTA and defaults to the maintained
+fork's latest GitHub release page until a signed APK artifact URL is supplied.
+
 ### Testing Connection
 
 1. Start phone app first

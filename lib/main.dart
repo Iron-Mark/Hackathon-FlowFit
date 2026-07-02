@@ -18,6 +18,7 @@ import 'theme/app_theme.dart';
 import 'utils/deep_link_handler.dart';
 import 'widgets/buddy_pending_sync_listener.dart';
 import 'screens/startup_configuration_error_screen.dart';
+import 'screens/landing/flowfit_landing_page.dart';
 import 'screens/loading_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/welcome_screen.dart';
@@ -203,7 +204,10 @@ class FlowFitPhoneApp extends StatelessWidget {
           themeMode: ThemeMode.system,
           routes: {
             // Only include '/' route in non-debug mode to avoid conflict with 'home'
-            '/': (context) => const SplashScreen(),
+            '/': (context) =>
+                kIsWeb ? const FlowFitLandingPage() : const SplashScreen(),
+            '/app': (context) => const SplashScreen(),
+            '/landing': (context) => const FlowFitLandingPage(),
             '/loading': (context) => const LoadingScreen(),
             '/welcome': (context) => const WelcomeScreen(),
             '/login': (context) => const LoginScreen(),

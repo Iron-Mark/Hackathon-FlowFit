@@ -22,6 +22,12 @@ class FlowFitRuntimeConfig {
     defaultValue: 'https://iron-mark.github.io/Hackathon-FlowFit',
   );
 
+  static const String apkDownloadUrl = String.fromEnvironment(
+    'FLOWFIT_APK_DOWNLOAD_URL',
+    defaultValue:
+        'https://github.com/Iron-Mark/Hackathon-FlowFit/releases/latest',
+  );
+
   static const String mapTileUrlTemplate = String.fromEnvironment(
     'FLOWFIT_MAP_TILE_URL_TEMPLATE',
     defaultValue:

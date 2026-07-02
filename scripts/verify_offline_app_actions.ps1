@@ -65,6 +65,10 @@ try {
         'test/screens/startup_configuration_error_screen_test.dart'
     )
 
+    Invoke-FlutterTestGroup 'Landing page actions' @(
+        'test/screens/landing/flowfit_landing_page_test.dart'
+    )
+
     Invoke-FlutterTestGroup 'Onboarding and buddy actions' @(
         'test/integration/survey_back_navigation_test.dart',
         'test/screens/onboarding/buddy_completion_screen_test.dart',

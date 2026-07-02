@@ -173,6 +173,17 @@ try {
     });
   });
 
+  await page.goto(normalizeUrl('/'), {
+    waitUntil: 'networkidle',
+    timeout: timeoutMs,
+  });
+  await enableFlutterSemantics(page);
+  await waitForText(page, 'FlowFit');
+  await waitForText(page, 'Try Web App');
+  await waitForText(page, 'Download APK');
+  await waitForText(page, 'WHAT FLOWFIT CONNECTS');
+  recordStep('Marketing landing page rendered', '/');
+
   await page.goto(normalizeUrl('/#/welcome'), {
     waitUntil: 'networkidle',
     timeout: timeoutMs,

@@ -275,7 +275,7 @@ pwsh -NoProfile -File scripts/verify_offline_app_actions.ps1 -SkipPubGet
 ```
 
 This script runs the static route/action guards, interactive surface coverage
-guard, and focused Flutter widget smokes for welcome/login/signup/splash,
+guard, and focused Flutter widget smokes for landing, welcome/login/signup/splash,
 production route-table navigation, auth/login flows, onboarding, home
 CTA/header actions, profile/settings, delete-account flow, dashboard, activity
 classifier navigation, health, phone, Wear, wellness/maps, workout, mood,
@@ -299,16 +299,17 @@ Serve `build/web` first, for example:
 python -m http.server 8791 --bind 127.0.0.1 --directory build\web
 ```
 
-The smoke enables Flutter semantics in Chromium, verifies the welcome/signup
-and login route actions, then covers survey intro to basic info, basic info to
-measurements, Buddy welcome to Buddy intro, phone home Clear dialog, workout
-type actions, settings legal/support/account actions, notification preferences,
-app integration to Wellness setup, language and unit preference routes, the
-Wellness Settings privacy action, the phone heart-rate route, and the Buddy
-completion entry surface. It writes JSON evidence with pass counts, console
-warnings/errors, and failed request counts. Expected local WebGL warnings from
-headless software rendering are recorded, but console errors or failed network
-requests fail the smoke.
+The smoke enables Flutter semantics in Chromium, verifies the marketing landing
+page at `/`, verifies the welcome/signup and login route actions, then covers
+survey intro to basic info, basic info to measurements, Buddy welcome to Buddy
+intro, phone home Clear dialog, workout type actions, settings legal/support/account
+actions, notification preferences, app integration to Wellness setup, language
+and unit preference routes, the Wellness Settings
+privacy action, the phone heart-rate route, and the Buddy completion entry
+surface. It writes JSON evidence with pass counts, console warnings/errors, and
+failed request counts. Expected local WebGL warnings from headless software
+rendering are recorded, but console errors or failed network requests fail the
+smoke.
 
 ---
 
