@@ -587,7 +587,7 @@ prompted.
 ### 12. configure_github_release_variables.ps1
 **Purpose**: Validate and set GitHub repository variables used by strict audit
 and the GitHub Pages deployment workflow after the maintainer has real Supabase
-client values and a verified support inbox.
+client values and a configured support inbox.
 
 **Dry run from the current environment**:
 ```powershell
@@ -620,7 +620,9 @@ secret/service-role Supabase keys, the retired project ref, and Supabase
 project hosts that do not resolve in DNS, then calls `gh variable set`. It
 redacts the publishable key in all output. If
 `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, the `-SupportEmailVerified` switch is
-required so the production web deploy cannot be enabled by accident.
+required so external inbox proof cannot be claimed by accident. Leaving the
+value false is valid for the app-web MVP deploy because Help & Support uses the
+authenticated in-app support request queue.
 
 ---
 
@@ -767,12 +769,12 @@ pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS -SupportEmailV
 
 **Build only Flutter web**:
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail
 ```
 
 **Build only Flutter web with WebAssembly output**:
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -AllowUnverifiedWebSupportEmail
 ```
 
 **Run the strict audit before building**:
@@ -839,7 +841,9 @@ wrapper. Production URLs must use a real HTTPS origin, not `.example`,
 Pass `-SupportEmailVerified` only after the configured support inbox is owned by
 the maintainer and usable for privacy/account deletion contact. The production
 wrapper rejects `support@flowfit.com`; it is the reserved source replacement
-token.
+token. For the app-web MVP target only, pass `-AllowUnverifiedWebSupportEmail`
+to build against the authenticated in-app support request queue while keeping
+Android/iOS store artifacts strict.
 When `-RunStrictAudit` is used, the wrapper also writes
 `build/store-release-readiness-audit.json` and includes it in the artifact
 manifest after the strict audit passes.

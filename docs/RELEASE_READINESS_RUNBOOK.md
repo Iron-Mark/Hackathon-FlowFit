@@ -291,15 +291,18 @@ App Store bundle in `build/ios/ipa/` when signing is configured.
 Build:
 
 ```powershell
-$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
-$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Configured support email'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail
 ```
 
 Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the final deployed URL before building,
 and set `FLOWFIT_SUPPORT_EMAIL` to the deliverable support/privacy inbox. Root
 domain hosts can use an origin such as `https://flowfit.example.com`.
+The app-web MVP support path uses authenticated in-app support requests, so the
+web artifact can pass `-AllowUnverifiedWebSupportEmail`; keep
+`-SupportEmailVerified` for store artifacts or reviewer flows that require
+external inbox proof.
 Project-site hosts can include the path, for example
 `https://iron-mark.github.io/Hackathon-FlowFit`. The wrapper derives Flutter's
 `--base-href` from that path, so GitHub Pages project sites load assets from
@@ -321,7 +324,7 @@ records both the directory and the zip in `build/store-release-artifacts.json`.
 Optional Wasm release artifact:
 
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -AllowUnverifiedWebSupportEmail
 ```
 
 Optional local Wasm compile-smoke without production artifact packaging:
@@ -750,7 +753,7 @@ pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke
 pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeWasmSmoke
 
 # Optional Flutter web Wasm production artifact wrapper:
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -AllowUnverifiedWebSupportEmail
 
 # Production artifact wrapper after external config is complete.
 # Run -Target All on macOS for Android, iOS, and web. On Windows, run
@@ -809,9 +812,11 @@ and other non-production package/auth IDs.
 The preflight now runs `scripts/release_readiness_audit.ps1` in advisory mode
 without creating a temporary `lib/secrets.dart`; tracked build-time defaults
 keep compile checks independent from ignored local files. For store handoff,
-run the audit separately with `-Strict`; it should fail until the maintainer has
-provided the real Supabase project ref/credentials, Android signing inputs,
-production Android/iOS IDs, deployed web base URL, and verified support inbox.
+run the audit separately with `-Strict`; it should pass before app-web MVP
+launch once the real Supabase project ref/credentials, Android signing inputs,
+production Android/iOS IDs, and deployed web base URL are configured. External
+support inbox proof remains a store-contact artifact requirement when the
+platform or reviewer flow needs it.
 If local `build/support-inbox-verification.json` records a failed DNS or inbound
 mail check, preflight reports it as advisory evidence and still runs build
 checks; strict audit remains the release blocker.

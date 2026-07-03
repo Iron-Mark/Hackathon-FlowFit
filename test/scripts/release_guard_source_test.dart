@@ -3537,11 +3537,15 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     for (final command in [
       'scripts/store_release_build.ps1 -Target Android -SupportEmailVerified',
       'scripts/store_release_build.ps1 -Target iOS -SupportEmailVerified',
-      'scripts/store_release_build.ps1 -Target Web -SupportEmailVerified',
-      'scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified',
+      'scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail',
+      'scripts/store_release_build.ps1 -Target Web -WebWasm -AllowUnverifiedWebSupportEmail',
     ]) {
       expect(storeSubmissionChecklist, contains(command));
     }
+    expect(
+      storeSubmissionChecklist,
+      contains('rerun the matching web build with `-SupportEmailVerified`'),
+    );
     expect(
       storeSubmissionChecklist,
       contains('Production wrapper builds set `FLOWFIT_PUBLIC_WEB_BASE_URL`'),
@@ -3554,7 +3558,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(
       scriptsReadme,
       contains(
-        'scripts/store_release_build.ps1 -Target Web -SupportEmailVerified',
+        'scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail',
       ),
     );
     expect(scriptsReadme, contains('wrapper rejects `support@flowfit.com`'));
@@ -3565,7 +3569,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(
       releaseReadinessRunbook,
       contains(
-        'scripts/store_release_build.ps1 -Target Web -SupportEmailVerified',
+        'scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail',
       ),
     );
     expect(
