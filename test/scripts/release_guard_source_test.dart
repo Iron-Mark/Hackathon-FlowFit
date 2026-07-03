@@ -1750,6 +1750,10 @@ storeFile=upload-keystore.jks
     expect(verifySupabaseBackend, contains('[string]\$OutFile'));
     expect(
       verifySupabaseBackend,
+      contains('Resolve-JsonPayloadFromCommandOutput'),
+    );
+    expect(
+      verifySupabaseBackend,
       contains('SUPABASE_BACKEND_VERIFICATION_SQL_OK'),
     );
     expect(

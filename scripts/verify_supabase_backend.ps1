@@ -100,11 +100,39 @@ function Convert-CommandOutputToText {
     }) -join [System.Environment]::NewLine
 }
 
+function Resolve-JsonPayloadFromCommandOutput {
+    param([Parameter(Mandatory = $true)][string]$Text)
+
+    $trimmedText = $Text.Trim()
+    if ($trimmedText.StartsWith('{') -or $trimmedText.StartsWith('[')) {
+        return $trimmedText
+    }
+
+    $lines = $Text -split "`r?`n"
+    for ($index = 0; $index -lt $lines.Count; $index++) {
+        $candidate = ($lines[$index..($lines.Count - 1)] -join [System.Environment]::NewLine).Trim()
+        if (-not ($candidate.StartsWith('{') -or $candidate.StartsWith('['))) {
+            continue
+        }
+
+        try {
+            $null = $candidate | ConvertFrom-Json -ErrorAction Stop
+            return $candidate
+        } catch {
+            continue
+        }
+    }
+
+    return $trimmedText
+}
+
 function Assert-AllBackendChecksPassed {
     param([Parameter(Mandatory = $true)][string]$JsonText)
 
+    $jsonPayload = Resolve-JsonPayloadFromCommandOutput -Text $JsonText
+
     try {
-        $parsed = $JsonText | ConvertFrom-Json -ErrorAction Stop
+        $parsed = $jsonPayload | ConvertFrom-Json -ErrorAction Stop
     } catch {
         throw 'Supabase backend verification output was not valid JSON; use -Output json with -RequireAllPass.'
     }
