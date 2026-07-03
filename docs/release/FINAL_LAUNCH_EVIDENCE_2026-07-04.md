@@ -21,7 +21,7 @@ signing.
 | Field | Value |
 | --- | --- |
 | Repository | `Iron-Mark/Hackathon-FlowFit` |
-| Main commit | `0354335e7f1ea1bb040b89ee0206dbe9eb2e1e2d` |
+| Main commit | `461f9e0f4d3b2b1e13e8757acc70a6e91c6c4ce8` |
 | Merged PR | `#16` - `ci(supabase): validate local stack in CI` |
 | Android package ID | `com.msiazondev.flowfit` |
 | iOS bundle ID | `com.msiazondev.flowfit` |
