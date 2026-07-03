@@ -112,7 +112,7 @@ credentials, debug labels, staging project refs, or private user data.
       passes with final public web URLs and support inbox values.
 - [x] Current explicit metadata verification passed:
       `scripts/verify_store_metadata.ps1 -Strict -PublicWebBaseUrl https://iron-mark.github.io/Hackathon-FlowFit -SupportEmail marksiazon.dev@gmail.com`
-      produced `47 pass, 0 warn, 0 fail`.
+      produced `48 pass, 0 warn, 0 fail`.
 - [ ] `build/store-release-artifacts.json` is archived with artifact paths,
       SHA-256 hashes, byte sizes, git/toolchain metadata, and release inputs.
 - [ ] `build/store-release-artifact-verification.json` is archived after

@@ -21,7 +21,7 @@ signing.
 | Field | Value |
 | --- | --- |
 | Repository | `Iron-Mark/Hackathon-FlowFit` |
-| Main commit | `756cfe86b369a18aca52fa6b694041835ab17400` |
+| Main commit | `0354335e7f1ea1bb040b89ee0206dbe9eb2e1e2d` |
 | Merged PR | `#16` - `ci(supabase): validate local stack in CI` |
 | Android package ID | `com.msiazondev.flowfit` |
 | iOS bundle ID | `com.msiazondev.flowfit` |
@@ -35,7 +35,7 @@ signing.
 | Area | Evidence | Result |
 | --- | --- | --- |
 | Live web app | `Invoke-WebRequest https://iron-mark.github.io/Hackathon-FlowFit/` | HTTP `200`, title `FlowFit` |
-| Main CI | `gh run view 28671430810 --repo Iron-Mark/Hackathon-FlowFit` | `success` on `756cfe86b369a18aca52fa6b694041835ab17400` |
+| Main CI | `gh run view 28681455776 --repo Iron-Mark/Hackathon-FlowFit` | `success` on `0354335e7f1ea1bb040b89ee0206dbe9eb2e1e2d` |
 | Supabase Docker local validation in CI | Main CI job `Supabase Docker Local Validation` | Passed; reset local database from tracked migrations and ran backend verification |
 | Windows offline app action smoke | Main CI job `Windows Offline App Action Smoke` | Passed |
 | Analyze, test, and build | Main CI job `Analyze, Test, and Build` | Passed analyzer, full tests, web JS/Wasm builds, Android debug, Wear OS debug, and release App Bundle smoke |
@@ -52,7 +52,7 @@ signing.
 | Field | Value |
 | --- | --- |
 | Target | Android |
-| Commit | `756cfe86b369a18aca52fa6b694041835ab17400` |
+| Commit | `0354335e7f1ea1bb040b89ee0206dbe9eb2e1e2d` |
 | Dirty tree | `false` |
 | Support email verified | `true` |
 | Support email | `marksiazon.dev@gmail.com` |
@@ -81,4 +81,3 @@ signing.
 - Build iOS IPA on macOS/Xcode with Apple signing before TestFlight/App Store
   submission.
 - Complete any store-console real-device testing and review workflows.
-

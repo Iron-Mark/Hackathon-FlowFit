@@ -7,7 +7,7 @@ MVP candidate.
 
 | Field | Value |
 | --- | --- |
-| Source commit | `756cfe86b369a18aca52fa6b694041835ab17400` |
+| Source commit | `0354335e7f1ea1bb040b89ee0206dbe9eb2e1e2d` |
 | AAB path | `build/app/outputs/bundle/release/app-release.aab` |
 | AAB size | 115,238,159 bytes |
 | AAB SHA-256 | `1c2423d3a296630eedf2c234cc39aa4c5bb1b836c1de6a95bd729a0fb42f5cff` |
@@ -137,4 +137,3 @@ debug or side-loaded build.
       target audience sections are complete.
 - [ ] The uploaded AAB matches the SHA-256 in this pack or the pack is refreshed
       for the newly uploaded artifact.
-
