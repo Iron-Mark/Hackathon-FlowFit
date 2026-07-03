@@ -1,7 +1,7 @@
 # FlowFit Final Launch Evidence - 2026-07-04
 
-This handoff records the current repo-controlled MVP launch evidence after PR
-#16 merged to `main`.
+This handoff records the current repo-controlled MVP launch evidence after the
+current release refresh on `main`.
 
 ## Verdict
 
@@ -21,7 +21,7 @@ signing.
 | Field | Value |
 | --- | --- |
 | Repository | `Iron-Mark/Hackathon-FlowFit` |
-| Main commit | `461f9e0f4d3b2b1e13e8757acc70a6e91c6c4ce8` |
+| Main commit | `25feb1175f7b18947cfa778eff2893238fbf174b` |
 | Merged PR | `#16` - `ci(supabase): validate local stack in CI` |
 | Android package ID | `com.msiazondev.flowfit` |
 | iOS bundle ID | `com.msiazondev.flowfit` |
@@ -35,14 +35,14 @@ signing.
 | Area | Evidence | Result |
 | --- | --- | --- |
 | Live web app | `Invoke-WebRequest https://iron-mark.github.io/Hackathon-FlowFit/` | HTTP `200`, title `FlowFit` |
-| Main CI | `gh run view 28681455776 --repo Iron-Mark/Hackathon-FlowFit` | `success` on `0354335e7f1ea1bb040b89ee0206dbe9eb2e1e2d` |
+| Main CI | `gh run list --repo Iron-Mark/Hackathon-FlowFit --limit 1` | `completed` success on `28682730958` (`49f2878f7b4fea0f98e04b80cdcb020073d8d03d`) |
 | Supabase Docker local validation in CI | Main CI job `Supabase Docker Local Validation` | Passed; reset local database from tracked migrations and ran backend verification |
 | Windows offline app action smoke | Main CI job `Windows Offline App Action Smoke` | Passed |
 | Analyze, test, and build | Main CI job `Analyze, Test, and Build` | Passed analyzer, full tests, web JS/Wasm builds, Android debug, Wear OS debug, and release App Bundle smoke |
 | Strict release audit | `build/store-release-readiness-audit.json` | `77 pass, 1 warn, 0 fail` |
 | Android store artifact manifest | `build/store-release-artifacts.json` | Clean `main` commit, `dirty=false`, support email verified |
 | Android artifact verification | `build/store-release-artifact-verification.json` | `12 pass, 0 warn, 0 fail` |
-| Android AAB | `build/app/outputs/bundle/release/app-release.aab` | 115,238,159 bytes, SHA-256 `1c2423d3a296630eedf2c234cc39aa4c5bb1b836c1de6a95bd729a0fb42f5cff` |
+| Android AAB | `build/app/outputs/bundle/release/app-release.aab` | 115,238,170 bytes, SHA-256 `50c00b66247c04f7b86bf27091e94443f2e9ec85bc0b88eaf4833a35c7f6765b` |
 | Support inbox receipt | `build/support-inbox-verification.json` | Confirmed inbound from `onboarding@resend.dev` at `2026-07-03T21:18:46.49728+08:00`, message id `985c0498-9768-4787-ab36-5de3468882ba` |
 
 ## Artifact Manifest Summary
@@ -52,7 +52,7 @@ signing.
 | Field | Value |
 | --- | --- |
 | Target | Android |
-| Commit | `0354335e7f1ea1bb040b89ee0206dbe9eb2e1e2d` |
+| Commit | `25feb1175f7b18947cfa778eff2893238fbf174b` |
 | Dirty tree | `false` |
 | Support email verified | `true` |
 | Support email | `marksiazon.dev@gmail.com` |
