@@ -480,7 +480,7 @@ try {
   await clickTextAnywhere(page, 'Help & Support');
   await page.waitForURL(/#\/help-support/, { timeout: timeoutMs });
   await enableFlutterSemantics(page);
-  await waitForText(page, 'Email Support');
+  await waitForText(page, 'Message Support');
   recordStep('Settings Help & Support action reached support route', '#/help-support');
 
   await gotoRoute(page, '/settings');

@@ -99,9 +99,9 @@ Profile Tab (dashboard_screen.dart)
 
 #### Help & Support Screen
 
-- Quick actions (Email Support, Live Chat, Report Bug)
+- Quick actions (Message Support, Report Bug)
 - FAQ section with expandable questions
-- Contact information and support hours
+- Contact information with the configured public support address
 
 #### About Us Screen
 

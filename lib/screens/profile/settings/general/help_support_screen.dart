@@ -2,20 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:flowfit/services/support_request_service.dart';
 import 'package:solar_icons/solar_icons.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-typedef SupportEmailLauncher = Future<bool> Function(Uri uri);
 typedef SupportRequestSubmitter =
     Future<String> Function(SupportRequestDraft draft);
 
 class HelpSupportScreen extends StatefulWidget {
-  const HelpSupportScreen({
-    super.key,
-    this.launchSupportEmail,
-    this.submitSupportRequest,
-  });
+  const HelpSupportScreen({super.key, this.submitSupportRequest});
 
-  final SupportEmailLauncher? launchSupportEmail;
   final SupportRequestSubmitter? submitSupportRequest;
 
   @override
@@ -23,55 +16,7 @@ class HelpSupportScreen extends StatefulWidget {
 }
 
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
-  bool _isLaunchingSupportEmail = false;
   bool _isSubmittingSupportRequest = false;
-
-  Future<void> _openSupportEmail(
-    BuildContext context, {
-    required String subject,
-    String body = '',
-  }) async {
-    if (_isLaunchingSupportEmail) return;
-
-    final uri = Uri(
-      scheme: 'mailto',
-      path: FlowFitRuntimeConfig.supportEmail,
-      queryParameters: {'subject': subject, if (body.isNotEmpty) 'body': body},
-    );
-
-    setState(() {
-      _isLaunchingSupportEmail = true;
-    });
-
-    try {
-      final launched = await (widget.launchSupportEmail ?? _launchSupportEmail)(
-        uri,
-      );
-      if (launched) return;
-    } catch (_) {
-      // Fall through to the in-app fallback below.
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLaunchingSupportEmail = false;
-        });
-      }
-    }
-
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Email app unavailable. Contact ${FlowFitRuntimeConfig.supportEmail}.',
-        ),
-        duration: Duration(seconds: 4),
-      ),
-    );
-  }
-
-  Future<bool> _launchSupportEmail(Uri uri) {
-    return launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
 
   Future<void> _openSupportRequestForm(
     BuildContext context, {
@@ -111,7 +56,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
       if (!context.mounted) return;
       final message = error is SupportRequestException
           ? error.message
-          : 'Unable to send support request. Try Email Support.';
+          : 'Unable to send support request. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
       );
@@ -181,7 +126,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'We\'re here to assist you with any questions',
+                    'Send an in-app request from your FlowFit account',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onPrimary.withValues(alpha: 0.9),
                     ),
@@ -211,18 +156,6 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
               ),
               child: Column(
                 children: [
-                  _buildActionItem(
-                    context,
-                    'Email Support',
-                    'Get help via email',
-                    SolarIconsOutline.letter,
-                    Colors.blue,
-                    () => _openSupportEmail(
-                      context,
-                      subject: 'FlowFit support request',
-                    ),
-                  ),
-                  _buildDivider(theme),
                   _buildActionItem(
                     context,
                     'Message Support',
@@ -369,9 +302,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     final theme = Theme.of(context);
 
     return InkWell(
-      onTap: (_isLaunchingSupportEmail || _isSubmittingSupportRequest)
-          ? null
-          : onTap,
+      onTap: _isSubmittingSupportRequest ? null : onTap,
       borderRadius: BorderRadius.circular(20),
       child: Padding(
         padding: const EdgeInsets.all(16),

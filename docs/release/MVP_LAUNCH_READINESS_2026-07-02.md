@@ -14,7 +14,8 @@ The linked Supabase project is reachable and reports `ACTIVE_HEALTHY`.
 Migrations are up to date, backend verification passes, the live app smoke
 passes against authenticated RLS, and GitHub CI is green on PR #15. The Help &
 Support screen now submits authenticated in-app support and bug requests to
-`public.support_requests`; email remains a fallback public contact surface.
+`public.support_requests`; email remains a passive public contact surface for
+store/legal metadata.
 
 Do not call the app store-ready or externally submitted until final store/account
 review steps are completed, including any platform-required public support email
@@ -78,7 +79,7 @@ proof.
 
 | Gate | Current result | Required fix |
 | --- | --- | --- |
-| Production support inbox | `build/support-inbox-verification.json` confirms Gmail MX records but `confirmedInbound=false`; strict audit now reports this as a store/contact warning because the in-app support queue is verified. | Optional for app MVP; required before store submission if the platform/release checklist needs external inbox proof. Rerun `scripts/verify_support_inbox.ps1 -EnvFile .env -ConfirmedInbound -ReceivedFrom "<external-sender>" -ReceivedAt "<received-timestamp>" -EvidenceNote "<evidence>" -OutFile build/support-inbox-verification.json`. |
+| Production support inbox | `build/support-inbox-verification.json` confirms the configured mailbox has MX records but `confirmedInbound=false`; strict audit now reports this as a store/contact warning because the in-app support queue is verified. | Optional for app MVP; required before store submission if the platform/release checklist needs external inbox proof. Rerun `scripts/verify_support_inbox.ps1 -EnvFile .env -ConfirmedInbound -ReceivedFrom "<external-sender>" -ReceivedAt "<received-timestamp>" -EvidenceNote "<evidence>" -OutFile build/support-inbox-verification.json`. |
 | Supabase Auth dashboard templates | Rendered templates exist in `build/supabase-email-templates`, but dashboard copy was not verified locally. | Copy rendered templates into Supabase Auth Email Templates before store submission. |
 | Android/iOS store artifacts | App-web artifacts are verified, but final Android/iOS store-upload artifacts are not claimed in this snapshot. | Generate final signed AAB/IPA with the appropriate platform accounts/signing inputs, then run strict artifact verification for those artifacts. |
 | Store submission | Local checks do not prove Play Console/App Store Connect account, review, data-safety, content-rating, or device review completion. | Complete platform submission steps with the appropriate account access and final signed artifacts. |
@@ -102,7 +103,7 @@ proof.
 - `build/store-release-artifacts.json` now exists for the app-web JavaScript
   handoff and strict verification passes for the web build directory and release
   ZIP.
-- Gmail connector access is not part of the app-support evidence path.
+- Mailbox connector access is not part of the app-support evidence path.
 - GitHub Pages app-web deployment no longer depends on Gmail/inbox proof; it
   uses the app-owned support queue and keeps external inbox proof scoped to
   store submission artifacts.
