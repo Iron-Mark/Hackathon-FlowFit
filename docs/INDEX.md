@@ -73,6 +73,14 @@ Technical implementation details and verification:
   - Current MVP launch verdict, verified local gates, Supabase/support blockers,
     and next release plan
 
+- **release/FINAL_LAUNCH_EVIDENCE_2026-07-04.md**
+  - Final merged-main MVP evidence, live web status, CI status, support inbox
+    proof, Android AAB hash, and remaining external launch steps
+
+- **release/PLAY_CONSOLE_SUBMISSION_PACK_2026-07-04.md**
+  - Current Play Console internal testing candidate, listing copy, review notes,
+    data-entry checklist, and real-device QA template
+
 - **release/PLAY_STORE_RELEASE_NOTES_AND_QA_2026-06-19.md**
   - Play Store release notes, listing copy, QA evidence, and real-device
     internal testing checklist

@@ -4,11 +4,14 @@ This snapshot records the current MVP release state after PR #13 merged to
 `main` and PR #15 refreshed the app-owned support queue, release gates, and
 app-web handoff evidence on `codex/flowfit-launch-evidence-refresh`.
 
+For the final merged-main 2026-07-04 handoff, see
+`docs/release/FINAL_LAUNCH_EVIDENCE_2026-07-04.md`.
+
 ## Current Verdict
 
 FlowFit is green on repo-controlled and runtime-controlled MVP evidence for an
-app-owned support path. The public support inbox remains an external
-store/contact warning until inbound receipt proof is recorded.
+app-owned support path. The public support inbox warning from this snapshot was
+resolved later by confirmed inbound receipt proof.
 Docker-local Supabase validation is now a GitHub Actions responsibility instead
 of a Windows workstation requirement.
 
@@ -42,7 +45,7 @@ proof.
 | Android live-auth E2E smoke | `scripts/verify_android_live_auth_smoke.ps1 -Device emulator-5554 -EnvFile .env -OutFile build/android-live-auth-smoke-latest.json` | Passed 122 checks on `sdk_gphone64_x86_64` / Android 15: login, age gate, survey onboarding, dashboard tabs, Health food add/remove, Track routes, Buddy setup, Supabase row assertions, cleanup, and no AndroidRuntime crash markers. |
 | Strict release audit | `scripts/release_readiness_audit.ps1 -Strict -EnvFile .env -OutFile build/store-release-readiness-audit.json` | Refreshed after the in-app support queue migration: 76 pass, 2 warn, 0 fail. The remaining support inbox item is a store/contact warning, not the app-support path. |
 | GitHub-variable strict snapshot | `scripts/release_status_snapshot.ps1 -Repo Iron-Mark/Hackathon-FlowFit -PullRequest 15 -OutFile build/release-status-snapshot.md` | Snapshot refreshed for PR #15; GitHub-variable strict audit reports 77 pass, 2 warn, 0 fail, PR checks are green, and PR merge state is `CLEAN`. |
-| GitHub Pages app-web deploy gate | `.github/workflows/flutter-web-pages.yml` plus `scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail` | Updated so app-web deploy can proceed with a configured real support address and verified in-app support queue while external support inbox proof remains required for store submission artifacts. |
+| GitHub Pages app-web deploy gate | `.github/workflows/flutter-web-pages.yml` plus `scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail` | Updated so app-web deploy can proceed with a configured real support address and verified in-app support queue. Store submission support-inbox proof was confirmed in the final 2026-07-04 handoff. |
 | Store metadata | `scripts/verify_store_metadata.ps1 -Strict -GitHubRepo Iron-Mark/Hackathon-FlowFit -OutFile build/store-metadata-verification.json` | Passed 48 checks, 0 warnings, 0 failures. |
 | App-web release artifact build | `scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail -RunStrictAudit -EnvFile .env -SkipFlutterPubGet` | Passed from a clean branch head; ran strict audit, analyzer, full Flutter tests, and Flutter web JavaScript release build, then generated `build/store-release-artifacts.json` with `flutter-web-build` and `flutter-web-release-zip`. The manifest records the exact commit. |
 | App-web artifact verification | `scripts/verify_store_artifacts.ps1 -Strict -RequireArtifact @('flutter-web-build','flutter-web-release-zip') -RequireWebBackend javascript -RequireStrictAudit -RequireCurrentCommit -OutFile build/store-release-artifact-verification.json` | Passed 17 checks, 0 warnings, 0 failures. Verified current clean commit, JavaScript backend, strict-audit evidence, `build/web`, and `build/release/flowfit-web-release.zip`. |
@@ -76,13 +79,13 @@ proof.
 | `build/web-app-smoke-preflight.json` | Local preflight browser workflow smoke evidence. |
 | `build/android-phone-smoke-latest.json` | Android phone emulator smoke evidence and artifact paths. |
 | `build/wear-emulator-smoke-latest.json` | Wear OS emulator smoke evidence and artifact paths. |
-| `build/support-inbox-verification.json` | Support inbox evidence; `confirmedInbound=false`. |
+| `build/support-inbox-verification.json` | This snapshot originally recorded `confirmedInbound=false`; the final 2026-07-04 handoff records confirmed inbound receipt proof. |
 
 ## Remaining Blockers
 
 | Gate | Current result | Required fix |
 | --- | --- | --- |
-| Production support inbox | `build/support-inbox-verification.json` confirms the configured mailbox has MX records but `confirmedInbound=false`; strict audit now reports this as a store/contact warning because the in-app support queue is verified. | Optional for app MVP; required before store submission if the platform/release checklist needs external inbox proof. Rerun `scripts/verify_support_inbox.ps1 -EnvFile .env -ConfirmedInbound -ReceivedFrom "<external-sender>" -ReceivedAt "<received-timestamp>" -EvidenceNote "<evidence>" -OutFile build/support-inbox-verification.json`. |
+| Production support inbox | Resolved after this snapshot. `build/support-inbox-verification.json` in the final handoff records confirmed inbound receipt proof. | Keep this evidence with store submission artifacts and rerun only when changing the configured support inbox. |
 | Supabase Auth dashboard templates | Rendered templates exist in `build/supabase-email-templates`, but dashboard copy was not verified locally. | Copy rendered templates into Supabase Auth Email Templates before store submission. |
 | Android/iOS store artifacts | App-web artifacts are verified, but final Android/iOS store-upload artifacts are not claimed in this snapshot. | Generate final signed AAB/IPA with the appropriate platform accounts/signing inputs, then run strict artifact verification for those artifacts. |
 | Store submission | Local checks do not prove Play Console/App Store Connect account, review, data-safety, content-rating, or device review completion. | Complete platform submission steps with the appropriate account access and final signed artifacts. |
@@ -120,4 +123,4 @@ proof.
 3. Generate final signed Android/iOS store artifacts with real signing/export inputs.
 4. Run `scripts/verify_store_artifacts.ps1 -Strict -RequireStrictAudit -RequireCurrentCommit` after native artifact generation.
 5. Complete Play Console/App Store Connect review tasks and device checks.
-6. Record optional public support inbox receipt proof if required for store review.
+6. Keep confirmed public support inbox receipt proof with store review evidence.
