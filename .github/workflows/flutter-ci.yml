@@ -39,6 +39,78 @@ jobs:
         shell: pwsh
         run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/verify_offline_app_actions.ps1 -SkipPubGet
 
+  supabase-local-validation:
+    name: Supabase Docker Local Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Verify Docker and npm tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker version
+          npm --version
+
+      - name: Validate backend verification SQL
+        shell: pwsh
+        run: pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -ValidateOnly
+
+      - name: Start local Supabase Docker stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          npx -y supabase@latest start \
+            --exclude analytics,edge-runtime,functions,imgproxy,studio,vector \
+            2>&1 | tee build/supabase-local-start.log
+          npx -y supabase@latest status -o json \
+            > build/supabase-local-status.json
+
+      - name: Reset local database from migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx -y supabase@latest db reset --local --no-seed \
+            2>&1 | tee build/supabase-local-db-reset.log
+
+      - name: Verify local Supabase backend
+        shell: pwsh
+        run: >
+          pwsh -NoProfile -File scripts/verify_supabase_backend.ps1
+          -Local
+          -Output json
+          -RequireAllPass
+          -OutFile build/supabase-local-backend-verification.json
+
+      - name: Capture Supabase container state
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p build
+          docker ps -a --filter "name=supabase" > build/supabase-local-containers.txt || true
+
+      - name: Stop local Supabase Docker stack
+        if: always()
+        shell: bash
+        run: npx -y supabase@latest stop --no-backup || true
+
+      - name: Upload Supabase local validation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: flowfit-supabase-local-validation
+          path: |
+            build/supabase-local-start.log
+            build/supabase-local-status.json
+            build/supabase-local-db-reset.log
+            build/supabase-local-backend-verification.json
+            build/supabase-local-containers.txt
+          if-no-files-found: warn
+
   verify:
     name: Analyze, Test, and Build
     runs-on: ubuntu-latest

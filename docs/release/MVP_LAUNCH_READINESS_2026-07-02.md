@@ -9,6 +9,8 @@ app-web handoff evidence on `codex/flowfit-launch-evidence-refresh`.
 FlowFit is green on repo-controlled and runtime-controlled MVP evidence for an
 app-owned support path. The public support inbox remains an external
 store/contact warning until inbound receipt proof is recorded.
+Docker-local Supabase validation is now a GitHub Actions responsibility instead
+of a Windows workstation requirement.
 
 The linked Supabase project is reachable and reports `ACTIVE_HEALTHY`.
 Migrations are up to date, backend verification passes, the live app smoke
@@ -35,6 +37,7 @@ proof.
 | Support request migration drift check | `npx -y supabase@latest db push --linked --dry-run` | Passed after apply; the remote database is up to date. The initial pre-apply dry run showed only `20260703010000_add_support_requests.sql` pending. |
 | Support request migration apply | `npx -y supabase@latest db push --linked` | Passed; `20260703010000_add_support_requests.sql` applied to the linked Supabase project. |
 | Backend verification | `scripts/verify_supabase_backend.ps1 -Linked -Output json` | Passed 19 read-only schema/RLS/grant checks. |
+| CI Docker local Supabase validation source | `.github/workflows/flutter-ci.yml` | Adds a `supabase-local-validation` job that starts the Supabase Docker stack, resets the local database from tracked migrations, runs `scripts/verify_supabase_backend.ps1 -Local -Output json -RequireAllPass`, uploads non-secret evidence, and stops the containers. |
 | Live app smoke | `scripts/verify_supabase_app_smoke.ps1 -EnvFile .env -AllowExternalWrites -OutFile build/supabase-app-smoke.json` | Passed 7 checks: auth sign-in, smoke row guard, profile upsert, buddy upsert, workout create/update/list/delete, heart-rate insert/list, and support request create/read/delete. |
 | Android live-auth E2E smoke | `scripts/verify_android_live_auth_smoke.ps1 -Device emulator-5554 -EnvFile .env -OutFile build/android-live-auth-smoke-latest.json` | Passed 122 checks on `sdk_gphone64_x86_64` / Android 15: login, age gate, survey onboarding, dashboard tabs, Health food add/remove, Track routes, Buddy setup, Supabase row assertions, cleanup, and no AndroidRuntime crash markers. |
 | Strict release audit | `scripts/release_readiness_audit.ps1 -Strict -EnvFile .env -OutFile build/store-release-readiness-audit.json` | Refreshed after the in-app support queue migration: 76 pass, 2 warn, 0 fail. The remaining support inbox item is a store/contact warning, not the app-support path. |
@@ -83,7 +86,6 @@ proof.
 | Supabase Auth dashboard templates | Rendered templates exist in `build/supabase-email-templates`, but dashboard copy was not verified locally. | Copy rendered templates into Supabase Auth Email Templates before store submission. |
 | Android/iOS store artifacts | App-web artifacts are verified, but final Android/iOS store-upload artifacts are not claimed in this snapshot. | Generate final signed AAB/IPA with the appropriate platform accounts/signing inputs, then run strict artifact verification for those artifacts. |
 | Store submission | Local checks do not prove Play Console/App Store Connect account, review, data-safety, content-rating, or device review completion. | Complete platform submission steps with the appropriate account access and final signed artifacts. |
-| Docker-local Supabase validation | Strict audit warns Docker CLI is unavailable on this Windows host. | Optional: install Docker only if local Supabase stack validation is required; linked backend verification already passes. |
 
 ## Release Notes
 
@@ -107,6 +109,9 @@ proof.
 - GitHub Pages app-web deployment no longer depends on Gmail/inbox proof; it
   uses the app-owned support queue and keeps external inbox proof scoped to
   store submission artifacts.
+- Docker Desktop is no longer required on the Windows release workstation for
+  local-stack Supabase proof; the CI `supabase-local-validation` job owns that
+  Docker check and uploads the evidence.
 
 ## Launch Plan
 

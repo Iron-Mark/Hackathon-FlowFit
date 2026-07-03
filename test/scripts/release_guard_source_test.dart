@@ -1746,28 +1746,76 @@ storeFile=upload-keystore.jks
     expect(verifySupabaseBackend, contains('--linked'));
     expect(verifySupabaseBackend, contains('--local'));
     expect(verifySupabaseBackend, contains('--db-url'));
+    expect(verifySupabaseBackend, contains('[switch]\$RequireAllPass'));
+    expect(verifySupabaseBackend, contains('[string]\$OutFile'));
+    expect(
+      verifySupabaseBackend,
+      contains('Resolve-JsonPayloadFromCommandOutput'),
+    );
     expect(
       verifySupabaseBackend,
       contains('SUPABASE_BACKEND_VERIFICATION_SQL_OK'),
     );
     expect(
       verifySupabaseBackend,
+      contains('SUPABASE_BACKEND_VERIFICATION_ALL_PASS'),
+    );
+    expect(
+      verifySupabaseBackend,
       contains('SUPABASE_BACKEND_VERIFICATION_RUN_OK'),
     );
     expect(scriptsReadme, contains('scripts/verify_supabase_backend.ps1'));
+    expect(scriptsReadme, contains('-RequireAllPass'));
+    expect(scriptsReadme, contains('supabase-local-backend-verification.json'));
     expect(
       supabaseRecoveryRunbook,
       contains('supabase/verification/verify_flowfit_backend.sql'),
     );
+    expect(supabaseRecoveryRunbook, contains('-RequireAllPass'));
     expect(
       releaseReadinessRunbook,
       contains('scripts/verify_supabase_backend.ps1'),
     );
+    expect(releaseReadinessRunbook, contains('-RequireAllPass'));
     expect(readinessAudit, contains('Supabase backend verification SQL'));
     expect(readinessAudit, contains('Supabase backend verification runner'));
     expect(readinessAudit, contains('verify_flowfit_backend.sql'));
     expect(readinessAudit, contains('verify_supabase_backend.ps1'));
     expect(readinessAudit, contains('Workout type-specific constraints'));
+  });
+
+  test('CI validates Supabase migrations through Docker local stack', () {
+    expect(ciWorkflow, contains('supabase-local-validation'));
+    expect(ciWorkflow, contains('Supabase Docker Local Validation'));
+    expect(ciWorkflow, contains('docker version'));
+    expect(ciWorkflow, contains('npm --version'));
+    expect(ciWorkflow, contains('npx -y supabase@latest start'));
+    expect(
+      ciWorkflow,
+      contains(
+        '--exclude analytics,edge-runtime,functions,imgproxy,studio,vector',
+      ),
+    );
+    expect(
+      ciWorkflow,
+      contains('npx -y supabase@latest db reset --local --no-seed'),
+    );
+    expect(ciWorkflow, contains('scripts/verify_supabase_backend.ps1'));
+    expect(ciWorkflow, contains('-Local'));
+    expect(ciWorkflow, contains('-Output json'));
+    expect(ciWorkflow, contains('-RequireAllPass'));
+    expect(
+      ciWorkflow,
+      contains('build/supabase-local-backend-verification.json'),
+    );
+    expect(ciWorkflow, contains('npx -y supabase@latest stop --no-backup'));
+    expect(ciWorkflow, contains('flowfit-supabase-local-validation'));
+    expect(scriptsReadme, contains('GitHub Actions runs the same check'));
+    expect(releaseReadinessRunbook, contains('supabase-local-validation'));
+    expect(
+      releaseReadinessRunbook,
+      contains('Docker-backed Supabase validation'),
+    );
   });
 
   test('Supabase backend verification runner validates read-only SQL', () {
