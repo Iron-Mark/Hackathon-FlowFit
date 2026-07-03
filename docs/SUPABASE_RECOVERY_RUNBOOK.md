@@ -196,7 +196,10 @@ it through the current Supabase CLI. Use `-Local` for a local Supabase stack,
 or `-DbUrl '<percent-encoded-postgres-url>'` when you intentionally want to
 target a database URL from a secure local shell. The SQL returns one row per
 backend check with `status = pass` or `status = fail`; every row should pass
-before moving to release MCP `read_only=true`.
+before moving to release MCP `read_only=true`. In CI or other automated gates,
+run the local stack with `-Output json -RequireAllPass -OutFile
+build/supabase-local-backend-verification.json` so non-pass rows fail the job
+and the raw query result is archived as non-secret evidence.
 
 For the current FlowFit project, this Windows environment can reach the
 Supabase pooler even when the direct linked DB hostname is unreliable. Keep the

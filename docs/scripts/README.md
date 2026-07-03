@@ -538,6 +538,15 @@ pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Local
 ```
 
+**Run against a local Supabase stack and write JSON evidence**:
+```powershell
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 `
+  -Local `
+  -Output json `
+  -RequireAllPass `
+  -OutFile build/supabase-local-backend-verification.json
+```
+
 **Run against an explicit database URL from a secure shell**:
 ```powershell
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 `
@@ -548,7 +557,17 @@ The script validates that
 `supabase/verification/verify_flowfit_backend.sql` remains read-only, then uses
 the current Supabase CLI `db query --file` surface with `--linked`, `--local`,
 or `--db-url`. The SQL returns one row per backend check; every row should have
-`status = pass` before switching MCP to release `read_only=true`.
+`status = pass` before switching MCP to release `read_only=true`. Use
+`-RequireAllPass` with `-Output json` when a local or CI gate should fail on
+any non-pass row. `-OutFile` writes the raw Supabase CLI query output inside the
+repository, normally under `build/`, for non-secret release evidence.
+
+GitHub Actions runs the same check in the `supabase-local-validation` job. That
+job starts the Supabase Docker stack, resets the local database from tracked
+migrations with `supabase db reset --local --no-seed`, runs this verifier with
+`-Local -Output json -RequireAllPass`, uploads the JSON/log evidence as
+`flowfit-supabase-local-validation`, and stops the local containers after the
+run.
 
 ---
 

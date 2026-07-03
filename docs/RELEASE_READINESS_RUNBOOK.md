@@ -743,6 +743,12 @@ pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -EnvFile .env.
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -ValidateOnly
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
 
+# CI-style local Docker backend verification:
+npx -y supabase@latest start --exclude analytics,edge-runtime,functions,imgproxy,studio,vector
+npx -y supabase@latest db reset --local --no-seed
+pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Local -Output json -RequireAllPass -OutFile build/supabase-local-backend-verification.json
+npx -y supabase@latest stop --no-backup
+
 # Native Android live-auth E2E evidence for strict audit:
 pwsh -NoProfile -File scripts/verify_android_live_auth_smoke.ps1 -Device emulator-5554 -EnvFile .env.release -OutFile build/android-live-auth-smoke-latest.json
 
@@ -846,10 +852,20 @@ supplied with separate fresh evidence for the same commit.
 
 `.github/workflows/flutter-ci.yml` runs the same core gates on pull requests,
 pushes to `main`, `develop`, and `supabase/**`, plus manual dispatch. The
-workflow installs the required Android SDK packages, runs the advisory
-release-readiness audit, builds the JS web artifact with `--no-wasm-dry-run`,
-builds Android phone/Wear debug APKs, and produces a debug-signed release App
-Bundle smoke artifact named `flowfit-release-smoke-not-for-store`. The CI
+workflow also has a separate `supabase-local-validation` job for
+Docker-backed Supabase validation. That job starts the local Supabase stack,
+resets the database from tracked migrations with
+`supabase db reset --local --no-seed`, runs
+`scripts/verify_supabase_backend.ps1 -Local -Output json -RequireAllPass`, and
+uploads `flowfit-supabase-local-validation` evidence before stopping the
+containers. Keep Docker-specific validation in that CI job instead of requiring
+Docker Desktop on the Windows release workstation.
+
+The main verify job installs the required Android SDK packages, runs the
+advisory release-readiness audit, builds the JS web artifact with
+`--no-wasm-dry-run`, builds Android phone/Wear debug APKs, and produces a
+debug-signed release App Bundle smoke artifact named
+`flowfit-release-smoke-not-for-store`. The CI
 release smoke uses
 `com.msiazondev.flowfit` package/auth values plus matching Dart defines and
 validation-shaped dummy Supabase client Dart defines, mirroring the local
