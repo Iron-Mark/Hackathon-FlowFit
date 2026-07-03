@@ -109,7 +109,7 @@ void main() {
     'Units': 'Measurement System',
     'Delete Account': 'Submitting this request will:',
     'Terms of Service': 'Acceptance of Terms',
-    'Help & Support': 'Email Support',
+    'Help & Support': 'Message Support',
     'About Us': 'Meet the team behind FlowFit',
   };
 
@@ -155,7 +155,7 @@ void main() {
     ),
     '/unit-settings': _RouteEntryExpectation('Measurement System'),
     '/terms-of-service': _RouteEntryExpectation('Acceptance of Terms'),
-    '/help-support': _RouteEntryExpectation('Email Support'),
+    '/help-support': _RouteEntryExpectation('Message Support'),
     '/change-password': _RouteEntryExpectation('Change Password'),
     '/delete-account': _RouteEntryExpectation('Submitting this request will:'),
     '/weight-goals': _RouteEntryExpectation('Weight Goals'),

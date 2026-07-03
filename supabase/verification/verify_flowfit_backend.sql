@@ -9,6 +9,7 @@ expected_tables(table_name) as (
     ('buddy_profiles'),
     ('workout_sessions'),
     ('heart_rate'),
+    ('support_requests'),
     ('account_deletion_requests'),
     ('flowfit_recovery_quarantine')
 ),
@@ -18,6 +19,7 @@ expected_id_constraints(table_name, column_name) as (
     ('buddy_profiles', 'id'),
     ('workout_sessions', 'id'),
     ('heart_rate', 'id'),
+    ('support_requests', 'id'),
     ('account_deletion_requests', 'id'),
     ('flowfit_recovery_quarantine', 'id')
 ),
@@ -84,6 +86,16 @@ expected_columns(table_name, column_name) as (
     ('heart_rate', 'raw_data'),
     ('heart_rate', 'created_at'),
     ('heart_rate', 'updated_at'),
+    ('support_requests', 'id'),
+    ('support_requests', 'user_id'),
+    ('support_requests', 'user_email'),
+    ('support_requests', 'category'),
+    ('support_requests', 'subject'),
+    ('support_requests', 'message'),
+    ('support_requests', 'status'),
+    ('support_requests', 'app_surface'),
+    ('support_requests', 'created_at'),
+    ('support_requests', 'updated_at'),
     ('account_deletion_requests', 'id'),
     ('account_deletion_requests', 'user_id'),
     ('account_deletion_requests', 'user_email'),
@@ -106,11 +118,21 @@ app_tables(table_name) as (
     ('workout_sessions'),
     ('heart_rate')
 ),
+support_tables(table_name) as (
+  values
+    ('support_requests')
+),
 expected_policies(table_name, command_name) as (
   select table_name, command_name
   from app_tables
   cross join (
     values ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE')
+  ) as commands(command_name)
+  union all
+  select table_name, command_name
+  from support_tables
+  cross join (
+    values ('SELECT'), ('INSERT'), ('DELETE')
   ) as commands(command_name)
   union all
   values
@@ -127,7 +149,16 @@ expected_table_grants(role_name, table_name, privilege_type) as (
     values ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE')
   ) as privileges(privilege_type)
   union all
+  select 'authenticated', table_name, privilege_type
+  from support_tables
+  cross join (
+    values ('SELECT'), ('INSERT'), ('DELETE')
+  ) as privileges(privilege_type)
+  union all
   values
+    ('service_role', 'support_requests', 'SELECT'),
+    ('service_role', 'support_requests', 'UPDATE'),
+    ('service_role', 'support_requests', 'DELETE'),
     ('authenticated', 'account_deletion_requests', 'SELECT'),
     ('service_role', 'account_deletion_requests', 'SELECT'),
     ('service_role', 'account_deletion_requests', 'UPDATE'),
@@ -147,6 +178,7 @@ expected_triggers(table_name, trigger_name) as (
     ('buddy_profiles', 'update_buddy_profiles_updated_at'),
     ('workout_sessions', 'update_workout_sessions_updated_at'),
     ('heart_rate', 'update_heart_rate_updated_at'),
+    ('support_requests', 'update_support_requests_updated_at'),
     ('account_deletion_requests', 'update_account_deletion_requests_updated_at')
 ),
 expected_indexes(index_name) as (
@@ -156,6 +188,7 @@ expected_indexes(index_name) as (
     ('idx_workout_sessions_user_id'),
     ('idx_workout_sessions_user_start_time_desc'),
     ('idx_heart_rate_user_id'),
+    ('idx_support_requests_user_id'),
     ('idx_account_deletion_requests_one_pending')
 ),
 expected_constraints(table_name, constraint_name) as (
@@ -163,6 +196,10 @@ expected_constraints(table_name, constraint_name) as (
     (
       'workout_sessions',
       'workout_sessions_type_specific_fields_valid'
+    ),
+    (
+      'support_requests',
+      'support_requests_message_valid'
     )
 ),
 missing_tables as (

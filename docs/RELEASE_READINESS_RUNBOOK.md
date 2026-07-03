@@ -291,15 +291,18 @@ App Store bundle in `build/ios/ipa/` when signing is configured.
 Build:
 
 ```powershell
-$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Verified support email'
-$env:FLOWFIT_SUPPORT_EMAIL_VERIFIED = 'true'
+$env:FLOWFIT_SUPPORT_EMAIL = Read-Host 'Configured support email'
 $env:FLOWFIT_PUBLIC_WEB_BASE_URL = 'https://iron-mark.github.io/Hackathon-FlowFit'
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail
 ```
 
 Set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the final deployed URL before building,
 and set `FLOWFIT_SUPPORT_EMAIL` to the deliverable support/privacy inbox. Root
 domain hosts can use an origin such as `https://flowfit.example.com`.
+The app-web MVP support path uses authenticated in-app support requests, so the
+web artifact can pass `-AllowUnverifiedWebSupportEmail`; keep
+`-SupportEmailVerified` for store artifacts or reviewer flows that require
+external inbox proof.
 Project-site hosts can include the path, for example
 `https://iron-mark.github.io/Hackathon-FlowFit`. The wrapper derives Flutter's
 `--base-href` from that path, so GitHub Pages project sites load assets from
@@ -321,7 +324,7 @@ records both the directory and the zip in `build/store-release-artifacts.json`.
 Optional Wasm release artifact:
 
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -AllowUnverifiedWebSupportEmail
 ```
 
 Optional local Wasm compile-smoke without production artifact packaging:
@@ -397,20 +400,29 @@ in release variable or store-build commands. DNS MX status is recorded in the
 JSON summary when local DNS tooling is available, but it is not a substitute for
 the received external test email.
 
-`scripts/release_readiness_audit.ps1` requires
-`build/support-inbox-verification.json` in strict mode before accepting
-`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. If that file
-is missing or records DNS failure, including Null MX, advisory audit reports the
-support inbox as a warning so local preflight can continue, while strict audit
-keeps the gate failing.
+`scripts/release_readiness_audit.ps1` also checks the authenticated in-app
+support request path: `Help & Support` must submit to `public.support_requests`,
+the migration must enable RLS, and the live app smoke must prove
+support-request create/read/delete through authenticated RLS. When that app
+support path is present, missing or weak support-inbox receipt metadata remains
+a store/contact warning instead of an app-support blocker. DNS failure,
+including Null MX, is still strict because the configured public contact address
+would not be deliverable.
+
+Keep using `build/support-inbox-verification.json` before setting
+`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. That flag is
+for the external public inbox, not for the in-app support queue.
 
 ### GitHub Pages Deployment
 
 `.github/workflows/flutter-web-pages.yml` provides a concrete Flutter web
 deployment path for this fork. It builds with `scripts/store_release_build.ps1
--Target Web -SkipFlutterPubGet`, uploads `build/web` to GitHub Pages, deploys
-it, then runs `scripts/verify_web_deployment.ps1` against the deployed Pages
-URL and uploads `flowfit-github-pages-verification` evidence.
+-Target Web -SkipFlutterPubGet -AllowUnverifiedWebSupportEmail`, uploads
+`build/web` to GitHub Pages, deploys it, then runs
+`scripts/verify_web_deployment.ps1` against the deployed Pages URL and uploads
+`flowfit-github-pages-verification` evidence. This web-only exception is for the
+app-owned support MVP path; Android/iOS store artifact builds still require
+`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`.
 
 Configure these repository variables before running it:
 
@@ -741,7 +753,7 @@ pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeReleaseSmoke
 pwsh -NoProfile -File scripts/release_preflight.ps1 -IncludeWasmSmoke
 
 # Optional Flutter web Wasm production artifact wrapper:
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -AllowUnverifiedWebSupportEmail
 
 # Production artifact wrapper after external config is complete.
 # Run -Target All on macOS for Android, iOS, and web. On Windows, run
@@ -800,9 +812,11 @@ and other non-production package/auth IDs.
 The preflight now runs `scripts/release_readiness_audit.ps1` in advisory mode
 without creating a temporary `lib/secrets.dart`; tracked build-time defaults
 keep compile checks independent from ignored local files. For store handoff,
-run the audit separately with `-Strict`; it should fail until the maintainer has
-provided the real Supabase project ref/credentials, Android signing inputs,
-production Android/iOS IDs, deployed web base URL, and verified support inbox.
+run the audit separately with `-Strict`; it should pass before app-web MVP
+launch once the real Supabase project ref/credentials, Android signing inputs,
+production Android/iOS IDs, and deployed web base URL are configured. External
+support inbox proof remains a store-contact artifact requirement when the
+platform or reviewer flow needs it.
 If local `build/support-inbox-verification.json` records a failed DNS or inbound
 mail check, preflight reports it as advisory evidence and still runs build
 checks; strict audit remains the release blocker.
@@ -884,8 +898,9 @@ upload signing, deployed web URL, and support inbox verification.
 
 `.github/workflows/flutter-web-pages.yml` is separate from CI because it is a
 deployment workflow. It requires GitHub Pages write permissions plus production
-Supabase repository variables, and it verifies the deployed public web URL after
-publish.
+Supabase repository variables and a configured support email, and it verifies
+the deployed public web URL after publish. External support inbox proof remains
+required for store submission artifacts, not for the app-web deploy path.
 
 Machine-level checks:
 

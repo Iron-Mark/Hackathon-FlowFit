@@ -360,14 +360,18 @@ Write a JSON evidence artifact for release handoff:
 pwsh -NoProfile -File scripts/release_readiness_audit.ps1 -Strict -SupportEmailVerified -OutFile build/store-release-readiness-audit.json
 ```
 
-The strict audit requires confirmed support inbox evidence at
-`build/support-inbox-verification.json` before accepting
-`-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. In advisory
-mode, DNS failures such as Null MX are warnings so local preflight can continue
-through code and build checks. In strict mode, missing evidence or failed DNS /
-inbound evidence keeps the support inbox gate failing. Use
-`-SupportInboxEvidencePath ''` only for isolated script tests that intentionally
-ignore local evidence.
+The strict audit also verifies the in-app support request path: the Flutter Help
+& Support screen must submit through `SupabaseTables.supportRequests`, the
+support request migration must enable authenticated RLS, and app smoke evidence
+should include support request create/read/delete. With that app path present,
+missing or weak `build/support-inbox-verification.json` receipt metadata is a
+store/contact warning, not an app-support blocker. DNS failures such as Null MX
+still fail strict mode because the configured public support address is not
+deliverable. Use `-SupportInboxEvidencePath ''` only for isolated script tests
+that intentionally ignore local evidence.
+
+Use `-SupportEmailVerified` or `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true` only after
+the configured external support inbox is confirmed separately.
 
 Strict mode also validates the native Android live-auth E2E smoke evidence at
 `build/android-live-auth-smoke-latest.json`. That smoke must pass the real
@@ -583,7 +587,7 @@ prompted.
 ### 12. configure_github_release_variables.ps1
 **Purpose**: Validate and set GitHub repository variables used by strict audit
 and the GitHub Pages deployment workflow after the maintainer has real Supabase
-client values and a verified support inbox.
+client values and a configured support inbox.
 
 **Dry run from the current environment**:
 ```powershell
@@ -616,7 +620,9 @@ secret/service-role Supabase keys, the retired project ref, and Supabase
 project hosts that do not resolve in DNS, then calls `gh variable set`. It
 redacts the publishable key in all output. If
 `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, the `-SupportEmailVerified` switch is
-required so the production web deploy cannot be enabled by accident.
+required so external inbox proof cannot be claimed by accident. Leaving the
+value false is valid for the app-web MVP deploy because Help & Support uses the
+authenticated in-app support request queue.
 
 ---
 
@@ -763,12 +769,12 @@ pwsh -NoProfile -File scripts/store_release_build.ps1 -Target iOS -SupportEmailV
 
 **Build only Flutter web**:
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -AllowUnverifiedWebSupportEmail
 ```
 
 **Build only Flutter web with WebAssembly output**:
 ```powershell
-pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified
+pwsh -NoProfile -File scripts/store_release_build.ps1 -Target Web -WebWasm -AllowUnverifiedWebSupportEmail
 ```
 
 **Run the strict audit before building**:
@@ -835,7 +841,9 @@ wrapper. Production URLs must use a real HTTPS origin, not `.example`,
 Pass `-SupportEmailVerified` only after the configured support inbox is owned by
 the maintainer and usable for privacy/account deletion contact. The production
 wrapper rejects `support@flowfit.com`; it is the reserved source replacement
-token.
+token. For the app-web MVP target only, pass `-AllowUnverifiedWebSupportEmail`
+to build against the authenticated in-app support request queue while keeping
+Android/iOS store artifacts strict.
 When `-RunStrictAudit` is used, the wrapper also writes
 `build/store-release-readiness-audit.json` and includes it in the artifact
 manifest after the strict audit passes.
@@ -917,20 +925,24 @@ For local smoke testing only, run a local static server for `build/web` and add
 ### GitHub Pages deployment workflow
 
 `.github/workflows/flutter-web-pages.yml` builds the production Flutter web
-artifact with `scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet`
-after the deploy-ready gate confirms the explicit public web URL, Supabase
-client variables, and `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`. The gate validates
-the Supabase URL shape, rejects the retired FlowFit project ref and placeholders,
-and allows only publishable client keys. It uploads `build/web` to GitHub Pages,
-deploys it, and verifies the deployed site with `scripts/verify_web_deployment.ps1`.
-It uploads the JSON verification evidence as `flowfit-github-pages-verification`.
+artifact with
+`scripts/store_release_build.ps1 -Target Web -SkipFlutterPubGet -AllowUnverifiedWebSupportEmail`
+after the deploy-ready gate confirms the explicit public web URL, configured
+support email, and Supabase client variables. The gate validates the Supabase URL
+shape, rejects the retired FlowFit project ref and placeholders, and allows only
+publishable client keys. It uploads `build/web` to GitHub Pages, deploys it, and
+verifies the deployed site with `scripts/verify_web_deployment.ps1`. It uploads
+the JSON verification evidence as `flowfit-github-pages-verification`.
 
 The workflow has a `deploy-ready` job. Pushes to `main` skip the production
 Pages deployment with a notice only while the public web URL, Supabase
-variables, or verified support inbox status are not configured. Once those
-release variables are present, configured-but-invalid or nonresolving Supabase
-project hosts fail the workflow. Manual dispatch uses the same gate. The
-workflow does not provide a fallback public URL; set
+variables, or configured support email are not configured. It does not require
+`FLOWFIT_SUPPORT_EMAIL_VERIFIED=true` for the app-web deploy because Help &
+Support uses the authenticated in-app support request queue; keep that flag for
+store submission artifacts after external inbox proof. Once those release
+variables are present, configured-but-invalid or nonresolving Supabase project
+hosts fail the workflow. Manual dispatch uses the same gate. The workflow does
+not provide a fallback public URL; set
 `FLOWFIT_PUBLIC_WEB_BASE_URL` before enabling deployment.
 
 Configure repository variables before dispatching it:
@@ -941,10 +953,11 @@ Configure repository variables before dispatching it:
   web host path cannot be derived from `FLOWFIT_PUBLIC_WEB_BASE_URL`.
 - `SUPABASE_URL`.
 - `SUPABASE_PUBLISHABLE_KEY`.
-- `FLOWFIT_SUPPORT_EMAIL`, set to the verified deliverable support/privacy
-  inbox.
+- `FLOWFIT_SUPPORT_EMAIL`, set to the configured support/privacy inbox. It must
+  not be the reserved `support@flowfit.com` source token.
 - `FLOWFIT_SUPPORT_EMAIL_VERIFIED=true`, set only after that configured inbox
-  is receiving mail from outside the maintainer account.
+  is receiving mail from outside the maintainer account. This is required for
+  store submission artifacts, not for the app-web deploy path.
 
 If the repository has no Pages site yet, enable Settings > Pages > GitHub
 Actions as the source before expecting the workflow to publish.

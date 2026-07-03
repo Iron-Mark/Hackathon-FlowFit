@@ -1,10 +1,11 @@
 # FlowFit Store Metadata Draft
 
-Last updated: 2026-06-15
+Last updated: 2026-07-03
 
 This is a release handoff pack for Google Play, App Store, and Flutter web
 release work. Final store upload still depends on the production Supabase
-project, package/bundle ownership, and a verified support inbox.
+project, package/bundle ownership, and external support inbox proof. The app-web
+MVP support surface is the authenticated in-app support request queue.
 
 ## Release Identity
 
@@ -16,7 +17,7 @@ project, package/bundle ownership, and a verified support inbox.
 | iOS bundle ID | `com.msiazondev.flowfit` | Apple Developer confirmation required |
 | Production auth scheme | `com.msiazondev.flowfit` | Add to Supabase redirect URLs |
 | Dev auth scheme | `com.msiazondev.flowfit.dev` | Add to Supabase redirect URLs |
-| Support email | `marksiazon.dev@gmail.com` | Verified maintainer support inbox; keep `FLOWFIT_SUPPORT_EMAIL` aligned for release builds |
+| Support email | `marksiazon.dev@gmail.com` | Configured maintainer support/privacy inbox; keep `FLOWFIT_SUPPORT_EMAIL` aligned for release builds and capture inbound proof before store submission artifacts |
 | Privacy policy URL | `https://iron-mark.github.io/Hackathon-FlowFit/privacy.html` | GitHub Pages release origin |
 | Account deletion URL | `https://iron-mark.github.io/Hackathon-FlowFit/account-deletion.html` | GitHub Pages release origin |
 
@@ -93,13 +94,16 @@ credentials, debug labels, staging project refs, or private user data.
       passes locally.
 - [ ] If using Flutter WebAssembly, `pwsh -NoProfile -File scripts\release_preflight.ps1 -IncludeWasmSmoke`
       passes locally.
-- [ ] If deploying Flutter WebAssembly, `pwsh -NoProfile -File scripts\store_release_build.ps1 -Target Web -WebWasm -SupportEmailVerified`
+- [ ] If deploying Flutter WebAssembly for app-web, `pwsh -NoProfile -File scripts\store_release_build.ps1 -Target Web -WebWasm -AllowUnverifiedWebSupportEmail`
       records `releaseInputs.webBuildBackend = wasm` in the artifact manifest.
 - [ ] On macOS, `pwsh -NoProfile -File scripts\store_release_build.ps1 -Target All -RunStrictAudit -SupportEmailVerified`
       produces `build/store-release-artifacts.json` with Android, iOS, and web
       artifacts.
 - [ ] Web handoff includes `build/release/flowfit-web-release.zip` plus the
       `flutter-web-release-zip` manifest entry.
+- [ ] If a store or reviewer requires external inbox proof for the web artifact,
+      rerun the matching web build with `-SupportEmailVerified` after confirming
+      inbound delivery.
 - [ ] `build/store-release-readiness-audit.json` is archived with the store
       handoff evidence after strict audit passes.
 - [ ] `build/store-metadata-verification.json` is archived after

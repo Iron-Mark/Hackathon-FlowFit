@@ -17,6 +17,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
 $results = New-Object System.Collections.Generic.List[object]
 $supportEmailVerifiedForAudit = $false
+$inAppSupportRequestSurfaceReady = $false
 $effectiveMcpMode = if ($McpMode -eq 'Auto') {
     if ($Strict) { 'Release' } else { 'Recovery' }
 } else {
@@ -732,7 +733,8 @@ function Get-SupportInboxEvidence {
 function Add-SupportInboxEvidenceIssue {
     param([Parameter(Mandatory = $true)][string]$Detail)
 
-    Add-Warn 'Production support inbox' $Detail
+    $isDeliverabilityFailure = $Detail -match 'DNS evidence failed|Null MX|does not accept email'
+    Add-Warn 'Production support inbox' $Detail -StrictFailure:($isDeliverabilityFailure -or -not $script:inAppSupportRequestSurfaceReady)
 }
 
 function Get-AndroidLiveAuthEvidence {
@@ -937,6 +939,25 @@ function Test-SupabaseMigration {
         Add-Fail 'Workout type-specific constraints' 'Migration must quarantine and constrain workout fields parsed by RunningSession, WalkingSession, and ResistanceSession.'
     }
 
+    $supportMigrationPath = 'supabase/migrations/20260703010000_add_support_requests.sql'
+    $supportMigration = Read-RepoText $supportMigrationPath
+    if (
+        $null -ne $supportMigration -and
+        $supportMigration.Contains('create table if not exists public.support_requests') -and
+        $supportMigration.Contains('alter table public.support_requests enable row level security;') -and
+        $supportMigration.Contains('Users can insert own support requests') -and
+        $supportMigration.Contains('not public.has_pending_account_deletion(user_id)') -and
+        $supportMigration.Contains('grant select, insert, delete') -and
+        $supportMigration.Contains('on public.support_requests') -and
+        $supportMigration.Contains('to authenticated;') -and
+        $supportMigration -notmatch '(?i)security\s+definer'
+    ) {
+        Add-Pass 'In-app support request backend' 'Support request migration creates authenticated RLS-backed in-app support queue.'
+    } else {
+        Add-Fail 'In-app support request backend' "Missing or unsafe $supportMigrationPath."
+    }
+    $migrationSurface = "$content`n$supportMigration"
+
     $verificationSqlPath = 'supabase/verification/verify_flowfit_backend.sql'
     $verificationSql = Read-RepoText $verificationSqlPath
     if (
@@ -947,6 +968,8 @@ function Test-SupabaseMigration {
         $verificationSql.Contains('role_table_grants') -and
         $verificationSql.Contains('relrowsecurity') -and
         $verificationSql.Contains('workout_sessions_type_specific_fields_valid') -and
+        $verificationSql.Contains('support_requests') -and
+        $verificationSql.Contains('idx_support_requests_user_id') -and
         $verificationSql -notmatch '(?im)^\s*(create|alter|drop|delete|insert|update|truncate|grant|revoke|comment|begin|commit)\b'
     ) {
         Add-Pass 'Supabase backend verification SQL' 'Read-only backend verification SQL is present for post-migration checks.'
@@ -976,10 +999,11 @@ function Test-SupabaseMigration {
         'buddy_profiles',
         'workout_sessions',
         'heart_rate',
+        'support_requests',
         'account_deletion_requests'
     )) {
         $rlsNeedle = "alter table public.$table enable row level security;"
-        if ($content.Contains($rlsNeedle)) {
+        if ($migrationSurface.Contains($rlsNeedle)) {
             Add-Pass "RLS: $table" "RLS is enabled for public.$table."
         } else {
             Add-Fail "RLS: $table" "Missing RLS enable statement for public.$table."
@@ -990,9 +1014,10 @@ function Test-SupabaseMigration {
         'public.user_profiles',
         'public.buddy_profiles',
         'public.workout_sessions',
-        'public.heart_rate'
+        'public.heart_rate',
+        'public.support_requests'
     )) {
-        if ($content.Contains($table)) {
+        if ($migrationSurface.Contains($table)) {
             Add-Pass "Data API grant target: $table" "Migration references $table in authenticated grants/policies."
         } else {
             Add-Fail "Data API grant target: $table" "Migration does not reference $table."
@@ -1003,6 +1028,16 @@ function Test-SupabaseMigration {
         Add-Pass 'Data API authenticated grants' 'Migration grants authenticated access to app tables; RLS still controls row access.'
     } else {
         Add-Fail 'Data API authenticated grants' 'Migration is missing the explicit authenticated grant block for app tables.'
+    }
+
+    if (
+        $null -ne $supportMigration -and
+        $supportMigration -match '(?s)grant select,\s*insert,\s*delete\s+on public\.support_requests\s+to authenticated;' -and
+        $supportMigration -match '(?s)grant select,\s*update,\s*delete\s+on public\.support_requests\s+to service_role;'
+    ) {
+        Add-Pass 'Support request queue grants' 'Authenticated users can create/read/delete own support requests; service_role can process them.'
+    } else {
+        Add-Fail 'Support request queue grants' 'Support request queue grants must be scoped for authenticated users and service_role processors.'
     }
 
     if ($content -match '(?s)grant usage on schema extensions\s+to authenticated,\s+service_role;') {
@@ -1498,6 +1533,24 @@ function Test-WebAndStoreConfig {
         Add-Fail 'Privacy deletion disclosure' 'Privacy page must link to account deletion and mention associated app data.'
     }
 
+    $helpSupport = Read-RepoText 'lib/screens/profile/settings/general/help_support_screen.dart'
+    $supportService = Read-RepoText 'lib/services/support_request_service.dart'
+    if (
+        $null -ne $helpSupport -and
+        $null -ne $supportService -and
+        $helpSupport.Contains('SupportRequestService') -and
+        $helpSupport.Contains('SupportRequestDraft') -and
+        $helpSupport.Contains('Send support request') -and
+        $supportService.Contains('SupabaseTables.supportRequests') -and
+        $supportService.Contains('auth.currentUser')
+    ) {
+        $script:inAppSupportRequestSurfaceReady = $true
+        Add-Pass 'In-app support request surface' 'Help & Support submits authenticated support requests through Supabase instead of relying only on mailto.'
+    } else {
+        $script:inAppSupportRequestSurfaceReady = $false
+        Add-Fail 'In-app support request surface' 'Help & Support must submit authenticated in-app support requests through Supabase.'
+    }
+
     $webBaseUrl = [Environment]::GetEnvironmentVariable('FLOWFIT_PUBLIC_WEB_BASE_URL')
     $webBaseUrlResult = Test-PublicWebBaseUrl $webBaseUrl
     if (-not $webBaseUrlResult.Valid) {
@@ -1594,15 +1647,15 @@ function Test-WebAndStoreConfig {
     }
 
     if ($filesWithExpectedSupport.Count -gt 0 -and -not $supportEmailVerifiedForAudit) {
-        Add-Warn 'Production support inbox' "Configured support inbox $expectedSupportEmail appears in $($filesWithExpectedSupport.Count) public/in-app files; verify it before store submission with scripts/verify_support_inbox.ps1."
+        Add-Warn 'Production support inbox' "Configured support inbox $expectedSupportEmail appears in $($filesWithExpectedSupport.Count) public/in-app files; verify it before store submission with scripts/verify_support_inbox.ps1." -StrictFailure:(-not $script:inAppSupportRequestSurfaceReady)
     } elseif ($filesWithExpectedSupport.Count -gt 0) {
         Add-Pass 'Production support inbox' "Configured support inbox $expectedSupportEmail is present and marked verified for this audit run."
     } elseif ($expectedSupportEmail -ne $defaultSupportEmail -and $filesWithDefaultSupport.Count -gt 0 -and -not $supportEmailVerifiedForAudit) {
-        Add-Warn 'Production support inbox' "Source templates still use $defaultSupportEmail; store_release_build.ps1 will replace it with configured support inbox $expectedSupportEmail, which still needs verification with scripts/verify_support_inbox.ps1."
+        Add-Warn 'Production support inbox' "Source templates still use $defaultSupportEmail; store_release_build.ps1 will replace it with configured support inbox $expectedSupportEmail, which still needs verification with scripts/verify_support_inbox.ps1." -StrictFailure:(-not $script:inAppSupportRequestSurfaceReady)
     } elseif ($expectedSupportEmail -ne $defaultSupportEmail -and $filesWithDefaultSupport.Count -gt 0) {
         Add-Pass 'Production support inbox' "Configured support inbox $expectedSupportEmail is marked verified; source templates use $defaultSupportEmail as the wrapper replacement token."
     } elseif ($filesWithDefaultSupport.Count -gt 0 -and -not $supportEmailVerifiedForAudit) {
-        Add-Warn 'Production support inbox' "Default support@flowfit.com appears in $($filesWithDefaultSupport.Count) public/in-app files; verify or replace it before store submission with scripts/verify_support_inbox.ps1."
+        Add-Warn 'Production support inbox' "Default support@flowfit.com appears in $($filesWithDefaultSupport.Count) public/in-app files; verify or replace it before store submission with scripts/verify_support_inbox.ps1." -StrictFailure:(-not $script:inAppSupportRequestSurfaceReady)
     } elseif ($filesWithDefaultSupport.Count -gt 0) {
         Add-Pass 'Production support inbox' 'Default support@flowfit.com is present and marked verified for this audit run.'
     } else {
