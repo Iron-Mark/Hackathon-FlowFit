@@ -7,7 +7,7 @@ MVP candidate.
 
 | Field | Value |
 | --- | --- |
-| Source commit | `36e7b63376a681ac9d8d6961bc5b1aa939ec17d5` |
+| Source commit | `ac16770e0a5585c341bbe1ecef2736b5c91abf86` |
 | AAB path | `build/app/outputs/bundle/release/app-release.aab` |
 | AAB size | 115,238,163 bytes |
 | AAB SHA-256 | `dfee10776f5eab4de1d323ff2f7a30bf334fe619ebf309f44a1da785ee7c01ec` |

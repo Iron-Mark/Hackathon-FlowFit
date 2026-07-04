@@ -137,7 +137,14 @@ function Assert-AllBackendChecksPassed {
         throw 'Supabase backend verification output was not valid JSON; use -Output json with -RequireAllPass.'
     }
 
-    $rows = if ($parsed -is [System.Array]) { @($parsed) } else { @($parsed) }
+    if ($parsed -is [System.Array]) {
+        $rows = @($parsed)
+    } elseif ($parsed.PSObject.Properties.Name -contains 'rows') {
+        $rows = @($parsed.rows)
+    } else {
+        $rows = @($parsed)
+    }
+
     $statusRows = @(
         $rows | Where-Object {
             $_.PSObject.Properties.Name -contains 'status'

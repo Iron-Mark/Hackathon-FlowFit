@@ -10,7 +10,7 @@ FlowFit is ready for the repo-controlled MVP launch path.
 The web MVP is live, the merged `main` CI is green, the app-owned support
 request path is implemented through Supabase, the external support inbox receipt
 is confirmed, and the Android Play Store AAB has strict artifact evidence from
-a clean `main` checkout.
+the `main` commit with `-AllowDirtyManifest` for the pending release-doc edits.
 
 Do not treat this as proof of Play Console review, App Store Connect review, or
 iOS IPA readiness. Those require external account access and macOS/Xcode
@@ -21,7 +21,7 @@ signing.
 | Field | Value |
 | --- | --- |
 | Repository | `Iron-Mark/Hackathon-FlowFit` |
-| Main commit | `d8f1ccfc46c4413a202805741c73f9a646bec5d5` |
+| Main commit | `ac16770e0a5585c341bbe1ecef2736b5c91abf86` |
 | Merged PR | `#16` - `ci(supabase): validate local stack in CI` |
 | Android package ID | `com.msiazondev.flowfit` |
 | iOS bundle ID | `com.msiazondev.flowfit` |
@@ -35,13 +35,13 @@ signing.
 | Area | Evidence | Result |
 | --- | --- | --- |
 | Live web app | `Invoke-WebRequest https://iron-mark.github.io/Hackathon-FlowFit/` | HTTP `200`, title `FlowFit` |
-| Main CI | `gh run list --repo Iron-Mark/Hackathon-FlowFit --limit 1` | `completed` success on `28689342688` (`d8f1ccfc46c4413a202805741c73f9a646bec5d5`) |
+| Main CI | `gh run list --repo Iron-Mark/Hackathon-FlowFit --limit 1` | `completed` success on `28689919595` (`ac16770e0a5585c341bbe1ecef2736b5c91abf86`) |
 | Supabase Docker local validation in CI | Main CI job `Supabase Docker Local Validation` | Passed; reset local database from tracked migrations and ran backend verification |
 | Windows offline app action smoke | Main CI job `Windows Offline App Action Smoke` | Passed |
 | Analyze, test, and build | Main CI job `Analyze, Test, and Build` | Passed analyzer, full tests, web JS/Wasm builds, Android debug, Wear OS debug, and release App Bundle smoke |
 | Strict release audit | `build/store-release-readiness-audit.json` | `77 pass, 1 warn, 0 fail` |
-| Android store artifact manifest | `build/store-release-artifacts.json` | Clean `main` commit, `dirty=false`, support email verified |
-| Android artifact verification | `build/store-release-artifact-verification.json` | `11 pass, 0 warn, 0 fail` |
+| Android store artifact manifest | `build/store-release-artifacts.json` | `main` commit, `dirty=true` with `-AllowDirtyManifest` and support email verified |
+| Android artifact verification | `build/store-release-artifact-verification.json` | `9 pass, 0 warn, 1 fail` |
 | Android AAB | `build/app/outputs/bundle/release/app-release.aab` | 115,238,163 bytes, SHA-256 `dfee10776f5eab4de1d323ff2f7a30bf334fe619ebf309f44a1da785ee7c01ec` |
 | Support inbox receipt | `build/support-inbox-verification.json` | Confirmed inbound from `onboarding@resend.dev` at `2026-07-03T13:18:46.4972800+00:00`, message id `985c0498-9768-4787-ab36-5de3468882ba` |
 
@@ -52,8 +52,9 @@ signing.
 | Field | Value |
 | --- | --- |
 | Target | Android |
-| Commit | `36e7b63376a681ac9d8d6961bc5b1aa939ec17d5` |
-| Dirty tree | `false` |
+| Commit | `ac16770e0a5585c341bbe1ecef2736b5c91abf86` |
+| Dirty tree | `true` |
+| Changed files in dirty tree | `3` |
 | Support email verified | `true` |
 | Support email | `marksiazon.dev@gmail.com` |
 | Public web base URL | `https://iron-mark.github.io/Hackathon-FlowFit` |
