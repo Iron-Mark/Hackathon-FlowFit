@@ -7,10 +7,10 @@ MVP candidate.
 
 | Field | Value |
 | --- | --- |
-| Source commit | `25feb1175f7b18947cfa778eff2893238fbf174b` |
+| Source commit | `36e7b63376a681ac9d8d6961bc5b1aa939ec17d5` |
 | AAB path | `build/app/outputs/bundle/release/app-release.aab` |
-| AAB size | 115,238,170 bytes |
-| AAB SHA-256 | `50c00b66247c04f7b86bf27091e94443f2e9ec85bc0b88eaf4833a35c7f6765b` |
+| AAB size | 115,238,163 bytes |
+| AAB SHA-256 | `dfee10776f5eab4de1d323ff2f7a30bf334fe619ebf309f44a1da785ee7c01ec` |
 | Android package ID | `com.msiazondev.flowfit` |
 | App name | FlowFit |
 | Category | Health & Fitness |
@@ -115,7 +115,7 @@ debug or side-loaded build.
 | Device model | Pending |
 | Android version | Pending |
 | Install source | Play Console internal testing |
-| AAB SHA-256 | `50c00b66247c04f7b86bf27091e94443f2e9ec85bc0b88eaf4833a35c7f6765b` |
+| AAB SHA-256 | `dfee10776f5eab4de1d323ff2f7a30bf334fe619ebf309f44a1da785ee7c01ec` |
 | Test account | Stored outside repo |
 | Signup/login | Pending |
 | Email verification | Pending |
