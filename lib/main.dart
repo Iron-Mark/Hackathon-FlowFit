@@ -61,7 +61,6 @@ import 'screens/profile/goals/weight_goals_screen.dart';
 import 'screens/profile/goals/fitness_goals_screen.dart';
 import 'screens/profile/goals/nutrition_goals_screen.dart';
 import 'screens/profile/buddy_customization_screen.dart';
-// import 'widgets/debug_route_menu.dart';
 import 'screens/workout/workout_type_selection_screen.dart';
 import 'screens/workout/running/running_setup_screen.dart';
 import 'screens/workout/running/active_running_screen.dart';

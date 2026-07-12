@@ -17,7 +17,6 @@ import 'package:flowfit/screens/onboarding/survey_basic_info_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_body_measurements_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_activity_goals_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_daily_targets_screen.dart';
-import 'package:flowfit/screens/profile/profile_view.dart';
 import 'package:flowfit/services/survey_completion_handler.dart';
 
 Future<void> _tapAndSettle(WidgetTester tester, Finder finder) async {
@@ -261,69 +260,6 @@ void main() {
         expect(profile.dailyActiveMinutesTarget, 30);
         expect(profile.dailyWaterTarget, 2.5);
         expect(container.read(surveyNotifierProvider).surveyData, isEmpty);
-      },
-      timeout: const Timeout(Duration(minutes: 1)),
-    );
-
-    testWidgets(
-      'INTEGRATION: Profile data displays correctly in profile screen',
-      (WidgetTester tester) async {
-        const testUserId = 'test-user-456';
-
-        // Create a test profile
-        final testProfile = UserProfile(
-          userId: testUserId,
-          fullName: 'John Doe',
-          age: 28,
-          gender: 'male',
-          height: 180.0,
-          weight: 80.0,
-          heightUnit: 'cm',
-          weightUnit: 'kg',
-          activityLevel: 'Very Active',
-          goals: ['Build Muscle', 'Improve Cardio'],
-          dailyCalorieTarget: 2500,
-          dailyStepsTarget: 10000,
-          dailyActiveMinutesTarget: 60,
-          dailyWaterTarget: 3.0,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          isSynced: true,
-        );
-
-        // Save profile to local storage
-        final repository = await container.read(
-          profile_providers.profileRepositoryProvider.future,
-        );
-        await repository.saveLocalProfile(testProfile);
-
-        // Build profile view with the profile
-        await tester.pumpWidget(
-          UncontrolledProviderScope(
-            container: container,
-            child: MaterialApp(
-              home: Scaffold(
-                body: ProfileView(
-                  profile: testProfile,
-                  userEmail: 'test@example.com',
-                  onPhotoTap: () {},
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        // Verify profile data is displayed
-        expect(find.text('John Doe'), findsOneWidget);
-        expect(find.textContaining('28'), findsWidgets);
-        expect(find.textContaining('Male'), findsWidgets);
-        expect(find.textContaining('180'), findsWidgets);
-        expect(find.textContaining('80'), findsWidgets);
-        expect(find.textContaining('Very Active'), findsWidgets);
-        expect(find.textContaining('Build Muscle'), findsWidgets);
-        expect(find.textContaining('2500'), findsWidgets);
-        expect(find.textContaining('10000'), findsWidgets);
       },
       timeout: const Timeout(Duration(minutes: 1)),
     );

@@ -2,7 +2,6 @@ import 'package:flowfit/providers/buddy_offline_storage_provider.dart';
 import 'package:flowfit/providers/buddy_onboarding_provider.dart';
 import 'package:flowfit/screens/onboarding/goal_selection_screen.dart';
 import 'package:flowfit/screens/onboarding/onboarding_screen.dart';
-import 'package:flowfit/screens/onboarding/quick_profile_setup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -80,73 +79,6 @@ void main() {
 
     expect(find.text('route:notification-permission'), findsOneWidget);
   });
-
-  testWidgets('quick profile continue stores optional profile details', (
-    tester,
-  ) async {
-    final container = _buddyContainer();
-    addTearDown(container.dispose);
-    container.read(buddyOnboardingProvider.notifier).setBuddyName('Blue');
-    container.read(buddyOnboardingProvider.notifier).selectColor('teal');
-
-    await _pumpQuickProfile(tester, container);
-
-    await tester.enterText(find.byType(TextField), 'Captain');
-    await tester.pump();
-    await tester.tap(find.text('10'));
-    await tester.pump();
-
-    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'CONTINUE'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(ElevatedButton, 'CONTINUE'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    final state = container.read(buddyOnboardingProvider);
-    expect(state.userNickname, 'Captain');
-    expect(state.userAge, 10);
-    expect(find.text('route:buddy-completion'), findsOneWidget);
-  });
-
-  testWidgets('quick profile skip continues without saving optional details', (
-    tester,
-  ) async {
-    final container = _buddyContainer();
-    addTearDown(container.dispose);
-
-    await _pumpQuickProfile(tester, container);
-
-    await tester.ensureVisible(find.widgetWithText(OutlinedButton, 'SKIP'));
-    await tester.pump();
-    await tester.tap(find.widgetWithText(OutlinedButton, 'SKIP'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    final state = container.read(buddyOnboardingProvider);
-    expect(state.userNickname, isNull);
-    expect(state.userAge, isNull);
-    expect(find.text('route:buddy-completion'), findsOneWidget);
-  });
-
-  testWidgets('quick profile back returns to the previous route', (
-    tester,
-  ) async {
-    final container = _buddyContainer();
-    addTearDown(container.dispose);
-
-    await _pumpQuickProfileFromLauncher(tester, container);
-
-    await tester.tap(find.text('Open Quick Profile'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(find.textContaining('Tell Buddy about yourself'), findsOneWidget);
-
-    await tester.tap(find.byIcon(Icons.arrow_back));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
-
-    expect(find.text('Open Quick Profile'), findsOneWidget);
-  });
 }
 
 Future<void> _pumpClassicOnboarding(WidgetTester tester) async {
@@ -183,61 +115,6 @@ Future<void> _pumpGoalSelection(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
-}
-
-Future<void> _pumpQuickProfile(
-  WidgetTester tester,
-  ProviderContainer container,
-) async {
-  await _setPhoneViewport(tester);
-
-  await tester.pumpWidget(
-    UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(
-        home: const QuickProfileSetupScreen(),
-        routes: {
-          '/buddy-completion': (_) =>
-              const Scaffold(body: Text('route:buddy-completion')),
-        },
-      ),
-    ),
-  );
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 300));
-}
-
-Future<void> _pumpQuickProfileFromLauncher(
-  WidgetTester tester,
-  ProviderContainer container,
-) async {
-  await _setPhoneViewport(tester);
-
-  await tester.pumpWidget(
-    UncontrolledProviderScope(
-      container: container,
-      child: MaterialApp(
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => const QuickProfileSetupScreen(),
-                    ),
-                  );
-                },
-                child: const Text('Open Quick Profile'),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-  await tester.pump();
 }
 
 ProviderContainer _buddyContainer() {

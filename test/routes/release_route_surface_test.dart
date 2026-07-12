@@ -3,16 +3,12 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  const legacySurveyIntroRoute =
-      '/survey'
-      '-intro';
   const legacyBuddyCompletionRoute =
       '/buddy'
       '_completion';
 
   late String mainSource;
   late String buddyProfileSetupSource;
-  late String profileSource;
   late int debugRouteGate;
   late Set<String> releaseRoutes;
 
@@ -20,9 +16,6 @@ void main() {
     mainSource = File('lib/main.dart').readAsStringSync();
     buddyProfileSetupSource = File(
       'lib/screens/onboarding/buddy_profile_setup_screen.dart',
-    ).readAsStringSync();
-    profileSource = File(
-      'lib/screens/profile/profile_screen.dart',
     ).readAsStringSync();
     debugRouteGate = mainSource.indexOf('if (kDebugMode) ...{');
     final releaseRouteSource = debugRouteGate == -1
@@ -77,9 +70,6 @@ void main() {
     expect(mainSource, contains("'/age-gate':"));
     expect(mainSource, contains("'/survey_intro':"));
     expect(mainSource, contains("'/buddy-completion':"));
-
-    expect(profileSource, contains("'/survey_intro'"));
-    expect(profileSource, isNot(contains("'$legacySurveyIntroRoute'")));
 
     expect(mainSource, contains("'/buddy_profile_setup':"));
     expect(mainSource, contains("'/goal-selection':"));

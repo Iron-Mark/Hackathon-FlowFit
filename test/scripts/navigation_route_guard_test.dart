@@ -183,8 +183,7 @@ bool _isKnownNonReleaseSlashLiteral(
   Set<String> debugOnlyRoutes,
 ) {
   if (debugOnlyRoutes.contains(literal.value)) {
-    return literal.filePath.endsWith('lib/main.dart') ||
-        literal.filePath.endsWith('lib/widgets/debug_route_menu.dart');
+    return literal.filePath.endsWith('lib/main.dart');
   }
 
   return literal.filePath.endsWith(
@@ -201,7 +200,6 @@ final _materialPageRoutePattern = RegExp(
 );
 
 final _reviewedDirectMaterialPushes = <String>{
-  'lib/screens/mood_tracking_demo_screen.dart|PostWorkoutMoodCheck',
   'lib/screens/wear/wear_dashboard.dart|AmbientMode',
   'lib/screens/wear/wear_heart_rate_screen.dart|SensorPermissionRationaleScreen',
   'lib/screens/workout/walking/mission_creation_screen.dart|ActiveWalkingScreen',

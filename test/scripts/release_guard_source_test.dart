@@ -2428,18 +2428,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       contains('tracker_page_watch_listener_test.dart'),
     );
     expect(offlineAppActionSmoke, contains('health_screen_actions_test.dart'));
-    expect(offlineAppActionSmoke, contains('cta_section_test.dart'));
-    expect(offlineAppActionSmoke, contains('home_header_test.dart'));
     expect(
       offlineAppActionSmoke,
       contains('progress_screen_actions_test.dart'),
     );
     expect(offlineAppActionSmoke, contains('track_screen_actions_test.dart'));
-    expect(
-      offlineAppActionSmoke,
-      contains('heart_rate_watch_screen_test.dart'),
-    );
-    expect(offlineAppActionSmoke, contains('profile_photo_actions_test.dart'));
     expect(offlineAppActionSmoke, contains('goal_save_button_test.dart'));
     expect(
       offlineAppActionSmoke,

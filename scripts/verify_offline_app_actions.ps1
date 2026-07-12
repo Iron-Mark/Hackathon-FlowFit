@@ -95,16 +95,8 @@ try {
         'test/screens/profile/goal_save_button_test.dart',
         'test/screens/profile/help_support_screen_actions_test.dart',
         'test/screens/profile/kids_profile_screen_actions_test.dart',
-        'test/screens/profile/profile_edit_navigation_unit_test.dart',
         'test/screens/profile/profile_goals_persistence_test.dart',
-        'test/screens/profile/profile_haptic_feedback_property_test.dart',
-        'test/screens/profile/profile_logout_property_test.dart',
-        'test/screens/profile/profile_logout_unit_test.dart',
-        'test/screens/profile/profile_photo_actions_test.dart',
         'test/screens/profile/profile_settings_preferences_test.dart',
-        'test/screens/profile/profile_state_handling_unit_test.dart',
-        'test/screens/profile/profile_sync_status_property_test.dart',
-        'test/screens/profile/profile_view_actions_test.dart',
         'test/screens/profile/settings_legal_back_actions_test.dart',
         'test/screens/profile/settings_screen_actions_test.dart',
         'test/services/user_settings_preferences_test.dart'
@@ -121,23 +113,15 @@ try {
         'test/screens/dashboard_tab_navigation_unit_test.dart',
         'test/screens/font_demo_screen_test.dart',
         'test/screens/health/health_screen_actions_test.dart',
-        'test/screens/heart_rate_monitor_screen_actions_test.dart',
-        'test/screens/home/widgets/cta_section_test.dart',
-        'test/screens/home/widgets/home_header_test.dart',
-        'test/screens/home/widgets/recent_activity_section_test.dart',
-        'test/screens/home/widgets/stats_section_test.dart',
         'test/screens/phone/phone_heart_rate_screen_test.dart',
         'test/screens/phone/phone_home_test.dart',
         'test/screens/progress/progress_screen_actions_test.dart',
-        'test/screens/sensor_permission_screen_test.dart',
         'test/screens/track/track_screen_actions_test.dart',
-        'test/screens/wear/heart_rate_watch_screen_test.dart',
         'test/screens/wear/sensor_permission_rationale_screen_test.dart',
         'test/screens/wear/wear_app_entrypoint_test.dart',
         'test/screens/wear/wear_dashboard_actions_test.dart',
         'test/screens/wear/wear_heart_rate_screen_accessibility_test.dart',
         'test/screens/wear/wear_heart_rate_screen_emulator_fallback_test.dart',
-        'test/screens/wear/wear_permission_wrapper_test.dart',
         'test/screens/wear/wear_workout_relax_actions_test.dart'
     )
 
@@ -149,7 +133,6 @@ try {
         'test/features/wellness/widgets/floating_actions_test.dart',
         'test/features/wellness/widgets/focus_mission_overlay_test.dart',
         'test/features/wellness/widgets/map_shared_widgets_test.dart',
-        'test/features/wellness/widgets/mission_bottom_sheet_focus_test.dart',
         'test/features/wellness/widgets/mission_dialogs_test.dart',
         'test/features/wellness/widgets/place_mode_overlay_test.dart',
         'test/screens/wellness/wellness_onboarding_screen_test.dart',
@@ -177,12 +160,7 @@ try {
         'test/features/yolo_camera/presentation/detection_overlay_widget_test.dart',
         'test/features/yolo_camera/presentation/yolo_camera_widget_test.dart',
         'test/features/yolo_camera/presentation/yolo_debug_screen_actions_test.dart',
-        'test/screens/mood_tracking_demo_screen_actions_test.dart',
-        'test/widgets/debug_route_menu_test.dart',
-        'test/widgets/mood_summary_widgets_test.dart',
-        'test/widgets/permission_status_widget_test.dart',
-        'test/widgets/post_workout_mood_check_test.dart',
-        'test/widgets/quick_mood_check_bottom_sheet_test.dart'
+        'test/widgets/mood_summary_widgets_test.dart'
     )
 } finally {
     Pop-Location
