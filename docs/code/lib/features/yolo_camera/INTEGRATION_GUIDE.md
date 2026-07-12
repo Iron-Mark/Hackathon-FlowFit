@@ -15,27 +15,28 @@ The `YoloCameraWidget` is a flexible widget that supports:
 ### 1. Android Asset Placement
 Place your `.tflite` model files in `android/app/src/main/assets/`:
 - `android/app/src/main/assets/yolov11s_food.tflite`
-- `android/app/src/main/assets/yolov11n_pose.tflite`
 
 **Important**: The models must be `.tflite` files (TensorFlow Lite format).
 
 ### 2. Model Files
 The repository is configured to use:
 - `yolov11s_food.tflite` for Object Detection ✅ **Working**
-- `yolov11n_pose.tflite` for Pose Detection
+
+Pose detection is currently disabled and no pose model is bundled (the previous
+`yolov11n_pose.tflite` was incompatible with the plugin and has been removed).
 
 **⚠️ Pose Model Compatibility:**
 The `ultralytics_yolo` plugin expects pose models with **17 keypoints** (COCO format).
 If you get an error like `Unexpected output feature size. Expected=56, Actual=50`, your pose model is incompatible.
 
-**Solution:** Use YOLOv8/v11 pose models with 17 keypoints:
+**To add a compatible pose model:** Use YOLOv8/v11 pose models with 17 keypoints:
 ```bash
 pip install ultralytics
 python -c "from ultralytics import YOLO; YOLO('yolov8n-pose.pt').export(format='tflite')"
-# Rename the exported file to yolov11n_pose.tflite
+# Place the exported .tflite file in android/app/src/main/assets/
 ```
 
-These names are referenced in the code without the `.tflite` extension.
+Model names are referenced in the code without the `.tflite` extension.
 
 ## Usage
 

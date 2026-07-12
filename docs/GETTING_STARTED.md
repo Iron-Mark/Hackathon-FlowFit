@@ -111,7 +111,7 @@ flutter pub get
 → See [Installation Troubleshooting](INSTALLATION_TROUBLESHOOTING.md)
 
 **Build errors?**
-→ See [Build Fixes Applied](BUILD_FIXES_APPLIED.md)
+→ See [Troubleshooting](TROUBLESHOOTING.md)
 
 **Need help?**
 → Check [Documentation Index](README.md)
@@ -165,14 +165,7 @@ flowfit/
 - Exercise monitoring
 - Calorie tracking
 
-**Code**: `lib/screens/workout/activity_tracker.dart`
-
-### Sleep Tracking
-- Sleep mode
-- Sleep quality analysis
-- Wake detection
-
-**Code**: `lib/screens/sleep/sleep_mode.dart`
+**Code**: `lib/screens/workout/`
 
 ### Data Sync
 - Watch → Phone transfer

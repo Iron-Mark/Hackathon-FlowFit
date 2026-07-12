@@ -84,8 +84,6 @@ Tap → Heart Rate Screen:
 ## 📚 More Help
 
 - **Connection issues:** `docs/WATCH_CONNECTION_GUIDE.md`
-- **Latest changes:** `docs/LATEST_IMPROVEMENTS.md`
-- **Full redesign:** `WATCH_UI_REDESIGN.md`
 - **Device commands:** `DEVICE_REFERENCE.md`
 
 ## 🎯 Success Criteria

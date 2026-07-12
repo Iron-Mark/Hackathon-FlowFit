@@ -254,7 +254,6 @@ adb -s adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp logcat | findstr "FlowFit"
 
 - [Samsung Health Setup](SAMSUNG_HEALTH_SETUP_GUIDE.md) - Watch-side setup
 - [Heart Rate Data Flow](HEART_RATE_DATA_FLOW.md) - Complete data flow
-- [Implementation Checklist](IMPLEMENTATION_CHECKLIST.md) - Testing guide
 
 ## ✨ Material 3 Features Used
 

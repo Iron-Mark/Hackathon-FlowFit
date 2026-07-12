@@ -50,7 +50,7 @@ The Samsung tutorial shows a **phone + watch companion app** setup using:
 ┌─────────────────────────────────────────┐
 │         Flutter UI (Dart)               │
 │  - wear_dashboard.dart                  │
-│  - activity_tracker.dart                │
+│  - wear_heart_rate_screen.dart          │
 └──────────────┬──────────────────────────┘
                │ Method Channel
                │ Event Channel
@@ -235,7 +235,7 @@ class HeartRateData {
 
 1. **Test on physical Galaxy Watch** - Emulator doesn't support Samsung Health sensors
 
-2. **Integrate with your UI** - Update `wear_dashboard.dart` and `activity_tracker.dart`
+2. **Integrate with your UI** - Update `wear_dashboard.dart` and the tracker page in `lib/features/activity_classifier/`
 
 3. **Store data in Supabase** - Save heart rate readings to your backend
 

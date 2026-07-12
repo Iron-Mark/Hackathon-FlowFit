@@ -88,6 +88,4 @@ Production navigation should use `/activity-classifier` instead of
 ## Verification
 
 Named-route references are checked by
-`test/routes/release_route_surface_test.dart`. Browser smoke evidence for the
-current welcome, signup, login, configured startup, and missing-Supabase startup
-paths is recorded in `docs/maintenance/CODEBASE_CLEANUP_AUDIT_2026-06-19.md`.
+`test/routes/release_route_surface_test.dart`.

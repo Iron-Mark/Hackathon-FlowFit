@@ -1242,8 +1242,6 @@ adb -s 6ece264d logcat | findstr "FlowFit MainActivity HealthTrackingManager"
 ## 🔗 Related Documentation
 
 - **[Installation Troubleshooting](../INSTALLATION_TROUBLESHOOTING.md)** - Detailed error solutions
-- **[Build Fixes Applied](../BUILD_FIXES_APPLIED.md)** - Recent fixes
-- **[Run Instructions](../RUN_INSTRUCTIONS.md)** - Device-specific commands
 
 ---
 

@@ -205,6 +205,6 @@ lib/
 │
 └── screens/                    # UI (ConsumerWidget)
     ├── phone_home.dart
-    ├── dashboard.dart
-    └── heart_rate_monitor_screen.dart
+    ├── dashboard_screen.dart
+    └── phone/phone_heart_rate_screen.dart
 ```

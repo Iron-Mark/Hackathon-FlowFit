@@ -5,7 +5,7 @@ Added AI-powered activity mode detection to the running workout screen using Ten
 
 ## What Was Added
 
-### 1. Activity Mode Provider (`lib/providers/activity_mode_provider.dart`)
+### 1. Activity Mode Detection (now part of `lib/features/activity_classifier/`)
 - **ActivityMode enum**: Defines three modes (stress, cardio, calm)
 - **ActivityModeState**: Holds detection state, confidence, and probabilities
 - **ActivityModeNotifier**: Manages the detection process

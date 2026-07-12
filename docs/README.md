@@ -12,10 +12,8 @@ below are the current navigation surface.
   Supabase, web, and store gates.
 - [Supabase recovery runbook](SUPABASE_RECOVERY_RUNBOOK.md) - rebuilding the
   backend on a new Supabase project.
-- [Codebase cleanup audit](maintenance/CODEBASE_CLEANUP_AUDIT_2026-06-19.md) -
-  latest local verification evidence, hashes, and remaining blockers.
-- [Play Store handoff](release/FINAL_RELEASE_HANDOFF_2026-06-19.md) - artifact
-  and submission handoff notes.
+- [Play Console submission pack](release/PLAY_CONSOLE_SUBMISSION_PACK_2026-07-04.md) -
+  artifact and submission handoff notes.
 
 ## Common Local Commands
 

@@ -213,4 +213,4 @@ Remember to approve the installation on your watch!
 
 ---
 
-**For detailed build fixes, see**: [docs/BUILD_FIXES_APPLIED.md](BUILD_FIXES_APPLIED.md)
+**For build troubleshooting, see**: [docs/INSTALLATION_TROUBLESHOOTING.md](INSTALLATION_TROUBLESHOOTING.md)

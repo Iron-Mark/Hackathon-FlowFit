@@ -117,8 +117,6 @@ adb -s SM_R930 logcat | findstr "=== Checking phone connection ==="
 - Simple START/STOP/SEND buttons
 - Better connection handling
 
-**See:** `WATCH_UI_REDESIGN.md` and `docs/LATEST_IMPROVEMENTS.md`
-
 ---
 
 **Keep this file handy for quick device reference!** 📌

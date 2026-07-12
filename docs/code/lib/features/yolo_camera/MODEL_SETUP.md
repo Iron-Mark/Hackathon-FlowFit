@@ -11,7 +11,6 @@ This means the model file cannot be found or loaded.
 Check that these files exist in your Android assets:
 ```
 android/app/src/main/assets/yolov11s_food.tflite
-android/app/src/main/assets/yolov11n_pose.tflite
 ```
 
 ### 2. File Format
@@ -38,10 +37,9 @@ flutter run
 
 ## Current Configuration
 The code expects:
-- Object detection: `yolov11s_food.tflite`
-- Pose detection: `yolov11n_pose.tflite`
+- Object detection: `yolov11s_food.tflite` in `android/app/src/main/assets/`
 
-Both in `android/app/src/main/assets/`
+(The incompatible `yolov11n_pose.tflite` bundle was removed; see YOLOV11_POSE_ISSUE.md before re-adding a pose model.)
 
 ## How to Get Models
 

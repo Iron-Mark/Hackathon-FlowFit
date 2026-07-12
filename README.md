@@ -138,7 +138,6 @@ The app uses Samsung Health Sensor SDK for real-time heart rate monitoring. See 
 
 - **[docs/QUICK_START.md](docs/QUICK_START.md)** - 5-minute quick start
 - **[SAMSUNG_HEALTH_SETUP_GUIDE.md](docs/SAMSUNG_HEALTH_SETUP_GUIDE.md)** - Complete setup guide
-- **[IMPLEMENTATION_CHECKLIST.md](docs/IMPLEMENTATION_CHECKLIST.md)** - Testing checklist
 
 ### Usage Example
 
@@ -201,20 +200,15 @@ HeartRateData {
 
 ### Phone App Features
 
-1. **Dashboard** (`lib/screens/dashboard.dart`)
+1. **Dashboard** (`lib/screens/dashboard_screen.dart`)
    - Overview of all health metrics
    - Historical data charts
    - Sync status
 
-2. **Workout Library** (`lib/screens/workout/workout_library.dart`)
-   - Exercise database
+2. **Workout Tracking** (`lib/screens/workout/workout_type_selection_screen.dart`)
+   - Running, walking, and resistance workout flows
    - Workout history
    - Performance analytics
-
-3. **Nutrition Logger** (`lib/screens/nutrition/food_logger.dart`)
-   - Food diary
-   - Calorie tracking
-   - Nutritional analysis
 
 ## 🔌 Data Synchronization
 
@@ -273,31 +267,21 @@ flowfit/
 │   ├── main_wear.dart               # Watch app entry
 │   ├── models/
 │   │   ├── heart_rate_data.dart
-│   │   ├── activity.dart
-│   │   ├── sleep_session.dart
-│   │   └── mood_log.dart
+│   │   ├── sensor_status.dart
+│   │   └── workout_session.dart
 │   ├── services/
 │   │   ├── watch_bridge.dart        # Samsung Health SDK bridge
 │   │   ├── supabase_service.dart    # Backend service
-│   │   └── sleep_service.dart
-│   ├── screens/
-│   │   ├── wear/                    # Watch-specific screens
-│   │   ├── workout/
-│   │   ├── sleep/
-│   │   └── nutrition/
-│   └── examples/
-│       └── heart_rate_example.dart
+│   │   └── phone_data_listener.dart
+│   └── screens/
+│       ├── wear/                    # Watch-specific screens
+│       └── workout/
 ├── docs/                            # Documentation
 │   ├── QUICK_START.md
 │   ├── SAMSUNG_HEALTH_SETUP_GUIDE.md
-│   ├── IMPLEMENTATION_CHECKLIST.md
 │   ├── INSTALLATION_TROUBLESHOOTING.md
-│   ├── BUILD_FIXES_APPLIED.md
 │   ├── HEART_RATE_DATA_FLOW.md
-│   ├── WEAR_OS_SETUP.md
-│   ├── RUN_INSTRUCTIONS.md
-│   ├── VGV_IMPROVEMENTS.md
-│   └── WEAR_OS_IMPROVEMENTS.md
+│   └── WEAR_OS_SETUP.md
 ├── scripts/                         # Build and run scripts
 │   ├── build_and_install.bat
 │   ├── run_watch.bat
@@ -360,13 +344,10 @@ pwsh -NoProfile -File scripts\run_phone.ps1 -Device <device-id>
 - **[NAVIGATION_GUIDE.md](docs/NAVIGATION_GUIDE.md)** - 🗺️ **How to access heart rate monitoring UI**
 - **[GETTING_STARTED.md](docs/GETTING_STARTED.md)** - Initial setup guide
 - **[WATCH_TO_PHONE_COMPLETE_FLOW.md](docs/WATCH_TO_PHONE_COMPLETE_FLOW.md)** - Live data flow from watch to phone
-- **[ALL_ISSUES_FIXED.md](docs/ALL_ISSUES_FIXED.md)** - Summary of all fixes applied
-- **[KOTLIN_COMPARISON_ANALYSIS.md](docs/KOTLIN_COMPARISON_ANALYSIS.md)** - Architecture comparison
 - **[RELEASE_READINESS_RUNBOOK.md](docs/RELEASE_READINESS_RUNBOOK.md)** - Store/web release readiness and remaining external gates
 
 ### 🐛 Troubleshooting
-- **[CONNECTION_TIMEOUT_FIX.md](docs/CONNECTION_TIMEOUT_FIX.md)** - Connection issues
-- **[PHONE_RECEIVER_ISSUE.md](docs/PHONE_RECEIVER_ISSUE.md)** - Phone data reception
+- **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Connection and general issues
 - **[SMARTWATCH_TO_PHONE_DATA_FLOW.md](docs/SMARTWATCH_TO_PHONE_DATA_FLOW.md)** - Complete data flow guide
 
 ## 🔐 Permissions

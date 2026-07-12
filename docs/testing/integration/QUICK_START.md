@@ -116,10 +116,8 @@ DELETE FROM user_profiles WHERE user_id IN (
    export SUPABASE_PUBLISHABLE_KEY="REPLACE_WITH_SUPABASE_PUBLISHABLE_KEY"
    ```
 
-2. **Create Test Users** (via migration script)
-   ```bash
-   ./scripts/create_test_users.sh
-   ```
+2. **Create Test Users**
+   - Create the test users listed in `README.md` via the Supabase dashboard or a migration script
 
 3. **Run Tests**
    ```bash
@@ -132,9 +130,7 @@ DELETE FROM user_profiles WHERE user_id IN (
    ```
 
 5. **Cleanup**
-   ```bash
-   ./scripts/cleanup_test_users.sh
-   ```
+   - Run the SQL from the "Cleanup Test Data" section above in the Supabase SQL Editor
 
 ---
 
@@ -166,7 +162,6 @@ If any fail: ❌ Review detailed test guide and investigate
 ### Documentation
 - **Detailed Manual Tests**: `MANUAL_TESTING_GUIDE.md`
 - **Test Documentation**: `README.md`
-- **Implementation Summary**: `TESTING_SUMMARY.md`
 
 ### Common Issues
 
@@ -181,12 +176,6 @@ A: Use `pumpAndSettle()` with longer duration for async operations
 
 **Q: Platform plugin errors**
 A: Run tests on actual device/emulator, not in Dart VM
-
-### Contact
-- Check task documentation: `.kiro/specs/supabase-auth-onboarding/`
-- Review requirements: `requirements.md`
-- Review design: `design.md`
-- Review tasks: `tasks.md`
 
 ---
 

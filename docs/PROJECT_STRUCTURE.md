@@ -24,21 +24,15 @@ All project documentation is organized in the `docs/` folder:
 ### Quick Start & Setup
 - `docs/QUICK_START.md` - 5-minute quick start guide
 - `SAMSUNG_HEALTH_SETUP_GUIDE.md` - Complete Samsung Health integration
-- `IMPLEMENTATION_CHECKLIST.md` - Step-by-step testing guide
 
 ### Troubleshooting
 - `INSTALLATION_TROUBLESHOOTING.md` - Installation issues and solutions
-- `BUILD_FIXES_APPLIED.md` - Recent build fixes and changes
+- `TROUBLESHOOTING.md` - General troubleshooting guide
 
 ### Architecture
 - `HEART_RATE_DATA_FLOW.md` - Data flow architecture
 - `WEAR_OS_SETUP.md` - Wear OS development setup
-- `RUN_INSTRUCTIONS.md` - Device-specific run commands
-
-### Improvements
-- `VGV_IMPROVEMENTS.md` - VGV best practices applied
-- `WEAR_OS_IMPROVEMENTS.md` - Wear OS optimizations
-- `SAMSUNG_HEALTH_IMPLEMENTATION_SUMMARY.md` - Implementation summary
+- `DEVICE_REFERENCE.md` - Device-specific run commands
 
 **See [docs/README.md](README.md) for complete documentation index.**
 
@@ -60,26 +54,20 @@ lib/
 ├── main_wear.dart            # Watch app entry point
 ├── models/                   # Data models
 │   ├── heart_rate_data.dart
-│   ├── activity.dart
-│   ├── sleep_session.dart
-│   └── mood_log.dart
+│   ├── workout_session.dart
+│   └── mood_rating.dart
 ├── services/                 # Business logic
 │   ├── watch_bridge.dart     # Samsung Health SDK bridge
-│   ├── supabase_service.dart # Backend service
-│   └── sleep_service.dart
-├── screens/                  # UI screens
-│   ├── wear/                 # Watch-specific screens
-│   │   ├── wear_dashboard.dart
-│   │   └── relax_screen.dart
-│   ├── workout/              # Workout screens
-│   │   ├── activity_tracker.dart
-│   │   └── workout_library.dart
-│   ├── sleep/                # Sleep tracking
-│   │   └── sleep_mode.dart
-│   └── nutrition/            # Nutrition logging
-│       └── food_logger.dart
-└── examples/                 # Example implementations
-    └── heart_rate_example.dart
+│   └── supabase_service.dart # Backend service
+└── screens/                  # UI screens
+    ├── wear/                 # Watch-specific screens
+    │   ├── wear_dashboard.dart
+    │   └── relax_screen.dart
+    └── workout/              # Workout screens
+        ├── workout_type_selection_screen.dart
+        ├── running/
+        ├── walking/
+        └── resistance/
 ```
 
 ## 🤖 Android Native (`android/`)
@@ -88,7 +76,7 @@ lib/
 android/
 ├── app/
 │   ├── src/main/
-│   │   ├── kotlin/com/example/flowfit/
+│   │   ├── kotlin/com/msiazondev/flowfit/
 │   │   │   ├── MainActivity.kt           # Main activity
 │   │   │   └── HealthTrackingManager.kt  # Samsung Health SDK manager
 │   │   └── AndroidManifest.xml           # App manifest
@@ -142,7 +130,6 @@ scripts\run_phone.bat
 ### Source Code
 - ✅ Follow Flutter project structure
 - ✅ Group by feature (models, services, screens)
-- ✅ Keep examples in `lib/examples/`
 
 ### Build Artifacts
 - ❌ Never commit `build/` folder

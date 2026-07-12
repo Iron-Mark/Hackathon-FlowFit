@@ -5,7 +5,7 @@ Implemented **continuous, automatic AI activity mode detection** during running 
 
 ## Implementation Details
 
-### 1. Activity Mode Provider (`lib/providers/activity_mode_provider.dart`)
+### 1. Activity Mode Detection (now part of `lib/features/activity_classifier/`)
 
 #### Key Features:
 - **Continuous Detection**: Automatically runs every 15 seconds

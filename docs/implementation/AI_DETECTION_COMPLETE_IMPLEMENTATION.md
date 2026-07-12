@@ -597,8 +597,6 @@ print('🔴 Buffer not ready: ${_sensorBuffer.length}/$_windowSize samples');
 
 - `AI_MODE_DETECTION_FEATURE.md` - Initial feature overview
 - `AI_MODE_LIVE_DETECTION.md` - Live detection implementation
-- `ACTIVITY_AI_WATCH_INTEGRATION.md` - Watch data integration
-- `RUNNING_FLOW_COMPLETE.md` - Complete running flow
 
 ---
 

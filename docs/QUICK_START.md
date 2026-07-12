@@ -14,7 +14,7 @@ flutter run -d <watch-device-id>
 
 ### Step 2: Test the Implementation
 
-Use the example widget or add this to your code:
+Add this to your code:
 
 ```dart
 import 'package:flowfit/services/watch_bridge.dart';
@@ -49,10 +49,6 @@ await watchBridge.disconnectFromWatch();
 2. **Grant permission** when prompted
 3. **Wait 5-10 seconds** for readings to stabilize
 4. **See heart rate** updating every 1-2 seconds
-
-## 📱 Example Widget
-
-Copy `lib/examples/heart_rate_example.dart` to see a complete working example with UI.
 
 ## 🐛 Quick Troubleshooting
 
@@ -122,8 +118,6 @@ watchBridge.heartRateStream.listen((data) async {
 ## 📚 Full Documentation
 
 - **SAMSUNG_HEALTH_SETUP_GUIDE.md** - Complete setup guide
-- **IMPLEMENTATION_CHECKLIST.md** - Detailed testing steps
-- **SAMSUNG_HEALTH_IMPLEMENTATION_SUMMARY.md** - What was implemented
 
 ## ✨ Key Features
 

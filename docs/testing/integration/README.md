@@ -264,9 +264,3 @@ flutter test --coverage test/integration/
 genhtml coverage/lcov.info -o coverage/html
 open coverage/html/index.html
 ```
-
-## Related Documentation
-
-- [Requirements Document](../../../.kiro/specs/supabase-auth-onboarding/requirements.md)
-- [Design Document](../../../.kiro/specs/supabase-auth-onboarding/design.md)
-- [Task List](../../../.kiro/specs/supabase-auth-onboarding/tasks.md)
