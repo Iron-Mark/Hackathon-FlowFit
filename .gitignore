@@ -105,3 +105,6 @@ linux/flutter/generated_plugins.cmake
 
 # Gradle build output under android/ (root /build/ pattern does not cover it)
 android/build/
+
+# General Sans fonts are fetched from Fontshare, not committed (see scripts/fetch_fonts.ps1)
+assets/fonts/GeneralSans/*.otf

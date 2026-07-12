@@ -132,6 +132,8 @@ Documentation for specific features implemented:
 
 Build and deployment scripts:
 
+- **fetch_fonts.ps1** - Download General Sans fonts from Fontshare (the .otf
+  files are not committed for license reasons; run once after cloning)
 - **build_and_install.bat** - Build and install to device
 - **run_phone.bat** - Run phone app
 - **run_watch.bat** - Run watch app
@@ -183,7 +185,7 @@ Build and deployment scripts:
 - **Markdown Documents:** 90 files
 - **Archived Markdown Documents:** 1 file (`docs/archive/`)
 - **Presentation Docs:** 3 files
-- **Scripts:** 29 files
+- **Scripts:** 30 files
 
 ---
 

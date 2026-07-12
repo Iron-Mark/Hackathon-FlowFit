@@ -35,6 +35,10 @@ jobs:
       - name: Flutter dependencies
         run: flutter pub get
 
+      - name: Fetch General Sans fonts
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/fetch_fonts.ps1
+
       - name: Offline app action smoke
         shell: pwsh
         run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/verify_offline_app_actions.ps1 -SkipPubGet
@@ -158,6 +162,10 @@ jobs:
 
       - name: Flutter dependencies
         run: flutter pub get
+
+      - name: Fetch General Sans fonts
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/fetch_fonts.ps1
 
       - name: Node dependencies
         run: npm ci

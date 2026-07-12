@@ -147,6 +147,10 @@ jobs:
       - name: Flutter dependencies
         run: flutter pub get
 
+      - name: Fetch General Sans fonts
+        shell: pwsh
+        run: pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/fetch_fonts.ps1
+
       - name: Write support inbox evidence
         shell: pwsh
         run: >

@@ -32,6 +32,9 @@ cd flowfit
 # Install dependencies
 flutter pub get
 
+# Fetch the General Sans fonts (not committed; Fontshare license)
+pwsh scripts/fetch_fonts.ps1
+
 # Configure Supabase
 # Preferred: set SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY in your shell
 # Optional script fallback: copy lib/secrets.dart.example to lib/secrets.dart

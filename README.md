@@ -92,6 +92,7 @@ FlowFit is a dual-platform fitness app that runs on:
    git clone <repository-url>
    cd flowfit
    flutter pub get
+   pwsh scripts/fetch_fonts.ps1   # downloads General Sans (not committed; Fontshare license)
    ```
 
 2. **Configure Supabase**

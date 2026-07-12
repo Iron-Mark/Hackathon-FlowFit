@@ -4,6 +4,19 @@ Automated scripts for building and running FlowFit on different devices.
 
 ## 📜 Available Scripts
 
+### 0. fetch_fonts.ps1
+
+Downloads the General Sans font family from Fontshare into
+`assets/fonts/GeneralSans/`. The .otf files are not committed (the Fontshare
+Free Font License allows embedding in the app but not redistributing the raw
+files), so run this once after cloning; CI runs it automatically before
+build/test steps.
+
+```powershell
+pwsh scripts/fetch_fonts.ps1        # no-op if fonts already present
+pwsh scripts/fetch_fonts.ps1 -Force # re-download
+```
+
 ### 1. build_and_install.bat
 **Purpose**: Automated build and installation on Galaxy Watch
 
