@@ -102,3 +102,6 @@ macos/Flutter/GeneratedPluginRegistrant.swift
 linux/flutter/generated_plugin_registrant.cc
 linux/flutter/generated_plugins.cmake
 .vscode/settings.json
+
+# Gradle build output under android/ (root /build/ pattern does not cover it)
+android/build/
