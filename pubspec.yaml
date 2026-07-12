@@ -15,7 +15,6 @@ dependencies:
   # google_maps_flutter removed per maps migration to flutter_map
   geolocator: ^14.0.1 # Keep current - major upgrade to 14.x may break things
   sensors_plus: ^5.0.1 # 5.x keeps the current API shape while unblocking Flutter web Wasm builds
-  wakelock_plus: ^1.1.0 # Keep screen on during Sleep Mode
   permission_handler: ^11.0.0 # Keep current - 12.x may have breaking changes
   wear_plus: ^1.2.0 # Wear OS support
   package_info_plus: ^8.3.1
@@ -23,23 +22,15 @@ dependencies:
 
   # State Management (Clean Architecture)
   flutter_riverpod: ^2.6.1 # SAFE UPGRADE: Bug fixes, no breaking changes
-  riverpod_annotation: ^2.6.1 # SAFE UPGRADE: Matches riverpod version
-
-  # Functional Programming & Utilities
-  freezed_annotation: ^2.4.4 # SAFE UPGRADE: Minor version bump
-  json_annotation: ^4.9.0 # SAFE UPGRADE: Bug fixes
 
   # UI & Utils
-  fl_chart: ^0.65.0 # Keep current - 1.x is major rewrite
   intl: ^0.18.1 # SAFE UPGRADE: Minor fixes
   provider: ^6.1.2 # SAFE UPGRADE: Bug fixes
-  wearable_rotary: ^2.0.3 # DISCONTINUED - consider removing if not used
+  wearable_rotary: ^2.0.3 # DISCONTINUED, but MainActivity.kt uses its Kotlin plugin class directly
   logger: ^2.4.0 # SAFE UPGRADE: Better logging
   ultralytics_yolo: ^0.1.25
   tflite_flutter: ^0.12.1
-  heart_bpm: ^2.0.0+0
 
-  cupertino_icons: ^1.0.8 # SAFE UPGRADE: New icons
   flutter_svg: ^2.0.10 # SAFE UPGRADE: Bug fixes
   solar_icons: ^0.0.5 # Solar icon pack
 
@@ -119,11 +110,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # Code Generation
-  build_runner: ^2.5.4 # SAFE UPGRADE: Bug fixes
-  riverpod_generator: ^2.6.4 # SAFE UPGRADE: Matches riverpod
-  freezed: ^2.5.8 # SAFE UPGRADE: Bug fixes
-  json_serializable: ^6.9.5 # SAFE UPGRADE: Bug fixes
+  # Code Generation (regenerates mockito .mocks.dart files)
+  build_runner: ^2.5.4
 
   # Testing
   mockito: ^5.4.4
