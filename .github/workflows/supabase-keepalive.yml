@@ -1,0 +1,50 @@
+name: Supabase Keep-Alive
+
+# Supabase pauses free-tier projects after ~7 days without activity. This
+# workflow pings the project every 3 days so the pause timer never expires,
+# with enough margin that one failed or delayed run does not matter.
+#
+# Cost: a single curl on a public repo (Actions minutes are free), ~10 seconds
+# per run. Uses only the public SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repo
+# variables — no secrets, and no GITHUB_TOKEN permissions.
+
+on:
+  schedule:
+    - cron: "0 9 */3 * *" # every 3 days at 09:00 UTC (day-of-month based)
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  ping:
+    name: Ping Supabase project
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - name: Ping auth health endpoint
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repo variables are not set" >&2
+            exit 1
+          fi
+          status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            --retry 3 --retry-delay 10 --max-time 30 \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/auth/v1/health")
+          echo "auth health: HTTP $status"
+          if [ "$status" != "200" ]; then
+            echo "Supabase auth health check failed" >&2
+            exit 1
+          fi
+
+      - name: Ping REST gateway (best effort)
+        run: |
+          # The publishable key cannot read the REST root (expected 401), but
+          # the request still lands in the project's API logs as activity.
+          status=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/rest/v1/" || true)
+          echo "rest gateway: HTTP $status (informational only)"
