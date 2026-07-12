@@ -364,9 +364,6 @@ class MainActivity: FlutterActivity() {
         registerPlugin(flutterEngine, "url_launcher_android") {
             io.flutter.plugins.urllauncher.UrlLauncherPlugin()
         }
-        registerPlugin(flutterEngine, "wakelock_plus") {
-            dev.fluttercommunity.plus.wakelock.WakelockPlusPlugin()
-        }
         Log.i(TAG, "Registered phone-safe Flutter plugins")
     }
 
