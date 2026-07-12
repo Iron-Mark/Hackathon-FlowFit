@@ -1391,7 +1391,14 @@ storeFile=upload-keystore.jks
   });
 
   test('project markdown docs are centralized under docs', () {
-    final allowedRootDocs = <String>{'AGENTS.md', 'README.md'};
+    final allowedRootDocs = <String>{
+      'AGENTS.md',
+      'README.md',
+      // Explains why the gitignored General Sans .otf files are absent and
+      // how scripts/fetch_fonts.ps1 restores them; it must live beside the
+      // font directory to be discoverable.
+      'assets/fonts/GeneralSans/README.md',
+    };
     final trackedFiles = Process.runSync('git', ['ls-files']);
     expect(
       trackedFiles.exitCode,
