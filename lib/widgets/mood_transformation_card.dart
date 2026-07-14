@@ -50,19 +50,22 @@ class MoodTransformationCard extends StatelessWidget {
       child: Column(
         children: [
           // Title
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Mood Transformation',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Mood Transformation',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              const Text('🚀', style: TextStyle(fontSize: 24)),
-            ],
+                const SizedBox(width: 8),
+                const Text('🚀', style: TextStyle(fontSize: 24)),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
 

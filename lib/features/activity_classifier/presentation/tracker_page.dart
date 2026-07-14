@@ -550,7 +550,13 @@ class _TrackerPageState extends State<TrackerPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Simulate Heart Rate: ${_simulatedHR.round()} BPM'),
+                  Flexible(
+                    child: Text(
+                      'Simulate Heart Rate: ${_simulatedHR.round()} BPM',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Column(
                     children: [
@@ -962,12 +968,16 @@ class _TrackerPageState extends State<TrackerPage> {
             'Galaxy Watch: ',
             style: TextStyle(color: color, fontWeight: FontWeight.w600),
           ),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 8),

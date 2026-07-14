@@ -62,127 +62,136 @@ class _MissionBottomSheetState extends State<MissionBottomSheet> {
     };
   }
 
-  Widget _buildMissionList(BuildContext context, ScrollController controller) {
+  Widget _buildMissionList(BuildContext context) {
     final missions = _filteredMissions;
 
     if (widget.repo.current.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18.0),
-          child: Text(
-            'No missions yet. Long-press on the map or tap Add to create a mission.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18.0),
+            child: Text(
+              'No missions yet. Long-press on the map or tap Add to create a mission.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
         ),
       );
     }
 
     if (missions.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18.0),
-          child: Text(
-            'No $_filterLabel missions match this filter.',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium,
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18.0),
+            child: Text(
+              'No $_filterLabel missions match this filter.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
         ),
       );
     }
 
-    return ListView.separated(
-      controller: controller,
+    return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      itemCount: missions.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8.0),
-      itemBuilder: (context, index) {
-        final m = missions[index];
-        return Card(
-          elevation: 2.2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14.0),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14.0,
-              vertical: 10.0,
+      sliver: SliverList.separated(
+        itemCount: missions.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8.0),
+        itemBuilder: (context, index) {
+          final m = missions[index];
+          return Card(
+            elevation: 2.2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14.0),
             ),
-            title: Text(
-              m.title,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4.0),
-                Text('${m.type.name} • ${m.radiusMeters.toStringAsFixed(0)} m'),
-                if (m.type == MissionType.target)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: LinearProgressIndicator(
-                      value:
-                          (m.targetDistanceMeters == null ||
-                              m.targetDistanceMeters == 0)
-                          ? 0.0
-                          : (widget.service.getProgress(m.id) /
-                                    (m.targetDistanceMeters ?? 1.0))
-                                .clamp(0.0, 1.0),
-                    ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 14.0,
+                vertical: 10.0,
+              ),
+              title: Text(
+                m.title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 4.0),
+                  Text(
+                    '${m.type.name} • ${m.radiusMeters.toStringAsFixed(0)} m',
                   ),
-              ],
-            ),
-            trailing: SizedBox(
-              width: 180,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerRight,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Make focus a primary action with a big, clear affordance
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        widget.onFocusMission(m);
-                      },
-                      icon: const Icon(Icons.flag),
-                      label: const Text('Focus'),
+                  if (m.type == MissionType.target)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: LinearProgressIndicator(
+                        value:
+                            (m.targetDistanceMeters == null ||
+                                m.targetDistanceMeters == 0)
+                            ? 0.0
+                            : (widget.service.getProgress(m.id) /
+                                      (m.targetDistanceMeters ?? 1.0))
+                                  .clamp(0.0, 1.0),
+                      ),
                     ),
-                    const SizedBox(width: 8.0),
-                    Transform.scale(
-                      scale: 0.72,
-                      child: Switch(
-                        value: m.isActive,
-                        onChanged: (v) async {
-                          if (v) {
-                            await widget.service.activateMission(m.id);
-                          } else {
-                            await widget.service.deactivateMission(m.id);
-                          }
-                          if (mounted) setState(() {});
+                ],
+              ),
+              trailing: SizedBox(
+                width: 180,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Make focus a primary action with a big, clear affordance
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          widget.onFocusMission(m);
                         },
+                        icon: const Icon(Icons.flag),
+                        label: const Text('Focus'),
                       ),
-                    ),
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 32,
-                        minHeight: 32,
+                      const SizedBox(width: 8.0),
+                      Transform.scale(
+                        scale: 0.72,
+                        child: Switch(
+                          value: m.isActive,
+                          onChanged: (v) async {
+                            if (v) {
+                              await widget.service.activateMission(m.id);
+                            } else {
+                              await widget.service.deactivateMission(m.id);
+                            }
+                            if (mounted) setState(() {});
+                          },
+                        ),
                       ),
-                      iconSize: 20,
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: () => _confirmDeleteMission(m),
-                    ),
-                  ],
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                        iconSize: 20,
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => _confirmDeleteMission(m),
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              onTap: () => widget.onFocusMission(m),
+              onLongPress: () => widget.onOpenMission(m),
             ),
-            onTap: () => widget.onFocusMission(m),
-            onLongPress: () => widget.onOpenMission(m),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -326,76 +335,87 @@ class _MissionBottomSheetState extends State<MissionBottomSheet> {
               ),
             ],
           ),
-          child: Column(
-            children: [
-              const SizedBox(height: 12.0),
-              Container(
-                width: 48.0,
-                height: 6.0,
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(12.0),
+          child: CustomScrollView(
+            controller: controller,
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12.0),
+                    Container(
+                      width: 48.0,
+                      height: 6.0,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                    ),
+                    const SizedBox(height: 8.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final title = Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Missions',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              Text(
+                                _filter == _MissionFilter.all
+                                    ? '${widget.repo.current.length} missions'
+                                    : '${_filteredMissions.length} of ${widget.repo.current.length} missions',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          );
+                          final actions = Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => _showFilterSheet(context),
+                                icon: const Icon(Icons.filter_list),
+                                label: Text(_filterLabel),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: _isAddingAtCenter
+                                    ? null
+                                    : _addAtVisibleCenter,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Add'),
+                              ),
+                            ],
+                          );
+
+                          if (constraints.maxWidth < 420) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                title,
+                                const SizedBox(height: 8.0),
+                                actions,
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(child: title),
+                              const SizedBox(width: 16.0),
+                              actions,
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 8.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final title = Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Missions',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        Text(
-                          _filter == _MissionFilter.all
-                              ? '${widget.repo.current.length} missions'
-                              : '${_filteredMissions.length} of ${widget.repo.current.length} missions',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    );
-                    final actions = Wrap(
-                      spacing: 8.0,
-                      runSpacing: 8.0,
-                      children: [
-                        TextButton.icon(
-                          onPressed: () => _showFilterSheet(context),
-                          icon: const Icon(Icons.filter_list),
-                          label: Text(_filterLabel),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: _isAddingAtCenter
-                              ? null
-                              : _addAtVisibleCenter,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add'),
-                        ),
-                      ],
-                    );
-
-                    if (constraints.maxWidth < 420) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [title, const SizedBox(height: 8.0), actions],
-                      );
-                    }
-
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(child: title),
-                        const SizedBox(width: 16.0),
-                        actions,
-                      ],
-                    );
-                  },
-                ),
-              ),
-              Expanded(child: _buildMissionList(context, controller)),
+              _buildMissionList(context),
             ],
           ),
         );

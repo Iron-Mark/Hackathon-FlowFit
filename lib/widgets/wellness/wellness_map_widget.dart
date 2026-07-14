@@ -591,13 +591,17 @@ class _WellnessMapWidgetState extends State<WellnessMapWidget> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  route.name,
-                  style: TextStyle(
-                    fontFamily: 'GeneralSans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : Colors.black,
+                Expanded(
+                  child: Text(
+                    route.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'GeneralSans',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? Colors.white : Colors.black,
+                    ),
                   ),
                 ),
                 Container(

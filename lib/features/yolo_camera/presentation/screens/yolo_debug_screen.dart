@@ -103,59 +103,84 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
         ),
         body: _hasError
             ? _buildErrorView()
-            : Column(
-                children: [
-                  // Control Panel
-                  _buildControlPanel(),
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  final minFullLayoutHeight = MediaQuery.textScalerOf(
+                    context,
+                  ).scale(480);
 
-                  // Camera/Detection View
-                  Expanded(
-                    child: Builder(
-                      builder: (context) {
-                        try {
-                          void handleDetection(List<DetectionResult> results) {
-                            debugPrint(
-                              '📊 YoloDebugScreen: Received ${results.length} detections',
-                            );
-                            if (mounted) {
-                              setState(() {
-                                _latestResults = results;
-                              });
-                            }
-                          }
+                  if (constraints.maxHeight < minFullLayoutHeight) {
+                    return SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // Control Panel
+                          _buildControlPanel(),
 
-                          final cameraBuilder = widget.cameraBuilder;
-                          if (cameraBuilder != null) {
-                            return cameraBuilder(
-                              context,
-                              _detectionMode,
-                              _cameraMode,
-                              handleDetection,
-                            );
-                          }
+                          // Camera/Detection View
+                          SizedBox(height: 240, child: _buildCameraView()),
 
-                          return YoloCameraWidget(
-                            detectionMode: _detectionMode,
-                            cameraMode: _cameraMode,
-                            onDetection: handleDetection,
-                          );
-                        } catch (e, stackTrace) {
-                          debugPrint(
-                            '💥 YoloDebugScreen: Error building camera widget: $e',
-                          );
-                          debugPrint('Stack trace: $stackTrace');
-                          _handleError('Camera error: $e');
-                          return _buildErrorView();
-                        }
-                      },
-                    ),
-                  ),
+                          // Results Panel
+                          _buildResultsPanel(),
+                        ],
+                      ),
+                    );
+                  }
 
-                  // Results Panel
-                  _buildResultsPanel(),
-                ],
+                  return Column(
+                    children: [
+                      // Control Panel
+                      _buildControlPanel(),
+
+                      // Camera/Detection View
+                      Expanded(child: _buildCameraView()),
+
+                      // Results Panel
+                      _buildResultsPanel(),
+                    ],
+                  );
+                },
               ),
       ),
+    );
+  }
+
+  Widget _buildCameraView() {
+    return Builder(
+      builder: (context) {
+        try {
+          void handleDetection(List<DetectionResult> results) {
+            debugPrint(
+              '📊 YoloDebugScreen: Received ${results.length} detections',
+            );
+            if (mounted) {
+              setState(() {
+                _latestResults = results;
+              });
+            }
+          }
+
+          final cameraBuilder = widget.cameraBuilder;
+          if (cameraBuilder != null) {
+            return cameraBuilder(
+              context,
+              _detectionMode,
+              _cameraMode,
+              handleDetection,
+            );
+          }
+
+          return YoloCameraWidget(
+            detectionMode: _detectionMode,
+            cameraMode: _cameraMode,
+            onDetection: handleDetection,
+          );
+        } catch (e, stackTrace) {
+          debugPrint('💥 YoloDebugScreen: Error building camera widget: $e');
+          debugPrint('Stack trace: $stackTrace');
+          _handleError('Camera error: $e');
+          return _buildErrorView();
+        }
+      },
     );
   }
 
@@ -318,7 +343,7 @@ class _YoloDebugScreenState extends State<YoloDebugScreen>
 
   Widget _buildResultsPanel() {
     return Container(
-      height: 120,
+      height: MediaQuery.textScalerOf(context).scale(120),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.black87,
