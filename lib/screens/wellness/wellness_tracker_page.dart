@@ -246,121 +246,124 @@ class _WellnessTrackerPageState extends ConsumerState<WellnessTrackerPage> {
 
     if (_errorMessage != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.error_outline,
+                    size: 64,
+                    color: Colors.red,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.red,
+                const SizedBox(height: 24),
+                const Text(
+                  'Connection Error',
+                  style: TextStyle(
+                    fontFamily: 'GeneralSans',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Connection Error',
-                style: TextStyle(
-                  fontFamily: 'GeneralSans',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: 12),
+                Text(
+                  _errorMessage!,
+                  style: TextStyle(
+                    fontFamily: 'GeneralSans',
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _errorMessage!,
-                style: TextStyle(
-                  fontFamily: 'GeneralSans',
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-              // Troubleshooting tips
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                // Troubleshooting tips
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Troubleshooting Tips:',
+                        style: TextStyle(
+                          fontFamily: 'GeneralSans',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTroubleshootingItem(
+                        'Check if your watch is connected',
+                      ),
+                      _buildTroubleshootingItem(
+                        'Ensure body sensors permission is granted',
+                      ),
+                      _buildTroubleshootingItem(
+                        'Try restarting the watch connection',
+                      ),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                const SizedBox(height: 24),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.center,
                   children: [
-                    const Text(
-                      'Troubleshooting Tips:',
-                      style: TextStyle(
-                        fontFamily: 'GeneralSans',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                       ),
+                      child: const Text('Go Back'),
                     ),
-                    const SizedBox(height: 12),
-                    _buildTroubleshootingItem(
-                      'Check if your watch is connected',
-                    ),
-                    _buildTroubleshootingItem(
-                      'Ensure body sensors permission is granted',
-                    ),
-                    _buildTroubleshootingItem(
-                      'Try restarting the watch connection',
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _errorMessage = null;
+                          _isInitializing = true;
+                        });
+                        _initializeMonitoring();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3B82F6),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Retry Connection'),
                     ),
                   ],
                 ),
-              ),
-
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text('Go Back'),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _errorMessage = null;
-                        _isInitializing = true;
-                      });
-                      _initializeMonitoring();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text('Retry Connection'),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );

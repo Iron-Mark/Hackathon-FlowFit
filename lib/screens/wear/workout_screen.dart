@@ -34,7 +34,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Center(
-        child: Container(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(isRound ? 20 : 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

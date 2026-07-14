@@ -232,7 +232,7 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
     final reversedData = _receivedData.reversed.toList();
     final latestData = reversedData.isNotEmpty ? reversedData.first : null;
 
-    return Column(
+    final content = Column(
       children: [
         // Test mode display
         if (_isTestMode) ...[_buildTestModeDisplay(), const Divider()],
@@ -265,6 +265,8 @@ class _PhoneHeartRateScreenState extends State<PhoneHeartRateScreen> {
           ),
       ],
     );
+
+    return _isTestMode ? SingleChildScrollView(child: content) : content;
   }
 
   Widget _buildLatestBpmCard(TrackedData data) {

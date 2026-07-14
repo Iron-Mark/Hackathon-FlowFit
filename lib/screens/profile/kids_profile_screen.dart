@@ -450,11 +450,15 @@ class KidsProfileScreen extends ConsumerWidget {
               color: Colors.grey,
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF314158),
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF314158),
+              ),
             ),
           ),
         ],

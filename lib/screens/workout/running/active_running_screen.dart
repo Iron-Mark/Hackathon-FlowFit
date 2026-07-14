@@ -351,19 +351,30 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
                     // Header with controls
                     _buildHeader(theme, session, isPaused),
 
-                    const Spacer(),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: SingleChildScrollView(
+                          reverse: true,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Activity mode badge (always show)
+                              _buildActivityModeBadge(viewModel),
 
-                    // Activity mode badge (always show)
-                    _buildActivityModeBadge(viewModel),
+                              // AI Metrics breakdown (show when detected)
+                              if (viewModel.currentActivity != null)
+                                _buildAIMetricsBreakdown(viewModel),
 
-                    // AI Metrics breakdown (show when detected)
-                    if (viewModel.currentActivity != null)
-                      _buildAIMetricsBreakdown(viewModel),
+                              const SizedBox(height: 16),
 
-                    const SizedBox(height: 16),
-
-                    // Bottom metrics panel
-                    _buildBottomMetricsPanel(theme, session),
+                              // Bottom metrics panel
+                              _buildBottomMetricsPanel(theme, session),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -811,29 +822,32 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
             ),
             const SizedBox(height: 10),
             // Value
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[900],
-                    height: 1.0,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[900],
+                      height: 1.0,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  unit,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(width: 3),
+                  Text(
+                    unit,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 4),
             // Label

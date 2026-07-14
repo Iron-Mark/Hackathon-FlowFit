@@ -43,6 +43,7 @@ void main() {
     await tester.pumpWidget(buildHarness());
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Get Started'));
     await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();
 
@@ -53,6 +54,7 @@ void main() {
     await tester.pumpWidget(buildHarness());
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('Log In'));
     await tester.tap(find.text('Log In'));
     await tester.pumpAndSettle();
 

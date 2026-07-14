@@ -85,7 +85,7 @@ class _RelaxScreenState extends State<RelaxScreen>
 
           // Content
           Center(
-            child: Container(
+            child: SingleChildScrollView(
               padding: EdgeInsets.all(isRound ? 20 : 16),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

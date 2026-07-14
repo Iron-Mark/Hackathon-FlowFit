@@ -9,68 +9,89 @@ class TrackScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4F8),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Time to Move!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3142),
-                  fontFamily: 'GeneralSans',
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'What do you want to do today?',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Color(0xFF9098A3)),
-              ),
-              const SizedBox(height: 28),
-              Expanded(
-                child: Center(
-                  child: SvgPicture.asset(
-                    'assets/flowy.svg',
-                    fit: BoxFit.contain,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Time to Move!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2D3142),
+                            fontFamily: 'GeneralSans',
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'What do you want to do today?',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFF9098A3),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        Expanded(
+                          child: Center(
+                            child: SvgPicture.asset(
+                              'assets/flowy.svg',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        _activityButton(
+                          context: context,
+                          title: 'AI Workout',
+                          subtitle:
+                              'Classify movement with phone or watch sensors',
+                          icon: Icons.fitness_center,
+                          color: const Color(0xFFFF6B6B),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/activity-classifier',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _activityButton(
+                          context: context,
+                          title: 'Take a Walk',
+                          subtitle: 'Explore the outdoors',
+                          icon: Icons.directions_walk,
+                          color: const Color(0xFF4ECDC4),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/workout/walking/options',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _activityButton(
+                          context: context,
+                          title: 'Log a Run',
+                          subtitle: 'Track your pace and progress',
+                          icon: Icons.directions_run,
+                          color: const Color(0xFF2D82E8),
+                          onTap: () => Navigator.pushNamed(
+                            context,
+                            '/workout/running/setup',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              _activityButton(
-                context: context,
-                title: 'AI Workout',
-                subtitle: 'Classify movement with phone or watch sensors',
-                icon: Icons.fitness_center,
-                color: const Color(0xFFFF6B6B),
-                onTap: () =>
-                    Navigator.pushNamed(context, '/activity-classifier'),
-              ),
-              const SizedBox(height: 12),
-              _activityButton(
-                context: context,
-                title: 'Take a Walk',
-                subtitle: 'Explore the outdoors',
-                icon: Icons.directions_walk,
-                color: const Color(0xFF4ECDC4),
-                onTap: () =>
-                    Navigator.pushNamed(context, '/workout/walking/options'),
-              ),
-              const SizedBox(height: 12),
-              _activityButton(
-                context: context,
-                title: 'Log a Run',
-                subtitle: 'Track your pace and progress',
-                icon: Icons.directions_run,
-                color: const Color(0xFF2D82E8),
-                onTap: () =>
-                    Navigator.pushNamed(context, '/workout/running/setup'),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

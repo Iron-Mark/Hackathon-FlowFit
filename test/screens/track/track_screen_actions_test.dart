@@ -19,6 +19,7 @@ void main() {
       ),
     );
 
+    await tester.ensureVisible(find.text('AI Workout'));
     await tester.tap(find.text('AI Workout'));
     await tester.pumpAndSettle();
 
@@ -40,6 +41,7 @@ void main() {
       ),
     );
 
+    await tester.ensureVisible(find.text('Take a Walk'));
     await tester.tap(find.text('Take a Walk'));
     await tester.pumpAndSettle();
 

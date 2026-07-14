@@ -123,7 +123,7 @@ class _SensorPermissionRationaleScreenState
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

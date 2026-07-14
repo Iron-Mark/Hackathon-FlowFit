@@ -20,6 +20,9 @@ void main() {
   ) async {
     await _pumpFlowFitAppAt(tester, '/welcome');
 
+    await tester.ensureVisible(
+      find.widgetWithText(ElevatedButton, 'Get Started'),
+    );
     await tester.tap(find.widgetWithText(ElevatedButton, 'Get Started'));
     await tester.pumpAndSettle();
 
