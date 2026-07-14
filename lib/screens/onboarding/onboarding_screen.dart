@@ -119,53 +119,71 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     itemCount: _pages.length,
                     itemBuilder: (context, index) {
                       final page = _pages[index];
-                      return Padding(
-                        padding: const EdgeInsets.all(40.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Icon
-                            Container(
-                              width: 140,
-                              height: 140,
-                              decoration: BoxDecoration(
-                                color: page['color'].withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            padding: const EdgeInsets.all(40.0),
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: (constraints.maxHeight - 80).clamp(
+                                  0.0,
+                                  double.infinity,
+                                ),
                               ),
-                              child: Icon(
-                                page['icon'],
-                                size: 70,
-                                color: page['color'],
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Icon
+                                  Container(
+                                    width: 140,
+                                    height: 140,
+                                    decoration: BoxDecoration(
+                                      color: page['color'].withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      page['icon'],
+                                      size: 70,
+                                      color: page['color'],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 48),
+
+                                  // Title
+                                  Text(
+                                    page['title'],
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.text,
+                                        ),
+                                    textAlign: TextAlign.center,
+                                  ),
+
+                                  const SizedBox(height: 16),
+
+                                  // Description
+                                  Text(
+                                    page['description'],
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: AppTheme.text.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                          height: 1.5,
+                                        ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
                             ),
-
-                            const SizedBox(height: 48),
-
-                            // Title
-                            Text(
-                              page['title'],
-                              style: Theme.of(context).textTheme.headlineMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.text,
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Description
-                            Text(
-                              page['description'],
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(
-                                    color: AppTheme.text.withValues(alpha: 0.7),
-                                    height: 1.5,
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
                   ),

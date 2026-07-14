@@ -93,29 +93,47 @@ class _BuddyColorSelectionScreenState
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-          child: Column(
-            children: [
-              // Subtask 6.1: Heading and subtitle
-              _buildHeader(),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 32.0,
+                    ),
+                    child: Column(
+                      children: [
+                        // Subtask 6.1: Heading and subtitle
+                        _buildHeader(),
 
-              const SizedBox(height: 48),
+                        const SizedBox(height: 48),
 
-              // Subtask 6.3: Central Buddy preview with color transition
-              Expanded(child: Center(child: _buildBuddyPreview(selectedColor))),
+                        // Subtask 6.3: Central Buddy preview with color transition
+                        Expanded(
+                          child: Center(
+                            child: _buildBuddyPreview(selectedColor),
+                          ),
+                        ),
 
-              const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-              // Subtask 6.2: Color options layout
-              _buildColorOptions(selectedColorKey),
+                        // Subtask 6.2: Color options layout
+                        _buildColorOptions(selectedColorKey),
 
-              const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-              // Subtask 6.5: Confirmation button
-              _buildConfirmationButton(selectedColorKey),
-            ],
-          ),
+                        // Subtask 6.5: Confirmation button
+                        _buildConfirmationButton(selectedColorKey),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -183,7 +201,7 @@ class _BuddyColorSelectionScreenState
         builder: (context, constraints) {
           final centerX = constraints.maxWidth / 2;
           const centerY = 140.0; // Half of height
-          const radius = 100.0; // Radius of the circular arrangement
+          const radius = 92.0; // Radius of the circular arrangement
 
           return Stack(
             children: colorOptions.entries.map((entry) {

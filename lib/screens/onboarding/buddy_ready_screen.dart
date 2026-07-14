@@ -356,11 +356,16 @@ class _BuddyReadyScreenState extends ConsumerState<BuddyReadyScreen>
                           size: 28,
                         ),
                         const SizedBox(width: 12),
-                        Text(
-                          '$buddyName gained +5.9 Compassion',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF314158),
+                        Flexible(
+                          child: Text(
+                            '$buddyName gained +5.9 Compassion',
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF314158),
+                            ),
                           ),
                         ),
                       ],

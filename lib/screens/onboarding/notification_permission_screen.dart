@@ -141,11 +141,15 @@ class _NotificationPermissionScreenState
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text(
-                          'From $buddyName • now',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF314158),
+                        Expanded(
+                          child: Text(
+                            'From $buddyName • now',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF314158),
+                            ),
                           ),
                         ),
                       ],

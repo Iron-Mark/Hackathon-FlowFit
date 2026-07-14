@@ -176,82 +176,96 @@ class _BuddyCompletionScreenState extends ConsumerState<BuddyCompletionScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Spacer(),
 
-              // Celebration emoji
-              Semantics(
-                label: 'Celebration',
-                child: const Text('🎉', style: TextStyle(fontSize: 64)),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Animated Buddy with celebration
-              Semantics(
-                label: '$buddyName celebrating with a jumping animation',
-                image: true,
-                child: BuddyCelebrationAnimation(
-                  child: BuddyCharacterWidget(color: buddyColor, size: 160),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Personalized message
-              Semantics(
-                header: true,
-                child: Text(
-                  '$buddyName is Ready!',
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF314158),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Motivational text
-              Semantics(
-                label:
-                    '$buddyName wants to play! Let\'s do your first challenge!',
-                child: Text(
-                  '$buddyName wants to play!\nLet\'s do your first challenge!',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              const Spacer(),
-
-              // Start mission button
-              _isLoading
-                  ? Semantics(
-                      label: 'Loading, please wait',
-                      child: const CircularProgressIndicator(),
-                    )
-                  : Semantics(
-                      button: true,
-                      label: 'Start first mission button',
-                      hint: 'Tap to begin your first challenge with $buddyName',
-                      child: OnboardingButton(
-                        label: 'START FIRST MISSION',
-                        onPressed: _handleStartMission,
-                        isPrimary: true,
+                      // Celebration emoji
+                      Semantics(
+                        label: 'Celebration',
+                        child: const Text('🎉', style: TextStyle(fontSize: 64)),
                       ),
-                    ),
 
-              const SizedBox(height: 16),
-            ],
+                      const SizedBox(height: 24),
+
+                      // Animated Buddy with celebration
+                      Semantics(
+                        label:
+                            '$buddyName celebrating with a jumping animation',
+                        image: true,
+                        child: BuddyCelebrationAnimation(
+                          child: BuddyCharacterWidget(
+                            color: buddyColor,
+                            size: 160,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Personalized message
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          '$buddyName is Ready!',
+                          style: theme.textTheme.displaySmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF314158),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Motivational text
+                      Semantics(
+                        label:
+                            '$buddyName wants to play! Let\'s do your first challenge!',
+                        child: Text(
+                          '$buddyName wants to play!\nLet\'s do your first challenge!',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.grey[600],
+                            height: 1.4,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+
+                      const Spacer(),
+
+                      // Start mission button
+                      _isLoading
+                          ? Semantics(
+                              label: 'Loading, please wait',
+                              child: const CircularProgressIndicator(),
+                            )
+                          : Semantics(
+                              button: true,
+                              label: 'Start first mission button',
+                              hint:
+                                  'Tap to begin your first challenge with $buddyName',
+                              child: OnboardingButton(
+                                label: 'START FIRST MISSION',
+                                onPressed: _handleStartMission,
+                                isPrimary: true,
+                              ),
+                            ),
+
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

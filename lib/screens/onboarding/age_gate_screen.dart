@@ -30,93 +30,108 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 40),
 
-              // Title
-              Text(
-                'Welcome to FlowFit!',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryBlue,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 16),
-
-              Text(
-                "Let's personalize your experience",
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: AppTheme.text,
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 48),
-
-              // Kids Option
-              _buildAgeCard(
-                context,
-                title: "I'm 7-12 years old",
-                subtitle: 'Fun whale-themed experience',
-                icon: Icons.child_care,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF4ECDC4), Color(0xFF44A08D)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                onTap: () => _onAgeSelected('kids'),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Teen/Adult Option
-              _buildAgeCard(
-                context,
-                title: "I'm 13 or older",
-                subtitle: 'Comprehensive fitness tracking',
-                icon: Icons.person,
-                gradient: const LinearGradient(
-                  colors: [AppTheme.primaryBlue, Color(0xFF667EEA)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                onTap: () => _onAgeSelected('adult'),
-              ),
-
-              const Spacer(),
-
-              // Privacy Note
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.lock_outline, size: 20, color: Colors.grey[600]),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Your privacy matters. We follow strict data protection standards.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[700],
+                        // Title
+                        Text(
+                          'Welcome to FlowFit!',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryBlue,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                      ),
+
+                        const SizedBox(height: 16),
+
+                        Text(
+                          "Let's personalize your experience",
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: AppTheme.text,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+
+                        const SizedBox(height: 48),
+
+                        // Kids Option
+                        _buildAgeCard(
+                          context,
+                          title: "I'm 7-12 years old",
+                          subtitle: 'Fun whale-themed experience',
+                          icon: Icons.child_care,
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF4ECDC4), Color(0xFF44A08D)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          onTap: () => _onAgeSelected('kids'),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Teen/Adult Option
+                        _buildAgeCard(
+                          context,
+                          title: "I'm 13 or older",
+                          subtitle: 'Comprehensive fitness tracking',
+                          icon: Icons.person,
+                          gradient: const LinearGradient(
+                            colors: [AppTheme.primaryBlue, Color(0xFF667EEA)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          onTap: () => _onAgeSelected('adult'),
+                        ),
+
+                        const Spacer(),
+
+                        // Privacy Note
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.lock_outline,
+                                size: 20,
+                                color: Colors.grey[600],
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Your privacy matters. We follow strict data protection standards.',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-
-              const SizedBox(height: 24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

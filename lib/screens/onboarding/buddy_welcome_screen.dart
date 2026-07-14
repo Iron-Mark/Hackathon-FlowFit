@@ -25,89 +25,103 @@ class BuddyWelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD), // FlowFit light gray
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              // FlowFit logo in header (subtle)
-              Semantics(
-                header: true,
-                label: 'FlowFit',
-                child: Align(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    'FlowFit',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: const Color(0xFF3B82F6), // Primary Blue
-                      fontWeight: FontWeight.bold,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      children: [
+                        // FlowFit logo in header (subtle)
+                        Semantics(
+                          header: true,
+                          label: 'FlowFit',
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              'FlowFit',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: const Color(0xFF3B82F6), // Primary Blue
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        // Animated Buddy character in Ocean Blue
+                        Semantics(
+                          label:
+                              'Animated Buddy character in ocean blue color, gently bobbing',
+                          image: true,
+                          child: const BuddyIdleAnimation(
+                            child: BuddyCharacterWidget(
+                              color: Color(0xFF4ECDC4), // Ocean Blue
+                              size: 200,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Large heading "Meet Your Fitness Buddy!"
+                        Semantics(
+                          header: true,
+                          child: Text(
+                            'Meet Your\nFitness Buddy!',
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(
+                                0xFF314158,
+                              ), // FlowFit text color
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Friendly whale tagline
+                        Semantics(
+                          label:
+                              'Your new whale companion will help you stay active and have fun!',
+                          child: Text(
+                            'Your new whale companion will help you\nstay active and have fun! 🐋',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+
+                        const Spacer(),
+
+                        // Primary button "LET'S GO!"
+                        Semantics(
+                          button: true,
+                          label:
+                              'Let\'s go button. Tap to start meeting your Buddy',
+                          child: OnboardingButton(
+                            label: 'LET\'S GO!',
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/buddy-intro');
+                            },
+                            isPrimary: true,
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+                      ],
                     ),
                   ),
                 ),
               ),
-
-              const Spacer(),
-
-              // Animated Buddy character in Ocean Blue
-              Semantics(
-                label:
-                    'Animated Buddy character in ocean blue color, gently bobbing',
-                image: true,
-                child: const BuddyIdleAnimation(
-                  child: BuddyCharacterWidget(
-                    color: Color(0xFF4ECDC4), // Ocean Blue
-                    size: 200,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Large heading "Meet Your Fitness Buddy!"
-              Semantics(
-                header: true,
-                child: Text(
-                  'Meet Your\nFitness Buddy!',
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF314158), // FlowFit text color
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Friendly whale tagline
-              Semantics(
-                label:
-                    'Your new whale companion will help you stay active and have fun!',
-                child: Text(
-                  'Your new whale companion will help you\nstay active and have fun! 🐋',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              const Spacer(),
-
-              // Primary button "LET'S GO!"
-              Semantics(
-                button: true,
-                label: 'Let\'s go button. Tap to start meeting your Buddy',
-                child: OnboardingButton(
-                  label: 'LET\'S GO!',
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/buddy-intro');
-                  },
-                  isPrimary: true,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
