@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/wellness_state.dart';
-import '../../providers/wellness_state_provider.dart';
+import 'package:flowfit/models/wellness_state.dart';
+import 'package:flowfit/providers/wellness_state_provider.dart';
 
 /// Debug panel for testing wellness tracker functionality
 class WellnessDebugPanel extends ConsumerStatefulWidget {

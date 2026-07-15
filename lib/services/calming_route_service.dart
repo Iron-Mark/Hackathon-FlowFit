@@ -1,7 +1,8 @@
 import 'dart:math';
 import 'package:latlong2/latlong.dart';
-import '../models/walking_route.dart';
-import 'openroute_service.dart' show OpenRouteService, POI;
+import 'package:flowfit/models/walking_route.dart';
+import 'package:flowfit/services/openroute_service.dart'
+    show OpenRouteService, POI;
 
 /// Service for generating calming walking routes
 class CalmingRouteService {

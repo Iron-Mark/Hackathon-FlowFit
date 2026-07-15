@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart' as maplat;
-import '../../domain/geofence_mission.dart';
+import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
 
 class PlaceModeOverlay extends StatelessWidget {
   final bool visible;

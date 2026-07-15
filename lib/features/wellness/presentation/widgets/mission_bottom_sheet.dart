@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:latlong2/latlong.dart' as maplat;
-import '../../domain/geofence_mission.dart';
-import '../../data/geofence_repository.dart';
-import '../../services/geofence_service.dart';
+import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
+import 'package:flowfit/features/wellness/data/geofence_repository.dart';
+import 'package:flowfit/features/wellness/services/geofence_service.dart';
 // map_components not required here; map markers created at map level
 
 enum _MissionFilter { all, active, target, sanctuary, safetyNet }

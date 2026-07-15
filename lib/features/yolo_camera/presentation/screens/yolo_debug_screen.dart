@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../presentation/widgets/yolo_camera_widget.dart';
-import '../../domain/entities/detection_result.dart';
+import 'package:flowfit/features/yolo_camera/presentation/widgets/yolo_camera_widget.dart';
+import 'package:flowfit/features/yolo_camera/domain/entities/detection_result.dart';
 
 typedef YoloDebugCameraBuilder =
     Widget Function(

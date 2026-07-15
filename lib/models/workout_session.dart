@@ -1,7 +1,7 @@
-import 'mood_rating.dart';
-import 'resistance_session.dart';
-import 'running_session.dart';
-import 'walking_session.dart';
+import 'package:flowfit/models/mood_rating.dart';
+import 'package:flowfit/models/resistance_session.dart';
+import 'package:flowfit/models/running_session.dart';
+import 'package:flowfit/models/walking_session.dart';
 
 /// Workout type enumeration
 enum WorkoutType {

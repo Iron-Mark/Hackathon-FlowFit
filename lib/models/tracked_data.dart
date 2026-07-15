@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'sensor_status.dart';
+import 'package:flowfit/models/sensor_status.dart';
 
 /// Enhanced TrackedData model matching Kotlin implementation
 /// Includes HR, IBI, HRV, and SPO2 data

@@ -134,11 +134,15 @@ void main() {
 
     expect(
       splitSelection,
-      contains("import '../../../providers/resistance_session_provider.dart';"),
+      contains(
+        "import 'package:flowfit/providers/resistance_session_provider.dart';",
+      ),
     );
     expect(
       splitSelection,
-      contains("import '../../../providers/workout_flow_provider.dart';"),
+      contains(
+        "import 'package:flowfit/providers/workout_flow_provider.dart';",
+      ),
     );
     expect(splitSelection, contains('.startSession('));
     expect(splitSelection, contains('split: selectedSplit'));

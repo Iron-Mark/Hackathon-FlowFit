@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import '../../domain/entities/user_profile.dart';
-import '../../domain/repositories/i_profile_repository.dart';
-import '../../core/utils/height_measurements.dart';
-import '../../domain/exceptions/auth_exceptions.dart';
+import 'package:flowfit/domain/entities/user_profile.dart';
+import 'package:flowfit/domain/repositories/i_profile_repository.dart';
+import 'package:flowfit/core/utils/height_measurements.dart';
+import 'package:flowfit/domain/exceptions/auth_exceptions.dart';
 
 /// State class for survey data and progress.
 class SurveyState {

@@ -6,11 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../domain/entities/user_profile.dart';
-import '../../domain/repositories/profile_repository.dart';
-import '../../exceptions/profile_exceptions.dart';
-import '../../config/supabase_tables.dart';
-import '../../utils/logger.dart';
+import 'package:flowfit/core/domain/entities/user_profile.dart';
+import 'package:flowfit/core/domain/repositories/profile_repository.dart';
+import 'package:flowfit/core/exceptions/profile_exceptions.dart';
+import 'package:flowfit/core/config/supabase_tables.dart';
+import 'package:flowfit/core/utils/logger.dart';
 
 /// Implementation of ProfileRepository with local and backend storage
 ///

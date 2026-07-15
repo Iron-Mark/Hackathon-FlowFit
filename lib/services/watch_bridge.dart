@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:logger/logger.dart';
-import '../models/heart_rate_data.dart';
-import '../models/permission_status.dart';
-import '../models/sensor_error.dart';
-import '../models/sensor_error_code.dart';
-import '../models/connection_state.dart' as conn;
+import 'package:flowfit/models/heart_rate_data.dart';
+import 'package:flowfit/models/permission_status.dart';
+import 'package:flowfit/models/sensor_error.dart';
+import 'package:flowfit/models/sensor_error_code.dart';
+import 'package:flowfit/models/connection_state.dart' as conn;
 
 /// Service for managing communication with Samsung Health Sensor API
 /// via native Android code through Method Channel

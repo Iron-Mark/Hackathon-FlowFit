@@ -3,9 +3,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../services/local_account_data_cleanup.dart';
-import '../../../theme/app_theme.dart';
-import '../../../utils/deep_link_handler.dart';
+import 'package:flowfit/services/local_account_data_cleanup.dart';
+import 'package:flowfit/theme/app_theme.dart';
+import 'package:flowfit/utils/deep_link_handler.dart';
 
 typedef DeleteAccountAction = Future<void> Function({required String password});
 

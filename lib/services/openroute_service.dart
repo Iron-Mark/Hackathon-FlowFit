@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import '../core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 
 /// Service for OpenRouteService API integration
 class OpenRouteService {

@@ -1,8 +1,8 @@
 import 'package:logger/logger.dart';
-import '../domain/activity.dart';
-import '../domain/classify_activity_usecase.dart';
-import '../platform/tflite_activity_classifier.dart';
-import 'activity_dto.dart';
+import 'package:flowfit/features/activity_classifier/domain/activity.dart';
+import 'package:flowfit/features/activity_classifier/domain/classify_activity_usecase.dart';
+import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
+import 'package:flowfit/features/activity_classifier/data/activity_dto.dart';
 
 /// Concrete implementation of ActivityClassifierRepository
 /// Wraps TFLite platform layer and maps to domain models

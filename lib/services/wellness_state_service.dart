@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import '../models/wellness_state.dart';
-import '../models/heart_rate_data.dart';
-import '../models/sensor_batch.dart';
-import 'phone_data_listener.dart';
+import 'package:flowfit/models/wellness_state.dart';
+import 'package:flowfit/models/heart_rate_data.dart';
+import 'package:flowfit/models/sensor_batch.dart';
+import 'package:flowfit/services/phone_data_listener.dart';
 
 /// Service for detecting wellness state from biometric data
 ///

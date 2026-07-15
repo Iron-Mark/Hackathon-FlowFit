@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../models/sensor_batch.dart';
-import 'phone_data_listener.dart';
-import 'step_detector.dart';
+import 'package:flowfit/models/sensor_batch.dart';
+import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/services/step_detector.dart';
 
 /// Service for counting steps using accelerometer data
 ///

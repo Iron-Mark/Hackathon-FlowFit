@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
-import '../domain/geofence_mission.dart';
-import 'notification_service.dart';
-import '../data/geofence_repository.dart';
+import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
+import 'package:flowfit/features/wellness/services/notification_service.dart';
+import 'package:flowfit/features/wellness/data/geofence_repository.dart';
 
 enum GeofenceEventType { entered, exited, targetReached, outsideAlert }
 

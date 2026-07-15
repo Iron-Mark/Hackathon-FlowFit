@@ -1,4 +1,4 @@
-import '../../domain/entities/user_profile.dart';
+import 'package:flowfit/domain/entities/user_profile.dart';
 
 /// Data model for UserProfile that maps to/from Supabase Database.
 /// Handles JSON serialization for database operations.

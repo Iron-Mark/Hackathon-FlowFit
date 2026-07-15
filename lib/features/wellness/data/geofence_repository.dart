@@ -1,6 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/foundation.dart';
-import '../domain/geofence_mission.dart';
+import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
 
 abstract class GeofenceRepository extends ChangeNotifier {
   Future<List<GeofenceMission>> getAll();

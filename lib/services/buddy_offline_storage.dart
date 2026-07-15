@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/buddy_onboarding_state.dart';
-import '../models/buddy_profile.dart';
+import 'package:flowfit/models/buddy_onboarding_state.dart';
+import 'package:flowfit/models/buddy_profile.dart';
 
 /// Service for offline storage of Buddy onboarding data
 ///

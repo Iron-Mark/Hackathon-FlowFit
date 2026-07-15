@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 
 /// Handles deep link authentication callbacks from Supabase
 class DeepLinkHandler {

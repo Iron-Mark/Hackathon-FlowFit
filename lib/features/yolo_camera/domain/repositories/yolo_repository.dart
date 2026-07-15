@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
-import '../entities/detection_result.dart';
+import 'package:flowfit/features/yolo_camera/domain/entities/detection_result.dart';
 
 abstract class YoloRepository {
   Future<void> initObjectDetector();

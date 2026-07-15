@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
-import '../models/heart_rate_data.dart';
-import '../models/sensor_batch.dart';
-import '../models/sensor_error.dart';
-import '../models/sensor_error_code.dart';
+import 'package:flowfit/models/heart_rate_data.dart';
+import 'package:flowfit/models/sensor_batch.dart';
+import 'package:flowfit/models/sensor_error.dart';
+import 'package:flowfit/models/sensor_error_code.dart';
 import 'package:logger/logger.dart';
 
 /// Service for receiving heart rate data from Galaxy Watch

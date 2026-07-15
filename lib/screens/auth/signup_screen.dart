@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../theme/app_theme.dart';
-import '../../presentation/providers/providers.dart';
-import '../../domain/entities/auth_state.dart';
+import 'package:flowfit/theme/app_theme.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/domain/entities/auth_state.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});

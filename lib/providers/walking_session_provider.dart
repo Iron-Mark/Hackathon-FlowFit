@@ -2,16 +2,16 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:uuid/uuid.dart';
-import '../models/walking_session.dart';
-import '../models/mood_rating.dart';
-import '../models/mission.dart';
-import '../models/workout_session.dart';
-import '../services/gps_tracking_service.dart';
-import '../services/timer_service.dart';
-import '../services/heart_rate_service.dart';
-import '../services/calorie_calculator_service.dart';
-import '../services/workout_session_service.dart';
-import 'running_session_provider.dart';
+import 'package:flowfit/models/walking_session.dart';
+import 'package:flowfit/models/mood_rating.dart';
+import 'package:flowfit/models/mission.dart';
+import 'package:flowfit/models/workout_session.dart';
+import 'package:flowfit/services/gps_tracking_service.dart';
+import 'package:flowfit/services/timer_service.dart';
+import 'package:flowfit/services/heart_rate_service.dart';
+import 'package:flowfit/services/calorie_calculator_service.dart';
+import 'package:flowfit/services/workout_session_service.dart';
+import 'package:flowfit/providers/running_session_provider.dart';
 
 /// Provider for managing walking workout sessions
 class WalkingSessionNotifier extends StateNotifier<WalkingSession?> {

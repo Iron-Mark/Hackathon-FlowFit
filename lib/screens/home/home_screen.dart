@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../widgets/flowy_companion.dart';
-import '../../services/phone_data_listener.dart';
-import '../../models/heart_rate_data.dart';
-import '../health/health_screen.dart';
+import 'package:flowfit/widgets/flowy_companion.dart';
+import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/models/heart_rate_data.dart';
+import 'package:flowfit/screens/health/health_screen.dart';
 
 // Home Screen - Redesigned for beginners with Flowy companion
 // Features: AI movement tracking, water/food reminders, beginner guidance

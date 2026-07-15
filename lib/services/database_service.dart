@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import '../models/tracked_data.dart';
+import 'package:flowfit/models/tracked_data.dart';
 
 abstract class HeartRateDataStore {
   Future<void> insertHeartRateDataBatch(List<TrackedData> dataList);

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../models/buddy_profile.dart';
-import '../../widgets/buddy_character_widget.dart';
-import '../../widgets/buddy_idle_animation.dart';
+import 'package:flowfit/models/buddy_profile.dart';
+import 'package:flowfit/widgets/buddy_character_widget.dart';
+import 'package:flowfit/widgets/buddy_idle_animation.dart';
 
 /// Buddy Profile Card Widget
 ///

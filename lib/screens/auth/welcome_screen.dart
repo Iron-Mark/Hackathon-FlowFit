@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../theme/app_theme.dart';
-import '../../presentation/providers/providers.dart';
+import 'package:flowfit/theme/app_theme.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});

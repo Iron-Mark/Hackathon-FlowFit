@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../models/wellness_state.dart';
+import 'package:flowfit/models/wellness_state.dart';
 
 /// Card displaying current wellness state
 class WellnessStateCard extends StatefulWidget {

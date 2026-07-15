@@ -1,4 +1,4 @@
-import 'wellness_state.dart';
+import 'package:flowfit/models/wellness_state.dart';
 
 /// State transition model for tracking wellness state changes
 class StateTransition {

@@ -1,6 +1,6 @@
-import 'workout_session.dart';
-import 'mood_rating.dart';
-import 'exercise_progress.dart';
+import 'package:flowfit/models/workout_session.dart';
+import 'package:flowfit/models/mood_rating.dart';
+import 'package:flowfit/models/exercise_progress.dart';
 
 /// Body split enumeration
 enum BodySplit {

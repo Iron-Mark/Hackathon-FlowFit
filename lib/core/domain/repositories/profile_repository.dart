@@ -1,4 +1,4 @@
-import '../entities/user_profile.dart';
+import 'package:flowfit/core/domain/entities/user_profile.dart';
 
 /// Sync status for profile data
 enum SyncStatus {

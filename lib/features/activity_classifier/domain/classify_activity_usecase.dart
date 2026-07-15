@@ -1,4 +1,4 @@
-import '../domain/activity.dart';
+import 'package:flowfit/features/activity_classifier/domain/activity.dart';
 
 /// Use case: Classify sensor buffer into an activity type
 /// Pure business logic, no platform dependencies

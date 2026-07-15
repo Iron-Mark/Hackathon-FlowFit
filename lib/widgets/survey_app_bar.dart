@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import 'package:flowfit/theme/app_theme.dart';
 
 class SurveyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int currentStep;

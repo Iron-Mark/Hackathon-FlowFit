@@ -1,4 +1,4 @@
-import 'sensor_error_code.dart';
+import 'package:flowfit/models/sensor_error_code.dart';
 
 class SensorError {
   final SensorErrorCode code;

@@ -1,15 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../domain/repositories/i_auth_repository.dart';
-import '../../domain/repositories/i_profile_repository.dart';
-import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/profile_repository.dart';
-import '../notifiers/auth_notifier.dart';
-import '../notifiers/survey_notifier.dart';
-import '../../domain/entities/auth_state.dart' as domain;
+import 'package:flowfit/domain/repositories/i_auth_repository.dart';
+import 'package:flowfit/domain/repositories/i_profile_repository.dart';
+import 'package:flowfit/data/repositories/auth_repository.dart';
+import 'package:flowfit/data/repositories/profile_repository.dart';
+import 'package:flowfit/presentation/notifiers/auth_notifier.dart';
+import 'package:flowfit/presentation/notifiers/survey_notifier.dart';
+import 'package:flowfit/domain/entities/auth_state.dart' as domain;
 
 // Export profile providers from dedicated file
-export 'profile_providers.dart';
+export 'package:flowfit/presentation/providers/profile_providers.dart';
 
 /// Provider for Supabase client instance.
 ///

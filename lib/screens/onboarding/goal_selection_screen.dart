@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/buddy_onboarding_provider.dart';
-import '../../widgets/buddy_character_widget.dart';
-import '../../widgets/buddy_idle_animation.dart';
-import '../../widgets/onboarding_button.dart';
-import '../../theme/app_theme.dart';
+import 'package:flowfit/providers/buddy_onboarding_provider.dart';
+import 'package:flowfit/widgets/buddy_character_widget.dart';
+import 'package:flowfit/widgets/buddy_idle_animation.dart';
+import 'package:flowfit/widgets/onboarding_button.dart';
+import 'package:flowfit/theme/app_theme.dart';
 
 /// Wellness Goal Selection Screen - Step 7 of 9
 ///

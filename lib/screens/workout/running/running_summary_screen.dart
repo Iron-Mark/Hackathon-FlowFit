@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../core/config/flowfit_runtime_config.dart';
-import '../../../widgets/mood_transformation_card.dart';
-import '../../../providers/running_session_provider.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/widgets/mood_transformation_card.dart';
+import 'package:flowfit/providers/running_session_provider.dart';
 
 /// Running summary screen with mood transformation, metrics, and map
 /// Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7, 14.5

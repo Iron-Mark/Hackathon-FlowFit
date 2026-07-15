@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'wellness_state_service.dart';
-import '../models/wellness_state.dart';
+import 'package:flowfit/services/wellness_state_service.dart';
+import 'package:flowfit/models/wellness_state.dart';
 
 /// Background service for wellness monitoring lifecycle management
 ///

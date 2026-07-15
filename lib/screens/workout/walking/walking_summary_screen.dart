@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
-import '../../../core/config/flowfit_runtime_config.dart';
-import '../../../widgets/mood_transformation_card.dart';
-import '../../../models/walking_session.dart';
-import '../../../models/mission.dart';
-import '../../../providers/walking_session_provider.dart';
-import '../../../providers/running_session_provider.dart'; // For workoutSessionServiceProvider
-import 'mission_creation_screen.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/widgets/mood_transformation_card.dart';
+import 'package:flowfit/models/walking_session.dart';
+import 'package:flowfit/models/mission.dart';
+import 'package:flowfit/providers/walking_session_provider.dart';
+import 'package:flowfit/providers/running_session_provider.dart'; // For workoutSessionServiceProvider
+import 'package:flowfit/screens/workout/walking/mission_creation_screen.dart';
 
 /// Walking summary screen with mood transformation, metrics, and map
 /// Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.7

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../widgets/buddy_character_widget.dart';
-import '../../widgets/buddy_celebration_animation.dart';
+import 'package:flowfit/widgets/buddy_character_widget.dart';
+import 'package:flowfit/widgets/buddy_celebration_animation.dart';
 
 /// Buddy Hatch Screen - Step 3 of 8
 ///

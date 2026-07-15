@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:uuid/uuid.dart';
-import '../../../core/config/flowfit_runtime_config.dart';
-import '../../../models/mission.dart';
-import '../../../models/mood_rating.dart';
-import '../../../models/walking_session.dart';
-import '../../../providers/walking_session_provider.dart';
-import '../../../providers/running_session_provider.dart'; // For gpsTrackingServiceProvider
-import 'active_walking_screen.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/models/mission.dart';
+import 'package:flowfit/models/mood_rating.dart';
+import 'package:flowfit/models/walking_session.dart';
+import 'package:flowfit/providers/walking_session_provider.dart';
+import 'package:flowfit/providers/running_session_provider.dart'; // For gpsTrackingServiceProvider
+import 'package:flowfit/screens/workout/walking/active_walking_screen.dart';
 
 /// Mission creation screen with map and mission configuration
 /// Requirements: 6.3, 6.5

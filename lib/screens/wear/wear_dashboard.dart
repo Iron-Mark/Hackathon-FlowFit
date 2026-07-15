@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:wear_plus/wear_plus.dart';
-import 'relax_screen.dart';
-import 'wear_heart_rate_screen.dart';
-import 'workout_screen.dart';
+import 'package:flowfit/screens/wear/relax_screen.dart';
+import 'package:flowfit/screens/wear/wear_heart_rate_screen.dart';
+import 'package:flowfit/screens/wear/workout_screen.dart';
 
 class WearDashboard extends StatelessWidget {
   final WearShape shape;

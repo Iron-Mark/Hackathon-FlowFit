@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
-import '../domain/activity.dart';
-import '../domain/classify_activity_usecase.dart';
+import 'package:flowfit/features/activity_classifier/domain/activity.dart';
+import 'package:flowfit/features/activity_classifier/domain/classify_activity_usecase.dart';
 
 /// ChangeNotifier for activity classification state management
 class ActivityClassifierViewModel with ChangeNotifier {

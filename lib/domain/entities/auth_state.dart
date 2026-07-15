@@ -1,4 +1,4 @@
-import 'user.dart';
+import 'package:flowfit/domain/entities/user.dart';
 
 /// Enum representing the authentication status.
 enum AuthStatus { authenticated, unauthenticated, loading }

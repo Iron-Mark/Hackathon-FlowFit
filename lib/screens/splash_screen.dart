@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../presentation/providers/providers.dart';
-import '../domain/entities/auth_state.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/domain/entities/auth_state.dart';
 
 typedef SplashRouteResolver = Future<SplashRoute> Function(WidgetRef ref);
 

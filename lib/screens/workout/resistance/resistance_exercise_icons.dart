@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/exercise_progress.dart';
+import 'package:flowfit/models/exercise_progress.dart';
 
 IconData resistanceExerciseIcon(ExerciseProgress exercise) {
   final name = exercise.exerciseName.toLowerCase();

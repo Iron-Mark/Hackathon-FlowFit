@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../domain/entities/user_profile.dart';
-import '../../domain/exceptions/auth_exceptions.dart' as domain_exceptions;
-import '../../domain/repositories/i_profile_repository.dart';
-import '../../core/config/supabase_tables.dart';
-import '../models/user_profile_model.dart';
-import '../../core/utils/error_logger.dart';
+import 'package:flowfit/domain/entities/user_profile.dart';
+import 'package:flowfit/domain/exceptions/auth_exceptions.dart'
+    as domain_exceptions;
+import 'package:flowfit/domain/repositories/i_profile_repository.dart';
+import 'package:flowfit/core/config/supabase_tables.dart';
+import 'package:flowfit/data/models/user_profile_model.dart';
+import 'package:flowfit/core/utils/error_logger.dart';
 
 /// Implementation of IProfileRepository that uses Supabase as the backend.
 /// Handles profile CRUD operations with retry logic for reliability.

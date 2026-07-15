@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/wellness_state_provider.dart';
+import 'package:flowfit/providers/wellness_state_provider.dart';
 
 /// Settings screen for wellness tracker privacy and preferences
 class WellnessSettingsScreen extends ConsumerStatefulWidget {

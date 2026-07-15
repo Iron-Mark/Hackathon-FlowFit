@@ -1,7 +1,7 @@
 import 'package:latlong2/latlong.dart';
-import 'workout_session.dart';
-import 'mood_rating.dart';
-import 'activity_mode_detection.dart';
+import 'package:flowfit/models/workout_session.dart';
+import 'package:flowfit/models/mood_rating.dart';
+import 'package:flowfit/models/activity_mode_detection.dart';
 
 /// Goal type for running workouts
 enum GoalType {

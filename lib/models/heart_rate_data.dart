@@ -1,4 +1,4 @@
-import 'sensor_status.dart';
+import 'package:flowfit/models/sensor_status.dart';
 
 class HeartRateData {
   final int? bpm; // Nullable since it might not be available during measurement
