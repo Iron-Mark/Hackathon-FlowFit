@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../../models/running_session.dart';
-import '../../../providers/running_session_provider.dart';
-import '../../../providers/workout_flow_provider.dart';
+import 'package:flowfit/models/running_session.dart';
+import 'package:flowfit/providers/running_session_provider.dart';
+import 'package:flowfit/providers/workout_flow_provider.dart';
 
 /// Running setup screen with goal selection and target controls.
 class RunningSetupScreen extends ConsumerStatefulWidget {

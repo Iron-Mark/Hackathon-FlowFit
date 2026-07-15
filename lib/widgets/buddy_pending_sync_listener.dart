@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../providers/buddy_onboarding_provider.dart';
+import 'package:flowfit/providers/buddy_onboarding_provider.dart';
 
 final buddyPendingSyncUserIdProvider = Provider.autoDispose<String?>((ref) {
   return Supabase.instance.client.auth.currentUser?.id;

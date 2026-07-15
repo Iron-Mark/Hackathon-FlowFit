@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../theme/app_theme.dart';
-import '../../presentation/providers/providers.dart';
-import '../../presentation/providers/profile_providers.dart'
+import 'package:flowfit/theme/app_theme.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/presentation/providers/profile_providers.dart'
     as profile_providers;
-import '../../widgets/survey_app_bar.dart';
-import '../../core/domain/entities/user_profile.dart';
-import '../../core/utils/height_measurements.dart';
+import 'package:flowfit/widgets/survey_app_bar.dart';
+import 'package:flowfit/core/domain/entities/user_profile.dart';
+import 'package:flowfit/core/utils/height_measurements.dart';
 
 class SurveyDailyTargetsScreen extends ConsumerStatefulWidget {
   const SurveyDailyTargetsScreen({super.key});

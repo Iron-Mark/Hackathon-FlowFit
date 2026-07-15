@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../presentation/providers/providers.dart';
-import '../../core/domain/entities/user_profile.dart';
-import '../../models/buddy_profile.dart';
-import '../../providers/buddy_profile_provider.dart';
-import 'buddy_profile_card.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/core/domain/entities/user_profile.dart';
+import 'package:flowfit/models/buddy_profile.dart';
+import 'package:flowfit/providers/buddy_profile_provider.dart';
+import 'package:flowfit/screens/profile/buddy_profile_card.dart';
 
 /// Kids Profile Screen - Kid-friendly profile with Buddy companion
 class KidsProfileScreen extends ConsumerWidget {

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/auth_state.dart';
-import '../../domain/repositories/i_auth_repository.dart';
-import '../../domain/exceptions/auth_exceptions.dart';
+import 'package:flowfit/domain/entities/auth_state.dart';
+import 'package:flowfit/domain/repositories/i_auth_repository.dart';
+import 'package:flowfit/domain/exceptions/auth_exceptions.dart';
 
 /// StateNotifier for managing authentication state.
 ///

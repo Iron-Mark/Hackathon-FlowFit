@@ -1,12 +1,12 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/buddy_onboarding_provider.dart';
-import '../../widgets/buddy_character_widget.dart';
-import '../../widgets/buddy_egg_widget.dart';
-import '../../widgets/buddy_idle_animation.dart';
-import '../../widgets/onboarding_button.dart';
-import '../../theme/app_theme.dart';
+import 'package:flowfit/providers/buddy_onboarding_provider.dart';
+import 'package:flowfit/widgets/buddy_character_widget.dart';
+import 'package:flowfit/widgets/buddy_egg_widget.dart';
+import 'package:flowfit/widgets/buddy_idle_animation.dart';
+import 'package:flowfit/widgets/onboarding_button.dart';
+import 'package:flowfit/theme/app_theme.dart';
 
 /// Screen for selecting Buddy's starting color via egg selection - Step 4 of 8
 ///

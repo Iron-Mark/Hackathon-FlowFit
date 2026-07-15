@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../models/walking_session.dart';
-import '../../../models/workout_session.dart';
-import '../../../providers/walking_session_provider.dart';
+import 'package:flowfit/models/walking_session.dart';
+import 'package:flowfit/models/workout_session.dart';
+import 'package:flowfit/providers/walking_session_provider.dart';
 
 /// Active walking session screen with live metrics and session controls.
 class ActiveWalkingScreen extends ConsumerStatefulWidget {

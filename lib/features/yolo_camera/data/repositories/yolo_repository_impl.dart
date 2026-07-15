@@ -2,8 +2,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ultralytics_yolo/yolo.dart';
 import 'package:image/image.dart' as img;
-import '../../domain/entities/detection_result.dart';
-import '../../domain/repositories/yolo_repository.dart';
+import 'package:flowfit/features/yolo_camera/domain/entities/detection_result.dart';
+import 'package:flowfit/features/yolo_camera/domain/repositories/yolo_repository.dart';
 
 class YoloRepositoryImpl implements YoloRepository {
   YOLO? _objectDetector;

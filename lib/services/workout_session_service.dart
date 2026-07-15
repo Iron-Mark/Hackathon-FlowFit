@@ -1,6 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/config/supabase_tables.dart';
-import '../models/workout_session.dart';
+import 'package:flowfit/core/config/supabase_tables.dart';
+import 'package:flowfit/models/workout_session.dart';
 
 /// Service for managing workout session CRUD operations with Supabase
 class WorkoutSessionService {

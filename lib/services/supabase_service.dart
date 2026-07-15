@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/config/supabase_tables.dart';
+import 'package:flowfit/core/config/supabase_tables.dart';
 
 /// Service for managing Supabase backend operations
 class SupabaseService {

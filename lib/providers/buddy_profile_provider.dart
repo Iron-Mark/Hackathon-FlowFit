@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/config/supabase_tables.dart';
-import '../models/buddy_profile.dart';
+import 'package:flowfit/core/config/supabase_tables.dart';
+import 'package:flowfit/models/buddy_profile.dart';
 
 typedef BuddyCustomizationSave =
     Future<void> Function(String userId, Map<String, dynamic> updates);

@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../../core/config/flowfit_runtime_config.dart';
-import '../../models/wellness_state.dart';
-import '../../models/walking_route.dart';
-import '../../services/calming_route_service.dart';
-import '../../services/openroute_service.dart';
-import '../../services/gps_tracking_service.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/models/wellness_state.dart';
+import 'package:flowfit/models/walking_route.dart';
+import 'package:flowfit/services/calming_route_service.dart';
+import 'package:flowfit/services/openroute_service.dart';
+import 'package:flowfit/services/gps_tracking_service.dart';
 
 /// Map widget that responds to wellness state
 class WellnessMapWidget extends StatefulWidget {

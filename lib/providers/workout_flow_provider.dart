@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/mood_rating.dart';
-import '../models/workout_session.dart';
+import 'package:flowfit/models/mood_rating.dart';
+import 'package:flowfit/models/workout_session.dart';
 
 /// Current step in the workout flow
 enum WorkoutFlowStep {

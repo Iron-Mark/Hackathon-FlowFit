@@ -1,6 +1,6 @@
 import 'dart:typed_data';
-import '../entities/detection_result.dart';
-import '../repositories/yolo_repository.dart';
+import 'package:flowfit/features/yolo_camera/domain/entities/detection_result.dart';
+import 'package:flowfit/features/yolo_camera/domain/repositories/yolo_repository.dart';
 
 class DetectImageUseCase {
   final YoloRepository _repository;

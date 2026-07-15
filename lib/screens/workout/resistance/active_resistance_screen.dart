@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../models/exercise_progress.dart';
-import '../../../models/resistance_session.dart';
-import '../../../providers/resistance_session_provider.dart';
-import 'resistance_exercise_icons.dart';
+import 'package:flowfit/models/exercise_progress.dart';
+import 'package:flowfit/models/resistance_session.dart';
+import 'package:flowfit/providers/resistance_session_provider.dart';
+import 'package:flowfit/screens/workout/resistance/resistance_exercise_icons.dart';
 
 /// Active resistance workout screen with exercise progress and session controls.
 class ActiveResistanceScreen extends ConsumerStatefulWidget {

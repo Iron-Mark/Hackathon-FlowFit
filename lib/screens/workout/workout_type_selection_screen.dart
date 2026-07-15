@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../models/workout_session.dart';
-import '../../providers/workout_flow_provider.dart';
+import 'package:flowfit/models/workout_session.dart';
+import 'package:flowfit/providers/workout_flow_provider.dart';
 
 /// Workout type selection screen
 ///

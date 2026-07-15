@@ -61,6 +61,14 @@ class FlowFitLandingPage extends StatelessWidget {
                     context,
                     _publicPageUri('account-deletion.html'),
                   ),
+                  onCaseStudy: () => _openExternalLink(
+                    context,
+                    Uri.parse('https://www.marksiazon.dev/projects/flowfit'),
+                  ),
+                  onMoreApps: () => _openExternalLink(
+                    context,
+                    Uri.parse('https://apps.marksiazon.dev/flowfit/'),
+                  ),
                 ),
               ),
             ],
@@ -307,6 +315,21 @@ class _DevicePreview extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // Flowy peeks out from behind the panel so the buddy — the
+          // product's core idea — is visible before the first scroll.
+          // Painted beneath the card, head above its top edge. Static on
+          // purpose: landing tests pumpAndSettle, so no animations here.
+          Positioned(
+            right: 30,
+            top: -54,
+            child: SvgPicture.asset(
+              'assets/flowy.svg',
+              width: 96,
+              height: 96,
+              fit: BoxFit.contain,
+              semanticsLabel: 'Flowy, the FlowFit buddy',
+            ),
+          ),
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -1064,10 +1087,17 @@ class _DownloadSection extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer({required this.onPrivacy, required this.onAccountDeletion});
+  const _Footer({
+    required this.onPrivacy,
+    required this.onAccountDeletion,
+    required this.onCaseStudy,
+    required this.onMoreApps,
+  });
 
   final VoidCallback onPrivacy;
   final VoidCallback onAccountDeletion;
+  final VoidCallback onCaseStudy;
+  final VoidCallback onMoreApps;
 
   @override
   Widget build(BuildContext context) {
@@ -1097,6 +1127,8 @@ class _Footer extends StatelessWidget {
             onPressed: onAccountDeletion,
             child: const Text('Account deletion'),
           ),
+          TextButton(onPressed: onCaseStudy, child: const Text('Case study')),
+          TextButton(onPressed: onMoreApps, child: const Text('More apps')),
         ],
       ),
     );

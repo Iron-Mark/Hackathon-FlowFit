@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wear_plus/wear_plus.dart';
-import 'screens/wear/wear_dashboard.dart';
+import 'package:flowfit/screens/wear/wear_dashboard.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

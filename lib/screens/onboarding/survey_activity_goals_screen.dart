@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../theme/app_theme.dart';
-import '../../presentation/providers/providers.dart';
-import '../../widgets/survey_app_bar.dart';
-import '../../core/utils/logger.dart';
+import 'package:flowfit/theme/app_theme.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/widgets/survey_app_bar.dart';
+import 'package:flowfit/core/utils/logger.dart';
 
 class SurveyActivityGoalsScreen extends ConsumerStatefulWidget {
   const SurveyActivityGoalsScreen({super.key});

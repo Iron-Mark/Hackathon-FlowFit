@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/step_counter_service.dart';
-import 'wellness_state_provider.dart';
+import 'package:flowfit/services/step_counter_service.dart';
+import 'package:flowfit/providers/wellness_state_provider.dart';
 
 /// Provider for StepCounterService
 final stepCounterServiceProvider = Provider<StepCounterService>((ref) {

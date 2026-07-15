@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:gotrue/gotrue.dart' as gotrue;
-import '../../theme/app_theme.dart';
+import 'package:flowfit/theme/app_theme.dart';
 import 'dart:async';
 
 typedef EmailVerificationStatusChecker = Future<bool> Function();

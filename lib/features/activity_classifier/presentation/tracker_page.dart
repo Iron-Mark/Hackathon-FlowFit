@@ -7,9 +7,9 @@ import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:flowfit/models/sensor_batch.dart';
 import 'package:provider/provider.dart';
 
-import 'providers.dart';
-import '../platform/tflite_activity_classifier.dart';
-import '../platform/heart_bpm_adapter.dart';
+import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
+import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
+import 'package:flowfit/features/activity_classifier/platform/heart_bpm_adapter.dart';
 
 enum BpmSource { simulation, plugin, watch }
 

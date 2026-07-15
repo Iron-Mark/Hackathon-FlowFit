@@ -1,4 +1,4 @@
-import '../models/workout_session.dart';
+import 'package:flowfit/models/workout_session.dart';
 
 /// Service for calculating calories burned during workouts
 class CalorieCalculatorService {

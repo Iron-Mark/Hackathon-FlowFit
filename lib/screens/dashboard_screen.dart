@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../presentation/providers/providers.dart';
-import 'home/home_screen.dart';
-import 'health/health_screen.dart';
-import 'track/track_screen.dart';
-import 'progress/progress_screen.dart';
-import 'profile/kids_profile_screen.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/screens/home/home_screen.dart';
+import 'package:flowfit/screens/health/health_screen.dart';
+import 'package:flowfit/screens/track/track_screen.dart';
+import 'package:flowfit/screens/progress/progress_screen.dart';
+import 'package:flowfit/screens/profile/kids_profile_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});

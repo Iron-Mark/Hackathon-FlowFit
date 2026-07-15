@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../theme/app_theme.dart';
-import '../../../utils/deep_link_handler.dart';
+import 'package:flowfit/theme/app_theme.dart';
+import 'package:flowfit/utils/deep_link_handler.dart';
 
 typedef ChangePasswordAction =
     Future<void> Function({

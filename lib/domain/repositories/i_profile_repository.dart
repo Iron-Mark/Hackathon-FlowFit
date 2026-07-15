@@ -1,4 +1,4 @@
-import '../entities/user_profile.dart';
+import 'package:flowfit/domain/entities/user_profile.dart';
 
 /// Interface for user profile repository operations.
 abstract class IProfileRepository {

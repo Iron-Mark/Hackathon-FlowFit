@@ -1,7 +1,7 @@
 // dart:async left out because no timers used in this widget
 import 'package:flutter/material.dart';
 // latlong import not required here; overlay uses GeofenceMission object only
-import '../../domain/geofence_mission.dart';
+import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
 
 class FocusMissionOverlay extends StatelessWidget {
   final GeofenceMission mission;

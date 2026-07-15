@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../providers/buddy_onboarding_provider.dart';
-import '../../widgets/buddy_character_widget.dart';
-import '../../widgets/buddy_idle_animation.dart';
-import '../../widgets/onboarding_button.dart';
+import 'package:flowfit/providers/buddy_onboarding_provider.dart';
+import 'package:flowfit/widgets/buddy_character_widget.dart';
+import 'package:flowfit/widgets/buddy_idle_animation.dart';
+import 'package:flowfit/widgets/onboarding_button.dart';
 
 /// Notification Permission Screen - Step 8 of 9
 ///

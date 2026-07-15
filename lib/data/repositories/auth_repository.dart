@@ -1,9 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../domain/entities/user.dart' as domain;
-import '../../domain/repositories/i_auth_repository.dart';
-import '../../domain/exceptions/auth_exceptions.dart' as domain_exceptions;
-import '../../core/utils/error_logger.dart';
-import '../../core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/domain/entities/user.dart' as domain;
+import 'package:flowfit/domain/repositories/i_auth_repository.dart';
+import 'package:flowfit/domain/exceptions/auth_exceptions.dart'
+    as domain_exceptions;
+import 'package:flowfit/core/utils/error_logger.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 
 /// Implementation of IAuthRepository using Supabase as the backend.
 class AuthRepository implements IAuthRepository {

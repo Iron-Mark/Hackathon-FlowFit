@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../models/walking_session.dart';
-import '../../../models/mission.dart';
-import '../../../providers/walking_session_provider.dart';
-import '../../../providers/workout_flow_provider.dart';
-import 'mission_creation_screen.dart';
-import 'active_walking_screen.dart';
+import 'package:flowfit/models/walking_session.dart';
+import 'package:flowfit/models/mission.dart';
+import 'package:flowfit/providers/walking_session_provider.dart';
+import 'package:flowfit/providers/workout_flow_provider.dart';
+import 'package:flowfit/screens/workout/walking/mission_creation_screen.dart';
+import 'package:flowfit/screens/workout/walking/active_walking_screen.dart';
 
 /// Walking options screen with Free Walk and Map Mission cards
 /// Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6

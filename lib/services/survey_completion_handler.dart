@@ -1,8 +1,8 @@
-import '../core/domain/entities/user_profile.dart';
-import '../core/domain/repositories/profile_repository.dart';
-import '../core/exceptions/profile_exceptions.dart';
-import '../core/utils/logger.dart';
-import 'sync_queue_service.dart';
+import 'package:flowfit/core/domain/entities/user_profile.dart';
+import 'package:flowfit/core/domain/repositories/profile_repository.dart';
+import 'package:flowfit/core/exceptions/profile_exceptions.dart';
+import 'package:flowfit/core/utils/logger.dart';
+import 'package:flowfit/services/sync_queue_service.dart';
 
 /// Service for handling survey completion and profile creation.
 ///

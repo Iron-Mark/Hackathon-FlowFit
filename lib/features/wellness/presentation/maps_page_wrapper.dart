@@ -5,11 +5,11 @@ import 'package:flowfit/services/watch_bridge.dart';
 import 'package:flowfit/models/heart_rate_data.dart' as hr_model;
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart' as maplat;
-import '../data/geofence_repository.dart';
-import '../services/geofence_service.dart';
-import 'maps_page.dart';
-import '../services/notification_service.dart';
-import '../services/mood_tracker_service.dart';
+import 'package:flowfit/features/wellness/data/geofence_repository.dart';
+import 'package:flowfit/features/wellness/services/geofence_service.dart';
+import 'package:flowfit/features/wellness/presentation/maps_page.dart';
+import 'package:flowfit/features/wellness/services/notification_service.dart';
+import 'package:flowfit/features/wellness/services/mood_tracker_service.dart';
 
 void routeWellnessNotificationTap(String payload, GeofenceService service) {
   if (payload.isEmpty) return;

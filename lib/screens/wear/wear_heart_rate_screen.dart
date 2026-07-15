@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:wear_plus/wear_plus.dart';
 
-import '../../models/heart_rate_data.dart';
-import '../../models/sensor_error.dart';
-import '../../models/sensor_error_code.dart';
-import '../../models/sensor_status.dart';
-import '../../services/watch_bridge.dart';
-import 'sensor_permission_rationale_screen.dart';
+import 'package:flowfit/models/heart_rate_data.dart';
+import 'package:flowfit/models/sensor_error.dart';
+import 'package:flowfit/models/sensor_error_code.dart';
+import 'package:flowfit/models/sensor_status.dart';
+import 'package:flowfit/services/watch_bridge.dart';
+import 'package:flowfit/screens/wear/sensor_permission_rationale_screen.dart';
 
 // WCAG 2.1 Level AA compliant color constants
 // All colors verified to meet contrast ratio requirements

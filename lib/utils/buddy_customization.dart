@@ -1,4 +1,4 @@
-import '../models/buddy_profile.dart';
+import 'package:flowfit/models/buddy_profile.dart';
 
 const String buddyAccessoryKey = 'current_accessory';
 const String buddyBackgroundKey = 'current_background';

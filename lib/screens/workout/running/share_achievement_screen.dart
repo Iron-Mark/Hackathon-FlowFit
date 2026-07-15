@@ -9,7 +9,7 @@ import 'package:latlong2/latlong.dart' hide Path;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:solar_icons/solar_icons.dart';
-import '../../../models/running_session.dart';
+import 'package:flowfit/models/running_session.dart';
 
 typedef ShareAchievementImagePicker = Future<File?> Function();
 typedef ShareAchievementCapture = Future<Uint8List> Function(GlobalKey key);

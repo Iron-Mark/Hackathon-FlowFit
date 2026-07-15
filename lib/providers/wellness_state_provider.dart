@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/wellness_state.dart';
-import '../models/state_transition.dart';
-import '../services/wellness_state_service.dart';
-import '../services/wellness_monitoring_service.dart';
-import '../services/watch_bridge.dart';
-import '../services/phone_data_listener.dart';
+import 'package:flowfit/models/wellness_state.dart';
+import 'package:flowfit/models/state_transition.dart';
+import 'package:flowfit/services/wellness_state_service.dart';
+import 'package:flowfit/services/wellness_monitoring_service.dart';
+import 'package:flowfit/services/watch_bridge.dart';
+import 'package:flowfit/services/phone_data_listener.dart';
 
 /// Provider for WatchBridgeService (singleton)
 final watchBridgeServiceProvider = Provider<WatchBridgeService>((ref) {

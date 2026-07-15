@@ -1,4 +1,4 @@
-import '../entities/user.dart';
+import 'package:flowfit/domain/entities/user.dart';
 
 /// Interface for authentication repository operations.
 abstract class IAuthRepository {

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../models/tracked_data.dart';
-import '../../models/heart_rate_data.dart';
-import '../../models/sensor_batch.dart';
-import '../../models/sensor_status.dart';
-import '../../services/phone_data_listener.dart';
+import 'package:flowfit/models/tracked_data.dart';
+import 'package:flowfit/models/heart_rate_data.dart';
+import 'package:flowfit/models/sensor_batch.dart';
+import 'package:flowfit/models/sensor_status.dart';
+import 'package:flowfit/services/phone_data_listener.dart';
 
 /// Screen for displaying heart rate data received from Galaxy Watch
 /// Shows real-time BPM, IBI values, and connection status

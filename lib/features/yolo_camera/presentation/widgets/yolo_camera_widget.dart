@@ -4,9 +4,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../providers/providers.dart';
-import 'detection_overlay_widget.dart';
-import '../../domain/entities/detection_result.dart';
+import 'package:flowfit/features/yolo_camera/presentation/providers/providers.dart';
+import 'package:flowfit/features/yolo_camera/presentation/widgets/detection_overlay_widget.dart';
+import 'package:flowfit/features/yolo_camera/domain/entities/detection_result.dart';
 
 enum DetectionMode { object, pose }
 

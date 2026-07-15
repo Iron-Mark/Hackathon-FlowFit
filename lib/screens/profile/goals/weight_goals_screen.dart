@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
 
-import '../../../services/profile_goal_preferences.dart';
-import 'widgets/goal_save_button.dart';
+import 'package:flowfit/services/profile_goal_preferences.dart';
+import 'package:flowfit/screens/profile/goals/widgets/goal_save_button.dart';
 
 class WeightGoalsScreen extends StatefulWidget {
   const WeightGoalsScreen({super.key});

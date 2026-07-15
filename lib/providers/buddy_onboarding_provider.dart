@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
-import '../core/config/supabase_tables.dart';
-import '../models/buddy_onboarding_state.dart';
-import '../models/buddy_profile.dart';
-import '../core/exceptions/buddy_exceptions.dart';
-import '../services/buddy_offline_storage.dart';
-import 'buddy_offline_storage_provider.dart';
+import 'package:flowfit/core/config/supabase_tables.dart';
+import 'package:flowfit/models/buddy_onboarding_state.dart';
+import 'package:flowfit/models/buddy_profile.dart';
+import 'package:flowfit/core/exceptions/buddy_exceptions.dart';
+import 'package:flowfit/services/buddy_offline_storage.dart';
+import 'package:flowfit/providers/buddy_offline_storage_provider.dart';
 
 Map<String, dynamic> buildBuddyUserProfileUpsertPayload({
   required String userId,

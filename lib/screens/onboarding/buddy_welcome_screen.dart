@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../widgets/buddy_character_widget.dart';
-import '../../widgets/buddy_idle_animation.dart';
-import '../../widgets/onboarding_button.dart';
+import 'package:flowfit/widgets/buddy_character_widget.dart';
+import 'package:flowfit/widgets/buddy_idle_animation.dart';
+import 'package:flowfit/widgets/onboarding_button.dart';
 
 /// Buddy Welcome Screen - Step 1 of 8
 ///

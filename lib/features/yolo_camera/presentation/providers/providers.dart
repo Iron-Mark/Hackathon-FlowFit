@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camera/camera.dart';
-import '../../domain/repositories/yolo_repository.dart';
-import '../../data/repositories/yolo_repository_impl.dart';
-import '../../domain/usecases/detect_object_usecase.dart';
-import '../../domain/usecases/detect_pose_usecase.dart';
-import '../../domain/usecases/detect_image_usecase.dart';
-import '../../domain/entities/detection_result.dart';
+import 'package:flowfit/features/yolo_camera/domain/repositories/yolo_repository.dart';
+import 'package:flowfit/features/yolo_camera/data/repositories/yolo_repository_impl.dart';
+import 'package:flowfit/features/yolo_camera/domain/usecases/detect_object_usecase.dart';
+import 'package:flowfit/features/yolo_camera/domain/usecases/detect_pose_usecase.dart';
+import 'package:flowfit/features/yolo_camera/domain/usecases/detect_image_usecase.dart';
+import 'package:flowfit/features/yolo_camera/domain/entities/detection_result.dart';
 
 // Repository Provider
 final yoloRepositoryProvider = Provider<YoloRepository>((ref) {

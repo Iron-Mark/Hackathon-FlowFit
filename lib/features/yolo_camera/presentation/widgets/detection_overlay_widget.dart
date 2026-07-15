@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../domain/entities/detection_result.dart';
+import 'package:flowfit/features/yolo_camera/domain/entities/detection_result.dart';
 
 class DetectionOverlayWidget extends StatelessWidget {
   final List<DetectionResult> results;

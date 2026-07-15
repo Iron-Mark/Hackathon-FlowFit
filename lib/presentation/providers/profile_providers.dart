@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/domain/entities/user_profile.dart';
-import '../../core/domain/repositories/profile_repository.dart';
-import '../../core/data/repositories/profile_repository_impl.dart';
-import '../../services/sync_queue_service.dart';
-import '../../services/survey_completion_handler.dart';
-import '../notifiers/profile_notifier.dart';
+import 'package:flowfit/core/domain/entities/user_profile.dart';
+import 'package:flowfit/core/domain/repositories/profile_repository.dart';
+import 'package:flowfit/core/data/repositories/profile_repository_impl.dart';
+import 'package:flowfit/services/sync_queue_service.dart';
+import 'package:flowfit/services/survey_completion_handler.dart';
+import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
 
 /// Provider for SharedPreferences instance.
 ///

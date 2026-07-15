@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:geolocator/geolocator.dart';
-import '../domain/geofence_mission.dart';
-import '../data/geofence_repository.dart';
-import 'geofence_service.dart';
-import 'notification_service.dart';
+import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
+import 'package:flowfit/features/wellness/data/geofence_repository.dart';
+import 'package:flowfit/features/wellness/services/geofence_service.dart';
+import 'package:flowfit/features/wellness/services/notification_service.dart';
 
 enum MoodState { calm, neutral, stressed }
 

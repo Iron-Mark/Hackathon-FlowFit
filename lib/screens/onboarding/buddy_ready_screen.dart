@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../presentation/providers/providers.dart';
-import '../../providers/buddy_onboarding_provider.dart';
-import '../../providers/buddy_profile_provider.dart';
-import '../../widgets/buddy_character_widget.dart';
-import '../../widgets/buddy_celebration_animation.dart';
-import '../../widgets/onboarding_button.dart';
-import '../../utils/buddy_colors.dart';
-import '../../core/exceptions/buddy_exceptions.dart';
+import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/providers/buddy_onboarding_provider.dart';
+import 'package:flowfit/providers/buddy_profile_provider.dart';
+import 'package:flowfit/widgets/buddy_character_widget.dart';
+import 'package:flowfit/widgets/buddy_celebration_animation.dart';
+import 'package:flowfit/widgets/onboarding_button.dart';
+import 'package:flowfit/utils/buddy_colors.dart';
+import 'package:flowfit/core/exceptions/buddy_exceptions.dart';
 
 typedef BuddyReadyCompletionAction =
     Future<void> Function({

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/buddy_offline_storage.dart';
+import 'package:flowfit/services/buddy_offline_storage.dart';
 
 /// Provider for SharedPreferences instance
 final sharedPreferencesProvider = FutureProvider<SharedPreferences>((

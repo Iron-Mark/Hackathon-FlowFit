@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/mood_rating.dart';
+import 'package:flowfit/models/mood_rating.dart';
 
 /// Mood transformation card showing pre/post workout mood change
 ///

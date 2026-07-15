@@ -8,18 +8,18 @@ import 'package:latlong2/latlong.dart' as maplat;
 // import 'dart:convert'; // import/export removed
 // import 'package:path_provider/path_provider.dart'; // import/export removed
 import 'package:geolocator/geolocator.dart';
-import '../../../core/config/flowfit_runtime_config.dart';
-import '../domain/geofence_mission.dart';
-import '../data/geofence_repository.dart';
-import '../services/geofence_service.dart';
-import 'widgets/place_mode_overlay.dart';
-import 'widgets/map_components.dart';
-import 'widgets/focus_mission_overlay.dart';
-import 'widgets/top_action_button.dart';
-import 'widgets/floating_actions.dart';
-import 'widgets/mission_bottom_sheet.dart';
-import 'widgets/edit_mission_dialog.dart';
-import 'widgets/map_tutorial_overlay.dart';
+import 'package:flowfit/core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
+import 'package:flowfit/features/wellness/data/geofence_repository.dart';
+import 'package:flowfit/features/wellness/services/geofence_service.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/place_mode_overlay.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/map_components.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/focus_mission_overlay.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/top_action_button.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/floating_actions.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/mission_bottom_sheet.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/edit_mission_dialog.dart';
+import 'package:flowfit/features/wellness/presentation/widgets/map_tutorial_overlay.dart';
 
 class WellnessMapsPage extends StatefulWidget {
   final maplat.LatLng? initialCenter;

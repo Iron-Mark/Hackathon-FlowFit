@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../models/permission_status.dart';
-import '../../services/watch_bridge.dart';
+import 'package:flowfit/models/permission_status.dart';
+import 'package:flowfit/services/watch_bridge.dart';
 
 typedef WellnessSetupChecker = Future<WellnessSetupStatus> Function();
 
