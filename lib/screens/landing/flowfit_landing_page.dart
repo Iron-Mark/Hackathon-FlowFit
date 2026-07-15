@@ -315,6 +315,21 @@ class _DevicePreview extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
+          // Flowy peeks out from behind the panel so the buddy — the
+          // product's core idea — is visible before the first scroll.
+          // Painted beneath the card, head above its top edge. Static on
+          // purpose: landing tests pumpAndSettle, so no animations here.
+          Positioned(
+            right: 30,
+            top: -54,
+            child: SvgPicture.asset(
+              'assets/flowy.svg',
+              width: 96,
+              height: 96,
+              fit: BoxFit.contain,
+              semanticsLabel: 'Flowy, the FlowFit buddy',
+            ),
+          ),
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -336,20 +351,6 @@ class _DevicePreview extends StatelessWidget {
             ),
           ),
           const Positioned(right: -8, bottom: 18, child: _WatchFace()),
-          // Flowy peeks over the panel so the buddy — the product's core
-          // idea — is visible before the first scroll. Static on purpose:
-          // landing tests pumpAndSettle, so no repeating animations here.
-          Positioned(
-            left: -16,
-            top: -40,
-            child: SvgPicture.asset(
-              'assets/flowy.svg',
-              width: 92,
-              height: 92,
-              fit: BoxFit.contain,
-              semanticsLabel: 'Flowy, the FlowFit buddy',
-            ),
-          ),
           Positioned(
             left: 22,
             bottom: -18,
