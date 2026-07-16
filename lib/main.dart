@@ -1,15 +1,10 @@
-import 'package:flowfit/features/activity_classifier/data/tflite_activity_repository.dart';
-import 'package:flowfit/features/activity_classifier/domain/classify_activity_usecase.dart';
-import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
-import 'package:flowfit/features/activity_classifier/platform/heart_bpm_adapter.dart';
+import 'package:flowfit/app/activity_classifier_scope.dart';
+import 'package:flowfit/app/startup_error_redactor.dart';
 import 'package:flowfit/features/activity_classifier/presentation/tracker_page.dart';
 import 'package:flowfit/features/wellness/presentation/maps_page_wrapper.dart';
-import 'package:flowfit/services/sensors/phone_data_listener.dart';
-import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart' hide Provider;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flowfit/core/config/supabase_runtime_config.dart';
@@ -87,7 +82,7 @@ Future<void> main() async {
   try {
     await _bootstrapPhoneApp();
   } catch (error, stackTrace) {
-    final redactedMessage = _redactStartupError(error);
+    final redactedMessage = redactStartupError(error);
     FlutterError.reportError(
       FlutterErrorDetails(
         exception: redactedMessage,
@@ -130,61 +125,13 @@ Future<void> _bootstrapPhoneApp() async {
   );
 }
 
-String _redactStartupError(Object error) {
-  return error
-      .toString()
-      .replaceFirst(RegExp(r'^Bad state:\s*'), '')
-      .replaceAllMapped(
-        RegExp(r'sb_(publishable|secret)_[A-Za-z0-9_-]+'),
-        (match) => 'sb_${match.group(1)}_<redacted>',
-      )
-      .replaceAll(
-        RegExp(r'eyJ[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+){2,}'),
-        '<redacted-jwt>',
-      );
-}
-
 class FlowFitPhoneApp extends StatelessWidget {
   const FlowFitPhoneApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BuddyPendingSyncListener(
-      child: MultiProvider(
-        providers: [
-          Provider<HeartBpmAdapter>(create: (_) => HeartBpmAdapter()),
-          // Phone data listener used to receive watch heart rate via Wearable data layer
-          Provider<PhoneDataListener>(create: (_) => PhoneDataListener()),
-          Provider<TFLiteActivityClassifier>(
-            create: (_) => TFLiteActivityClassifier(),
-          ),
-
-          // Data layer
-          ProxyProvider<TFLiteActivityClassifier, ActivityClassifierRepository>(
-            create: (context) => TFLiteActivityRepository(
-              context.read<TFLiteActivityClassifier>(),
-            ),
-            update: (_, classifier, __) => TFLiteActivityRepository(classifier),
-          ),
-          // Domain layer (use ActivityClassifierRepository abstract type)
-          ProxyProvider<ActivityClassifierRepository, ClassifyActivityUseCase>(
-            create: (context) => ClassifyActivityUseCase(
-              context.read<ActivityClassifierRepository>(),
-            ),
-            update: (_, repository, __) => ClassifyActivityUseCase(repository),
-          ),
-
-          // Presentation layer
-          ChangeNotifierProxyProvider<
-            ClassifyActivityUseCase,
-            ActivityClassifierViewModel
-          >(
-            create: (context) => ActivityClassifierViewModel(
-              context.read<ClassifyActivityUseCase>(),
-            ),
-            update: (_, useCase, __) => ActivityClassifierViewModel(useCase),
-          ),
-        ],
+      child: ActivityClassifierScope(
         child: MaterialApp(
           // Add navigator key for deep link handling
           navigatorKey: DeepLinkHandler.navigatorKey,
