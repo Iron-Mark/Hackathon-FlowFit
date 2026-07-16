@@ -10,7 +10,7 @@ import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:flowfit/models/sensor_error.dart';
 import 'package:flowfit/models/sensor_error_code.dart';
 import 'package:flowfit/models/sensor_status.dart';
-import 'package:flowfit/services/watch_bridge.dart';
+import 'package:flowfit/services/sensors/watch_bridge.dart';
 import 'package:flowfit/screens/wear/sensor_permission_rationale_screen.dart';
 
 // WCAG 2.1 Level AA compliant color constants

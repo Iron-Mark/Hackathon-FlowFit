@@ -3,7 +3,7 @@ import 'package:flowfit/core/domain/entities/user_profile.dart';
 import 'package:flowfit/core/domain/repositories/profile_repository.dart';
 import 'package:flowfit/core/exceptions/profile_exceptions.dart';
 import 'package:flowfit/core/utils/logger.dart';
-import 'package:flowfit/services/sync_queue_service.dart';
+import 'package:flowfit/services/backend/sync_queue_service.dart';
 
 /// StateNotifier for managing user profile state.
 ///

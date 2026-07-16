@@ -317,7 +317,7 @@ void main() {
 
   test('database workout types match parsed session models', () {
     final service = File(
-      'lib/services/workout_session_service.dart',
+      'lib/services/workout/workout_session_service.dart',
     ).readAsStringSync();
     final model = File('lib/models/workout_session.dart').readAsStringSync();
     final typeConstraint = RegExp(

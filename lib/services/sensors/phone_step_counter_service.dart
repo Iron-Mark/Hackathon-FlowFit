@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:flowfit/services/step_detector.dart';
+import 'package:flowfit/services/sensors/step_detector.dart';
 
 /// Service for counting steps using the phone's native accelerometer
 ///

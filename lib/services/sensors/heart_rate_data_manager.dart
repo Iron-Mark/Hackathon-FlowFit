@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:logger/logger.dart';
 import 'package:flowfit/models/tracked_data.dart';
-import 'package:flowfit/services/database_service.dart';
-import 'package:flowfit/services/supabase_service.dart';
+import 'package:flowfit/services/storage/database_service.dart';
+import 'package:flowfit/services/backend/supabase_service.dart';
 
 /// Heart Rate Data Manager
 /// Manages in-memory buffer, database storage, and data lifecycle

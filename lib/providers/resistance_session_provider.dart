@@ -6,10 +6,10 @@ import 'package:flowfit/models/resistance_session.dart';
 import 'package:flowfit/models/exercise_progress.dart';
 import 'package:flowfit/models/mood_rating.dart';
 import 'package:flowfit/models/workout_session.dart';
-import 'package:flowfit/services/timer_service.dart';
-import 'package:flowfit/services/heart_rate_service.dart';
-import 'package:flowfit/services/calorie_calculator_service.dart';
-import 'package:flowfit/services/workout_session_service.dart';
+import 'package:flowfit/services/workout/timer_service.dart';
+import 'package:flowfit/services/sensors/heart_rate_service.dart';
+import 'package:flowfit/services/workout/calorie_calculator_service.dart';
+import 'package:flowfit/services/workout/workout_session_service.dart';
 import 'package:flowfit/providers/running_session_provider.dart';
 
 /// Provider for countdown timer service (rest periods)

@@ -7,13 +7,13 @@ import 'package:uuid/uuid.dart';
 import 'package:flowfit/models/running_session.dart';
 import 'package:flowfit/models/mood_rating.dart';
 import 'package:flowfit/models/workout_session.dart';
-import 'package:flowfit/services/gps_tracking_service.dart';
-import 'package:flowfit/services/timer_service.dart';
-import 'package:flowfit/services/heart_rate_service.dart';
-import 'package:flowfit/services/calorie_calculator_service.dart';
-import 'package:flowfit/services/workout_session_service.dart';
-import 'package:flowfit/services/phone_step_counter_service.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/services/location/gps_tracking_service.dart';
+import 'package:flowfit/services/workout/timer_service.dart';
+import 'package:flowfit/services/sensors/heart_rate_service.dart';
+import 'package:flowfit/services/workout/calorie_calculator_service.dart';
+import 'package:flowfit/services/workout/workout_session_service.dart';
+import 'package:flowfit/services/sensors/phone_step_counter_service.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
 
 /// Provider for GPS tracking service
 final gpsTrackingServiceProvider = Provider((ref) => GPSTrackingService());

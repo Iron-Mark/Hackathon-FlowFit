@@ -10,7 +10,7 @@ import 'package:flowfit/providers/running_session_provider.dart';
 import 'package:flowfit/models/workout_session.dart';
 import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
 import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
 
 /// Active running screen with real-time GPS tracking and metrics
 /// Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flowfit/services/step_counter_service.dart';
+import 'package:flowfit/services/sensors/step_counter_service.dart';
 import 'package:flowfit/providers/wellness_state_provider.dart';
 
 /// Provider for StepCounterService

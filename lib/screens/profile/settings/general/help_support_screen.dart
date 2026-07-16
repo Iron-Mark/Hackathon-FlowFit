@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
-import 'package:flowfit/services/support_request_service.dart';
+import 'package:flowfit/services/backend/support_request_service.dart';
 import 'package:solar_icons/solar_icons.dart';
 
 typedef SupportRequestSubmitter =

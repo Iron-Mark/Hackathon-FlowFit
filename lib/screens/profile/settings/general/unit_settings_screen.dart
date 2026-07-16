@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
 
-import 'package:flowfit/services/user_settings_preferences.dart';
+import 'package:flowfit/services/storage/user_settings_preferences.dart';
 
 class UnitSettingsScreen extends StatefulWidget {
   const UnitSettingsScreen({super.key});

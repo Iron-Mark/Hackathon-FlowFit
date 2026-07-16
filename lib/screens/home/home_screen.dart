@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:flowfit/widgets/flowy_companion.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
 import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:flowfit/screens/health/health_screen.dart';
 

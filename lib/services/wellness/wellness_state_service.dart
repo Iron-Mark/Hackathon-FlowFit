@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flowfit/models/wellness_state.dart';
 import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:flowfit/models/sensor_batch.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
 
 /// Service for detecting wellness state from biometric data
 ///

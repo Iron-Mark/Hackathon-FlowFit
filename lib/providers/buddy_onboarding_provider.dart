@@ -5,7 +5,7 @@ import 'package:flowfit/core/config/supabase_tables.dart';
 import 'package:flowfit/models/buddy_onboarding_state.dart';
 import 'package:flowfit/models/buddy_profile.dart';
 import 'package:flowfit/core/exceptions/buddy_exceptions.dart';
-import 'package:flowfit/services/buddy_offline_storage.dart';
+import 'package:flowfit/services/storage/buddy_offline_storage.dart';
 import 'package:flowfit/providers/buddy_offline_storage_provider.dart';
 
 Map<String, dynamic> buildBuddyUserProfileUpsertPayload({

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:flowfit/models/tracked_data.dart';
-import 'package:flowfit/services/database_service.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
-import 'package:flowfit/services/heart_rate_data_manager.dart';
+import 'package:flowfit/services/storage/database_service.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
+import 'package:flowfit/services/sensors/heart_rate_data_manager.dart';
 import 'package:logger/logger.dart';
 
 class PhoneHomePage extends StatefulWidget {

@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flowfit/models/wellness_state.dart';
 import 'package:flowfit/models/state_transition.dart';
-import 'package:flowfit/services/wellness_state_service.dart';
-import 'package:flowfit/services/wellness_monitoring_service.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/services/wellness/wellness_state_service.dart';
+import 'package:flowfit/services/wellness/wellness_monitoring_service.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
 
 /// Provider for PhoneDataListener (singleton)
 final phoneDataListenerServiceProvider = Provider<PhoneDataListener>((ref) {

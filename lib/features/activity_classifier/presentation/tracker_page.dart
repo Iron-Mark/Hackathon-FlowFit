@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
 import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:flowfit/models/sensor_batch.dart';
 import 'package:provider/provider.dart';

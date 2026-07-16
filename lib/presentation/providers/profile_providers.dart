@@ -4,8 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flowfit/core/domain/entities/user_profile.dart';
 import 'package:flowfit/core/domain/repositories/profile_repository.dart';
 import 'package:flowfit/core/data/repositories/profile_repository_impl.dart';
-import 'package:flowfit/services/sync_queue_service.dart';
-import 'package:flowfit/services/survey_completion_handler.dart';
+import 'package:flowfit/services/backend/sync_queue_service.dart';
+import 'package:flowfit/services/backend/survey_completion_handler.dart';
 import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
 
 /// Provider for SharedPreferences instance.

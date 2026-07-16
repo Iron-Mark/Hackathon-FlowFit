@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flowfit/services/watch_bridge.dart';
+import 'package:flowfit/services/sensors/watch_bridge.dart';
 
 typedef SensorPermissionWatchBridgeFactory = WatchBridgeService Function();
 typedef SensorPermissionSettingsOpener = Future<bool> Function();

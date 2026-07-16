@@ -13,8 +13,8 @@ import 'package:flowfit/widgets/wellness/wellness_stats_card.dart';
 import 'package:flowfit/widgets/wellness/stress_alert_banner.dart';
 import 'package:flowfit/widgets/wellness/cardio_detection_banner.dart';
 import 'package:flowfit/widgets/wellness/wellness_debug_panel.dart';
-import 'package:flowfit/services/phone_step_counter_service.dart';
-import 'package:flowfit/services/wellness_state_service.dart';
+import 'package:flowfit/services/sensors/phone_step_counter_service.dart';
+import 'package:flowfit/services/wellness/wellness_state_service.dart';
 import 'package:flowfit/screens/wellness/wellness_onboarding_screen.dart';
 
 typedef WellnessOnboardingCompletionChecker = Future<bool> Function();

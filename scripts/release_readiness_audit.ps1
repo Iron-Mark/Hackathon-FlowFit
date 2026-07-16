@@ -1534,7 +1534,7 @@ function Test-WebAndStoreConfig {
     }
 
     $helpSupport = Read-RepoText 'lib/screens/profile/settings/general/help_support_screen.dart'
-    $supportService = Read-RepoText 'lib/services/support_request_service.dart'
+    $supportService = Read-RepoText 'lib/services/backend/support_request_service.dart'
     if (
         $null -ne $helpSupport -and
         $null -ne $supportService -and
