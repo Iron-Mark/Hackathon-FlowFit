@@ -1,5 +1,5 @@
 import 'package:flowfit/screens/wear/sensor_permission_rationale_screen.dart';
-import 'package:flowfit/services/watch_bridge.dart';
+import 'package:flowfit/services/sensors/watch_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

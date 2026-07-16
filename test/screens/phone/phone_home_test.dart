@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flowfit/models/tracked_data.dart';
 import 'package:flowfit/models/sensor_status.dart';
 import 'package:flowfit/screens/phone_home.dart';
-import 'package:flowfit/services/database_service.dart';
+import 'package:flowfit/services/storage/database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';

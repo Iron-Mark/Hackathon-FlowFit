@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flowfit/models/wellness_state.dart';
-import 'package:flowfit/services/gps_tracking_service.dart';
+import 'package:flowfit/services/location/gps_tracking_service.dart';
 import 'package:flowfit/widgets/wellness/wellness_map_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';

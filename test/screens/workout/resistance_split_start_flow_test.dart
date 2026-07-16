@@ -3,7 +3,7 @@ import 'package:flowfit/models/workout_session.dart';
 import 'package:flowfit/providers/running_session_provider.dart';
 import 'package:flowfit/screens/workout/resistance/active_resistance_screen.dart';
 import 'package:flowfit/screens/workout/resistance/split_selection_screen.dart';
-import 'package:flowfit/services/workout_session_service.dart';
+import 'package:flowfit/services/workout/workout_session_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

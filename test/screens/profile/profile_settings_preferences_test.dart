@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flowfit/screens/profile/settings/general/language_settings_screen.dart';
 import 'package:flowfit/screens/profile/settings/general/notification_settings_screen.dart';
 import 'package:flowfit/screens/profile/settings/general/unit_settings_screen.dart';
-import 'package:flowfit/services/user_settings_preferences.dart';
+import 'package:flowfit/services/storage/user_settings_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flowfit/providers/wellness_state_provider.dart';
 import 'package:flowfit/screens/wellness/wellness_settings_screen.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
-import 'package:flowfit/services/wellness_monitoring_service.dart';
-import 'package:flowfit/services/wellness_state_service.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
+import 'package:flowfit/services/wellness/wellness_monitoring_service.dart';
+import 'package:flowfit/services/wellness/wellness_state_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

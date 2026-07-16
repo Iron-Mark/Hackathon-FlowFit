@@ -14,7 +14,7 @@ import 'package:flowfit/screens/onboarding/survey_basic_info_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_body_measurements_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_daily_targets_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_intro_screen.dart';
-import 'package:flowfit/services/survey_completion_handler.dart';
+import 'package:flowfit/services/backend/survey_completion_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

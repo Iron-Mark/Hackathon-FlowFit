@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flowfit/services/openroute_service.dart';
+import 'package:flowfit/services/location/openroute_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';

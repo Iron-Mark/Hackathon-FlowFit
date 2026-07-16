@@ -1,6 +1,6 @@
 import 'package:flowfit/models/buddy_onboarding_state.dart';
 import 'package:flowfit/models/buddy_profile.dart';
-import 'package:flowfit/services/buddy_offline_storage.dart';
+import 'package:flowfit/services/storage/buddy_offline_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

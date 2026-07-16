@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flowfit/services/survey_completion_handler.dart';
+import 'package:flowfit/services/backend/survey_completion_handler.dart';
 import 'package:flowfit/core/domain/entities/user_profile.dart';
 import 'package:flowfit/core/domain/repositories/profile_repository.dart';
 import 'package:flowfit/core/exceptions/profile_exceptions.dart';

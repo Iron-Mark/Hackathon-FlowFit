@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flowfit/services/phone_data_listener.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
 import 'package:flowfit/models/sensor_error.dart';
 
 void main() {

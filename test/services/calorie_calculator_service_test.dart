@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flowfit/services/calorie_calculator_service.dart';
+import 'package:flowfit/services/workout/calorie_calculator_service.dart';
 import 'package:flowfit/models/workout_session.dart';
 
 void main() {

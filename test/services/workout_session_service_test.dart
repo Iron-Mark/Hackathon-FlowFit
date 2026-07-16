@@ -2,7 +2,7 @@ import 'package:flowfit/models/resistance_session.dart';
 import 'package:flowfit/models/running_session.dart';
 import 'package:flowfit/models/walking_session.dart';
 import 'package:flowfit/models/workout_session.dart';
-import 'package:flowfit/services/workout_session_service.dart';
+import 'package:flowfit/services/workout/workout_session_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

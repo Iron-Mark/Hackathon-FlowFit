@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flowfit/services/timer_service.dart';
+import 'package:flowfit/services/workout/timer_service.dart';
 
 void main() {
   group('TimerService', () {

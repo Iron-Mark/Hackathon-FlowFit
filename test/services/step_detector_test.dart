@@ -1,4 +1,4 @@
-import 'package:flowfit/services/step_detector.dart';
+import 'package:flowfit/services/sensors/step_detector.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,6 +1,6 @@
 import 'package:flowfit/models/walking_route.dart';
-import 'package:flowfit/services/calming_route_service.dart';
-import 'package:flowfit/services/openroute_service.dart';
+import 'package:flowfit/services/location/calming_route_service.dart';
+import 'package:flowfit/services/location/openroute_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 

@@ -17,7 +17,7 @@ import 'package:flowfit/screens/onboarding/survey_basic_info_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_body_measurements_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_activity_goals_screen.dart';
 import 'package:flowfit/screens/onboarding/survey_daily_targets_screen.dart';
-import 'package:flowfit/services/survey_completion_handler.dart';
+import 'package:flowfit/services/backend/survey_completion_handler.dart';
 
 Future<void> _tapAndSettle(WidgetTester tester, Finder finder) async {
   final target = finder.first;

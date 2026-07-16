@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:flowfit/screens/profile/settings/general/help_support_screen.dart';
-import 'package:flowfit/services/support_request_service.dart';
+import 'package:flowfit/services/backend/support_request_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
