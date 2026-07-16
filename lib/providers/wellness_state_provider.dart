@@ -6,13 +6,7 @@ import 'package:flowfit/models/wellness_state.dart';
 import 'package:flowfit/models/state_transition.dart';
 import 'package:flowfit/services/wellness_state_service.dart';
 import 'package:flowfit/services/wellness_monitoring_service.dart';
-import 'package:flowfit/services/watch_bridge.dart';
 import 'package:flowfit/services/phone_data_listener.dart';
-
-/// Provider for WatchBridgeService (singleton)
-final watchBridgeServiceProvider = Provider<WatchBridgeService>((ref) {
-  return WatchBridgeService();
-});
 
 /// Provider for PhoneDataListener (singleton)
 final phoneDataListenerServiceProvider = Provider<PhoneDataListener>((ref) {
@@ -216,12 +210,6 @@ final wellnessStateProvider =
       final prefs = ref.watch(sharedPreferencesProvider);
       return WellnessStateNotifier(service, prefs);
     });
-
-/// Provider for wellness history
-final wellnessHistoryProvider = Provider<List<WellnessStateData>>((ref) {
-  final notifier = ref.watch(wellnessStateProvider.notifier);
-  return notifier.getStateHistory();
-});
 
 /// Provider for today's wellness durations
 final todayDurationsProvider = Provider<Map<WellnessState, Duration>>((ref) {

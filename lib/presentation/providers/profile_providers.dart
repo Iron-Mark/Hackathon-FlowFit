@@ -113,25 +113,6 @@ final pendingSyncCountProvider = FutureProvider<int>((ref) async {
   return await syncQueue.getPendingCount();
 });
 
-/// Provider for manual sync trigger.
-///
-/// Call this to manually trigger sync from UI (e.g., pull-to-refresh).
-/// Returns true if sync was attempted (has connectivity), false otherwise.
-///
-/// Usage:
-/// ```dart
-/// final result = await ref.read(manualSyncProvider.future);
-/// if (result) {
-///   // Sync attempted
-/// } else {
-///   // No connectivity
-/// }
-/// ```
-final manualSyncProvider = FutureProvider.autoDispose<bool>((ref) async {
-  final syncQueue = await ref.watch(syncQueueServiceProvider.future);
-  return await syncQueue.manualSync();
-});
-
 /// StateNotifier provider family for user-specific profile state.
 ///
 /// Manages user profile state with offline-first strategy:
