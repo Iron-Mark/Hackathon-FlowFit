@@ -13,6 +13,7 @@ Essential documentation that should be easily accessible:
 - **README.md** - Main project overview and setup instructions
 - **docs/QUICK_START.md** - Quick start guide for developers
 - **docs/TROUBLESHOOTING.md** - Common issues and solutions
+- **docs/architecture/ARCHITECTURE_REVIEW_2026-07-14.md** - Architecture survey, guard-test constraint map, executed refactor stages, and the ranked refactor roadmap
 
 ---
 
