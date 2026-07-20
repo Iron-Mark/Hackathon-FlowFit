@@ -1,0 +1,46 @@
+name: Site Health
+
+# Weekly health check over every live public surface. Read-only curls, no
+# checkout, well under one Actions minute per run — fails loudly if any
+# surface stops serving.
+
+on:
+  schedule:
+    - cron: "37 4 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: site-health
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    name: Probe live surfaces
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check public URLs
+        run: |
+          set -u
+          fail=0
+          check() {
+            local url="$1" expected="${2:-200}"
+            local code
+            code=$(curl -sS -o /dev/null -w "%{http_code}" --max-time 30 "$url" || echo "000")
+            if [ "$code" = "$expected" ]; then
+              echo "OK   $code $url"
+            else
+              echo "::error::FAIL $code (expected $expected) $url"
+              fail=1
+            fi
+          }
+          check "https://iron-mark.github.io/Hackathon-FlowFit/"
+          check "https://iron-mark.github.io/Hackathon-FlowFit/privacy.html"
+          check "https://iron-mark.github.io/Hackathon-FlowFit/account-deletion.html"
+          check "https://apps.marksiazon.dev/flowfit/"
+          check "https://apps.marksiazon.dev/flowfit/app"
+          check "https://apps.marksiazon.dev/flowfit/flowy.svg"
+          exit "$fail"
