@@ -133,6 +133,8 @@ literal source text. Violating any of these fails CI:
   `lib/app/activity_classifier_scope.dart` (`ActivityClassifierScope`) and
   the secret-redaction helper became `lib/app/startup_error_redactor.dart`
   (357 → 304 lines, provider-package imports out of main.dart).
+  `ActivityClassifierScope` was later deleted outright when roadmap item 4
+  landed (2026-07-21) — the chain lives in Riverpod providers now.
   `FlowFitPhoneApp`, the verbatim routes map, `buildRunningShareRoute`,
   `MissingWorkoutSessionScreen` (kept: it is exercised only via route text,
   so a new interactive file would trip the surface-coverage guard), and
@@ -178,6 +180,45 @@ literal source text. Violating any of these fails CI:
    scanner paths (`navigation_route_guard_test.dart:83/93/186`,
    `release_route_surface_test.dart:16`, smoke test:272). Low payoff until
    the god screens shrink; skip unless main.dart grows again.
+
+### Execution status (updated 2026-07-21)
+
+- **Item 1 — profile stack: executed 2026-07-20/21.** Stages 1–6 per
+  `PROFILE_UNIFICATION_PLAN_2026-07-20.md`; the deferred
+  `patchBackendProfile` repository member landed 2026-07-21 and the buddy
+  onboarding write now routes through it.
+- **Item 2 — single user-id source: executed 2026-07-20**
+  (auth-reactive `currentUserIdProvider`).
+- **Item 3 — wellness consolidation: resolved 2026-07-21 as a *logical*
+  consolidation.** Guard pins anchor files in three of the four wellness
+  locations, so the physical layout deliberately stays; the real defects
+  shipped instead: geofence missions now persist
+  (`GeofenceMissionStorage` + `PersistentGeofenceRepository` + app-scoped
+  `geofenceRepositoryProvider` — previously destroyed on every screen
+  exit), and the wellness history save/load round-trip was fixed
+  (`Map.toString` written but query-string parsed; now JSON).
+- **Item 4 — retire the provider package: executed 2026-07-21.** Wellness
+  site via constructor injection, classifier chain via Riverpod
+  (`ActivityClassifierScope` deleted, `main.dart` unwrapped), dependency
+  removed from pubspec with the full suite green and a debug APK build as
+  the Kotlin-compile proof.
+- **Item 5 — god screens: executed 2026-07-20/21, all five.** landing,
+  health, wear, tracker, and active-running each split into a shell (stem
+  kept, pinned literals in place) plus public widgets under a sibling
+  `widgets/` directory; active-running's detection pipeline extracted to
+  `running_activity_detection.dart`.
+- **Item 6 — shared-service dispose bug: executed 2026-07-15.**
+- **Item 7 — model hygiene: largely executed 2026-07-15** (see the roadmap
+  batch notes); leftovers are cosmetic.
+- **Item 8 — route-table extraction: still deliberately skipped.**
+- Also shipped 2026-07-21 beyond this roadmap: sync-queue dead-letter
+  park/restore (R8) and the `isKidsMode` fromJson default aligned to true
+  (R7's hazard half — the DB default/backfill remains a product decision).
+- New follow-ups surfaced by the work: dead-letter store is not cleared on
+  account deletion; `phoneDataListenerProvider` exists twice (classifier
+  chain vs `running_session_provider`, kept deliberately via a `hide` to
+  preserve two-instance semantics); the 320-sample buffer pipeline is still
+  duplicated between tracker (inline) and running (extracted controller).
 
 ## 5. Standing conventions going forward
 
