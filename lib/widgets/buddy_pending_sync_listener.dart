@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:flowfit/providers/buddy_onboarding_provider.dart';
+import 'package:flowfit/providers/current_user_id_provider.dart';
 
 final buddyPendingSyncUserIdProvider = Provider.autoDispose<String?>((ref) {
-  return Supabase.instance.client.auth.currentUser?.id;
+  return ref.watch(currentUserIdProvider);
 });
 
 final buddyPendingSyncActionProvider = Provider<Future<void> Function()>((ref) {

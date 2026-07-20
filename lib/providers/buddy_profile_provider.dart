@@ -2,12 +2,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flowfit/core/config/supabase_tables.dart';
 import 'package:flowfit/models/buddy_profile.dart';
+import 'package:flowfit/providers/current_user_id_provider.dart';
 
 typedef BuddyCustomizationSave =
     Future<void> Function(String userId, Map<String, dynamic> updates);
 
 final buddyCustomizationCurrentUserIdProvider = Provider<String?>((ref) {
-  return Supabase.instance.client.auth.currentUser?.id;
+  return ref.watch(currentUserIdProvider);
 });
 
 final buddyCustomizationSaveProvider = Provider<BuddyCustomizationSave>((ref) {

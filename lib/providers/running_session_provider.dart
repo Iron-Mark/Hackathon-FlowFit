@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flowfit/providers/current_user_id_provider.dart';
 import 'package:flowfit/models/running_session.dart';
 import 'package:flowfit/models/mood_rating.dart';
 import 'package:flowfit/models/workout_session.dart';
@@ -35,8 +36,12 @@ final workoutSessionServiceProvider = Provider(
 );
 
 /// Provider for resolving the current signed-in user for workout ownership.
+/// Delegates to the auth-reactive source so a signed-out cold start can never
+/// cache a null id; the trailing live read covers the pre-first-emission
+/// window.
 final workoutSessionUserIdProvider = Provider<String?>((ref) {
-  return Supabase.instance.client.auth.currentUser?.id;
+  return ref.watch(currentUserIdProvider) ??
+      Supabase.instance.client.auth.currentUser?.id;
 });
 
 String requireWorkoutSessionUserId(String? Function() readCurrentUserId) {
