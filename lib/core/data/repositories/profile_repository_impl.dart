@@ -251,9 +251,17 @@ class ProfileRepositoryImpl implements ProfileRepository {
         throw ValidationException(validationError);
       }
 
+      // Strip null-valued columns so a sparse local profile (e.g. a queued
+      // survey payload replayed after Buddy onboarding) can never null-clobber
+      // fields another writer has since set. No live flow clears a column by
+      // writing null: copyWith never nulls fields and updateField never sets
+      // null.
+      final payload = profile.toSupabaseJson()
+        ..removeWhere((_, value) => value == null);
+
       await _supabase
           .from(SupabaseTables.userProfiles)
-          .upsert(profile.toSupabaseJson(), onConflict: 'user_id')
+          .upsert(payload, onConflict: 'user_id')
           .timeout(
             const Duration(seconds: 10),
             onTimeout: () {

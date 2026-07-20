@@ -161,7 +161,7 @@ class UserProfile {
       'activity_level': activityLevel,
       'goals': goals,
       'wellness_goals': wellnessGoals,
-      'notifications_enabled': notificationsEnabled ?? false,
+      'notifications_enabled': notificationsEnabled,
       'daily_calorie_target': dailyCalorieTarget,
       'daily_steps_target': dailyStepsTarget,
       'daily_active_minutes_target': dailyActiveMinutesTarget,

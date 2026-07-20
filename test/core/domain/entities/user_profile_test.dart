@@ -242,7 +242,8 @@ void main() {
         expect(json.containsKey('created_at'), false); // Not included
       });
 
-      test('defaults required Supabase notification flag when unset', () {
+      test('leaves the notification flag null when unset so the backend '
+          'payload strip can drop it instead of clobbering to false', () {
         final profile = UserProfile(
           userId: 'user-123',
           createdAt: now,
@@ -251,7 +252,8 @@ void main() {
 
         final json = profile.toSupabaseJson();
 
-        expect(json['notifications_enabled'], isFalse);
+        expect(json.containsKey('notifications_enabled'), isTrue);
+        expect(json['notifications_enabled'], isNull);
       });
     });
 
