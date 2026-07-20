@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
 import 'package:provider/provider.dart';
+import 'package:flowfit/providers/geofence_repository_provider.dart';
 import 'package:flowfit/services/sensors/watch_bridge.dart';
 import 'package:flowfit/models/heart_rate_data.dart' as hr_model;
 import 'package:geolocator/geolocator.dart';
@@ -37,6 +39,7 @@ class MapsPageWrapper extends StatefulWidget {
 
 class _MapsPageWrapperState extends State<MapsPageWrapper> {
   late final GeofenceRepository _repo;
+  late final bool _ownsRepo;
   late final GeofenceService _service;
   WatchBridgeService? _watchBridge;
   late final MoodTrackerService _moodTracker;
@@ -45,7 +48,20 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
   @override
   void initState() {
     super.initState();
-    _repo = InMemoryGeofenceRepository();
+    // Prefer the app-scoped persistent repository when a Riverpod
+    // ProviderScope is available (the production route table). Widget tests
+    // that pump the wrapper bare — or scopes without a SharedPreferences
+    // override — fall back to a route-owned in-memory repository unchanged.
+    try {
+      _repo = ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(geofenceRepositoryProvider);
+      _ownsRepo = false;
+    } catch (_) {
+      _repo = InMemoryGeofenceRepository();
+      _ownsRepo = true;
+    }
     _service = GeofenceService(repository: _repo);
     final watchBridge = widget.enableDeviceServices
         ? WatchBridgeService()
@@ -110,7 +126,12 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
     _watchBridge?.stopPermissionMonitoring();
     _watchBridge?.stopConnectionMonitoring();
     _service.dispose();
-    _repo.dispose();
+    // Only dispose a repository this route created. The provider-scoped repo
+    // is a shared ChangeNotifier owned by the app container; disposing it on
+    // route pop would break every later '/mission' visit.
+    if (_ownsRepo) {
+      _repo.dispose();
+    }
     super.dispose();
   }
 
@@ -136,4 +157,6 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
 // How to use:
 // - Add `MapsPageWrapper()` to your application's routing for `wellness` category.
 // - This feature uses `flutter_map` plus the shared FlowFit map tile config.
-// - Optionally, replace `InMemoryGeofenceRepository` with a persisted implementation.
+// - Under a Riverpod `ProviderScope` the wrapper reads the app-scoped
+//   persistent repository (`geofenceRepositoryProvider`); without one it
+//   falls back to a route-local `InMemoryGeofenceRepository`.
