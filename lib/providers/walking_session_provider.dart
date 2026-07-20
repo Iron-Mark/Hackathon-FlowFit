@@ -67,6 +67,7 @@ class WalkingSessionNotifier extends StateNotifier<WalkingSession?> {
     // Start services
     await _gpsService.startTracking();
     _timerService.start();
+    _hrService.reset();
     await _hrService.startMonitoring();
 
     // Subscribe to GPS updates

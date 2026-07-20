@@ -79,6 +79,7 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
     // Start services
     _timerService.start();
     if (hrMonitorEnabled) {
+      _hrService.reset();
       await _hrService.startMonitoring();
     }
 

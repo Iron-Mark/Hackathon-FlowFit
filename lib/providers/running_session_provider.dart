@@ -120,6 +120,7 @@ class RunningSessionNotifier extends StateNotifier<RunningSession?> {
     // Start services
     await _gpsService.startTracking();
     _timerService.start(); // Timer starts from 0
+    _hrService.reset();
     await _hrService.startMonitoring();
 
     // Start phone step counter using phone's accelerometer
