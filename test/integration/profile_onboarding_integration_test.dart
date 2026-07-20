@@ -720,4 +720,7 @@ class _InMemoryProfileRepository implements ProfileRepository {
   Future<bool> hasCompletedSurvey(String userId) async {
     return _profiles.containsKey(userId);
   }
+
+  @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
 }

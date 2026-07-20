@@ -61,6 +61,5 @@ final authNotifierProvider =
 /// Requirement 8.4: Consume state through providers without direct service dependencies
 final surveyNotifierProvider =
     StateNotifierProvider<SurveyNotifier, SurveyState>((ref) {
-      final profileRepository = ref.watch(profileRepositoryProvider);
-      return SurveyNotifier(profileRepository);
+      return SurveyNotifier();
     });

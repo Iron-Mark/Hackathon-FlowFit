@@ -97,4 +97,14 @@ abstract class ProfileRepository {
   /// Returns true if a profile exists locally for [userId],
   /// indicating the user has completed onboarding.
   Future<bool> hasCompletedSurvey(String userId);
+
+  /// Backend-truth onboarding check used by routing (splash/welcome/login).
+  ///
+  /// Reads user_profiles.survey_completed for [userId] from Supabase.
+  /// A missing row means false. Throws [BackendSyncException] on network or
+  /// backend failure so routing screens can keep their retry/snackbar
+  /// behavior. Unlike [hasCompletedSurvey], this must reflect backend truth:
+  /// a fresh install on a second device routes by the backend flag even with
+  /// an empty local store.
+  Future<bool> hasCompletedSurveyOnBackend(String userId);
 }

@@ -66,4 +66,41 @@ void main() {
       },
     );
   });
+
+  group('hasCompletedSurveyOnBackend contract', () {
+    late String source;
+
+    setUpAll(() {
+      source = File(
+        'lib/core/data/repositories/profile_repository_impl.dart',
+      ).readAsStringSync();
+    });
+
+    test('reads backend truth for the routing flag: single column, '
+        'missing row means false, no unsafe bool cast', () {
+      expect(source, contains("select('survey_completed')"));
+      expect(source, contains("eq('user_id', userId)"));
+      expect(source, contains('.maybeSingle()'));
+      expect(source, contains("response?['survey_completed'] == true"));
+      expect(
+        source,
+        isNot(contains("response['survey_completed'] as bool")),
+        reason: 'the Stack A cast-crash class of failure must not return',
+      );
+    });
+
+    test('maps timeout, network, and backend failures to '
+        'BackendSyncException so routing screens keep their retry UI', () {
+      final section = source.substring(
+        source.indexOf('hasCompletedSurveyOnBackend'),
+      );
+      expect(section, contains('isTimeout: true'));
+      expect(section, contains('isNetworkError: true'));
+      expect(section, contains('on PostgrestException'));
+      expect(
+        RegExp('BackendSyncException').allMatches(section).length,
+        greaterThanOrEqualTo(4),
+      );
+    });
+  });
 }

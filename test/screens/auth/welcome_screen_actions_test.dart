@@ -1,8 +1,10 @@
 import 'package:flowfit/domain/entities/user.dart';
-import 'package:flowfit/domain/entities/user_profile.dart';
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
-import 'package:flowfit/domain/repositories/i_profile_repository.dart';
-import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/core/domain/repositories/profile_repository.dart';
+import 'package:flowfit/presentation/providers/providers.dart'
+    hide profileRepositoryProvider;
+import 'package:flowfit/presentation/providers/profile_providers.dart'
+    as profile_providers;
 import 'package:flowfit/screens/auth/welcome_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,15 +13,15 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   Widget buildHarness({
     IAuthRepository? authRepository,
-    IProfileRepository? profileRepository,
+    ProfileRepository? profileRepository,
   }) {
     return ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(
           authRepository ?? _FakeAuthRepository(),
         ),
-        profileRepositoryProvider.overrideWithValue(
-          profileRepository ?? _FakeProfileRepository(),
+        profile_providers.profileRepositoryProvider.overrideWith(
+          (ref) async => profileRepository ?? _FakeProfileRepository(),
         ),
       ],
       child: MaterialApp(
@@ -148,7 +150,7 @@ class _FakeAuthRepository implements IAuthRepository {
   }
 }
 
-class _FakeProfileRepository implements IProfileRepository {
+class _FakeProfileRepository implements ProfileRepository {
   _FakeProfileRepository({
     Set<String>? completedUsers,
     this.throwOnLookup = false,
@@ -158,16 +160,7 @@ class _FakeProfileRepository implements IProfileRepository {
   final bool throwOnLookup;
 
   @override
-  Future<UserProfile> createProfile(UserProfile profile) async {
-    completedUsers.add(profile.userId);
-    return profile;
-  }
-
-  @override
-  Future<UserProfile?> getProfile(String userId) async => null;
-
-  @override
-  Future<bool> hasCompletedSurvey(String userId) async {
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async {
     if (throwOnLookup) {
       throw StateError('profile lookup unavailable');
     }
@@ -175,8 +168,6 @@ class _FakeProfileRepository implements IProfileRepository {
   }
 
   @override
-  Future<UserProfile> updateProfile(UserProfile profile) async {
-    completedUsers.add(profile.userId);
-    return profile;
-  }
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not stubbed');
 }

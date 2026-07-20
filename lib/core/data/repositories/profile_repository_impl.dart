@@ -498,4 +498,75 @@ class ProfileRepositoryImpl implements ProfileRepository {
       return false;
     }
   }
+
+  @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async {
+    try {
+      _logger.debug('Checking backend survey completion for user: $userId');
+
+      final response = await _supabase
+          .from(SupabaseTables.userProfiles)
+          .select('survey_completed')
+          .eq('user_id', userId)
+          .maybeSingle()
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw TimeoutException(
+                'Backend request timed out after 10 seconds',
+              );
+            },
+          );
+
+      final hasCompleted = response?['survey_completed'] == true;
+      _logger.info('Backend survey completion for user $userId: $hasCompleted');
+      return hasCompleted;
+    } on TimeoutException catch (e, stackTrace) {
+      _logger.warning(
+        'Backend survey check timed out for user: $userId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw BackendSyncException(
+        'Request timed out while checking survey completion',
+        originalError: e,
+        stackTrace: stackTrace,
+        isTimeout: true,
+      );
+    } on SocketException catch (e, stackTrace) {
+      _logger.warning(
+        'Network error checking survey completion for user: $userId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw BackendSyncException(
+        'Network error: ${e.message}',
+        originalError: e,
+        stackTrace: stackTrace,
+        isNetworkError: true,
+      );
+    } on PostgrestException catch (e, stackTrace) {
+      _logger.error(
+        'Supabase error checking survey completion for user: $userId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw BackendSyncException(
+        'Backend error: ${e.message}',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error checking survey completion for user: $userId',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw BackendSyncException(
+        'Unexpected error checking survey completion',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
 }

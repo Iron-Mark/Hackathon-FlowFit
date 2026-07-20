@@ -3,6 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flowfit/theme/app_theme.dart';
 import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/presentation/providers/profile_providers.dart'
+    as profile_providers;
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -37,9 +39,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     _isRedirectingAuthenticatedUser = true;
 
     try {
-      final hasCompletedSurvey = await ref
-          .read(profileRepositoryProvider)
-          .hasCompletedSurvey(userId);
+      final profileRepository = await ref.read(
+        profile_providers.profileRepositoryProvider.future,
+      );
+      final hasCompletedSurvey = await profileRepository
+          .hasCompletedSurveyOnBackend(userId);
 
       if (!mounted) return;
 

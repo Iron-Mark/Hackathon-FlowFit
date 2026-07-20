@@ -62,6 +62,9 @@ class MockProfileRepository implements ProfileRepository {
   Future<bool> hasCompletedSurvey(String userId) async {
     return _localProfile != null;
   }
+
+  @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
 }
 
 void main() {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/presentation/providers/profile_providers.dart'
+    as profile_providers;
 import 'package:flowfit/domain/entities/auth_state.dart';
 
 typedef SplashRouteResolver = Future<SplashRoute> Function(WidgetRef ref);
@@ -118,9 +120,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       return const SplashRoute('/welcome');
     }
 
-    final hasCompletedSurvey = await ref
-        .read(profileRepositoryProvider)
-        .hasCompletedSurvey(user.id);
+    final profileRepository = await ref.read(
+      profile_providers.profileRepositoryProvider.future,
+    );
+    final hasCompletedSurvey = await profileRepository
+        .hasCompletedSurveyOnBackend(user.id);
 
     if (hasCompletedSurvey) {
       return const SplashRoute('/dashboard');

@@ -116,6 +116,14 @@ class MockProfileRepository extends _i1.Mock implements _i3.ProfileRepository {
             returnValue: _i4.Future<bool>.value(false),
           )
           as _i4.Future<bool>);
+
+  @override
+  _i4.Future<bool> hasCompletedSurveyOnBackend(String? userId) =>
+      (super.noSuchMethod(
+            Invocation.method(#hasCompletedSurveyOnBackend, [userId]),
+            returnValue: _i4.Future<bool>.value(false),
+          )
+          as _i4.Future<bool>);
 }
 
 /// A class which mocks [ProfileNotifier].

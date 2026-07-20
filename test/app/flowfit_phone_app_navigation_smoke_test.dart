@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:flowfit/domain/entities/user.dart';
-import 'package:flowfit/domain/entities/user_profile.dart';
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
-import 'package:flowfit/domain/repositories/i_profile_repository.dart';
 import 'package:flowfit/main.dart';
-import 'package:flowfit/presentation/providers/providers.dart';
+import 'package:flowfit/core/domain/repositories/profile_repository.dart';
+import 'package:flowfit/presentation/providers/providers.dart'
+    hide profileRepositoryProvider;
+import 'package:flowfit/presentation/providers/profile_providers.dart'
+    as profile_providers;
 import 'package:flowfit/providers/buddy_profile_provider.dart' as buddy_profile;
 import 'package:flowfit/providers/wellness_state_provider.dart' as wellness;
 import 'package:flowfit/widgets/buddy_pending_sync_listener.dart';
@@ -302,7 +304,9 @@ Future<void> _pumpFlowFitAppAt(
     ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(_UnauthenticatedAuth()),
-        profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
+        profile_providers.profileRepositoryProvider.overrideWith(
+          (ref) async => _FakeProfileRepository(),
+        ),
         buddy_profile.buddyCustomizationCurrentUserIdProvider.overrideWithValue(
           null,
         ),
@@ -372,16 +376,11 @@ User _fakeAuthUser({required String email, String? fullName}) {
   );
 }
 
-class _FakeProfileRepository implements IProfileRepository {
+class _FakeProfileRepository implements ProfileRepository {
   @override
-  Future<UserProfile> createProfile(UserProfile profile) async => profile;
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
 
   @override
-  Future<UserProfile?> getProfile(String userId) async => null;
-
-  @override
-  Future<bool> hasCompletedSurvey(String userId) async => false;
-
-  @override
-  Future<UserProfile> updateProfile(UserProfile profile) async => profile;
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not stubbed');
 }

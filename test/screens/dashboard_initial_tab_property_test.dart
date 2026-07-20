@@ -591,6 +591,9 @@ class TestProfileRepository implements core_profile_repo.ProfileRepository {
   }
 
   @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
+
+  @override
   Future<bool> hasPendingSync(String userId) async {
     return false;
   }

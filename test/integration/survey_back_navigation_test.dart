@@ -406,6 +406,9 @@ class _InMemoryProfileRepository
   }
 
   @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
+
+  @override
   Future<bool> hasPendingSync(String userId) async {
     return _profiles[userId]?.isSynced == false;
   }

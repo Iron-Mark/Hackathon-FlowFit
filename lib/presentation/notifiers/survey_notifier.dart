@@ -1,10 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:flowfit/domain/entities/user_profile.dart';
-import 'package:flowfit/domain/repositories/i_profile_repository.dart';
 import 'package:flowfit/core/utils/height_measurements.dart';
-import 'package:flowfit/domain/exceptions/auth_exceptions.dart';
 
 /// State class for survey data and progress.
 class SurveyState {
@@ -73,11 +70,9 @@ class SurveyState {
 ///
 /// Requirements: 3.2, 3.3, 3.4, 3.5, 4.1, 4.3
 class SurveyNotifier extends StateNotifier<SurveyState> {
-  final IProfileRepository _profileRepository;
   static const String _storageKey = 'survey_data';
-  static const int _maxRetries = 3;
 
-  SurveyNotifier(this._profileRepository) : super(SurveyState.initial()) {
+  SurveyNotifier() : super(SurveyState.initial()) {
     _loadSurveyData();
   }
 
@@ -247,80 +242,6 @@ class SurveyNotifier extends StateNotifier<SurveyState> {
     }
 
     return null; // All valid
-  }
-
-  /// Submits the complete survey data to create a user profile.
-  ///
-  /// Validates all data, creates a UserProfile entity, and calls the repository
-  /// with retry logic (up to 3 attempts).
-  ///
-  /// Requirement 4.1: Save all survey data to Supabase
-  /// Requirement 4.3: Retry operation up to 3 times on failure
-  Future<bool> submitSurvey(String userId) async {
-    // Validate all data
-    final validationError = validateAllData();
-    if (validationError != null) {
-      state = state.copyWith(errorMessage: validationError);
-      return false;
-    }
-
-    state = state.copyWith(isLoading: true, clearError: true);
-
-    // Create UserProfile entity from survey data
-    final profile = UserProfile(
-      userId: userId,
-      fullName: state.surveyData['fullName'] as String,
-      age: state.surveyData['age'] as int,
-      gender: state.surveyData['gender'] as String,
-      weight: state.surveyData['weight'] as double,
-      height: state.surveyData['height'] as double,
-      heightUnit: state.surveyData['heightUnit'] as String? ?? 'cm',
-      weightUnit: state.surveyData['weightUnit'] as String? ?? 'kg',
-      activityLevel: state.surveyData['activityLevel'] as String,
-      goals: (state.surveyData['goals'] as List<dynamic>)
-          .map((e) => e.toString())
-          .toList(),
-      dailyCalorieTarget: state.surveyData['dailyCalorieTarget'] as int,
-      dailyStepsTarget: state.surveyData['dailyStepsTarget'] as int?,
-      dailyActiveMinutesTarget:
-          state.surveyData['dailyActiveMinutesTarget'] as int?,
-      dailyWaterTarget: (state.surveyData['dailyWaterTarget'] as num?)
-          ?.toDouble(),
-      surveyCompleted: true,
-    );
-
-    // Attempt to save with retry logic (Requirement 4.3)
-    for (int attempt = 1; attempt <= _maxRetries; attempt++) {
-      try {
-        await _profileRepository.createProfile(profile);
-
-        // Success - clear local storage and reset state
-        await _clearSurveyData();
-        state = SurveyState.initial();
-        return true;
-      } on AuthException catch (e) {
-        if (attempt == _maxRetries) {
-          // Final attempt failed
-          state = state.copyWith(isLoading: false, errorMessage: e.message);
-          return false;
-        }
-        // Wait before retrying (exponential backoff)
-        await Future.delayed(Duration(seconds: attempt));
-      } catch (e) {
-        if (attempt == _maxRetries) {
-          // Final attempt failed
-          state = state.copyWith(
-            isLoading: false,
-            errorMessage: 'Failed to save profile. Please try again.',
-          );
-          return false;
-        }
-        // Wait before retrying
-        await Future.delayed(Duration(seconds: attempt));
-      }
-    }
-
-    return false;
   }
 
   /// Clears survey data from local storage.

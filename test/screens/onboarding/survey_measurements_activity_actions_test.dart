@@ -591,6 +591,9 @@ class _InMemoryProfileRepository
   Future<bool> hasCompletedSurvey(String userId) async {
     return _profiles.containsKey(userId);
   }
+
+  @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
 }
 
 class _BlockingSurveyCompletionHandler extends SurveyCompletionHandler {

@@ -347,6 +347,9 @@ class _ThrowingProfileRepository implements ProfileRepository {
   Future<bool> hasCompletedSurvey(String userId) async => false;
 
   @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
+
+  @override
   Future<bool> hasPendingSync(String userId) async => false;
 
   @override
@@ -380,6 +383,9 @@ class _LoadedProfileRepository implements ProfileRepository {
 
   @override
   Future<bool> hasCompletedSurvey(String userId) async => true;
+
+  @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
 
   @override
   Future<bool> hasPendingSync(String userId) async => false;

@@ -334,4 +334,8 @@ class _UnavailableProfileRepository implements ProfileRepository {
 
   @override
   Future<bool> hasCompletedSurvey(String userId) async => _throwUnavailable();
+
+  @override
+  Future<bool> hasCompletedSurveyOnBackend(String userId) async =>
+      _throwUnavailable();
 }
