@@ -270,9 +270,9 @@ class ResistanceSessionNotifier extends StateNotifier<ResistanceSession?> {
     _countdownSubscription?.cancel();
     _hrSubscription?.cancel();
     _metricsUpdateTimer?.cancel();
-    _timerService.dispose();
-    _countdownService.dispose();
-    _hrService.dispose();
+    _timerService.stop();
+    _countdownService.stop();
+    _hrService.stopMonitoring();
     super.dispose();
   }
 }

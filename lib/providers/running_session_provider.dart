@@ -315,15 +315,15 @@ class RunningSessionNotifier extends StateNotifier<RunningSession?> {
     _hrSubscription?.cancel();
     _stepSubscription?.cancel();
     _metricsUpdateTimer?.cancel();
-    _gpsService.dispose();
-    _timerService.dispose();
-    _hrService.dispose();
+    _gpsService.stopTracking();
+    _timerService.stop();
+    _hrService.stopMonitoring();
 
-    // Dispose phone step counter if available
+    // Stop phone step counter if available
     try {
-      _phoneStepCounterService.dispose();
+      _phoneStepCounterService.stopCounting();
     } catch (e) {
-      debugPrint('⚠️ Could not dispose phone step counter: $e');
+      debugPrint('⚠️ Could not stop phone step counter: $e');
     }
 
     super.dispose();

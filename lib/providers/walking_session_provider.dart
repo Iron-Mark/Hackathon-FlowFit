@@ -221,9 +221,9 @@ class WalkingSessionNotifier extends StateNotifier<WalkingSession?> {
     _timerSubscription?.cancel();
     _hrSubscription?.cancel();
     _metricsUpdateTimer?.cancel();
-    _gpsService.dispose();
-    _timerService.dispose();
-    _hrService.dispose();
+    _gpsService.stopTracking();
+    _timerService.stop();
+    _hrService.stopMonitoring();
     super.dispose();
   }
 }
