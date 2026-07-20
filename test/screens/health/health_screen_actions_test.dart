@@ -1,4 +1,9 @@
 import 'package:flowfit/screens/health/health_screen.dart';
+import 'package:flowfit/screens/health/widgets/add_food_dialog.dart';
+import 'package:flowfit/screens/health/widgets/edit_sleep_dialog.dart';
+import 'package:flowfit/screens/health/widgets/food_intake_card.dart';
+import 'package:flowfit/screens/health/widgets/hydration_card.dart';
+import 'package:flowfit/screens/health/widgets/sleep_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,6 +37,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(AddFoodDialog), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(AlertDialog),
@@ -48,6 +54,7 @@ void main() {
     ) async {
       await tester.pumpWidget(const MaterialApp(home: HealthScreen()));
 
+      expect(find.byType(FoodIntakeCard), findsOneWidget);
       expect(find.text('1595/2000 kcal'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(ElevatedButton, 'Add Food'));
@@ -213,6 +220,7 @@ void main() {
     ) async {
       await tester.pumpWidget(const MaterialApp(home: HealthScreen()));
 
+      expect(find.byType(HydrationCard), findsOneWidget);
       expect(find.text('1.5 / 2.0 L'), findsOneWidget);
 
       await tester.ensureVisible(find.text('-'));
@@ -259,6 +267,8 @@ void main() {
     ) async {
       await tester.pumpWidget(const MaterialApp(home: HealthScreen()));
 
+      expect(find.byType(SleepCard), findsOneWidget);
+
       final editButton = find.widgetWithText(TextButton, 'Edit');
       await tester.ensureVisible(editButton);
       await tester.pumpAndSettle();
@@ -267,6 +277,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(EditSleepDialog), findsOneWidget);
       expect(find.text('Edit Sleep Schedule'), findsOneWidget);
       expect(find.text('Bed Time'), findsOneWidget);
       expect(find.text('Wake Up Time'), findsOneWidget);
@@ -274,6 +285,7 @@ void main() {
       await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
       await tester.pumpAndSettle();
 
+      expect(find.byType(EditSleepDialog), findsNothing);
       expect(find.text('Edit Sleep Schedule'), findsNothing);
     });
 
