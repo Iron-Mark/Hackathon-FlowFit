@@ -1,5 +1,16 @@
 # FlowFit Profile-Stack Unification — Staged Migration Plan
 
+> **Status (2026-07-20): Stages 1–5 EXECUTED and green** (commits f04f923,
+> f75e5df, 55c8119, 9afa9cb, 05b1fc1 — full suite green at every stage; the
+> suite went 1,154 → 1,114 as Stack A's shape tests retired with their
+> subjects). One deviation from this plan: SurveyNotifier's repository
+> dependency was severed in Stage 3 instead of Stage 4, because the five
+> re-pointed routing suites otherwise needed throwaway Stack A overrides.
+> Stage 6 (buddy writer alignment + stale-replay guard) is deliberately NOT
+> executed yet — it adds a repository member (fake/mock churn) and changes
+> offline replay semantics, so it ships as its own session per the ordering
+> rationale below.
+
 Repo root: `C:\Codes Local\Hackathons (Workspace)\11-27-25 - FlowFit - OldStLabs`. All paths below are relative to it. Gate for every stage: `flutter test` — full 1,154-test suite green before merge.
 
 ---
