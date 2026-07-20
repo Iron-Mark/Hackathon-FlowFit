@@ -63,6 +63,16 @@ abstract class ProfileRepository {
   /// Throws exception on network errors or backend failures.
   Future<void> saveBackendProfile(UserProfile profile);
 
+  /// Patch user profile columns on the backend (Supabase)
+  ///
+  /// Performs a partial upsert of user_profiles keyed on user_id: only the
+  /// columns present in [partialPayload] are written. Null-valued entries are
+  /// stripped first so a sparse patch can never null-clobber columns another
+  /// writer has set. Throws [ValidationException] if [partialPayload] carries
+  /// no 'user_id' after the strip. BackendSyncException mapping (timeout,
+  /// network, Postgrest, unexpected) is identical to [saveBackendProfile].
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload);
+
   // ============================================================================
   // Sync Operations
   // ============================================================================

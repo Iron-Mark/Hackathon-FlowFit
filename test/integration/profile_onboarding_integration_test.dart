@@ -688,4 +688,7 @@ class _InMemoryProfileRepository implements ProfileRepository {
 
   @override
   Future<bool> hasCompletedSurveyOnBackend(String userId) async => false;
+
+  @override
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload) async {}
 }

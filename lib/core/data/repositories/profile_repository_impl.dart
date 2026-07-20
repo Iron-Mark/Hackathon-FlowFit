@@ -569,4 +569,87 @@ class ProfileRepositoryImpl implements ProfileRepository {
       );
     }
   }
+
+  @override
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload) async {
+    try {
+      // Defensive copy so the strip never mutates the caller's map, then
+      // drop null-valued entries: a partial patch must only ever touch the
+      // columns it explicitly carries, never null-clobber the rest.
+      final patch = Map<String, dynamic>.from(partialPayload)
+        ..removeWhere((_, value) => value == null);
+
+      if (!patch.containsKey('user_id')) {
+        throw ValidationException(
+          'patchBackendProfile requires a non-null user_id entry',
+        );
+      }
+
+      _logger.debug('Patching backend profile for user: ${patch['user_id']}');
+
+      await _supabase
+          .from(SupabaseTables.userProfiles)
+          .upsert(patch, onConflict: 'user_id')
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw TimeoutException(
+                'Backend request timed out after 10 seconds',
+              );
+            },
+          );
+
+      _logger.info(
+        'Successfully patched backend profile for user: ${patch['user_id']}',
+      );
+    } on ValidationException {
+      rethrow;
+    } on TimeoutException catch (e, stackTrace) {
+      _logger.warning(
+        'Backend request timed out while patching profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw BackendSyncException(
+        'Request timed out while patching profile',
+        originalError: e,
+        stackTrace: stackTrace,
+        isTimeout: true,
+      );
+    } on SocketException catch (e, stackTrace) {
+      _logger.warning(
+        'Network error patching backend profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw BackendSyncException(
+        'Network error: ${e.message}',
+        originalError: e,
+        stackTrace: stackTrace,
+        isNetworkError: true,
+      );
+    } on PostgrestException catch (e, stackTrace) {
+      _logger.error(
+        'Supabase error patching backend profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw BackendSyncException(
+        'Backend error: ${e.message}',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Unexpected error patching backend profile',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      throw BackendSyncException(
+        'Failed to patch profile on backend',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
 }

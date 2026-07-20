@@ -103,4 +103,40 @@ void main() {
       );
     });
   });
+
+  group('patchBackendProfile contract', () {
+    late String source;
+
+    setUpAll(() {
+      source = File(
+        'lib/core/data/repositories/profile_repository_impl.dart',
+      ).readAsStringSync();
+    });
+
+    test('exists and strips nulls before its onConflict upsert', () {
+      expect(source, contains('patchBackendProfile('));
+
+      final section = source.substring(source.indexOf('patchBackendProfile('));
+      expect(section, contains('removeWhere((_, value) => value == null)'));
+      expect(section, contains(".upsert(patch, onConflict: 'user_id')"));
+      expect(
+        section.indexOf('removeWhere((_, value) => value == null)'),
+        lessThan(section.indexOf(".upsert(patch, onConflict: 'user_id')")),
+        reason: 'the strip must run before the upsert',
+      );
+    });
+
+    test('guards a missing user_id and keeps the saveBackendProfile '
+        'BackendSyncException mapping', () {
+      final section = source.substring(source.indexOf('patchBackendProfile('));
+      expect(section, contains('ValidationException'));
+      expect(section, contains('isTimeout: true'));
+      expect(section, contains('isNetworkError: true'));
+      expect(section, contains('on PostgrestException'));
+      expect(
+        RegExp('BackendSyncException').allMatches(section).length,
+        greaterThanOrEqualTo(4),
+      );
+    });
+  });
 }

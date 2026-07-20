@@ -376,6 +376,9 @@ class TestProfileRepository implements core_profile_repo.ProfileRepository {
   Future<void> saveBackendProfile(core_profile.UserProfile profile) async {}
 
   @override
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload) async {}
+
+  @override
   Future<void> saveLocalProfile(core_profile.UserProfile profile) async {}
 
   @override

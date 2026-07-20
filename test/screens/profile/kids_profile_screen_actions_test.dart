@@ -353,6 +353,9 @@ class _ThrowingProfileRepository implements ProfileRepository {
   Future<bool> hasPendingSync(String userId) async => false;
 
   @override
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload) async {}
+
+  @override
   Future<void> saveBackendProfile(UserProfile profile) async {}
 
   @override
@@ -389,6 +392,9 @@ class _LoadedProfileRepository implements ProfileRepository {
 
   @override
   Future<bool> hasPendingSync(String userId) async => false;
+
+  @override
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload) async {}
 
   @override
   Future<void> saveBackendProfile(UserProfile profile) async {}

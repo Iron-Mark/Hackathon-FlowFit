@@ -635,6 +635,9 @@ class _DashboardProfileRepository
   Future<void> saveBackendProfile(core_profile.UserProfile profile) async {}
 
   @override
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload) async {}
+
+  @override
   Future<void> saveLocalProfile(core_profile.UserProfile profile) async {}
 
   @override

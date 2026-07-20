@@ -322,6 +322,10 @@ class _UnavailableProfileRepository implements ProfileRepository {
       _throwUnavailable();
 
   @override
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload) async =>
+      _throwUnavailable();
+
+  @override
   Future<void> syncProfile(String userId) async => _throwUnavailable();
 
   @override

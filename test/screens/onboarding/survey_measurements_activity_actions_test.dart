@@ -543,6 +543,9 @@ class _InMemoryProfileRepository
   }
 
   @override
+  Future<void> patchBackendProfile(Map<String, dynamic> partialPayload) async {}
+
+  @override
   Future<void> syncProfile(String userId) async {
     final profile = _profiles[userId];
     if (profile != null) {
