@@ -2,9 +2,7 @@ import 'package:flowfit/core/domain/entities/user_profile.dart' as core_profile;
 import 'package:flowfit/core/domain/repositories/profile_repository.dart'
     as core_profile_repo;
 import 'package:flowfit/domain/entities/user.dart' as domain_user;
-import 'package:flowfit/domain/entities/user_profile.dart' as domain_profile;
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
-import 'package:flowfit/domain/repositories/i_profile_repository.dart';
 import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
 import 'package:flowfit/presentation/providers/profile_providers.dart'
     as profile_providers;
@@ -33,9 +31,6 @@ void main() {
       container = ProviderContainer(
         overrides: [
           authRepositoryProvider.overrideWithValue(_FakeAuthRepository()),
-          profileRepositoryProvider.overrideWithValue(
-            _FakeSurveyProfileRepository(),
-          ),
           profile_providers.profileRepositoryProvider.overrideWith(
             (ref) async => coreRepository,
           ),
@@ -344,36 +339,6 @@ class _FakeAuthRepository implements IAuthRepository {
     required Map<String, dynamic> metadata,
   }) async {
     return _user.copyWith(email: email, fullName: fullName);
-  }
-}
-
-class _FakeSurveyProfileRepository implements IProfileRepository {
-  final Map<String, domain_profile.UserProfile> _profiles = {};
-
-  @override
-  Future<domain_profile.UserProfile> createProfile(
-    domain_profile.UserProfile profile,
-  ) async {
-    _profiles[profile.userId] = profile;
-    return profile;
-  }
-
-  @override
-  Future<domain_profile.UserProfile?> getProfile(String userId) async {
-    return _profiles[userId];
-  }
-
-  @override
-  Future<bool> hasCompletedSurvey(String userId) async {
-    return _profiles.containsKey(userId);
-  }
-
-  @override
-  Future<domain_profile.UserProfile> updateProfile(
-    domain_profile.UserProfile profile,
-  ) async {
-    _profiles[profile.userId] = profile;
-    return profile;
   }
 }
 

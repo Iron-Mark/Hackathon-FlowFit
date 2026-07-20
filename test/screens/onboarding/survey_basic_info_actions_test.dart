@@ -1,5 +1,3 @@
-import 'package:flowfit/domain/entities/user_profile.dart';
-import 'package:flowfit/domain/repositories/i_profile_repository.dart';
 import 'package:flowfit/presentation/providers/providers.dart';
 import 'package:flowfit/screens/onboarding/survey_basic_info_screen.dart';
 import 'package:flutter/material.dart';
@@ -188,11 +186,7 @@ void main() {
 }
 
 ProviderContainer _container() {
-  return ProviderContainer(
-    overrides: [
-      profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
-    ],
-  );
+  return ProviderContainer(overrides: []);
 }
 
 Widget _harness(
@@ -246,20 +240,6 @@ Future<void> _openSurvey(WidgetTester tester) async {
   await tester.tap(find.text('Open Survey'));
   await tester.pumpAndSettle();
   expect(find.text('Tell us about yourself'), findsOneWidget);
-}
-
-class _FakeProfileRepository implements IProfileRepository {
-  @override
-  Future<UserProfile> createProfile(UserProfile profile) async => profile;
-
-  @override
-  Future<UserProfile?> getProfile(String userId) async => null;
-
-  @override
-  Future<bool> hasCompletedSurvey(String userId) async => false;
-
-  @override
-  Future<UserProfile> updateProfile(UserProfile profile) async => profile;
 }
 
 class _CountingNavigatorObserver extends NavigatorObserver {

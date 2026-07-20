@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flowfit/core/domain/entities/user_profile.dart' as core_profile;
 import 'package:flowfit/core/domain/repositories/profile_repository.dart'
     as core_profile_repo;
-import 'package:flowfit/domain/entities/user_profile.dart';
-import 'package:flowfit/domain/repositories/i_profile_repository.dart';
 import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
 import 'package:flowfit/presentation/providers/profile_providers.dart'
     as profile_providers;
@@ -452,11 +450,7 @@ String _fieldText(WidgetTester tester, String hintText) {
 }
 
 ProviderContainer _container() {
-  return ProviderContainer(
-    overrides: [
-      profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
-    ],
-  );
+  return ProviderContainer(overrides: []);
 }
 
 ProviderContainer _containerWithCompletionHandler(
@@ -464,7 +458,6 @@ ProviderContainer _containerWithCompletionHandler(
 ) {
   return ProviderContainer(
     overrides: [
-      profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
       profile_providers.surveyCompletionHandlerProvider.overrideWith(
         (ref) async => completionHandler,
       ),
@@ -477,7 +470,6 @@ ProviderContainer _dailyTargetsContainer(
 ) {
   return ProviderContainer(
     overrides: [
-      profileRepositoryProvider.overrideWithValue(_FakeProfileRepository()),
       profile_providers.profileRepositoryProvider.overrideWith(
         (ref) async => repository,
       ),
@@ -516,20 +508,6 @@ Future<void> _setPhoneViewport(WidgetTester tester) async {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-}
-
-class _FakeProfileRepository implements IProfileRepository {
-  @override
-  Future<UserProfile> createProfile(UserProfile profile) async => profile;
-
-  @override
-  Future<UserProfile?> getProfile(String userId) async => null;
-
-  @override
-  Future<bool> hasCompletedSurvey(String userId) async => false;
-
-  @override
-  Future<UserProfile> updateProfile(UserProfile profile) async => profile;
 }
 
 class _InMemoryProfileRepository

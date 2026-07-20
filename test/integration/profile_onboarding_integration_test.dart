@@ -5,9 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flowfit/core/domain/entities/user_profile.dart';
 import 'package:flowfit/core/domain/repositories/profile_repository.dart';
 import 'package:flowfit/domain/entities/user.dart' as domain_user;
-import 'package:flowfit/domain/entities/user_profile.dart' as domain_profile;
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
-import 'package:flowfit/domain/repositories/i_profile_repository.dart';
 import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
 import 'package:flowfit/presentation/providers/profile_providers.dart'
     as profile_providers;
@@ -78,9 +76,6 @@ void main() {
       container = ProviderContainer(
         overrides: [
           authRepositoryProvider.overrideWithValue(_TestAuthRepository()),
-          profileRepositoryProvider.overrideWithValue(
-            _TestSurveyProfileRepository(),
-          ),
           profile_providers.profileRepositoryProvider.overrideWith(
             (ref) async => repository,
           ),
@@ -628,36 +623,6 @@ class _TestAuthRepository implements IAuthRepository {
   @override
   Stream<domain_user.User?> authStateChanges() {
     return Stream.value(_user);
-  }
-}
-
-class _TestSurveyProfileRepository implements IProfileRepository {
-  final Map<String, domain_profile.UserProfile> _profiles = {};
-
-  @override
-  Future<domain_profile.UserProfile> createProfile(
-    domain_profile.UserProfile profile,
-  ) async {
-    _profiles[profile.userId] = profile;
-    return profile;
-  }
-
-  @override
-  Future<domain_profile.UserProfile> updateProfile(
-    domain_profile.UserProfile profile,
-  ) async {
-    _profiles[profile.userId] = profile;
-    return profile;
-  }
-
-  @override
-  Future<domain_profile.UserProfile?> getProfile(String userId) async {
-    return _profiles[userId];
-  }
-
-  @override
-  Future<bool> hasCompletedSurvey(String userId) async {
-    return _profiles.containsKey(userId);
   }
 }
 
