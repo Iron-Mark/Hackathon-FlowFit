@@ -72,4 +72,22 @@ void main() {
       expect(prefs.containsKey('buddy_onboarding_state'), isFalse);
     },
   );
+
+  test('loadOnboardingTimestamp exposes when the payload was queued', () async {
+    final prefs = await SharedPreferences.getInstance();
+    final storage = BuddyOfflineStorage(prefs);
+
+    expect(await storage.loadOnboardingTimestamp(), isNull);
+
+    final queuedAt = DateTime(2026, 7, 20, 9, 30);
+    await prefs.setInt(
+      'buddy_onboarding_timestamp',
+      queuedAt.millisecondsSinceEpoch,
+    );
+
+    expect(await storage.loadOnboardingTimestamp(), queuedAt);
+
+    await storage.clearOnboardingState();
+    expect(await storage.loadOnboardingTimestamp(), isNull);
+  });
 }

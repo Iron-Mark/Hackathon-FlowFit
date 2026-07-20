@@ -388,6 +388,27 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
       final savedState = await storage.loadOnboardingState();
       final onboardingState = savedState ?? state;
 
+      // Stale-replay guard: if the backend row changed after this payload was
+      // queued, replaying would clobber newer edits (and the updated_at
+      // trigger would even make the stale write look newest). Drop it.
+      final queuedAt = await storage.loadOnboardingTimestamp();
+      if (queuedAt != null) {
+        final row = await _client
+            .from(SupabaseTables.userProfiles)
+            .select('updated_at')
+            .eq('user_id', pendingProfile.userId)
+            .maybeSingle()
+            .timeout(_supabaseOperationTimeout);
+        final backendUpdatedAt = DateTime.tryParse(
+          row?['updated_at'] as String? ?? '',
+        );
+        if (backendUpdatedAt != null && backendUpdatedAt.isAfter(queuedAt)) {
+          await storage.clearPendingBuddyProfile();
+          await storage.clearOnboardingState();
+          return;
+        }
+      }
+
       // Try to save to Supabase
       await _saveBuddyProfile(pendingProfile);
       await _updateUserProfile(

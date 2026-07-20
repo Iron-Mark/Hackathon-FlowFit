@@ -85,6 +85,14 @@ class BuddyOfflineStorage {
     await _prefs.remove(_onboardingTimestampKey);
   }
 
+  /// When the currently saved onboarding state (and its pending payload,
+  /// which is written in the same flow) was queued locally.
+  Future<DateTime?> loadOnboardingTimestamp() async {
+    final timestamp = _prefs.getInt(_onboardingTimestampKey);
+    if (timestamp == null) return null;
+    return DateTime.fromMillisecondsSinceEpoch(timestamp);
+  }
+
   /// Save pending buddy profile for later sync
   Future<void> savePendingBuddyProfile(BuddyProfile profile) async {
     await _prefs.setString(

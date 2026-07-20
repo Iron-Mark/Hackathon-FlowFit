@@ -91,11 +91,13 @@ void main() {
       expect(source, contains('age: onboardingState.userAge'));
       expect(source, contains('await _updateUserProfile('));
 
+      // The stale-guard path clears earlier, so the success-path clears are
+      // the LAST occurrences: they must still come after the replay.
       final updateIndex = source.indexOf('await _updateUserProfile(');
-      final clearPendingIndex = source.indexOf(
+      final clearPendingIndex = source.lastIndexOf(
         'await storage.clearPendingBuddyProfile();',
       );
-      final clearStateIndex = source.indexOf(
+      final clearStateIndex = source.lastIndexOf(
         'await storage.clearOnboardingState();',
       );
 
@@ -106,4 +108,18 @@ void main() {
       expect(updateIndex, lessThan(clearStateIndex));
     },
   );
+
+  test('offline Buddy sync drops a stale payload instead of clobbering '
+      'newer backend edits', () {
+    expect(source, contains('loadOnboardingTimestamp()'));
+    expect(source, contains("select('updated_at')"));
+    expect(source, contains('backendUpdatedAt.isAfter(queuedAt)'));
+
+    // The guard must run before anything is written to the backend.
+    final guardIndex = source.indexOf('loadOnboardingTimestamp()');
+    final saveIndex = source.indexOf('await _saveBuddyProfile(pendingProfile)');
+    expect(guardIndex, isNonNegative);
+    expect(saveIndex, isNonNegative);
+    expect(guardIndex, lessThan(saveIndex));
+  });
 }
