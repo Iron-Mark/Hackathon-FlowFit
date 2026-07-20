@@ -1113,7 +1113,7 @@ class _Footer extends StatelessWidget {
           SizedBox(
             width: isNarrow ? double.infinity : 360,
             child: const Text(
-              'FlowFit prototype release surface',
+              'FlowFit web MVP release surface',
               style: TextStyle(
                 color: FlowFitLandingPage._muted,
                 fontFamily: 'GeneralSans',

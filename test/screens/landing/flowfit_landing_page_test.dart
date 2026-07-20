@@ -75,9 +75,9 @@ void main() {
     await _pumpLanding(tester);
 
     expect(tester.takeException(), isNull);
-    await tester.ensureVisible(find.text('FlowFit prototype release surface'));
+    await tester.ensureVisible(find.text('FlowFit web MVP release surface'));
     await tester.pumpAndSettle();
-    expect(find.text('FlowFit prototype release surface'), findsOneWidget);
+    expect(find.text('FlowFit web MVP release surface'), findsOneWidget);
   });
 }
 
