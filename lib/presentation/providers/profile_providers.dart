@@ -7,17 +7,19 @@ import 'package:flowfit/core/data/repositories/profile_repository_impl.dart';
 import 'package:flowfit/services/backend/sync_queue_service.dart';
 import 'package:flowfit/services/backend/survey_completion_handler.dart';
 import 'package:flowfit/presentation/notifiers/profile_notifier.dart';
+import 'package:flowfit/providers/shared_preferences_provider.dart' as prefs_di;
 
 /// Provider for SharedPreferences instance.
 ///
-/// Returns a Future that resolves to the SharedPreferences instance.
-/// Used for local storage operations in profile repository.
+/// Kept as a FutureProvider for override compatibility, but delegates to the
+/// canonical sync provider (overridden in main.dart) instead of running a
+/// second SharedPreferences.getInstance() path.
 ///
 /// Requirement 7.4: Use single source of truth
 final sharedPreferencesProvider = FutureProvider<SharedPreferences>((
   ref,
 ) async {
-  return await SharedPreferences.getInstance();
+  return ref.watch(prefs_di.sharedPreferencesProvider);
 });
 
 /// Provider for Supabase client instance.

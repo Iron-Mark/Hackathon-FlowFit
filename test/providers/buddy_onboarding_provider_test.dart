@@ -1,13 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flowfit/providers/buddy_onboarding_provider.dart';
+import 'package:flowfit/providers/shared_preferences_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('BuddyOnboardingNotifier', () {
     late ProviderContainer container;
 
-    setUp(() {
-      container = ProviderContainer();
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
     });
 
     tearDown(() {

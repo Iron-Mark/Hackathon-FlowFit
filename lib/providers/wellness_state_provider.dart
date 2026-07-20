@@ -7,6 +7,9 @@ import 'package:flowfit/models/state_transition.dart';
 import 'package:flowfit/services/wellness/wellness_state_service.dart';
 import 'package:flowfit/services/wellness/wellness_monitoring_service.dart';
 import 'package:flowfit/services/sensors/phone_data_listener.dart';
+import 'package:flowfit/providers/shared_preferences_provider.dart';
+
+export 'package:flowfit/providers/shared_preferences_provider.dart';
 
 /// Provider for PhoneDataListener (singleton)
 final phoneDataListenerServiceProvider = Provider<PhoneDataListener>((ref) {
@@ -216,9 +219,4 @@ final todayDurationsProvider = Provider<Map<WellnessState, Duration>>((ref) {
   ref.watch(wellnessStateProvider); // Rebuild when state changes
   final notifier = ref.read(wellnessStateProvider.notifier);
   return notifier.getTodayDurations();
-});
-
-/// Provider for SharedPreferences (must be initialized in main)
-final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw StateError('SharedPreferences must be overridden in main.dart');
 });

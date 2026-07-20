@@ -1,5 +1,6 @@
 import 'package:flowfit/core/exceptions/buddy_exceptions.dart';
 import 'package:flowfit/screens/onboarding/buddy_completion_screen.dart';
+import 'package:flowfit/providers/buddy_offline_storage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +15,7 @@ void main() {
 
   Widget buildHarness({BuddyOnboardingCompletionAction? completeOnboarding}) {
     return ProviderScope(
+      overrides: [buddyOfflineStorageProvider.overrideWithValue(null)],
       child: MaterialApp(
         home: BuddyCompletionScreen(completeOnboarding: completeOnboarding),
         routes: {

@@ -1,6 +1,7 @@
 import 'package:flowfit/providers/buddy_onboarding_provider.dart';
 import 'package:flowfit/screens/onboarding/buddy_naming_screen.dart';
 import 'package:flowfit/screens/onboarding/buddy_profile_setup_screen.dart';
+import 'package:flowfit/providers/buddy_offline_storage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -51,7 +52,9 @@ void main() {
   }
 
   testWidgets('naming opens profile setup before goals', (tester) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [buddyOfflineStorageProvider.overrideWithValue(null)],
+    );
     addTearDown(container.dispose);
 
     await pumpFlow(tester, container);
@@ -65,7 +68,9 @@ void main() {
   testWidgets('naming suggestion fills the input and can be submitted', (
     tester,
   ) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [buddyOfflineStorageProvider.overrideWithValue(null)],
+    );
     addTearDown(container.dispose);
 
     await pumpFlow(tester, container);
@@ -87,7 +92,9 @@ void main() {
   testWidgets('profile setup continue saves optional info and opens goals', (
     tester,
   ) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [buddyOfflineStorageProvider.overrideWithValue(null)],
+    );
     addTearDown(container.dispose);
 
     await pumpFlow(tester, container);
@@ -115,7 +122,9 @@ void main() {
   testWidgets('profile setup skip opens goals without overwriting info', (
     tester,
   ) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [buddyOfflineStorageProvider.overrideWithValue(null)],
+    );
     addTearDown(container.dispose);
 
     await pumpFlow(tester, container);

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flowfit/screens/onboarding/notification_permission_screen.dart';
 import 'package:flowfit/providers/buddy_onboarding_provider.dart';
+import 'package:flowfit/providers/buddy_offline_storage_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,7 @@ void main() {
 
   Widget buildHarness() {
     return ProviderScope(
+      overrides: [buddyOfflineStorageProvider.overrideWithValue(null)],
       child: MaterialApp(
         home: const NotificationPermissionScreen(),
         routes: {
@@ -77,7 +79,9 @@ void main() {
   testWidgets('Turn on notifications stores granted permission and continues', (
     tester,
   ) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [buddyOfflineStorageProvider.overrideWithValue(null)],
+    );
     addTearDown(container.dispose);
 
     final calls = <MethodCall>[];
@@ -109,7 +113,9 @@ void main() {
   testWidgets('Turn on notifications ignores duplicate in-flight requests', (
     tester,
   ) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(
+      overrides: [buddyOfflineStorageProvider.overrideWithValue(null)],
+    );
     addTearDown(container.dispose);
 
     final permissionCompleter = Completer<Map<int, int>>();
