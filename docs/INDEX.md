@@ -14,6 +14,7 @@ Essential documentation that should be easily accessible:
 - **docs/QUICK_START.md** - Quick start guide for developers
 - **docs/TROUBLESHOOTING.md** - Common issues and solutions
 - **docs/architecture/ARCHITECTURE_REVIEW_2026-07-14.md** - Architecture survey, guard-test constraint map, executed refactor stages, and the ranked refactor roadmap
+- **docs/architecture/PROFILE_UNIFICATION_PLAN_2026-07-20.md** - Staged migration plan to unify the two UserProfile stacks: target architecture, per-stage file and test lists, data-safety analysis against the live schema, and risk register
 
 ---
 
