@@ -1,5 +1,8 @@
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 import 'package:flowfit/screens/landing/flowfit_landing_page.dart';
+import 'package:flowfit/screens/landing/widgets/landing_cta_footer.dart';
+import 'package:flowfit/screens/landing/widgets/landing_hero.dart';
+import 'package:flowfit/screens/landing/widgets/landing_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,6 +19,16 @@ void main() {
     expect(find.text('How it works'.toUpperCase()), findsOneWidget);
     expect(find.text('Privacy'), findsOneWidget);
     expect(find.text('Account deletion'), findsOneWidget);
+
+    // The extracted landing widgets stay composed into the shell page.
+    expect(find.byType(LandingTopNav), findsOneWidget);
+    expect(find.byType(LandingHero), findsOneWidget);
+    expect(find.byType(LandingDownloadSection), findsOneWidget);
+    expect(find.byType(LandingFooter), findsOneWidget);
+    expect(
+      tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
+      LandingPalette.paper,
+    );
   });
 
   testWidgets('Try Web App opens the app startup route', (tester) async {
