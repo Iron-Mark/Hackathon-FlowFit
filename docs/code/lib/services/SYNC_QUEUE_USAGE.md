@@ -10,7 +10,8 @@ The `SyncQueueService` manages offline profile synchronization with automatic re
 - **Connectivity Monitoring**: Checks connectivity every 30 seconds and processes queue when online
 - **Exponential Backoff**: Implements retry logic with increasing delays (5s, 10s, 20s, 40s, 80s)
 - **Persistent Queue**: Queue is persisted to local storage and survives app restarts
-- **Max Retries**: Attempts up to 5 retries before discarding failed items
+- **Max Retries**: Attempts up to 5 retries before parking failed items in a dead-letter store
+- **Dead-Letter Restore**: Parked items are restored to the queue on startup and when connectivity returns (with a stale-guard against clobbering newer backend data)
 - **Real-time Status**: Provides stream of pending queue count for UI indicators
 
 ## Architecture
@@ -178,7 +179,30 @@ The service implements exponential backoff with the following configuration:
   - Attempt 4: After 20 seconds
   - Attempt 5: After 40 seconds
   - Attempt 6: After 80 seconds
-  - After 6 attempts: Item is discarded
+  - After 6 attempts: Item is parked in the dead-letter store (see below)
+
+## Dead-Letter Store
+
+Items that exhaust their retry budget are **not** discarded. They are parked
+under the SharedPreferences key `sync_queue_dead_letter` (one payload per
+user, replace-by-userId, same JSON codec as the main queue).
+
+A restore pass runs:
+
+1. On service construction (app start)
+2. Every time the connectivity monitor confirms the device is online, right
+   before the queue is processed
+
+For each parked item the restore pass applies a **stale guard first**: it
+fetches the backend profile and, if the backend `updatedAt` is newer than the
+parked item's `queuedAt`, the parked payload is dropped permanently (the
+backend already holds newer data — replaying would clobber it; this mirrors
+the buddy onboarding stale-replay guard). If the backend is unreachable
+(`BackendSyncException`), the item stays parked for the next cycle. Otherwise
+the item re-enters the main queue with `retryCount` reset to 0 and no pending
+backoff — unless the main queue already holds an item for that user, in which
+case the queued (necessarily fresher) payload wins and the parked one is
+dropped.
 
 ## Connectivity Monitoring
 
@@ -210,7 +234,8 @@ The service is designed to be resilient:
 - **Queue Load Errors**: Returns empty queue, logs error
 - **Queue Save Errors**: Logs error but doesn't throw
 - **Sync Errors**: Increments retry count and schedules next attempt
-- **Max Retries**: Logs and discards item after 5 failed attempts
+- **Max Retries**: Parks item in the dead-letter store after 5 failed attempts; a later restore pass re-enqueues it
+- **Corrupted Dead-Letter Data**: Cleared on load, returns empty store
 
 ## Best Practices
 
@@ -275,7 +300,7 @@ expect(count, 0);
 3. Check for network timeouts
 4. Review console logs for repeated errors
 
-### Items discarded after max retries
+### Items parked in dead-letter store after max retries
 
 1. Check backend error logs
 2. Verify data format is correct

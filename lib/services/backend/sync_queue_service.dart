@@ -77,6 +77,9 @@ class SyncQueueService {
   // Storage key for sync queue
   static const String _queueKey = 'sync_queue';
 
+  // Storage key for items parked after exhausting their retries
+  static const String _deadLetterKey = 'sync_queue_dead_letter';
+
   // Retry configuration
   static const int _maxRetries = 5;
   static const Duration _initialBackoff = Duration(seconds: 5);
@@ -86,6 +89,7 @@ class SyncQueueService {
   Timer? _connectivityTimer;
   Timer? _retryTimer;
   bool _isProcessing = false;
+  bool _isRestoringDeadLetters = false;
 
   // Stream controller for queue status
   final _queueStatusController = StreamController<int>.broadcast();
@@ -98,6 +102,9 @@ class SyncQueueService {
     _logger.info('SyncQueueService initialized');
     _startConnectivityMonitoring();
     _startRetryTimer();
+
+    // Give parked dead-letter items a chance to re-enter the queue on startup
+    unawaited(_restoreDeadLetters());
   }
 
   /// Get stream of pending queue count
@@ -257,6 +264,162 @@ class SyncQueueService {
     }
   }
 
+  /// Park an item that exhausted its retries in the dead-letter store
+  ///
+  /// Replace-by-userId semantics: one parked payload per user, matching the
+  /// main queue's contract.
+  Future<void> _parkInDeadLetter(SyncQueueItem item) async {
+    final deadLetters = await _loadDeadLetters();
+
+    final existingIndex = deadLetters.indexWhere(
+      (parked) => parked.userId == item.userId,
+    );
+
+    if (existingIndex >= 0) {
+      deadLetters[existingIndex] = item;
+    } else {
+      deadLetters.add(item);
+    }
+
+    await _saveDeadLetters(deadLetters);
+  }
+
+  /// Load dead-letter store from local storage
+  Future<List<SyncQueueItem>> _loadDeadLetters() async {
+    final jsonString = _prefs.getString(_deadLetterKey);
+    if (jsonString == null) {
+      return [];
+    }
+
+    try {
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      return jsonList
+          .map((json) => SyncQueueItem.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Corrupted dead-letter store, clearing key',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      // If parsing fails, clear corrupted data
+      await _prefs.remove(_deadLetterKey);
+      return [];
+    }
+  }
+
+  /// Save dead-letter store to local storage
+  ///
+  /// Removes the key entirely when the store is empty so the restore pass
+  /// stays a cheap no-op.
+  Future<void> _saveDeadLetters(List<SyncQueueItem> deadLetters) async {
+    try {
+      if (deadLetters.isEmpty) {
+        await _prefs.remove(_deadLetterKey);
+        return;
+      }
+
+      final jsonList = deadLetters.map((item) => item.toJson()).toList();
+      await _prefs.setString(_deadLetterKey, jsonEncode(jsonList));
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Error saving dead-letter store',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  /// Restore parked dead-letter items back into the main queue
+  ///
+  /// Runs at startup and whenever connectivity is confirmed. For each parked
+  /// item the backend copy is checked first: if it changed after the item was
+  /// queued, replaying would clobber newer edits, so the item is dropped
+  /// permanently (mirrors the buddy onboarding stale-replay guard). Items
+  /// that cannot be checked because the backend is unreachable stay parked
+  /// for the next cycle.
+  Future<void> _restoreDeadLetters() async {
+    // Prevent concurrent restore passes
+    if (_isRestoringDeadLetters) {
+      return;
+    }
+
+    // Cheap no-op when nothing is parked
+    if (!_prefs.containsKey(_deadLetterKey)) {
+      return;
+    }
+
+    _isRestoringDeadLetters = true;
+
+    try {
+      final deadLetters = await _loadDeadLetters();
+      if (deadLetters.isEmpty) {
+        return;
+      }
+
+      final queue = await _loadQueue();
+      final stillParked = <SyncQueueItem>[];
+      int restoredCount = 0;
+
+      for (final parked in deadLetters) {
+        // Stale guard first: a backend row updated after this payload was
+        // queued means the backend already holds newer data - drop the item.
+        try {
+          final backend = await _profileRepository.getBackendProfile(
+            parked.userId,
+          );
+          if (backend != null && backend.updatedAt.isAfter(parked.queuedAt)) {
+            _logger.info(
+              'Dropping dead-letter item for user ${parked.userId}: backend copy is newer',
+            );
+            continue;
+          }
+        } on BackendSyncException {
+          // Backend unreachable - keep parked for the next cycle
+          stillParked.add(parked);
+          continue;
+        }
+
+        // A queued item for this user is necessarily fresher than the parked
+        // one, so the parked payload is dropped in its favor.
+        final alreadyQueued = queue.any(
+          (item) => item.userId == parked.userId,
+        );
+        if (alreadyQueued) {
+          continue;
+        }
+
+        // Re-enqueue with a fresh retry budget and no pending backoff
+        queue.add(
+          SyncQueueItem(
+            userId: parked.userId,
+            profile: parked.profile,
+            queuedAt: parked.queuedAt,
+          ),
+        );
+        restoredCount++;
+      }
+
+      await _saveQueue(queue);
+      await _saveDeadLetters(stillParked);
+      _queueStatusController.add(queue.length);
+
+      if (restoredCount > 0) {
+        _logger.info(
+          'Restored $restoredCount dead-letter item(s) into the sync queue',
+        );
+      }
+    } catch (e, stackTrace) {
+      _logger.error(
+        'Error restoring dead-letter items',
+        error: e,
+        stackTrace: stackTrace,
+      );
+    } finally {
+      _isRestoringDeadLetters = false;
+    }
+  }
+
   /// Start monitoring connectivity
   void _startConnectivityMonitoring() {
     // Check connectivity every 30 seconds
@@ -278,6 +441,7 @@ class SyncQueueService {
   /// Check connectivity and process queue if online
   Future<void> _checkConnectivityAndProcess() async {
     if (await _hasConnectivity()) {
+      await _restoreDeadLetters();
       await _processQueue();
     }
   }
@@ -370,9 +534,10 @@ class SyncQueueService {
               'Retry ${item.retryCount + 1}/$_maxRetries scheduled for user ${item.userId} in ${backoffDuration.inSeconds}s',
             );
           } else {
-            // Max retries reached - log and discard
+            // Max retries reached - park for a later restore pass
+            await _parkInDeadLetter(item);
             _logger.error(
-              'Max retries ($_maxRetries) reached for user ${item.userId}, discarding item',
+              'Max retries ($_maxRetries) reached for user ${item.userId}, parking item in dead-letter store',
             );
           }
         } else {

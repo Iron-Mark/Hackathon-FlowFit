@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +11,25 @@ import 'package:flowfit/services/backend/sync_queue_service.dart';
 class _FailingSyncRepository implements ProfileRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #saveBackendProfile) {
+      return Future<void>.error(Exception('offline'));
+    }
+    return super.noSuchMethod(invocation);
+  }
+}
+
+/// Backend saves always fail; getBackendProfile returns a canned profile so
+/// the dead-letter restore pass can run its stale guard.
+class _DeadLetterRestoreRepository implements ProfileRepository {
+  _DeadLetterRestoreRepository({this.backendProfile});
+
+  final UserProfile? backendProfile;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    if (invocation.memberName == #getBackendProfile) {
+      return Future<UserProfile?>.value(backendProfile);
+    }
     if (invocation.memberName == #saveBackendProfile) {
       return Future<void>.error(Exception('offline'));
     }
@@ -81,9 +101,87 @@ void main() {
       },
     );
 
-    test('documents the discard-after-max-retries behavior '
-        '(a future re-enqueue fix must change this deliberately)', () {
-      expect(source, contains('discarding item'));
+    test('parks exhausted items in the dead-letter store instead of '
+        'silently dropping them', () {
+      expect(source, contains('_deadLetterKey'));
+      expect(source, contains('parking item in dead-letter store'));
+      expect(source, isNot(contains('discarding item')));
     });
+  });
+
+  group('dead-letter restore', () {
+    SyncQueueItem parkedItem() {
+      return SyncQueueItem(
+        userId: 'user-a',
+        profile: _profile('user-a'),
+        queuedAt: DateTime(2026, 7, 20, 12),
+        retryCount: 5,
+        nextRetryAt: DateTime(2026, 7, 20, 12, 30),
+      );
+    }
+
+    test(
+      're-enqueues a parked item with a fresh retry budget when the backend '
+      'has nothing newer',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'sync_queue_dead_letter': jsonEncode([parkedItem().toJson()]),
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final service = SyncQueueService(
+          prefs: prefs,
+          profileRepository: _DeadLetterRestoreRepository(
+            backendProfile: null,
+          ),
+        );
+        addTearDown(service.dispose);
+
+        // Constructor kicks off the restore pass; let it settle.
+        await pumpEventQueue();
+
+        expect(await service.getPendingCount(), 1);
+        expect(await service.hasPendingSync('user-a'), isTrue);
+        expect(prefs.getString('sync_queue_dead_letter'), isNull);
+
+        // Restored item starts over: retryCount reset, no pending backoff.
+        final queueJson =
+            jsonDecode(prefs.getString('sync_queue')!) as List<dynamic>;
+        final restored = SyncQueueItem.fromJson(
+          queueJson.single as Map<String, dynamic>,
+        );
+        expect(restored.userId, 'user-a');
+        expect(restored.retryCount, 0);
+        expect(restored.nextRetryAt, isNull);
+      },
+    );
+
+    test(
+      'drops a parked item permanently when the backend copy is newer than '
+      'the parked payload',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'sync_queue_dead_letter': jsonEncode([parkedItem().toJson()]),
+        });
+        final prefs = await SharedPreferences.getInstance();
+        final newerBackendProfile = UserProfile(
+          userId: 'user-a',
+          createdAt: DateTime(2026, 7, 20, 11),
+          updatedAt: DateTime(2026, 7, 20, 14),
+        );
+        final service = SyncQueueService(
+          prefs: prefs,
+          profileRepository: _DeadLetterRestoreRepository(
+            backendProfile: newerBackendProfile,
+          ),
+        );
+        addTearDown(service.dispose);
+
+        await pumpEventQueue();
+
+        expect(await service.getPendingCount(), 0);
+        expect(await service.hasPendingSync('user-a'), isFalse);
+        expect(prefs.getString('sync_queue_dead_letter'), isNull);
+      },
+    );
   });
 }
