@@ -382,9 +382,7 @@ class SyncQueueService {
 
         // A queued item for this user is necessarily fresher than the parked
         // one, so the parked payload is dropped in its favor.
-        final alreadyQueued = queue.any(
-          (item) => item.userId == parked.userId,
-        );
+        final alreadyQueued = queue.any((item) => item.userId == parked.userId);
         if (alreadyQueued) {
           continue;
         }

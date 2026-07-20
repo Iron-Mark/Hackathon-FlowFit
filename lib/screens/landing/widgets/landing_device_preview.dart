@@ -255,11 +255,7 @@ class LandingWatchFace extends StatelessWidget {
       child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.favorite_rounded,
-            color: LandingPalette.red,
-            size: 24,
-          ),
+          Icon(Icons.favorite_rounded, color: LandingPalette.red, size: 24),
           SizedBox(height: 6),
           Text(
             '72',

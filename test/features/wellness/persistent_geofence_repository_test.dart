@@ -23,15 +23,14 @@ class _ThrowingStorage extends GeofenceMissionStorage {
   }
 }
 
-GeofenceMission _mission(String id, {bool isActive = false}) =>
-    GeofenceMission(
-      id: id,
-      title: 'Mission $id',
-      center: const LatLng(14.5995, 120.9842),
-      radiusMeters: 60.0,
-      type: GeofenceMissionType.sanctuary,
-      isActive: isActive,
-    );
+GeofenceMission _mission(String id, {bool isActive = false}) => GeofenceMission(
+  id: id,
+  title: 'Mission $id',
+  center: const LatLng(14.5995, 120.9842),
+  radiusMeters: 60.0,
+  type: GeofenceMissionType.sanctuary,
+  isActive: isActive,
+);
 
 void main() {
   setUp(() {

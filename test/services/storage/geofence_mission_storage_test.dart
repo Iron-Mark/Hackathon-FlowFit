@@ -64,9 +64,7 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final storage = GeofenceMissionStorage(prefs);
 
-    await storage.saveMissions([
-      _mission('m1', status: GeofenceStatus.inside),
-    ]);
+    await storage.saveMissions([_mission('m1', status: GeofenceStatus.inside)]);
 
     final raw = prefs.getString('wellness_geofence_missions')!;
     final envelope = jsonDecode(raw) as Map<String, dynamic>;
@@ -104,24 +102,27 @@ void main() {
     expect(prefs.containsKey('wellness_geofence_missions'), isFalse);
   });
 
-  test('parseable envelope with malformed mission entries is cleared', () async {
-    SharedPreferences.setMockInitialValues({
-      'wellness_geofence_missions': jsonEncode({
-        'version': 1,
-        'savedAt': DateTime.now().toUtc().toIso8601String(),
-        'missions': [
-          {'title': 'missing id and coordinates'},
-        ],
-      }),
-    });
-    final prefs = await SharedPreferences.getInstance();
-    final storage = GeofenceMissionStorage(prefs);
+  test(
+    'parseable envelope with malformed mission entries is cleared',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'wellness_geofence_missions': jsonEncode({
+          'version': 1,
+          'savedAt': DateTime.now().toUtc().toIso8601String(),
+          'missions': [
+            {'title': 'missing id and coordinates'},
+          ],
+        }),
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final storage = GeofenceMissionStorage(prefs);
 
-    final loaded = await storage.loadMissions();
+      final loaded = await storage.loadMissions();
 
-    expect(loaded, isEmpty);
-    expect(prefs.containsKey('wellness_geofence_missions'), isFalse);
-  });
+      expect(loaded, isEmpty);
+      expect(prefs.containsKey('wellness_geofence_missions'), isFalse);
+    },
+  );
 
   test('loadMissions returns empty list when nothing saved', () async {
     final prefs = await SharedPreferences.getInstance();
