@@ -6,10 +6,12 @@
 > subjects). One deviation from this plan: SurveyNotifier's repository
 > dependency was severed in Stage 3 instead of Stage 4, because the five
 > re-pointed routing suites otherwise needed throwaway Stack A overrides.
-> Stage 6 (buddy writer alignment + stale-replay guard) is deliberately NOT
-> executed yet — it adds a repository member (fake/mock churn) and changes
-> offline replay semantics, so it ships as its own session per the ordering
-> rationale below.
+> Stage 6: the stale-replay guard (the live-bug half) shipped in 482ed24 —
+> syncPendingProfile now discards a pending payload when the backend row's
+> updated_at postdates the local queue timestamp. The remaining half —
+> routing the buddy upsert through a patchBackendProfile repository member —
+> is cosmetic consolidation and stays as follow-up (it adds interface churn
+> across all repository fakes for no behavior change).
 
 Repo root: `C:\Codes Local\Hackathons (Workspace)\11-27-25 - FlowFit - OldStLabs`. All paths below are relative to it. Gate for every stage: `flutter test` — full 1,154-test suite green before merge.
 
