@@ -19,6 +19,7 @@ void main() {
     expect(source, contains("'user_id': userId"));
     expect(source, contains("onConflict: 'user_id'"));
     expect(source, contains("'survey_completed': true"));
+    expect(source, contains('patchBackendProfile('));
     expect(source, isNot(contains(".eq('id', userId)")));
   });
 

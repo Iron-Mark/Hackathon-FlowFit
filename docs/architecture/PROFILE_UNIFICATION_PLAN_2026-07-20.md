@@ -8,10 +8,11 @@
 > re-pointed routing suites otherwise needed throwaway Stack A overrides.
 > Stage 6: the stale-replay guard (the live-bug half) shipped in 482ed24 —
 > syncPendingProfile now discards a pending payload when the backend row's
-> updated_at postdates the local queue timestamp. The remaining half —
-> routing the buddy upsert through a patchBackendProfile repository member —
-> is cosmetic consolidation and stays as follow-up (it adds interface churn
-> across all repository fakes for no behavior change).
+> updated_at postdates the local queue timestamp. The remaining half is now
+> EXECUTED too: the buddy user_profiles upsert routes through the
+> patchBackendProfile repository member, lazily built from a factory so
+> provider construction never touches prefs or Supabase (the stale-guard
+> SELECT stays direct on the client — it carries pins). Stage 6 complete.
 
 Repo root: `C:\Codes Local\Hackathons (Workspace)\11-27-25 - FlowFit - OldStLabs`. All paths below are relative to it. Gate for every stage: `flutter test` — full 1,154-test suite green before merge.
 

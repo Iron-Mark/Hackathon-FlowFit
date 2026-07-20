@@ -2,11 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flowfit/core/config/supabase_tables.dart';
+import 'package:flowfit/core/data/repositories/profile_repository_impl.dart';
+import 'package:flowfit/core/domain/repositories/profile_repository.dart';
 import 'package:flowfit/models/buddy_onboarding_state.dart';
 import 'package:flowfit/models/buddy_profile.dart';
 import 'package:flowfit/core/exceptions/buddy_exceptions.dart';
 import 'package:flowfit/services/storage/buddy_offline_storage.dart';
 import 'package:flowfit/providers/buddy_offline_storage_provider.dart';
+import 'package:flowfit/providers/shared_preferences_provider.dart';
 
 Map<String, dynamic> buildBuddyUserProfileUpsertPayload({
   required String userId,
@@ -52,14 +55,18 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
   final SupabaseClient? _supabase;
   final Uuid _uuid;
   final BuddyOfflineStorage? _offlineStorage;
+  final ProfileRepository Function()? _profileRepositoryFactory;
+  ProfileRepository? _profileRepositoryCache;
 
   BuddyOnboardingNotifier({
     SupabaseClient? supabase,
     Uuid? uuid,
     BuddyOfflineStorage? offlineStorage,
+    ProfileRepository Function()? profileRepositoryFactory,
   }) : _supabase = supabase,
        _uuid = uuid ?? const Uuid(),
        _offlineStorage = offlineStorage,
+       _profileRepositoryFactory = profileRepositoryFactory,
        super(const BuddyOnboardingState()) {
     _loadSavedState();
   }
@@ -67,6 +74,20 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
   /// Get the Supabase client, initializing if needed
   SupabaseClient get _client {
     return _supabase ?? Supabase.instance.client;
+  }
+
+  /// Lazily construct the unified profile repository via the injected factory.
+  ///
+  /// The factory keeps prefs/Supabase access deferred past provider build so
+  /// widget tests can construct the notifier without touching either.
+  ProfileRepository get _profileRepository {
+    final factory = _profileRepositoryFactory;
+    if (factory == null) {
+      throw StateError(
+        'profileRepositoryFactory required for backend profile sync',
+      );
+    }
+    return _profileRepositoryCache ??= factory();
   }
 
   /// Load saved onboarding state from offline storage
@@ -448,19 +469,16 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
     List<String>? wellnessGoals,
     bool? notificationsEnabled,
   }) async {
-    await _client
-        .from(SupabaseTables.userProfiles)
-        .upsert(
-          buildBuddyUserProfileUpsertPayload(
-            userId: userId,
-            nickname: nickname,
-            age: age,
-            wellnessGoals: wellnessGoals,
-            notificationsEnabled: notificationsEnabled,
-          ),
-          onConflict: 'user_id',
-        )
-        .timeout(_supabaseOperationTimeout);
+    final payload = buildBuddyUserProfileUpsertPayload(
+      userId: userId,
+      nickname: nickname,
+      age: age,
+      wellnessGoals: wellnessGoals,
+      notificationsEnabled: notificationsEnabled,
+    );
+    // The repository owns the upsert shape, its 10s timeout, and error
+    // mapping — Buddy no longer maintains a parallel user_profiles writer.
+    await _profileRepository.patchBackendProfile(payload);
   }
 
   /// Reset the onboarding state
@@ -480,5 +498,14 @@ class BuddyOnboardingNotifier extends StateNotifier<BuddyOnboardingState> {
 final buddyOnboardingProvider =
     StateNotifierProvider<BuddyOnboardingNotifier, BuddyOnboardingState>((ref) {
       final offlineStorage = ref.watch(buddyOfflineStorageProvider);
-      return BuddyOnboardingNotifier(offlineStorage: offlineStorage);
+      return BuddyOnboardingNotifier(
+        offlineStorage: offlineStorage,
+        // Everything stays inside the closure: widget tests build this
+        // provider without a prefs override and without Supabase initialized,
+        // so neither may be touched until a backend sync actually runs.
+        profileRepositoryFactory: () => ProfileRepositoryImpl(
+          prefs: ref.read(sharedPreferencesProvider),
+          supabase: Supabase.instance.client,
+        ),
+      );
     });
