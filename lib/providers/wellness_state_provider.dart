@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -65,13 +66,11 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
       for (final json in historyJson) {
         try {
           final data = WellnessStateData.fromJson(
-            Map<String, dynamic>.from(
-              Uri.splitQueryString(json).map((k, v) => MapEntry(k, v)),
-            ),
+            jsonDecode(json) as Map<String, dynamic>,
           );
           _history.add(data);
         } catch (e) {
-          // Skip invalid entries
+          // Skip invalid entries (including legacy Map.toString payloads)
         }
       }
 
@@ -80,13 +79,11 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
       for (final json in transitionsJson) {
         try {
           final transition = StateTransition.fromJson(
-            Map<String, dynamic>.from(
-              Uri.splitQueryString(json).map((k, v) => MapEntry(k, v)),
-            ),
+            jsonDecode(json) as Map<String, dynamic>,
           );
           _transitions.add(transition);
         } catch (e) {
-          // Skip invalid entries
+          // Skip invalid entries (including legacy Map.toString payloads)
         }
       }
     } catch (e) {
@@ -98,12 +95,12 @@ class WellnessStateNotifier extends StateNotifier<WellnessStateData> {
   Future<void> _saveHistory() async {
     try {
       final historyJson = _history
-          .map((data) => data.toJson().toString())
+          .map((data) => jsonEncode(data.toJson()))
           .toList();
       await _prefs.setStringList(_historyKey, historyJson);
 
       final transitionsJson = _transitions
-          .map((t) => t.toJson().toString())
+          .map((t) => jsonEncode(t.toJson()))
           .toList();
       await _prefs.setStringList(_transitionsKey, transitionsJson);
     } catch (e) {
