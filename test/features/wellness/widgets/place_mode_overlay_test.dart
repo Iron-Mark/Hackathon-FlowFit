@@ -11,7 +11,7 @@ void main() {
     final controller = TextEditingController();
     addTearDown(controller.dispose);
     var radius = 100.0;
-    var selectedType = MissionType.sanctuary;
+    var selectedType = GeofenceMissionType.sanctuary;
     var cancelCalls = 0;
     var confirmCalls = 0;
 
@@ -44,16 +44,16 @@ void main() {
     expect(find.byType(TextField), findsNWidgets(1)); // Title field
     expect(find.text('Radius'), findsOneWidget);
     expect(find.byType(Slider), findsOneWidget);
-    expect(find.byType(DropdownButton<MissionType>), findsOneWidget);
+    expect(find.byType(DropdownButton<GeofenceMissionType>), findsOneWidget);
     expect(find.text('Create'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'Morning walk');
     await tester.drag(find.byType(Slider), const Offset(120, 0));
     await tester.pump();
 
-    await tester.tap(find.byType(DropdownButton<MissionType>));
+    await tester.tap(find.byType(DropdownButton<GeofenceMissionType>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(MissionType.target.name).last);
+    await tester.tap(find.text(GeofenceMissionType.target.name).last);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.close));
@@ -62,7 +62,7 @@ void main() {
 
     expect(controller.text, 'Morning walk');
     expect(radius, isNot(100));
-    expect(selectedType, MissionType.target);
+    expect(selectedType, GeofenceMissionType.target);
     expect(cancelCalls, 1);
     expect(confirmCalls, 1);
   });

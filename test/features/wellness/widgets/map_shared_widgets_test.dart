@@ -72,7 +72,7 @@ void main() {
     final mission = GeofenceMission(
       id: 'mission-1',
       title: 'Park loop',
-      center: const LatLngSimple(14.5995, 120.9842),
+      center: const maplat.LatLng(14.5995, 120.9842),
       radiusMeters: 80,
     );
     final marker = buildMissionMarker(mission, () => tapCalls++);
@@ -102,7 +102,7 @@ void main() {
       GeofenceMission(
         id: 'mission-1',
         title: 'Park loop',
-        center: const LatLngSimple(14.5995, 120.9842),
+        center: const maplat.LatLng(14.5995, 120.9842),
         radiusMeters: 80,
       ),
     );

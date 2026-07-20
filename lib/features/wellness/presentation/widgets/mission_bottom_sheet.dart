@@ -41,12 +41,13 @@ class _MissionBottomSheetState extends State<MissionBottomSheet> {
   List<GeofenceMission> get _filteredMissions {
     return widget.repo.current
         .where((mission) {
+          final type = mission.type;
           return switch (_filter) {
             _MissionFilter.all => true,
             _MissionFilter.active => mission.isActive,
-            _MissionFilter.target => mission.type == MissionType.target,
-            _MissionFilter.sanctuary => mission.type == MissionType.sanctuary,
-            _MissionFilter.safetyNet => mission.type == MissionType.safetyNet,
+            _MissionFilter.target => type == GeofenceMissionType.target,
+            _MissionFilter.sanctuary => type == GeofenceMissionType.sanctuary,
+            _MissionFilter.safetyNet => type == GeofenceMissionType.safetyNet,
           };
         })
         .toList(growable: false);
@@ -125,7 +126,7 @@ class _MissionBottomSheetState extends State<MissionBottomSheet> {
                   Text(
                     '${m.type.name} • ${m.radiusMeters.toStringAsFixed(0)} m',
                   ),
-                  if (m.type == MissionType.target)
+                  if (m.type == GeofenceMissionType.target)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: LinearProgressIndicator(

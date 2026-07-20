@@ -146,7 +146,7 @@ class GeofenceService extends ChangeNotifier {
       }
 
       // Special behavior per mission type
-      if (m.type == MissionType.safetyNet && !isInside) {
+      if (m.type == GeofenceMissionType.safetyNet && !isInside) {
         // If outside and safety net active, alert
         _eventController.add(
           GeofenceEvent(
@@ -164,7 +164,7 @@ class GeofenceService extends ChangeNotifier {
         );
       }
 
-      if (m.type == MissionType.target) {
+      if (m.type == GeofenceMissionType.target) {
         // accumulate distance travelled while active
         final lastPos = _lastPositionForMission[m.id];
         if (lastPos != null) {

@@ -13,7 +13,7 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _targetDistanceController;
-  late MissionType _type;
+  late GeofenceMissionType _type;
   late double _radius;
   double? _targetDistance;
 
@@ -56,13 +56,13 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
               controller: _descriptionController,
               decoration: const InputDecoration(labelText: 'Description'),
             ),
-            DropdownButton<MissionType>(
+            DropdownButton<GeofenceMissionType>(
               value: _type,
-              items: MissionType.values
+              items: GeofenceMissionType.values
                   .map((t) => DropdownMenuItem(value: t, child: Text(t.name)))
                   .toList(),
               onChanged: (v) =>
-                  setState(() => _type = v ?? MissionType.sanctuary),
+                  setState(() => _type = v ?? GeofenceMissionType.sanctuary),
             ),
             Row(
               children: [
@@ -78,7 +78,7 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
                 Text(_radius.toStringAsFixed(0)),
               ],
             ),
-            if (_type == MissionType.target)
+            if (_type == GeofenceMissionType.target)
               TextField(
                 controller: _targetDistanceController,
                 decoration: const InputDecoration(
@@ -108,7 +108,7 @@ class _EditMissionDialogState extends State<EditMissionDialog> {
               radiusMeters: _radius,
               type: _type,
               isActive: widget.mission.isActive,
-              targetDistanceMeters: _type == MissionType.target
+              targetDistanceMeters: _type == GeofenceMissionType.target
                   ? _targetDistance
                   : null,
               status: widget.mission.status,

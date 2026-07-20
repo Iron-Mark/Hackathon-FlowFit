@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
 import 'package:flowfit/features/wellness/presentation/widgets/focus_mission_overlay.dart';
 
@@ -10,7 +11,7 @@ void main() {
     final mission = GeofenceMission(
       id: 'm1',
       title: 'Test Mission',
-      center: const LatLngSimple(0.0, 0.0),
+      center: const LatLng(0.0, 0.0),
       radiusMeters: 100,
     );
     var centerCalls = 0;
@@ -63,7 +64,7 @@ void main() {
     final mission = GeofenceMission(
       id: 'm1',
       title: 'Test Mission',
-      center: const LatLngSimple(0.0, 0.0),
+      center: const LatLng(0.0, 0.0),
       radiusMeters: 100,
     );
     var deactivateCalls = 0;

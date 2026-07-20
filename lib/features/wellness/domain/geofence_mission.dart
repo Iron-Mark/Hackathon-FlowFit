@@ -1,22 +1,17 @@
 // Kept minimal imports; enums and data classes used across the feature
+import 'package:latlong2/latlong.dart';
 
-enum MissionType { target, sanctuary, safetyNet }
+enum GeofenceMissionType { target, sanctuary, safetyNet }
 
 enum GeofenceStatus { unknown, inside, outside }
-
-class LatLngSimple {
-  final double latitude;
-  final double longitude;
-  const LatLngSimple(this.latitude, this.longitude);
-}
 
 class GeofenceMission {
   final String id;
   String title;
   String? description;
-  LatLngSimple center;
+  LatLng center;
   double radiusMeters;
-  MissionType type;
+  GeofenceMissionType type;
   bool isActive;
   double? targetDistanceMeters; // Only for target missions
 
@@ -29,7 +24,7 @@ class GeofenceMission {
     this.description,
     required this.center,
     this.radiusMeters = 50.0,
-    this.type = MissionType.sanctuary,
+    this.type = GeofenceMissionType.sanctuary,
     this.isActive = false,
     this.targetDistanceMeters,
     this.status = GeofenceStatus.unknown,
@@ -38,9 +33,9 @@ class GeofenceMission {
   GeofenceMission copyWith({
     String? title,
     String? description,
-    LatLngSimple? center,
+    LatLng? center,
     double? radiusMeters,
-    MissionType? type,
+    GeofenceMissionType? type,
     bool? isActive,
     double? targetDistanceMeters,
     GeofenceStatus? status,
@@ -76,14 +71,14 @@ class GeofenceMission {
       id: json['id'] as String,
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
-      center: LatLngSimple(
+      center: LatLng(
         (json['latitude'] as num).toDouble(),
         (json['longitude'] as num).toDouble(),
       ),
       radiusMeters: (json['radius'] as num?)?.toDouble() ?? 50.0,
-      type: MissionType.values.firstWhere(
+      type: GeofenceMissionType.values.firstWhere(
         (t) => t.name == (json['type'] as String?),
-        orElse: () => MissionType.sanctuary,
+        orElse: () => GeofenceMissionType.sanctuary,
       ),
       isActive: (json['isActive'] as bool?) ?? false,
       targetDistanceMeters: (json['targetDistance'] as num?)?.toDouble(),

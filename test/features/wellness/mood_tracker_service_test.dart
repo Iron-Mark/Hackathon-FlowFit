@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flowfit/features/wellness/services/mood_tracker_service.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flowfit/features/wellness/services/geofence_service.dart';
 import 'package:flowfit/features/wellness/data/geofence_repository.dart';
 import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
@@ -37,9 +38,9 @@ void main() {
     final mission = GeofenceMission(
       id: 'm1',
       title: 'Sanctuary',
-      center: const LatLngSimple(0.0, 0.0),
+      center: const LatLng(0.0, 0.0),
       radiusMeters: 100,
-      type: MissionType.sanctuary,
+      type: GeofenceMissionType.sanctuary,
     );
     await repo.add(mission);
 

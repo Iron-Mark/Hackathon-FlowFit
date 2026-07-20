@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flowfit/features/wellness/data/geofence_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
@@ -16,7 +17,7 @@ void main() {
     final mission = GeofenceMission(
       id: 'm1',
       title: 'Test M',
-      center: const LatLngSimple(0.0, 0.0),
+      center: const LatLng(0.0, 0.0),
       radiusMeters: 50,
     );
     await repo.add(mission);

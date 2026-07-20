@@ -55,7 +55,7 @@ void main() {
 
     expect(repo.current, hasLength(1));
     expect(repo.current.single.title, 'Morning sanctuary');
-    expect(repo.current.single.type, MissionType.sanctuary);
+    expect(repo.current.single.type, GeofenceMissionType.sanctuary);
     expect(repo.current.single.center.latitude, 14.5995);
     expect(repo.current.single.center.longitude, 120.9842);
     expect(find.text('Mission added'), findsOneWidget);
@@ -133,9 +133,9 @@ void main() {
       GeofenceMission(
         id: 'focus-1',
         title: 'Focus park',
-        center: const LatLngSimple(14.5995, 120.9842),
+        center: const maplat.LatLng(14.5995, 120.9842),
         radiusMeters: 80,
-        type: MissionType.sanctuary,
+        type: GeofenceMissionType.sanctuary,
       ),
     );
 

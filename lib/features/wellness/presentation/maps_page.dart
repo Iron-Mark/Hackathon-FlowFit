@@ -51,7 +51,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
   bool _isPlacingMission = false;
   maplat.LatLng? _placingLatLng;
   double _placingRadius = 50.0;
-  MissionType _placingType = MissionType.sanctuary;
+  GeofenceMissionType _placingType = GeofenceMissionType.sanctuary;
   double? _placingTargetDistance;
   // Title for place-mode is stored in `_placingTitleController.text`
   final TextEditingController _placingTitleController = TextEditingController();
@@ -217,7 +217,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
       _isPlacingMission = true;
       _placingLatLng = latLng;
       _placingRadius = 50.0;
-      _placingType = MissionType.sanctuary;
+      _placingType = GeofenceMissionType.sanctuary;
       _placingTargetDistance = null;
       _placingTitleController.text = '';
     });
@@ -240,11 +240,11 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
       id: id,
       title: title.isEmpty ? 'Mission $id' : title,
       description: null,
-      center: LatLngSimple(_placingLatLng!.latitude, _placingLatLng!.longitude),
+      center: _placingLatLng!,
       radiusMeters: _placingRadius,
       type: _placingType,
       isActive: false,
-      targetDistanceMeters: _placingType == MissionType.target
+      targetDistanceMeters: _placingType == GeofenceMissionType.target
           ? _placingTargetDistance
           : null,
     );
@@ -469,8 +469,9 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
             titleController: _placingTitleController,
             type: _placingType,
             onRadiusChanged: (v) => setState(() => _placingRadius = v),
-            onTypeChanged: (t) =>
-                setState(() => _placingType = t ?? MissionType.sanctuary),
+            onTypeChanged: (t) => setState(
+              () => _placingType = t ?? GeofenceMissionType.sanctuary,
+            ),
             onCancel: _cancelPlaceMode,
             onConfirm: () async => await _confirmPlaceMode(),
           ),

@@ -2,6 +2,7 @@ import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
 import 'package:flowfit/features/wellness/presentation/widgets/edit_mission_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 
 void main() {
   testWidgets('EditMissionDialog keeps original title when submitted blank', (
@@ -12,7 +13,7 @@ void main() {
       id: 'mission-1',
       title: 'Original mission',
       description: 'Before edit',
-      center: const LatLngSimple(1, 2),
+      center: const LatLng(1, 2),
       radiusMeters: 80,
     );
 
@@ -58,7 +59,7 @@ void main() {
       id: 'mission-1',
       title: 'Original mission',
       description: 'Before edit',
-      center: const LatLngSimple(1, 2),
+      center: const LatLng(1, 2),
       radiusMeters: 80,
     );
 

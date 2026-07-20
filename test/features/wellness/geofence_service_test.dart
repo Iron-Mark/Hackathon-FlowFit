@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flowfit/features/wellness/data/geofence_repository.dart';
 import 'package:flowfit/features/wellness/data/geofence_repository.dart'
     show InMemoryGeofenceRepository;
@@ -34,9 +35,9 @@ void main() {
     final mission = GeofenceMission(
       id: 't1',
       title: 'Target Test',
-      center: const LatLngSimple(0.0, 0.0),
+      center: const LatLng(0.0, 0.0),
       radiusMeters: 100000,
-      type: MissionType.target,
+      type: GeofenceMissionType.target,
       targetDistanceMeters: 500,
     );
     await repo.add(mission);
@@ -83,9 +84,9 @@ void main() {
     final mission = GeofenceMission(
       id: 's1',
       title: 'Safety Net',
-      center: const LatLngSimple(0.0, 0.0),
+      center: const LatLng(0.0, 0.0),
       radiusMeters: 50,
-      type: MissionType.safetyNet,
+      type: GeofenceMissionType.safetyNet,
       targetDistanceMeters: null,
       isActive: true,
     );

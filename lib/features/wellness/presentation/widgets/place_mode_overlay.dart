@@ -7,9 +7,9 @@ class PlaceModeOverlay extends StatelessWidget {
   final maplat.LatLng? latLng;
   final double radius;
   final TextEditingController titleController;
-  final MissionType type;
+  final GeofenceMissionType type;
   final void Function(double) onRadiusChanged;
-  final void Function(MissionType?) onTypeChanged;
+  final void Function(GeofenceMissionType?) onTypeChanged;
   final VoidCallback onCancel;
   final VoidCallback onConfirm;
 
@@ -73,10 +73,10 @@ class PlaceModeOverlay extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: DropdownButton<MissionType>(
+                      child: DropdownButton<GeofenceMissionType>(
                         value: type,
                         isExpanded: true,
-                        items: MissionType.values
+                        items: GeofenceMissionType.values
                             .map(
                               (t) => DropdownMenuItem(
                                 value: t,

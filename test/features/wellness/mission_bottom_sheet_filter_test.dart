@@ -20,8 +20,8 @@ void main() {
       GeofenceMission(
         id: 'target-1',
         title: 'Target Walk',
-        center: const LatLngSimple(0, 0),
-        type: MissionType.target,
+        center: const maplat.LatLng(0, 0),
+        type: GeofenceMissionType.target,
         targetDistanceMeters: 100,
       ),
     );
@@ -29,8 +29,8 @@ void main() {
       GeofenceMission(
         id: 'sanctuary-1',
         title: 'Calm Place',
-        center: const LatLngSimple(1, 1),
-        type: MissionType.sanctuary,
+        center: const maplat.LatLng(1, 1),
+        type: GeofenceMissionType.sanctuary,
       ),
     );
 
@@ -301,8 +301,8 @@ Future<void> _seedMission(GeofenceRepository repo) {
     GeofenceMission(
       id: 'target-1',
       title: 'Target Walk',
-      center: const LatLngSimple(0, 0),
-      type: MissionType.target,
+      center: const maplat.LatLng(0, 0),
+      type: GeofenceMissionType.target,
       targetDistanceMeters: 100,
     ),
   );
