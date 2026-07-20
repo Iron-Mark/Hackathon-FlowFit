@@ -98,7 +98,10 @@ class UserProfile {
           json['profile_image_url'] as String?,
       nickname: json['nickname'] as String?,
       isKidsMode:
-          json['isKidsMode'] as bool? ?? json['is_kids_mode'] as bool? ?? false,
+          // Default true to match the constructor default and every live
+          // writer; a legacy local JSON without the key must not hydrate as
+          // false and then clobber a backend true on the next sync.
+          json['isKidsMode'] as bool? ?? json['is_kids_mode'] as bool? ?? true,
       surveyCompleted:
           json['surveyCompleted'] as bool? ??
           json['survey_completed'] as bool? ??

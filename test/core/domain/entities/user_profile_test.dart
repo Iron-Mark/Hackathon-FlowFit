@@ -144,6 +144,25 @@ void main() {
         expect(profile.isSynced, false);
       });
 
+      test('defaults isKidsMode to true when both keys are absent, matching '
+          'the constructor default and every live writer', () {
+        final json = {
+          'userId': 'user-789',
+          'createdAt': '2024-01-01T12:00:00.000',
+          'updatedAt': '2024-01-01T12:00:00.000',
+        };
+
+        final profile = UserProfile.fromJson(json);
+
+        // A legacy local JSON without the key must not hydrate as false and
+        // then clobber a backend true on the next sync.
+        expect(profile.isKidsMode, isTrue);
+        expect(UserProfile.fromJson({...json, 'is_kids_mode': false}).isKidsMode,
+            isFalse);
+        expect(UserProfile.fromJson({...json, 'isKidsMode': false}).isKidsMode,
+            isFalse);
+      });
+
       test('handles numeric types correctly', () {
         final json = {
           'userId': 'user-123',
