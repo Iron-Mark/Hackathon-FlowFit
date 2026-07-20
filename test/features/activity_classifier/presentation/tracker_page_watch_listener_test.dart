@@ -7,6 +7,9 @@ import 'package:flowfit/features/activity_classifier/platform/heart_bpm_adapter.
 import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
 import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
 import 'package:flowfit/features/activity_classifier/presentation/tracker_page.dart';
+import 'package:flowfit/features/activity_classifier/presentation/widgets/tracker_source_controls.dart';
+import 'package:flowfit/features/activity_classifier/presentation/widgets/tracker_status_card.dart';
+import 'package:flowfit/features/activity_classifier/presentation/widgets/tracker_watch_banners.dart';
 import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:flowfit/models/sensor_batch.dart';
 import 'package:flowfit/models/sensor_status.dart';
@@ -30,6 +33,10 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Retry watch listener'), findsOneWidget);
+    expect(find.byType(TrackerWatchLiveBanner), findsOneWidget);
+    expect(find.byType(TrackerWatchListenerError), findsOneWidget);
+    expect(find.byType(TrackerSourceControls), findsOneWidget);
+    expect(find.byType(TrackerStatusCard), findsOneWidget);
     expect(listener.startCalls, 1);
   });
 
@@ -50,6 +57,7 @@ void main() {
 
     expect(listener.startCalls, 2);
     expect(find.text('Retry watch listener'), findsNothing);
+    expect(find.byType(TrackerWatchListenerError), findsNothing);
     expect(find.text('Not connected'), findsOneWidget);
   });
 

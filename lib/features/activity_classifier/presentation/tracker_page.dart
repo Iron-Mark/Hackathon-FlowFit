@@ -3,37 +3,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
-import 'package:flowfit/services/sensors/phone_data_listener.dart';
 import 'package:flowfit/models/heart_rate_data.dart';
-import 'package:flowfit/models/sensor_batch.dart';
 
 import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
+import 'package:flowfit/features/activity_classifier/presentation/watch_data_listener.dart';
+import 'package:flowfit/features/activity_classifier/presentation/widgets/tracker_source_controls.dart';
+import 'package:flowfit/features/activity_classifier/presentation/widgets/tracker_status_card.dart';
+import 'package:flowfit/features/activity_classifier/presentation/widgets/tracker_watch_banners.dart';
 import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
 
-enum BpmSource { simulation, plugin, watch }
-
-enum AccelSource { phone, simulation, watch }
-
-abstract class ActivityWatchDataListener {
-  Future<bool> startListening();
-  Stream<HeartRateData> get heartRateStream;
-  Stream<SensorBatch> get sensorBatchStream;
-}
-
-class PhoneActivityWatchDataListener implements ActivityWatchDataListener {
-  PhoneActivityWatchDataListener(this._phoneListener);
-
-  final PhoneDataListener _phoneListener;
-
-  @override
-  Future<bool> startListening() => _phoneListener.startListening();
-
-  @override
-  Stream<HeartRateData> get heartRateStream => _phoneListener.heartRateStream;
-
-  @override
-  Stream<SensorBatch> get sensorBatchStream => _phoneListener.sensorBatchStream;
-}
+export 'package:flowfit/features/activity_classifier/presentation/watch_data_listener.dart';
 
 class TrackerPage extends ConsumerStatefulWidget {
   const TrackerPage({
@@ -427,6 +406,21 @@ class _TrackerPageState extends ConsumerState<TrackerPage> {
     }
   }
 
+  void _onAccelSourceChanged(AccelSource source) {
+    setState(() {
+      _accelSource = source;
+      _startSensorSubscription();
+    });
+  }
+
+  void _onBpmSourceChanged(BpmSource source) {
+    setState(() {
+      _bpmSource = source;
+      _forceSimulate = source == BpmSource.simulation;
+      _connectToSelectedSource();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // Listen to the ViewModel
@@ -466,14 +460,23 @@ class _TrackerPageState extends ConsumerState<TrackerPage> {
           children: [
             const SizedBox(height: 8),
             // Always-on watch heart rate banner
-            _buildWatchLiveBanner(),
+            TrackerWatchLiveBanner(
+              watchLiveConnected: _watchLiveConnected,
+              watchLiveBpm: _watchLiveBpm,
+              isStartingWatchListener: _isStartingWatchListener,
+              watchListenerError: _watchListenerError,
+            ),
             if (_watchListenerError != null) ...[
               const SizedBox(height: 8),
-              _buildWatchListenerError(),
+              TrackerWatchListenerError(
+                message: _watchListenerError!,
+                isStartingWatchListener: _isStartingWatchListener,
+                onRetry: _retryWatchListener,
+              ),
             ],
             if (_modelLoadError != null) ...[
               const SizedBox(height: 8),
-              _buildModelLoadError(),
+              TrackerModelLoadError(message: _modelLoadError!),
             ],
             const SizedBox(height: 16),
             // 1. The Result (Big Text)
@@ -500,227 +503,22 @@ class _TrackerPageState extends ConsumerState<TrackerPage> {
 
             const SizedBox(height: 24),
 
-            // 3. Heart Rate Source Display
-            if (_bpmSource == BpmSource.watch && _currentBpmValue != null) ...[
-              // Show live watch heart rate
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green, width: 2),
-                ),
-                child: Column(
-                  children: [
-                    const Text(
-                      '❤️ Live Watch Heart Rate',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '$_currentBpmValue BPM',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Using real-time data from Galaxy Watch',
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ] else ...[
-              // Show simulation controls
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      'Simulate Heart Rate: ${_simulatedHR.round()} BPM',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    children: [
-                      const Text('Use simulation'),
-                      Switch(
-                        value: _forceSimulate,
-                        onChanged: _bpmSource == BpmSource.simulation
-                            ? (v) => setState(() => _forceSimulate = v)
-                            : null, // Disable when not in simulation mode
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              Slider(
-                min: 60,
-                max: 180,
-                value: _simulatedHR,
-                onChanged: _bpmSource == BpmSource.simulation
-                    ? (val) => setState(() => _simulatedHR = val)
-                    : null, // Disable when not in simulation mode
-                activeColor: Colors.red,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _bpmSource == BpmSource.simulation
-                    ? 'Drag slider HIGH to simulate Panic/Running'
-                    : 'Switch to Simulation mode to use slider',
-                style: TextStyle(
-                  color: _bpmSource == BpmSource.simulation
-                      ? Colors.black
-                      : Colors.grey,
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-
-            // Accelerometer Source Selection
-            const Text(
-              'Accelerometer Source',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: [
-                ChoiceChip(
-                  label: const Text('Phone'),
-                  selected: _accelSource == AccelSource.phone,
-                  onSelected: (s) {
-                    setState(() {
-                      _accelSource = AccelSource.phone;
-                      _startSensorSubscription();
-                    });
-                  },
-                ),
-                ChoiceChip(
-                  label: const Text('Simulation'),
-                  selected: _accelSource == AccelSource.simulation,
-                  onSelected: (s) {
-                    setState(() {
-                      _accelSource = AccelSource.simulation;
-                      _startSensorSubscription();
-                    });
-                  },
-                ),
-                ChoiceChip(
-                  label: const Text('Watch'),
-                  selected: _accelSource == AccelSource.watch,
-                  onSelected: (s) {
-                    setState(() {
-                      _accelSource = AccelSource.watch;
-                      _startSensorSubscription();
-                    });
-                  },
-                ),
-              ],
-            ),
-
-            // Simulation controls (only show when simulation is selected)
-            if (_accelSource == AccelSource.simulation) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Simulation Controls',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Text('Amplitude:'),
-                  Expanded(
-                    child: Slider(
-                      min: 0.0,
-                      max: 2.0,
-                      value: _accelAmplitude,
-                      onChanged: (v) {
-                        setState(() => _accelAmplitude = v);
-                      },
-                      divisions: 20,
-                      label: _accelAmplitude.toStringAsFixed(2),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  const Text('Frequency:'),
-                  Expanded(
-                    child: Slider(
-                      min: 0.5,
-                      max: 4.0,
-                      value: _accelFreqHz,
-                      onChanged: (v) {
-                        setState(() => _accelFreqHz = v);
-                      },
-                      divisions: 35,
-                      label: '${_accelFreqHz.toStringAsFixed(2)}Hz',
-                    ),
-                  ),
-                ],
-              ),
-            ],
-
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-
-            // Heart Rate Source Selection
-            const Text(
-              'Heart Rate Source',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: [
-                ChoiceChip(
-                  label: const Text('Simulation'),
-                  selected: _bpmSource == BpmSource.simulation,
-                  onSelected: (s) {
-                    setState(() {
-                      _bpmSource = BpmSource.simulation;
-                      _forceSimulate = true;
-                      _connectToSelectedSource();
-                    });
-                  },
-                ),
-                ChoiceChip(
-                  label: const Text('Plugin'),
-                  selected: _bpmSource == BpmSource.plugin,
-                  onSelected: (s) {
-                    setState(() {
-                      _bpmSource = BpmSource.plugin;
-                      _forceSimulate = false;
-                      _connectToSelectedSource();
-                    });
-                  },
-                ),
-                ChoiceChip(
-                  label: const Text('Watch HR'),
-                  selected: _bpmSource == BpmSource.watch,
-                  onSelected: (s) {
-                    setState(() {
-                      _bpmSource = BpmSource.watch;
-                      _forceSimulate = false;
-                      _connectToSelectedSource();
-                    });
-                  },
-                ),
-              ],
+            // Source selection + simulation controls
+            TrackerSourceControls(
+              accelSource: _accelSource,
+              bpmSource: _bpmSource,
+              currentBpmValue: _currentBpmValue,
+              simulatedHr: _simulatedHR,
+              forceSimulate: _forceSimulate,
+              accelAmplitude: _accelAmplitude,
+              accelFreqHz: _accelFreqHz,
+              onAccelSourceChanged: _onAccelSourceChanged,
+              onBpmSourceChanged: _onBpmSourceChanged,
+              onForceSimulateChanged: (v) => setState(() => _forceSimulate = v),
+              onSimulatedHrChanged: (val) => setState(() => _simulatedHR = val),
+              onAccelAmplitudeChanged: (v) =>
+                  setState(() => _accelAmplitude = v),
+              onAccelFreqHzChanged: (v) => setState(() => _accelFreqHz = v),
             ),
 
             // Optional: show last error from ViewModel
@@ -743,324 +541,20 @@ class _TrackerPageState extends ConsumerState<TrackerPage> {
             const SizedBox(height: 16),
 
             // Display connection status
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Status',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Accelerometer Status
-                  Row(
-                    children: [
-                      Icon(
-                        _accelSource == AccelSource.watch
-                            ? Icons.watch
-                            : _accelSource == AccelSource.phone
-                            ? Icons.phone_android
-                            : Icons.science,
-                        color: _accelSource == AccelSource.watch
-                            ? Colors.green
-                            : Colors.blue,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _accelSource == AccelSource.watch
-                              ? 'Accelerometer: Watch'
-                              : _accelSource == AccelSource.phone
-                              ? 'Accelerometer: Phone'
-                              : 'Accelerometer: Simulated',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  // Heart Rate Status
-                  if (_bpmSource == BpmSource.plugin) ...[
-                    Row(
-                      children: [
-                        Icon(
-                          _pluginAvailable ? Icons.check_circle : Icons.error,
-                          color: _pluginAvailable
-                              ? Colors.green
-                              : Colors.orange,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _pluginAvailable
-                                ? 'Heart Rate: Plugin connected'
-                                : 'Heart Rate: Plugin not connected',
-                            style: TextStyle(
-                              color: _pluginAvailable
-                                  ? Colors.green
-                                  : Colors.orange,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ] else if (_bpmSource == BpmSource.watch) ...[
-                    Row(
-                      children: [
-                        Icon(
-                          _currentBpmValue != null
-                              ? Icons.check_circle
-                              : Icons.watch_off,
-                          color: _currentBpmValue != null
-                              ? Colors.green
-                              : Colors.orange,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _currentBpmValue != null
-                                ? 'Heart Rate: Watch connected'
-                                : 'Heart Rate: Waiting for watch...',
-                            style: TextStyle(
-                              color: _currentBpmValue != null
-                                  ? Colors.green
-                                  : Colors.orange,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ] else if (_bpmSource == BpmSource.simulation) ...[
-                    Row(
-                      children: [
-                        const Icon(Icons.science, color: Colors.blue, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Heart Rate: Simulated (${_simulatedHR.round()} BPM)',
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-
-                  const SizedBox(height: 12),
-
-                  // Buffer status
-                  Row(
-                    children: [
-                      Icon(
-                        _dataBuffer.length == _windowSize
-                            ? Icons.check_circle
-                            : Icons.hourglass_empty,
-                        color: _dataBuffer.length == _windowSize
-                            ? Colors.green
-                            : Colors.orange,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Buffer: ${_dataBuffer.length}/$_windowSize samples',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Watch integration tip
-                  if (_accelSource == AccelSource.watch ||
-                      _bpmSource == BpmSource.watch) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.info, color: Colors.blue, size: 16),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _accelSource == AccelSource.watch
-                                  ? 'Using complete sensor batch from watch (accel + HR)'
-                                  : 'Using watch heart rate only',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+            TrackerStatusCard(
+              accelSource: _accelSource,
+              bpmSource: _bpmSource,
+              pluginAvailable: _pluginAvailable,
+              currentBpmValue: _currentBpmValue,
+              simulatedHr: _simulatedHR,
+              bufferLength: _dataBuffer.length,
+              windowSize: _windowSize,
             ),
 
             // Bottom padding for scrolling
             const SizedBox(height: 40),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildWatchLiveBanner() {
-    final connected = _watchLiveConnected && _watchLiveBpm != null;
-    final color = connected
-        ? Colors.red
-        : _watchListenerError != null
-        ? Colors.orange
-        : Colors.grey;
-    final label = _isStartingWatchListener
-        ? 'Starting listener...'
-        : _watchListenerError != null
-        ? 'Listener inactive'
-        : connected
-        ? '$_watchLiveBpm BPM'
-        : 'Not connected';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.watch, color: color, size: 18),
-          const SizedBox(width: 8),
-          Text(
-            'Galaxy Watch: ',
-            style: TextStyle(color: color, fontWeight: FontWeight.w600),
-          ),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: color,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: connected ? Colors.green : Colors.grey,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWatchListenerError() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.watch_off, color: Colors.orange, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  _watchListenerError!,
-                  style: const TextStyle(
-                    color: Colors.orange,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _isStartingWatchListener ? null : _retryWatchListener,
-            icon: const Icon(Icons.refresh, size: 18),
-            label: const Text('Retry watch listener'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModelLoadError() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.error_outline, color: Colors.red, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Activity model unavailable',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _modelLoadError!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
