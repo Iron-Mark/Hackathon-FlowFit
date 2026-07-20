@@ -253,7 +253,7 @@ class _HeroCopy extends StatelessWidget {
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: Text(
-            'A fitness companion for heart-rate sessions, workout tracking, wellness missions, and buddy progress across watch, phone, and browser.',
+            'A fitness buddy that makes healthy habits stick for kids — heart-rate sessions from the watch, whole-day tracking on the phone, one companion in front of it all.',
             style: textTheme.titleLarge?.copyWith(
               color: FlowFitLandingPage._muted,
               fontFamily: 'GeneralSans',
