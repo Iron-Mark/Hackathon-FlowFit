@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show ProviderScope;
-import 'package:provider/provider.dart';
 import 'package:flowfit/providers/geofence_repository_provider.dart';
 import 'package:flowfit/services/sensors/watch_bridge.dart';
 import 'package:flowfit/models/heart_rate_data.dart' as hr_model;
@@ -137,19 +136,14 @@ class _MapsPageWrapperState extends State<MapsPageWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<GeofenceRepository>.value(value: _repo),
-        ChangeNotifierProvider<GeofenceService>.value(value: _service),
-        Provider<MoodTrackerService>.value(value: _moodTracker),
-      ],
-      child: WellnessMapsPage(
-        initialCenter: widget.enableDeviceServices
-            ? null
-            : const maplat.LatLng(0, 0),
-        enableLocationServices: widget.enableDeviceServices,
-        renderMapLayers: widget.enableDeviceServices,
-      ),
+    return WellnessMapsPage(
+      repository: _repo,
+      service: _service,
+      initialCenter: widget.enableDeviceServices
+          ? null
+          : const maplat.LatLng(0, 0),
+      enableLocationServices: widget.enableDeviceServices,
+      renderMapLayers: widget.enableDeviceServices,
     );
   }
 }

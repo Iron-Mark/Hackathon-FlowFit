@@ -7,7 +7,6 @@ import 'package:flowfit/features/wellness/services/geofence_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart' as maplat;
-import 'package:provider/provider.dart';
 
 void main() {
   testWidgets('mission filter narrows the visible mission list', (
@@ -36,21 +35,15 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: MultiProvider(
-          providers: [
-            ChangeNotifierProvider<GeofenceRepository>.value(value: repo),
-            ChangeNotifierProvider<GeofenceService>.value(value: service),
-          ],
-          child: Scaffold(
-            body: MissionBottomSheet(
-              repo: repo,
-              service: service,
-              mapController: null,
-              lastCenter: null,
-              onAddAtLatLng: (_) {},
-              onOpenMission: (_) {},
-              onFocusMission: (_) {},
-            ),
+        home: Scaffold(
+          body: MissionBottomSheet(
+            repo: repo,
+            service: service,
+            mapController: null,
+            lastCenter: null,
+            onAddAtLatLng: (_) {},
+            onOpenMission: (_) {},
+            onFocusMission: (_) {},
           ),
         ),
       ),
@@ -274,21 +267,15 @@ Future<void> _pumpMissionBottomSheet(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      home: MultiProvider(
-        providers: [
-          ChangeNotifierProvider<GeofenceRepository>.value(value: repo),
-          ChangeNotifierProvider<GeofenceService>.value(value: service),
-        ],
-        child: Scaffold(
-          body: MissionBottomSheet(
-            repo: repo,
-            service: service,
-            mapController: null,
-            lastCenter: lastCenter,
-            onAddAtLatLng: onAddAtLatLng ?? (_) {},
-            onOpenMission: (_) {},
-            onFocusMission: (_) {},
-          ),
+      home: Scaffold(
+        body: MissionBottomSheet(
+          repo: repo,
+          service: service,
+          mapController: null,
+          lastCenter: lastCenter,
+          onAddAtLatLng: onAddAtLatLng ?? (_) {},
+          onOpenMission: (_) {},
+          onFocusMission: (_) {},
         ),
       ),
     ),

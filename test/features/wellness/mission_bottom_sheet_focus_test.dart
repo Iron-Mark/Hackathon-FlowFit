@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flowfit/features/wellness/data/geofence_repository.dart';
-import 'package:provider/provider.dart';
 import 'package:flowfit/features/wellness/domain/geofence_mission.dart';
 import 'package:flowfit/features/wellness/presentation/widgets/focus_mission_overlay.dart';
 import 'package:flowfit/features/wellness/presentation/widgets/mission_bottom_sheet.dart';
@@ -60,40 +59,34 @@ class _MissionFocusHarnessState extends State<_MissionFocusHarness> {
   Widget build(BuildContext context) {
     final focusedMission = _focusedMission;
 
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<GeofenceRepository>.value(value: widget.repo),
-        ChangeNotifierProvider<GeofenceService>.value(value: widget.service),
-      ],
-      child: Scaffold(
-        body: Stack(
-          children: [
-            MissionBottomSheet(
-              repo: widget.repo,
-              service: widget.service,
-              mapController: null,
-              lastCenter: null,
-              onAddAtLatLng: (_) {},
-              onOpenMission: (_) {},
-              onFocusMission: (mission) {
-                setState(() => _focusedMission = mission);
-              },
+    return Scaffold(
+      body: Stack(
+        children: [
+          MissionBottomSheet(
+            repo: widget.repo,
+            service: widget.service,
+            mapController: null,
+            lastCenter: null,
+            onAddAtLatLng: (_) {},
+            onOpenMission: (_) {},
+            onFocusMission: (mission) {
+              setState(() => _focusedMission = mission);
+            },
+          ),
+          if (focusedMission != null)
+            FocusMissionOverlay(
+              mission: focusedMission,
+              distanceMeters: 0,
+              eta: Duration.zero,
+              isActive: focusedMission.isActive,
+              speedMetersPerSecond: 1.4,
+              onUnfocus: () => setState(() => _focusedMission = null),
+              onCenter: () {},
+              onActivate: () {},
+              onDeactivate: () {},
+              onSpeedChanged: (_) {},
             ),
-            if (focusedMission != null)
-              FocusMissionOverlay(
-                mission: focusedMission,
-                distanceMeters: 0,
-                eta: Duration.zero,
-                isActive: focusedMission.isActive,
-                speedMetersPerSecond: 1.4,
-                onUnfocus: () => setState(() => _focusedMission = null),
-                onCenter: () {},
-                onActivate: () {},
-                onDeactivate: () {},
-                onSpeedChanged: (_) {},
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }

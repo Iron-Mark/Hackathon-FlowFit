@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter_map/flutter_map.dart' as fm;
 import 'package:latlong2/latlong.dart' as maplat;
 // import 'dart:io'; // import/export removed
@@ -26,11 +25,21 @@ class WellnessMapsPage extends StatefulWidget {
   final bool enableLocationServices;
   final bool renderMapLayers;
 
+  /// Injected mission repository. When null the page owns a private
+  /// [InMemoryGeofenceRepository] for its lifetime.
+  final GeofenceRepository? repository;
+
+  /// Injected geofence service. When null the page owns a private
+  /// [GeofenceService] bound to its repository.
+  final GeofenceService? service;
+
   const WellnessMapsPage({
     super.key,
     this.initialCenter,
     this.enableLocationServices = true,
     this.renderMapLayers = true,
+    this.repository,
+    this.service,
   });
 
   @override
@@ -63,25 +72,30 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
   double _focusSpeedMps = 1.4; // default walking speed
   bool _locationStartupFailed = false;
 
-  GeofenceRepository _getRepo() {
-    try {
-      return context.read<GeofenceRepository>();
-    } catch (_) {
-      return InMemoryGeofenceRepository();
-    }
-  }
-
-  GeofenceService _getService() {
-    try {
-      return context.read<GeofenceService>();
-    } catch (_) {
-      return GeofenceService(repository: _getRepo());
-    }
-  }
+  // Resolved once per State: injected via the widget, or a page-owned
+  // fallback so the page still works when constructed bare.
+  late final GeofenceRepository _repo;
+  late final GeofenceService _service;
+  bool _ownsRepo = false;
+  bool _ownsService = false;
 
   @override
   void initState() {
     super.initState();
+    final injectedRepo = widget.repository;
+    if (injectedRepo != null) {
+      _repo = injectedRepo;
+    } else {
+      _repo = InMemoryGeofenceRepository();
+      _ownsRepo = true;
+    }
+    final injectedService = widget.service;
+    if (injectedService != null) {
+      _service = injectedService;
+    } else {
+      _service = GeofenceService(repository: _repo);
+      _ownsService = true;
+    }
     final initialCenter = widget.initialCenter;
     if (initialCenter != null) {
       _initialCenter = initialCenter;
@@ -129,20 +143,12 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
   Future<void> _subscribeToService({required bool startMonitoring}) async {
     if (_eventsSub != null || _focusRequestsSub != null) return;
 
-    GeofenceService service;
-    try {
-      service = context.read<GeofenceService>();
-    } catch (_) {
-      // If a provider is not present, fallback to a local in-memory service.
-      final fallbackRepo = InMemoryGeofenceRepository();
-      service = GeofenceService(repository: fallbackRepo);
-    }
+    final service = _service;
     if (startMonitoring) {
       await service.startMonitoring();
     }
     _eventsSub = service.events.listen((event) {
-      final repo = _getRepo();
-      final m = repo.getById(event.missionId);
+      final m = _repo.getById(event.missionId);
       if (m == null) return;
       final message = _buildEventMessage(m, event);
       if (!mounted) return;
@@ -152,7 +158,6 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
     });
     // Listen for focus requests (e.g., pushed by MoodTrackerService or notifications)
     _focusRequestsSub = service.focusRequests.listen((id) async {
-      final repo = _getRepo();
       if (id == 'add_sanctuary') {
         // Prompt user to start place mode at current location
         if (!widget.enableLocationServices && _initialCenter != null) {
@@ -168,7 +173,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
           return;
         }
       }
-      final mission = repo.getById(id);
+      final mission = _repo.getById(id);
       if (mission != null) {
         // Start focus mode for this mission
         _startFocusMission(mission);
@@ -183,6 +188,14 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
     _focusRequestsSub?.cancel();
     _placingTitleController.dispose();
     _focusTimer?.cancel();
+    // Only dispose the fallback instances this State created; injected
+    // repo/service are owned by whoever constructed the page.
+    if (_ownsService) {
+      _service.dispose();
+    }
+    if (_ownsRepo) {
+      _repo.dispose();
+    }
     super.dispose();
   }
 
@@ -248,8 +261,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
           ? _placingTargetDistance
           : null,
     );
-    final repo = _getRepo();
-    await repo.add(mission);
+    await _repo.add(mission);
     if (!mounted) return;
     setState(() {
       _isPlacingMission = false;
@@ -265,10 +277,10 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
     _focusTimer?.cancel();
     // ensure mission is active
     try {
-      await _getService().activateMission(mission.id);
+      await _service.activateMission(mission.id);
     } catch (_) {}
     if (!mounted) return;
-    final focusedMission = _getRepo().getById(mission.id) ?? mission;
+    final focusedMission = _repo.getById(mission.id) ?? mission;
     setState(() {
       _focusedMission = focusedMission;
       // hide missions to focus map UI
@@ -338,16 +350,17 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
 
   @override
   Widget build(BuildContext context) {
-    late final GeofenceRepository repo;
-    late final GeofenceService service;
-    try {
-      repo = context.watch<GeofenceRepository>();
-      service = context.watch<GeofenceService>();
-    } catch (_) {
-      // Fallback for direct use of WellnessMapsPage without wrapping provider
-      repo = InMemoryGeofenceRepository();
-      service = GeofenceService(repository: repo);
-    }
+    // Rebuild everything that reads repo/service state (markers, circles,
+    // mission sheet, focus overlay) whenever either notifies listeners.
+    return ListenableBuilder(
+      listenable: Listenable.merge([_repo, _service]),
+      builder: (context, _) => _buildScaffold(context),
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context) {
+    final repo = _repo;
+    final service = _service;
 
     final markers = <fm.Marker>[];
     final circles = <fm.CircleMarker>[];
@@ -508,20 +521,20 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
                 16.0,
               ),
               onActivate: () async {
-                await _getService().activateMission(focusedMission.id);
+                await _service.activateMission(focusedMission.id);
                 if (mounted) {
                   setState(() {
                     _focusedMission =
-                        _getRepo().getById(focusedMission.id) ?? focusedMission;
+                        _repo.getById(focusedMission.id) ?? focusedMission;
                   });
                 }
               },
               onDeactivate: () async {
-                await _getService().deactivateMission(focusedMission.id);
+                await _service.deactivateMission(focusedMission.id);
                 if (mounted) {
                   setState(() {
                     _focusedMission =
-                        _getRepo().getById(focusedMission.id) ?? focusedMission;
+                        _repo.getById(focusedMission.id) ?? focusedMission;
                   });
                 }
               },
@@ -588,8 +601,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
                   title: const Text('Activate'),
                   onTap: () async {
                     final sheetNavigator = Navigator.of(ctx);
-                    final service = _getService();
-                    await service.activateMission(mission.id);
+                    await _service.activateMission(mission.id);
                     if (!mounted) return;
                     setState(() {});
                     sheetNavigator.pop();
@@ -600,8 +612,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
                   title: const Text('Deactivate'),
                   onTap: () async {
                     final sheetNavigator = Navigator.of(ctx);
-                    final service = _getService();
-                    await service.deactivateMission(mission.id);
+                    await _service.deactivateMission(mission.id);
                     if (!mounted) return;
                     setState(() {});
                     sheetNavigator.pop();
@@ -617,7 +628,7 @@ class _WellnessMapsPageState extends State<WellnessMapsPage> {
                       builder: (_) => EditMissionDialog(mission: mission),
                     );
                     if (edited != null) {
-                      await _getRepo().update(edited);
+                      await _repo.update(edited);
                     }
                     if (!mounted) return;
                     setState(() {});
