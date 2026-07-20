@@ -12,30 +12,11 @@ import 'package:flowfit/models/sensor_error_code.dart';
 import 'package:flowfit/models/sensor_status.dart';
 import 'package:flowfit/services/sensors/watch_bridge.dart';
 import 'package:flowfit/screens/wear/sensor_permission_rationale_screen.dart';
+import 'package:flowfit/screens/wear/widgets/wear_hr_controls.dart';
+import 'package:flowfit/screens/wear/widgets/wear_hr_display.dart';
+import 'package:flowfit/screens/wear/widgets/wear_test_mode_panel.dart';
 
-// WCAG 2.1 Level AA compliant color constants
-// All colors verified to meet contrast ratio requirements
-class WearColors {
-  // Primary blue for main interactive elements
-  // Contrast with black: 8.6:1, with white text: 4.5:1
-  static const Color primaryBlue = Color(0xFF2196F3);
-
-  // Dark blue for pressed/active states
-  // Contrast with black: 6.3:1, with white text: 5.7:1
-  static const Color darkBlue = Color(0xFF1976D2);
-
-  // Light blue-grey for disabled states (60% opacity)
-  // Contrast with black: 3.2:1 (for large text)
-  static const Color lightBlueGrey = Color(0xFF90CAF9);
-
-  // Teal for success states
-  // Contrast with black: 9.1:1, with white text: 4.2:1
-  static const Color teal = Color(0xFF00BCD4);
-
-  // Red for error states
-  // Contrast with black: 5.9:1, with white text: 4.8:1
-  static const Color errorRed = Color(0xFFF44336);
-}
+export 'package:flowfit/screens/wear/wear_colors.dart';
 
 /// Modern Wear OS heart rate monitoring screen
 /// Features:
@@ -548,6 +529,18 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
         !_isSimulatedFallbackAvailable;
   }
 
+  /// Retry the connection after an error, resuming monitoring when possible
+  /// Requirements: 5.5, 6.5
+  Future<void> _retryConnection() async {
+    setState(() {
+      _errorMessage = null;
+    });
+    await _checkConnection();
+    if (_isConnected && !_isMonitoring) {
+      await _startMonitoring();
+    }
+  }
+
   /// Toggle test mode on/off
   /// Requirements: 8.5
   void _toggleTestMode() {
@@ -619,7 +612,9 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Center(
-          child: isAmbient ? _buildAmbientMode() : _buildActiveMode(),
+          child: isAmbient
+              ? WearAmbientDisplay(bpm: _currentHeartRate?.bpm)
+              : _buildActiveMode(),
         ),
       ),
     );
@@ -637,517 +632,62 @@ class _WearHeartRateScreenState extends State<WearHeartRateScreen>
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildSensorStatus(),
+            WearSensorStatusRow(
+              transmissionAnimation: _transmissionAnimation,
+              bpm: _currentHeartRate?.bpm,
+              isMonitoring: _isMonitoring,
+              isSimulatedHeartRate: _isSimulatedHeartRate,
+              isAccelerometerActive: _isAccelerometerActive,
+            ),
             const SizedBox(height: 10),
             if (_isTestMode) ...[
-              _buildTestModeDisplay(),
+              WearTestModeDisplay(data: _testModeData),
               const SizedBox(height: 10),
             ] else ...[
-              _buildBpmDisplay(),
+              WearBpmDisplay(
+                pulseAnimation: _pulseAnimation,
+                bpm: _currentHeartRate?.bpm,
+                isMonitoring: _isMonitoring,
+                showServiceUnavailableNote:
+                    _isSimulatedFallbackAvailable || _isSimulatedHeartRate,
+              ),
               const SizedBox(height: 10),
             ],
-            _buildStartButton(),
+            WearStartButton(
+              isMonitoring: _isMonitoring,
+              isBusy: _isMonitoringBusy,
+              onPressed: _toggleMonitoring,
+            ),
             if (_canSendCurrentHeartRate) ...[
               const SizedBox(height: 8),
-              _buildSendButton(),
+              WearSendButton(isSending: _isSending, onPressed: _sendToPhone),
             ],
             if (!_isSimulatedFallbackAvailable && !_isSimulatedHeartRate) ...[
               const SizedBox(height: 8),
-              _buildTestModeToggle(),
+              WearTestModeToggle(
+                isTestMode: _isTestMode,
+                onPressed: _toggleTestMode,
+              ),
             ],
             if (shouldShowFullError) ...[
               const SizedBox(height: 12),
-              _buildErrorDisplay(),
+              WearErrorDisplay(
+                errorMessage: _errorMessage,
+                isSimulatedFallback:
+                    _isSimulatedFallbackAvailable || _isSimulatedHeartRate,
+                onRetry: _retryConnection,
+              ),
             ],
             const SizedBox(height: 8),
-            _buildStatusIndicator(),
+            WearStatusIndicator(
+              statusMessage: _statusMessage,
+              isConnected: _isConnected,
+              isMonitoring: _isMonitoring,
+            ),
             const SizedBox(height: 8),
           ],
         ),
       ),
-    );
-  }
-
-  /// Builds sensor status indicator showing heart rate and accelerometer status
-  /// Meets WCAG requirements: minimum 14sp font, color + icon for status
-  Widget _buildSensorStatus() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Heart rate indicator
-        Icon(
-          Icons.favorite,
-          color: _isMonitoring ? Colors.red : Colors.grey,
-          size: 24,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          _currentHeartRate?.bpm != null ? '${_currentHeartRate!.bpm}' : '--',
-          style: const TextStyle(
-            fontSize: 18, // Meets minimum 14sp requirement
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(width: 16),
-        // Accelerometer indicator with animation
-        AnimatedBuilder(
-          animation: _transmissionAnimation,
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _transmissionAnimation.value,
-              child: Icon(
-                Icons.sensors,
-                color: _isSimulatedHeartRate
-                    ? WearColors.teal
-                    : _isAccelerometerActive
-                    ? WearColors.primaryBlue
-                    : Colors.grey,
-                size: 24,
-              ),
-            );
-          },
-        ),
-        const SizedBox(width: 4),
-        Text(
-          _isSimulatedHeartRate
-              ? 'Sim'
-              : (_isAccelerometerActive ? 'Active' : 'Off'),
-          style: const TextStyle(
-            fontSize: 14, // Meets minimum 14sp requirement
-            color: Colors.white,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBpmDisplay() {
-    final bpm = _currentHeartRate?.bpm;
-    final showServiceUnavailableNote =
-        _isSimulatedFallbackAvailable || _isSimulatedHeartRate;
-
-    return AnimatedBuilder(
-      animation: _pulseAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _isMonitoring ? _pulseAnimation.value : 1.0,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!showServiceUnavailableNote) ...[
-                Icon(
-                  Icons.favorite,
-                  color: _isMonitoring ? Colors.red : Colors.grey.shade700,
-                  size: 32,
-                ),
-                const SizedBox(height: 8),
-              ],
-              Text(
-                bpm != null ? '$bpm' : '--',
-                style: const TextStyle(
-                  fontSize: 44,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const Text(
-                'BPM',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white60,
-                  letterSpacing: 0,
-                ),
-              ),
-              if (showServiceUnavailableNote) ...[
-                const SizedBox(height: 2),
-                const SizedBox(
-                  width: 180,
-                  child: Text(
-                    'Samsung Health service unavailable',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: WearColors.teal),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  /// Start/Stop button with WCAG-compliant touch target (48x48dp minimum)
-  /// Uses primaryBlue for Start button, errorRed for Stop button
-  /// Requirements: 4.1, 4.5
-  Widget _buildStartButton() {
-    return SizedBox(
-      width: 120,
-      height: 48, // WCAG 2.1 Level AA: minimum 48dp touch target
-      child: ElevatedButton.icon(
-        onPressed: _isMonitoringBusy ? null : _toggleMonitoring,
-        style:
-            ElevatedButton.styleFrom(
-              backgroundColor: _isMonitoring
-                  ? WearColors.errorRed
-                  : WearColors.primaryBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ).copyWith(
-              // Apply darkBlue to pressed/active states (Requirements: 4.2)
-              backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                if (states.contains(WidgetState.pressed)) {
-                  return _isMonitoring
-                      ? WearColors.errorRed.withValues(alpha: 0.8)
-                      : WearColors.darkBlue;
-                }
-                return _isMonitoring
-                    ? WearColors.errorRed
-                    : WearColors.primaryBlue;
-              }),
-            ),
-        icon: _isMonitoringBusy
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : Icon(_isMonitoring ? Icons.pause : Icons.play_arrow, size: 20),
-        label: Text(
-          _isMonitoringBusy ? 'Wait' : (_isMonitoring ? 'Stop' : 'Start'),
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
-  /// Send to phone button with WCAG-compliant touch target (48x48dp minimum)
-  /// Uses primaryBlue for enabled state, lightBlueGrey for disabled state
-  /// Requirements: 4.1, 4.2, 4.3
-  Widget _buildSendButton() {
-    return SizedBox(
-      width: 120,
-      height: 48, // WCAG 2.1 Level AA: minimum 48dp touch target
-      child: ElevatedButton.icon(
-        onPressed: _isSending ? null : _sendToPhone,
-        style:
-            ElevatedButton.styleFrom(
-              backgroundColor: WearColors.primaryBlue,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: WearColors.lightBlueGrey.withValues(
-                alpha: 0.6,
-              ), // Requirements: 4.3
-              disabledForegroundColor: Colors.white.withValues(alpha: 0.6),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ).copyWith(
-              // Apply darkBlue to pressed/active states (Requirements: 4.2)
-              backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                if (states.contains(WidgetState.disabled)) {
-                  return WearColors.lightBlueGrey.withValues(alpha: 0.6);
-                }
-                if (states.contains(WidgetState.pressed)) {
-                  return WearColors.darkBlue;
-                }
-                return WearColors.primaryBlue;
-              }),
-            ),
-        icon: _isSending
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Icon(Icons.phone_android, size: 18),
-        label: Text(
-          _isSending ? 'Sending' : 'Send',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-
-  /// Error display widget with icon and descriptive text
-  /// Meets WCAG requirements: minimum 14sp font, sufficient contrast
-  /// Requirements: 5.5, 6.5 - Display error with retry option
-  Widget _buildErrorDisplay() {
-    final showRetry = _errorMessage?.contains('retry') ?? false;
-    final isSimulatedFallback =
-        _isSimulatedFallbackAvailable || _isSimulatedHeartRate;
-    final accentColor = isSimulatedFallback
-        ? WearColors.teal
-        : WearColors.errorRed;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: accentColor, width: 1),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isSimulatedFallback ? Icons.science : Icons.error_outline,
-                color: accentColor,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  _errorMessage ?? 'An error occurred',
-                  style: const TextStyle(
-                    fontSize: 14, // Meets minimum 14sp requirement
-                    color: Colors.white,
-                  ),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          if (showRetry) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 36,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  setState(() {
-                    _errorMessage = null;
-                  });
-                  await _checkConnection();
-                  if (_isConnected && !_isMonitoring) {
-                    await _startMonitoring();
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: WearColors.primaryBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                ),
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Retry', style: TextStyle(fontSize: 12)),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// Test mode toggle button
-  /// Requirements: 8.5
-  Widget _buildTestModeToggle() {
-    return SizedBox(
-      width: 48,
-      height: 48, // WCAG 2.1 Level AA: minimum 48dp touch target
-      child: IconButton(
-        onPressed: _toggleTestMode,
-        style: IconButton.styleFrom(
-          backgroundColor: _isTestMode ? WearColors.teal : Colors.grey.shade800,
-          foregroundColor: Colors.white,
-        ),
-        icon: Icon(
-          _isTestMode ? Icons.bug_report : Icons.bug_report_outlined,
-          size: 20,
-        ),
-      ),
-    );
-  }
-
-  /// Test mode display showing real-time sensor values
-  /// Requirements: 8.5, 11.2
-  Widget _buildTestModeDisplay() {
-    final data = _testModeData;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: WearColors.teal.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: WearColors.teal, width: 1),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Test Mode',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: WearColors.teal,
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Heart rate
-          _buildTestModeRow(
-            'HR',
-            data?['heartRate']?.toString() ?? '--',
-            'bpm',
-          ),
-          const SizedBox(height: 4),
-          // Accelerometer X
-          _buildTestModeRow(
-            'Acc X',
-            data?['accelerometerX'] != null
-                ? (data!['accelerometerX'] as double).toStringAsFixed(2)
-                : '--',
-            'm/s²',
-          ),
-          const SizedBox(height: 4),
-          // Accelerometer Y
-          _buildTestModeRow(
-            'Acc Y',
-            data?['accelerometerY'] != null
-                ? (data!['accelerometerY'] as double).toStringAsFixed(2)
-                : '--',
-            'm/s²',
-          ),
-          const SizedBox(height: 4),
-          // Accelerometer Z
-          _buildTestModeRow(
-            'Acc Z',
-            data?['accelerometerZ'] != null
-                ? (data!['accelerometerZ'] as double).toStringAsFixed(2)
-                : '--',
-            'm/s²',
-          ),
-          const SizedBox(height: 4),
-          // Buffer size
-          _buildTestModeRow(
-            'Buffer',
-            '${data?['bufferSize'] ?? 0}/32',
-            'samples',
-          ),
-          const SizedBox(height: 4),
-          // Time since last transmission
-          _buildTestModeRow(
-            'Last TX',
-            data?['timeSinceLastTransmission'] != null
-                ? '${(data!['timeSinceLastTransmission'] as int) ~/ 1000}'
-                : '--',
-            's ago',
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Helper widget to build a test mode data row
-  /// Requirements: 8.5
-  Widget _buildTestModeRow(String label, String value, String unit) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.white70),
-        ),
-        Text(
-          '$value $unit',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Status indicator with color-coded states
-  /// Uses teal for success states, errorRed for errors, primaryBlue for ready
-  /// Requirements: 4.1, 4.4, 4.5
-  Widget _buildStatusIndicator() {
-    Color statusColor = Colors.grey;
-
-    // Determine status color based on state
-    if (_statusMessage == 'Sent!' ||
-        _statusMessage == 'Active' ||
-        _statusMessage == 'Simulated') {
-      // Success states use teal (Requirements: 4.4)
-      statusColor = WearColors.teal;
-    } else if (_statusMessage.contains('Error') ||
-        _statusMessage.contains('Failed') ||
-        _statusMessage.contains('denied') ||
-        _statusMessage.contains('unavailable')) {
-      // Error states use errorRed (Requirements: 4.5)
-      statusColor = WearColors.errorRed;
-    } else if (_isConnected && _isMonitoring) {
-      // Active monitoring uses teal (Requirements: 4.4)
-      statusColor = WearColors.teal;
-    } else if (_isConnected) {
-      // Ready state uses primaryBlue (Requirements: 4.1)
-      statusColor = WearColors.primaryBlue;
-    } else {
-      // Disconnected/unknown uses grey
-      statusColor = Colors.grey;
-    }
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          _statusMessage,
-          style: TextStyle(fontSize: 10, color: statusColor),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAmbientMode() {
-    final bpm = _currentHeartRate?.bpm;
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.favorite, color: Colors.white24, size: 24),
-        const SizedBox(height: 8),
-        Text(
-          bpm != null ? '$bpm' : '--',
-          style: const TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Colors.white24,
-          ),
-        ),
-        const Text(
-          'BPM',
-          style: TextStyle(fontSize: 14, color: Colors.white10),
-        ),
-      ],
     );
   }
 }

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flowfit/screens/wear/wear_heart_rate_screen.dart';
+import 'package:flowfit/screens/wear/widgets/wear_hr_controls.dart';
+import 'package:flowfit/screens/wear/widgets/wear_test_mode_panel.dart';
 import 'package:wear_plus/wear_plus.dart';
 
 /// Tests for WCAG 2.1 Level AA accessibility compliance
@@ -78,6 +80,7 @@ void main() {
       // Act - Find the Start button
       final startButtonFinder = find.widgetWithText(ElevatedButton, 'Start');
       expect(startButtonFinder, findsOneWidget);
+      expect(find.byType(WearStartButton), findsOneWidget);
 
       // Assert - Verify touch target size
       final RenderBox buttonBox =
@@ -154,6 +157,7 @@ void main() {
 
       final sendButtonFinder = find.widgetWithText(ElevatedButton, 'Send');
       expect(sendButtonFinder, findsOneWidget);
+      expect(find.byType(WearSendButton), findsOneWidget);
 
       final RenderBox buttonBox =
           tester.renderObject(sendButtonFinder) as RenderBox;
@@ -528,6 +532,7 @@ void main() {
         await tester.tap(find.widgetWithText(ElevatedButton, 'Start'));
         await tester.pump(const Duration(milliseconds: 100));
 
+        expect(find.byType(WearErrorDisplay), findsOneWidget);
         expect(find.byIcon(Icons.error_outline), findsOneWidget);
         expect(
           find.text('Failed to start heart rate tracking'),
@@ -566,9 +571,12 @@ void main() {
 
         await pumpWearHeartRateScreen(tester);
 
+        expect(find.byType(WearTestModeToggle), findsOneWidget);
+
         await tester.tap(find.byIcon(Icons.bug_report_outlined));
         await tester.pump(const Duration(milliseconds: 600));
 
+        expect(find.byType(WearTestModeDisplay), findsOneWidget);
         expect(find.text('Test Mode'), findsOneWidget);
         expect(find.text('82 bpm'), findsOneWidget);
         expect(find.text('3/32 samples'), findsOneWidget);
