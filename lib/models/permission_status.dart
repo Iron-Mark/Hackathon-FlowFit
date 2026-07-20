@@ -1,14 +1,14 @@
-enum PermissionStatus {
+enum WatchPermissionStatus {
   granted,
   denied,
   notDetermined;
 
   String toJson() => name;
 
-  static PermissionStatus fromJson(String json) {
-    return PermissionStatus.values.firstWhere(
+  static WatchPermissionStatus fromJson(String json) {
+    return WatchPermissionStatus.values.firstWhere(
       (status) => status.name == json,
-      orElse: () => PermissionStatus.notDetermined,
+      orElse: () => WatchPermissionStatus.notDetermined,
     );
   }
 }

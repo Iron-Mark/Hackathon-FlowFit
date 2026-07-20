@@ -416,7 +416,7 @@ void main() {
       test('permissionStateStream is available', () {
         final stream = service.permissionStateStream;
         expect(stream, isNotNull);
-        expect(stream, isA<Stream<PermissionStatus>>());
+        expect(stream, isA<Stream<WatchPermissionStatus>>());
       });
 
       test('startPermissionMonitoring can be called', () {

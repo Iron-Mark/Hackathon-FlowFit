@@ -57,7 +57,7 @@ Future<bool> _ensureBodySensorPermission(WatchBridgeService watchBridge) async {
   } catch (_) {
     try {
       final fallbackStatus = await watchBridge.checkBodySensorPermission();
-      if (fallbackStatus == PermissionStatus.granted) {
+      if (fallbackStatus == WatchPermissionStatus.granted) {
         return true;
       }
 

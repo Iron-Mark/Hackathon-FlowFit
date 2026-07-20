@@ -43,8 +43,8 @@ class WatchBridgeService {
   StreamSubscription<HeartRateData>? _heartRateSubscription;
 
   // Permission state stream
-  final StreamController<PermissionStatus> _permissionStateController =
-      StreamController<PermissionStatus>.broadcast();
+  final StreamController<WatchPermissionStatus> _permissionStateController =
+      StreamController<WatchPermissionStatus>.broadcast();
   Timer? _permissionCheckTimer;
 
   // Connection state stream
@@ -169,7 +169,7 @@ class WatchBridgeService {
 
   /// Check the current BODY_SENSORS permission status (legacy method using permission_handler)
   /// Returns the current permission state without requesting
-  Future<PermissionStatus> checkBodySensorPermission() async {
+  Future<WatchPermissionStatus> checkBodySensorPermission() async {
     _logger.d('Checking body sensor permission status');
 
     try {
@@ -177,13 +177,13 @@ class WatchBridgeService {
         _operationTimeout,
       );
 
-      PermissionStatus result;
+      WatchPermissionStatus result;
       if (status.isGranted) {
-        result = PermissionStatus.granted;
+        result = WatchPermissionStatus.granted;
       } else if (status.isDenied || status.isPermanentlyDenied) {
-        result = PermissionStatus.denied;
+        result = WatchPermissionStatus.denied;
       } else {
-        result = PermissionStatus.notDetermined;
+        result = WatchPermissionStatus.notDetermined;
       }
 
       _logger.d('Permission status: $result');
@@ -475,8 +475,9 @@ class WatchBridgeService {
   }
 
   /// Get a stream of permission state changes
-  /// Returns a Stream that emits PermissionStatus when permission state changes
-  Stream<PermissionStatus> get permissionStateStream =>
+  /// Returns a Stream that emits WatchPermissionStatus when permission state
+  /// changes
+  Stream<WatchPermissionStatus> get permissionStateStream =>
       _permissionStateController.stream;
 
   /// Start monitoring permission state changes
