@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:solar_icons/solar_icons.dart';
-import 'package:provider/provider.dart' as provider;
 import 'dart:async';
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
-import 'package:flowfit/providers/running_session_provider.dart';
+// Hide running_session_provider's own phoneDataListenerProvider so this
+// screen reads the activity-classifier chain's listener (the instance the
+// retired ActivityClassifierScope used to supply).
+import 'package:flowfit/providers/running_session_provider.dart'
+    hide phoneDataListenerProvider;
 import 'package:flowfit/models/workout_session.dart';
 import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
-import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
-import 'package:flowfit/services/sensors/phone_data_listener.dart';
 
 /// Active running screen with real-time GPS tracking and metrics
 /// Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8
@@ -53,14 +54,8 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
   }
 
   void _startContinuousDetection() async {
-    final classifier = provider.Provider.of<TFLiteActivityClassifier>(
-      context,
-      listen: false,
-    );
-    final phoneDataListener = provider.Provider.of<PhoneDataListener>(
-      context,
-      listen: false,
-    );
+    final classifier = ref.read(tfliteActivityClassifierProvider);
+    final phoneDataListener = ref.read(phoneDataListenerProvider);
 
     // Start listening for watch data FIRST — before model loading
     await phoneDataListener.startListening();
@@ -138,10 +133,11 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
       debugPrint(
         '🟢 Running AI detection with ${_sensorBuffer.length} samples',
       );
-      final viewModel = provider.Provider.of<ActivityClassifierViewModel>(
-        context,
-        listen: false,
-      );
+      // _runDetection is invoked from Timer and stream callbacks across async
+      // gaps; using ref after this ConsumerState is disposed throws, so guard
+      // on mounted immediately before the read.
+      if (!mounted) return;
+      final viewModel = ref.read(activityClassifierViewModelProvider);
       final bufferCopy = List<List<double>>.from(
         _sensorBuffer.take(_windowSize),
       );
@@ -316,72 +312,70 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
         ? session.routePoints.last
         : null;
 
-    return provider.Consumer<ActivityClassifierViewModel>(
-      builder: (context, viewModel, child) {
-        return Scaffold(
-          backgroundColor: Colors.black,
-          body: SafeArea(
-            child: Stack(
-              children: [
-                // Full-screen map as background
-                _buildFullScreenMap(session, currentLocation),
+    final viewModel = ref.watch(activityClassifierViewModelProvider);
 
-                // Gradient overlay for better readability
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.6),
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.8),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Full-screen map as background
+            _buildFullScreenMap(session, currentLocation),
+
+            // Gradient overlay for better readability
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.6),
+                      Colors.transparent,
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.8),
+                    ],
+                    stops: const [0.0, 0.2, 0.6, 1.0],
+                  ),
+                ),
+              ),
+            ),
+
+            // Content overlay
+            Column(
+              children: [
+                // Header with controls
+                _buildHeader(theme, session, isPaused),
+
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SingleChildScrollView(
+                      reverse: true,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Activity mode badge (always show)
+                          _buildActivityModeBadge(viewModel),
+
+                          // AI Metrics breakdown (show when detected)
+                          if (viewModel.currentActivity != null)
+                            _buildAIMetricsBreakdown(viewModel),
+
+                          const SizedBox(height: 16),
+
+                          // Bottom metrics panel
+                          _buildBottomMetricsPanel(theme, session),
                         ],
-                        stops: const [0.0, 0.2, 0.6, 1.0],
                       ),
                     ),
                   ),
                 ),
-
-                // Content overlay
-                Column(
-                  children: [
-                    // Header with controls
-                    _buildHeader(theme, session, isPaused),
-
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: SingleChildScrollView(
-                          reverse: true,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Activity mode badge (always show)
-                              _buildActivityModeBadge(viewModel),
-
-                              // AI Metrics breakdown (show when detected)
-                              if (viewModel.currentActivity != null)
-                                _buildAIMetricsBreakdown(viewModel),
-
-                              const SizedBox(height: 16),
-
-                              // Bottom metrics panel
-                              _buildBottomMetricsPanel(theme, session),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 

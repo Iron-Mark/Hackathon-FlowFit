@@ -13,7 +13,11 @@ import 'package:flowfit/models/sensor_batch.dart';
 import 'package:flowfit/models/walking_session.dart';
 import 'package:flowfit/models/workout_session.dart';
 import 'package:flowfit/providers/resistance_session_provider.dart';
-import 'package:flowfit/providers/running_session_provider.dart';
+// Hide the running provider module's phoneDataListenerProvider: the override
+// below must target the activity-classifier chain's provider, which is the
+// one ActiveRunningScreen reads.
+import 'package:flowfit/providers/running_session_provider.dart'
+    hide phoneDataListenerProvider;
 import 'package:flowfit/providers/walking_session_provider.dart';
 import 'package:flowfit/screens/workout/resistance/active_resistance_screen.dart';
 import 'package:flowfit/screens/workout/running/active_running_screen.dart';
@@ -29,7 +33,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:solar_icons/solar_icons.dart';
 
 void main() {
@@ -622,29 +625,25 @@ class _RunningHarness extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return provider.MultiProvider(
-      providers: [
-        provider.ChangeNotifierProvider<ActivityClassifierViewModel>.value(
-          value: _ReadyActivityClassifierViewModel(),
+    return ProviderScope(
+      overrides: [
+        runningSessionProvider.overrideWith((ref) => notifier),
+        activityClassifierViewModelProvider.overrideWith(
+          (ref) => _ReadyActivityClassifierViewModel(),
         ),
-        provider.Provider<TFLiteActivityClassifier>.value(
-          value: _FakeTFLiteActivityClassifier(),
+        tfliteActivityClassifierProvider.overrideWithValue(
+          _FakeTFLiteActivityClassifier(),
         ),
-        provider.Provider<PhoneDataListener>.value(
-          value: _NoopPhoneDataListener(),
-        ),
+        phoneDataListenerProvider.overrideWithValue(_NoopPhoneDataListener()),
       ],
-      child: ProviderScope(
-        overrides: [runningSessionProvider.overrideWith((ref) => notifier)],
-        child: MaterialApp(
-          home: const ActiveRunningScreen(),
-          routes: {
-            '/activity-classifier': (_) =>
-                const Scaffold(body: Text('route:activity-classifier')),
-            '/workout/running/summary': (_) =>
-                const Scaffold(body: Text('route:running-summary')),
-          },
-        ),
+      child: MaterialApp(
+        home: const ActiveRunningScreen(),
+        routes: {
+          '/activity-classifier': (_) =>
+              const Scaffold(body: Text('route:activity-classifier')),
+          '/workout/running/summary': (_) =>
+              const Scaffold(body: Text('route:running-summary')),
+        },
       ),
     );
   }

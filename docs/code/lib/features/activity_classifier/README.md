@@ -15,7 +15,7 @@
 /// ├── platform/
 /// │   └── tflite_activity_classifier.dart # TFLite platform wrapper
 /// └── presentation/
-///     └── providers.dart                # View model & Provider setup
+///     └── providers.dart                # View model & Riverpod providers
 ///
 /// test/features/activity_classifier/
 /// ├── domain/
@@ -40,27 +40,35 @@
 /// - Domain layer (classify_activity_usecase.dart) is pure Dart, testable without platform
 /// - Data layer handles mapping and persistence (could add Supabase, local DB, cache)
 /// - Platform layer isolates TFLite dependencies (can swap with other ML framework)
-/// - Presentation layer (ViewModel) uses Provider for state management
+/// - Presentation layer (ViewModel) uses Riverpod for state management
 /// - Each layer has dedicated tests
 ///
 /// Usage in App:
-/// 1. Initialize classifier in main.dart:
+/// 1. The app root hosts a ProviderScope (lib/main.dart). The Riverpod
+///    providers in presentation/providers.dart wire the whole chain:
+///    heartBpmAdapterProvider, phoneDataListenerProvider,
+///    tfliteActivityClassifierProvider, activityClassifierRepositoryProvider,
+///    classifyActivityUseCaseProvider, activityClassifierViewModelProvider.
+/// 2. In a ConsumerWidget/ConsumerState, read the ViewModel and load the
+///    model once at startup:
 ///    ```dart
-///    final classifier = TFLiteActivityClassifier();
+///    final classifier = ref.read(tfliteActivityClassifierProvider);
 ///    await classifier.loadModel(); // Call once at startup
-///    ```
-/// 2. Set up Provider hierarchy (see providers.dart for MultiProvider setup)
-/// 3. In widget, read the ViewModel:
-///    ```dart
-///    final viewModel = context.read<ActivityClassifierViewModel>();
+///    final viewModel = ref.read(activityClassifierViewModelProvider);
 ///    await viewModel.classify(sensorBuffer);
 ///    ```
-/// 4. Listen for changes:
+/// 3. Listen for changes:
 ///    ```dart
-///    Consumer<ActivityClassifierViewModel>(
-///      builder: (context, vm, _) {
-///        return Text('Activity: ${vm.currentActivity?.label}');
-///      },
+///    final viewModel = ref.watch(activityClassifierViewModelProvider);
+///    return Text('Activity: ${viewModel.currentActivity?.label}');
+///    ```
+/// 4. Tests override the chain with fakes:
+///    ```dart
+///    ProviderScope(
+///      overrides: [
+///        tfliteActivityClassifierProvider.overrideWithValue(fakeClassifier),
+///      ],
+///      child: ...,
 ///    )
 ///    ```
 ///
@@ -71,10 +79,10 @@
 
 /// Heart BPM integration
 /// - The tracker UI prefers a simulated BPM value (mock slider) by default to make demos and testing consistent.
-/// - To use a hardware source, connect the `HeartBpm` plugin's stream to the `HeartBpmAdapter` in `main.dart`, e.g.:
+/// - To use a hardware source, connect the `HeartBpm` plugin's stream to the `HeartBpmAdapter` during app init, e.g.:
 ///
 /// ```dart
-/// final adapter = context.read<HeartBpmAdapter>();
+/// final adapter = ref.read(heartBpmAdapterProvider);
 /// adapter.connectExternalStream(HeartBpm.heartBpmStream);
 /// ```
 ///

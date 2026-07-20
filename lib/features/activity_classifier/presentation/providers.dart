@@ -1,7 +1,14 @@
 import 'package:flutter/foundation.dart';
+// flutter_riverpod 2.x exports ChangeNotifierProvider directly; riverpod 3.x
+// moves it to package:flutter_riverpod/legacy.dart.
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
+import 'package:flowfit/features/activity_classifier/data/tflite_activity_repository.dart';
 import 'package:flowfit/features/activity_classifier/domain/activity.dart';
 import 'package:flowfit/features/activity_classifier/domain/classify_activity_usecase.dart';
+import 'package:flowfit/features/activity_classifier/platform/heart_bpm_adapter.dart';
+import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
+import 'package:flowfit/services/sensors/phone_data_listener.dart';
 
 /// ChangeNotifier for activity classification state management
 class ActivityClassifierViewModel with ChangeNotifier {
@@ -46,57 +53,78 @@ class ActivityClassifierViewModel with ChangeNotifier {
   }
 }
 
+/// Platform layer: heart BPM adapter (plugin or watch stream source).
+final heartBpmAdapterProvider = Provider<HeartBpmAdapter>(
+  (ref) => HeartBpmAdapter(),
+);
+
+/// Platform layer: phone-side listener that receives watch heart rate and
+/// sensor batches via the Wearable data layer.
+final phoneDataListenerProvider = Provider<PhoneDataListener>(
+  (ref) => PhoneDataListener(),
+);
+
+/// Platform layer: TFLite model wrapper.
+final tfliteActivityClassifierProvider = Provider<TFLiteActivityClassifier>(
+  (ref) => TFLiteActivityClassifier(),
+);
+
+/// Data layer (exposed as the abstract ActivityClassifierRepository type).
+final activityClassifierRepositoryProvider =
+    Provider<ActivityClassifierRepository>(
+      (ref) =>
+          TFLiteActivityRepository(ref.watch(tfliteActivityClassifierProvider)),
+    );
+
+/// Domain layer.
+final classifyActivityUseCaseProvider = Provider<ClassifyActivityUseCase>(
+  (ref) =>
+      ClassifyActivityUseCase(ref.watch(activityClassifierRepositoryProvider)),
+);
+
+/// Presentation layer. Riverpod's ChangeNotifierProvider disposes the notifier
+/// automatically, matching the old ChangeNotifierProxyProvider behaviour; the
+/// plain providers above hold objects the retired ActivityClassifierScope
+/// never disposed either, so no ref.onDispose hooks are needed.
+final activityClassifierViewModelProvider =
+    ChangeNotifierProvider<ActivityClassifierViewModel>(
+      (ref) => ActivityClassifierViewModel(
+        ref.watch(classifyActivityUseCaseProvider),
+      ),
+    );
+
 // =============================================================================
-// USAGE: Set up in app's MultiProvider:
+// USAGE: The app root hosts a ProviderScope (see lib/main.dart), so the
+// Riverpod providers above are available everywhere — no MultiProvider setup.
 //
-// MultiProvider(
-//   providers: [
-//     // Platform layer
-//     Provider<TFLiteActivityClassifier>(
-//       create: (_) => TFLiteActivityClassifier(),
-//     ),
-//     // Data layer
-//     ProxyProvider<TFLiteActivityClassifier, ActivityClassifierRepository>(
-//       create: (_, classifier) => TFLiteActivityRepository(classifier),
-//       update: (_, classifier, __) => TFLiteActivityRepository(classifier),
-//     ),
-//     // Domain layer
-//     ProxyProvider<ActivityClassifierRepository, ClassifyActivityUseCase>(
-//       create: (_, repository) => ClassifyActivityUseCase(repository),
-//       update: (_, repository, __) => ClassifyActivityUseCase(repository),
-//     ),
-//     // Presentation layer
-//     ChangeNotifierProxyProvider<ClassifyActivityUseCase, ActivityClassifierViewModel>(
-//       create: (_, useCase) => ActivityClassifierViewModel(useCase),
-//       update: (_, useCase, __) => ActivityClassifierViewModel(useCase),
-//     ),
-//   ],
-//   child: MyApp(),
-// )
+// In a ConsumerWidget / ConsumerState:
+//
+// // One-shot reads (init code, callbacks)
+// final classifier = ref.read(tfliteActivityClassifierProvider);
+// final viewModel = ref.read(activityClassifierViewModelProvider);
+//
+// // Rebuild whenever the ViewModel notifies
+// final viewModel = ref.watch(activityClassifierViewModelProvider);
+// if (viewModel.isLoading) return Text('Classifying...');
+// if (viewModel.hasError) return Text('Error: ${viewModel.error}');
+// return Text('Activity: ${viewModel.currentActivity?.label}');
 //
 // Optional: Heart BPM integration (plugin or watch)
-// - Add `Provider<HeartBpmAdapter>` and `Provider<PhoneDataListener>` in `main.dart`
+// - Read heartBpmAdapterProvider / phoneDataListenerProvider where needed.
 // - To connect a plugin stream in your app initialization, do:
 //
 // WidgetsBinding.instance.addPostFrameCallback((_) {
-//   final adapter = context.read<HeartBpmAdapter>();
+//   final adapter = ref.read(heartBpmAdapterProvider);
 //   // If the plugin exports a stream called `heartBpmStream`, connect it:
 //   // adapter.connectExternalStream(HeartBpm.heartBpmStream);
 // });
 //
+// Tests override the chain with fakes:
 //
-// USAGE: In widgets:
-//
-// // Read current activity
-// final activity = context.read<Activity?>();
-// final viewModel = context.read<ActivityClassifierViewModel>();
-//
-// // Listen for changes
-// Consumer<ActivityClassifierViewModel>(
-//   builder: (context, viewModel, _) {
-//     if (viewModel.isLoading) return Text('Classifying...');
-//     if (viewModel.hasError) return Text('Error: ${viewModel.error}');
-//     return Text('Activity: ${viewModel.currentActivity?.label}');
-//   },
+// ProviderScope(
+//   overrides: [
+//     tfliteActivityClassifierProvider.overrideWithValue(fakeClassifier),
+//   ],
+//   child: ...,
 // )
 // =============================================================================

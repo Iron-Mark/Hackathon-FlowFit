@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flowfit/services/sensors/phone_data_listener.dart';
 import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:flowfit/models/sensor_batch.dart';
-import 'package:provider/provider.dart';
 
 import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
 import 'package:flowfit/features/activity_classifier/platform/tflite_activity_classifier.dart';
-import 'package:flowfit/features/activity_classifier/platform/heart_bpm_adapter.dart';
 
 enum BpmSource { simulation, plugin, watch }
 
@@ -36,7 +35,7 @@ class PhoneActivityWatchDataListener implements ActivityWatchDataListener {
   Stream<SensorBatch> get sensorBatchStream => _phoneListener.sensorBatchStream;
 }
 
-class TrackerPage extends StatefulWidget {
+class TrackerPage extends ConsumerStatefulWidget {
   const TrackerPage({
     super.key,
     this.watchDataListener,
@@ -49,10 +48,10 @@ class TrackerPage extends StatefulWidget {
   final BpmSource initialBpmSource;
 
   @override
-  State<TrackerPage> createState() => _TrackerPageState();
+  ConsumerState<TrackerPage> createState() => _TrackerPageState();
 }
 
-class _TrackerPageState extends State<TrackerPage> {
+class _TrackerPageState extends ConsumerState<TrackerPage> {
   // Buffers
   final List<List<double>> _dataBuffer = [];
   static const int _windowSize = 320; // 10 seconds @ ~32Hz
@@ -104,20 +103,12 @@ class _TrackerPageState extends State<TrackerPage> {
     super.didChangeDependencies();
 
     if (!_initialized) {
-      // Resolve providers from the widget tree
-      _viewModel = Provider.of<ActivityClassifierViewModel>(
-        context,
-        listen: false,
-      );
-      _platformClassifier = Provider.of<TFLiteActivityClassifier>(
-        context,
-        listen: false,
-      );
+      // Resolve dependencies from the Riverpod container
+      _viewModel = ref.read(activityClassifierViewModelProvider);
+      _platformClassifier = ref.read(tfliteActivityClassifierProvider);
       _watchDataListener =
           widget.watchDataListener ??
-          PhoneActivityWatchDataListener(
-            Provider.of<PhoneDataListener>(context, listen: false),
-          );
+          PhoneActivityWatchDataListener(ref.read(phoneDataListenerProvider));
 
       // Ensure model is loaded once at startup
       if (!_platformClassifier.isLoaded) {
@@ -307,7 +298,7 @@ class _TrackerPageState extends State<TrackerPage> {
   }
 
   Future<void> _connectToSelectedSource() async {
-    final adapter = Provider.of<HeartBpmAdapter>(context, listen: false);
+    final adapter = ref.read(heartBpmAdapterProvider);
 
     // Cancel existing subscription
     _bpmSub?.cancel();
@@ -439,7 +430,7 @@ class _TrackerPageState extends State<TrackerPage> {
   @override
   Widget build(BuildContext context) {
     // Listen to the ViewModel
-    final viewModel = Provider.of<ActivityClassifierViewModel>(context);
+    final viewModel = ref.watch(activityClassifierViewModelProvider);
 
     final currentActivity = viewModel.currentActivity?.label ?? 'Waiting...';
     final probs = viewModel.currentActivity?.probabilities ?? [0.0, 0.0, 0.0];

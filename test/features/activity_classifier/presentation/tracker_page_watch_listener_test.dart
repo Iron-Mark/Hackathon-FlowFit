@@ -11,8 +11,8 @@ import 'package:flowfit/models/heart_rate_data.dart';
 import 'package:flowfit/models/sensor_batch.dart';
 import 'package:flowfit/models/sensor_status.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart' as provider;
 
 void main() {
   testWidgets('shows retry when watch listener startup fails', (tester) async {
@@ -130,17 +130,17 @@ Widget _harness(
   Map<String, WidgetBuilder> routes = const {},
   TFLiteActivityClassifier? classifier,
 }) {
-  return provider.MultiProvider(
-    providers: [
-      provider.ChangeNotifierProvider<ActivityClassifierViewModel>(
-        create: (_) => ActivityClassifierViewModel(
+  return ProviderScope(
+    overrides: [
+      activityClassifierViewModelProvider.overrideWith(
+        (ref) => ActivityClassifierViewModel(
           ClassifyActivityUseCase(_FakeActivityClassifierRepository()),
         ),
       ),
-      provider.Provider<TFLiteActivityClassifier>.value(
-        value: classifier ?? _FakeTFLiteActivityClassifier(),
+      tfliteActivityClassifierProvider.overrideWithValue(
+        classifier ?? _FakeTFLiteActivityClassifier(),
       ),
-      provider.Provider<HeartBpmAdapter>(create: (_) => HeartBpmAdapter()),
+      heartBpmAdapterProvider.overrideWithValue(HeartBpmAdapter()),
     ],
     child: MaterialApp(
       routes: routes,
