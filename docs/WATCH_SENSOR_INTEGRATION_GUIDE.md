@@ -126,7 +126,7 @@ Located at: `lib/features/activity_classifier/presentation/tracker_page.dart`
 ### Code Example
 ```dart
 // Subscribe to watch sensor batches
-final phoneListener = Provider.of<PhoneDataListener>(context, listen: false);
+final phoneListener = ref.read(phoneDataListenerProvider);
 phoneListener.startListening();
 
 _sensorBatchSub = phoneListener.sensorBatchStream.listen((sensorBatch) {

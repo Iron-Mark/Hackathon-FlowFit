@@ -128,7 +128,7 @@ Future<void> _runDetection() async {
   }
 
   try {
-    final viewModel = provider.Provider.of<ActivityClassifierViewModel>(context, listen: false);
+    final viewModel = ref.read(activityClassifierViewModelProvider);
     final bufferCopy = List<List<double>>.from(_sensorBuffer.take(_windowSize));
     await viewModel.classify(bufferCopy);
 
@@ -613,7 +613,7 @@ print('🔴 Buffer not ready: ${_sensorBuffer.length}/$_windowSize samples');
 ✅ Maintaining 320-sample buffer efficiently
 ✅ Scheduling detections every 15 seconds
 ✅ Handling missing or invalid sensor data
-✅ UI updates with Consumer/Provider pattern
+✅ UI updates with Riverpod ref.watch
 ✅ Cleanup on screen disposal
 
 ### Best Practices:

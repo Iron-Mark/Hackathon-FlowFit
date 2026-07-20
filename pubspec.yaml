@@ -25,7 +25,6 @@ dependencies:
 
   # UI & Utils
   intl: ^0.18.1 # SAFE UPGRADE: Minor fixes
-  provider: ^6.1.2 # SAFE UPGRADE: Bug fixes
   wearable_rotary: ^2.0.3 # DISCONTINUED, but MainActivity.kt uses its Kotlin plugin class directly
   logger: ^2.4.0 # SAFE UPGRADE: Better logging
   ultralytics_yolo: ^0.1.25
