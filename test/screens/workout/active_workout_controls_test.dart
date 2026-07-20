@@ -21,6 +21,9 @@ import 'package:flowfit/providers/running_session_provider.dart'
 import 'package:flowfit/providers/walking_session_provider.dart';
 import 'package:flowfit/screens/workout/resistance/active_resistance_screen.dart';
 import 'package:flowfit/screens/workout/running/active_running_screen.dart';
+import 'package:flowfit/screens/workout/running/widgets/activity_ai_overlay.dart';
+import 'package:flowfit/screens/workout/running/widgets/running_map_view.dart';
+import 'package:flowfit/screens/workout/running/widgets/running_metric_tiles.dart';
 import 'package:flowfit/screens/workout/walking/active_walking_screen.dart';
 import 'package:flowfit/services/workout/calorie_calculator_service.dart';
 import 'package:flowfit/services/location/gps_tracking_service.dart';
@@ -308,6 +311,12 @@ void main() {
 
     expect(find.text('RUNNING'), findsOneWidget);
     expect(find.text('Pause'), findsOneWidget);
+    expect(find.byType(RunningMapView), findsOneWidget);
+    expect(find.byType(ActivityModeBadge), findsOneWidget);
+    expect(find.byType(AiMetricsBreakdown), findsOneWidget);
+    expect(find.byType(ProbabilityBar), findsNWidgets(3));
+    expect(find.byType(RunningLargeMetric), findsNWidgets(3));
+    expect(find.byType(RunningSmallMetric), findsNWidgets(3));
 
     await tester.tap(find.byIcon(SolarIconsBold.cpu).first);
     await tester.pumpAndSettle();
