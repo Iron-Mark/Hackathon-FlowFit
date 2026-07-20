@@ -19,7 +19,7 @@ jobs:
   ping:
     name: Ping Supabase project
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 6
     env:
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
@@ -30,8 +30,11 @@ jobs:
             echo "SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repo variables are not set" >&2
             exit 1
           fi
+          # --retry-all-errors + a wide delay ride out transient runner DNS
+          # outages (a 30s blip failed the 2026-07-19 run) without emailing a
+          # false alarm; the 3-day cadence leaves margin either way.
           status=$(curl -sS -o /dev/null -w '%{http_code}' \
-            --retry 3 --retry-delay 10 --max-time 30 \
+            --retry 5 --retry-delay 45 --retry-all-errors --max-time 30 \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
             "$SUPABASE_URL/auth/v1/health")
           echo "auth health: HTTP $status"
