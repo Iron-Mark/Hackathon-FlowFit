@@ -442,29 +442,32 @@ class _BuddyCustomizationScreenState
                         ]
                       : null,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (isUnlocked)
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isUnlocked)
+                        Text(
+                          accessoryData['emoji'] as String,
+                          style: const TextStyle(fontSize: 32),
+                        )
+                      else
+                        const Icon(Icons.lock, color: Colors.grey, size: 32),
+                      const SizedBox(height: 4),
                       Text(
-                        accessoryData['emoji'] as String,
-                        style: const TextStyle(fontSize: 32),
-                      )
-                    else
-                      const Icon(Icons.lock, color: Colors.grey, size: 32),
-                    const SizedBox(height: 4),
-                    Text(
-                      isUnlocked
-                          ? accessoryData['name'] as String
-                          : 'Lvl ${accessoryData['level']}',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isUnlocked ? Colors.black87 : Colors.grey,
-                        fontWeight: FontWeight.w600,
+                        isUnlocked
+                            ? accessoryData['name'] as String
+                            : 'Lvl ${accessoryData['level']}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isUnlocked ? Colors.black87 : Colors.grey,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );

@@ -69,52 +69,62 @@ class _BuddyHatchScreenState extends ConsumerState<BuddyHatchScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF1F6FD),
       body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Animated Buddy
-              Semantics(
-                label: 'Baby whale appearing with celebration animation',
-                image: true,
-                liveRegion: true,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: const BuddyCelebrationAnimation(
-                    child: BuddyCharacterWidget(
-                      color: Color(0xFF4ECDC4), // Ocean Blue
-                      size: 180,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 48),
-
-              // "You found a baby whale!" text
-              Semantics(
-                label: 'You found a baby whale!',
-                liveRegion: true,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'You found a baby whale!',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          color: const Color(0xFF314158),
-                          fontWeight: FontWeight.bold,
+                      // Animated Buddy
+                      Semantics(
+                        label:
+                            'Baby whale appearing with celebration animation',
+                        image: true,
+                        liveRegion: true,
+                        child: ScaleTransition(
+                          scale: _scaleAnimation,
+                          child: const BuddyCelebrationAnimation(
+                            child: BuddyCharacterWidget(
+                              color: Color(0xFF4ECDC4), // Ocean Blue
+                              size: 180,
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Text('🐋', style: TextStyle(fontSize: 48)),
+
+                      const SizedBox(height: 48),
+
+                      // "You found a baby whale!" text
+                      Semantics(
+                        label: 'You found a baby whale!',
+                        liveRegion: true,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Column(
+                            children: [
+                              Text(
+                                'You found a baby whale!',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  color: const Color(0xFF314158),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              const Text('🐋', style: TextStyle(fontSize: 48)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

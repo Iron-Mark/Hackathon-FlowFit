@@ -157,12 +157,16 @@ class _WellnessStateCardState extends State<WellnessStateCard>
               else
                 Icon(icon, size: 16, color: color),
               const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: 'GeneralSans',
-                  fontSize: 12,
-                  color: Colors.grey[600],
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'GeneralSans',
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
                 ),
               ),
             ],

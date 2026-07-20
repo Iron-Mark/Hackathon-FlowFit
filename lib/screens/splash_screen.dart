@@ -136,74 +136,91 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     return Scaffold(
       backgroundColor: const Color(0xFFF2F7FF), // Light blue background
       body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
-
-              // Animated Logo
-              AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: child,
-                    ),
-                  );
-                },
-                child: SvgPicture.asset(
-                  'assets/flowfit_logo.svg',
-                  width: 120,
-                  height: 120,
-                ),
-              ),
-
-              const Spacer(),
-
-              // App Name at the bottom
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 48.0),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'FlowFit',
-                        style: Theme.of(context).textTheme.displayMedium
-                            ?.copyWith(
-                              color: const Color(0xFF3183E8), // Brand Blue
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'GeneralSans',
-                              letterSpacing: 0,
+                      const Spacer(),
+
+                      // Animated Logo
+                      AnimatedBuilder(
+                        animation: _animationController,
+                        builder: (context, child) {
+                          return FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: ScaleTransition(
+                              scale: _scaleAnimation,
+                              child: child,
                             ),
+                          );
+                        },
+                        child: SvgPicture.asset(
+                          'assets/flowfit_logo.svg',
+                          width: 120,
+                          height: 120,
+                        ),
                       ),
-                      if (_startupError != null) ...[
-                        const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: Text(
-                            _startupError!,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: Colors.red[700]),
+
+                      const Spacer(),
+
+                      // App Name at the bottom
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 48.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'FlowFit',
+                                style: Theme.of(context).textTheme.displayMedium
+                                    ?.copyWith(
+                                      color: const Color(
+                                        0xFF3183E8,
+                                      ), // Brand Blue
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'GeneralSans',
+                                      letterSpacing: 0,
+                                    ),
+                              ),
+                              if (_startupError != null) ...[
+                                const SizedBox(height: 16),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                  ),
+                                  child: Text(
+                                    _startupError!,
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(color: Colors.red[700]),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: _isRetrying
+                                      ? null
+                                      : _checkAuthState,
+                                  child: const Text('Try Again'),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: _isRetrying ? null : _checkAuthState,
-                          child: const Text('Try Again'),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

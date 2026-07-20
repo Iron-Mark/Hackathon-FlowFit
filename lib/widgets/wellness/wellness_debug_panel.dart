@@ -50,214 +50,235 @@ class _WellnessDebugPanelState extends ConsumerState<WellnessDebugPanel> {
             ),
           ],
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.of(context).size.height -
+                MediaQuery.of(context).padding.top -
+                112,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Debug Panel',
+                      style: TextStyle(
+                        fontFamily: 'GeneralSans',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => setState(() => _isExpanded = false),
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Current State Display
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Current State: ${wellnessState.state.displayName}',
+                        style: const TextStyle(
+                          fontFamily: 'GeneralSans',
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'HR: ${wellnessState.heartRate ?? "--"} BPM',
+                        style: const TextStyle(
+                          fontFamily: 'GeneralSans',
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Motion: ${wellnessState.motionMagnitude?.toStringAsFixed(2) ?? "--"} m/s²',
+                        style: const TextStyle(
+                          fontFamily: 'GeneralSans',
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        'Confidence: ${(wellnessState.confidence * 100).toStringAsFixed(0)}%',
+                        style: const TextStyle(
+                          fontFamily: 'GeneralSans',
+                          fontSize: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
                 const Text(
-                  'Debug Panel',
+                  'Mock State Override',
                   style: TextStyle(
                     fontFamily: 'GeneralSans',
-                    fontSize: 16,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => setState(() => _isExpanded = false),
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
-                  padding: EdgeInsets.zero,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
-            // Current State Display
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Current State: ${wellnessState.state.displayName}',
-                    style: const TextStyle(
-                      fontFamily: 'GeneralSans',
-                      fontSize: 12,
-                      color: Colors.white,
+                // Mock State Buttons
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildMockButton('CALM', WellnessState.calm, Colors.green),
+                    _buildMockButton(
+                      'STRESS',
+                      WellnessState.stress,
+                      Colors.orange,
                     ),
-                  ),
-                  Text(
-                    'HR: ${wellnessState.heartRate ?? "--"} BPM',
-                    style: const TextStyle(
-                      fontFamily: 'GeneralSans',
-                      fontSize: 12,
-                      color: Colors.white,
+                    _buildMockButton(
+                      'CARDIO',
+                      WellnessState.cardio,
+                      Colors.red,
                     ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Mock Sensor Data
+                const Text(
+                  'Mock Sensor Data',
+                  style: TextStyle(
+                    fontFamily: 'GeneralSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
-                  Text(
-                    'Motion: ${wellnessState.motionMagnitude?.toStringAsFixed(2) ?? "--"} m/s²',
-                    style: const TextStyle(
-                      fontFamily: 'GeneralSans',
-                      fontSize: 12,
-                      color: Colors.white,
+                ),
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'HR: $_mockHeartRate BPM',
+                            style: const TextStyle(
+                              fontFamily: 'GeneralSans',
+                              fontSize: 10,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Slider(
+                            value: _mockHeartRate.toDouble(),
+                            min: 50,
+                            max: 180,
+                            divisions: 130,
+                            activeColor: Colors.red,
+                            inactiveColor: Colors.white.withValues(alpha: 0.3),
+                            onChanged: (value) {
+                              setState(() => _mockHeartRate = value.toInt());
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Text(
-                    'Confidence: ${(wellnessState.confidence * 100).toStringAsFixed(0)}%',
-                    style: const TextStyle(
-                      fontFamily: 'GeneralSans',
-                      fontSize: 12,
-                      color: Colors.white,
+                  ],
+                ),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Motion: ${_mockMotion.toStringAsFixed(1)} m/s²',
+                            style: const TextStyle(
+                              fontFamily: 'GeneralSans',
+                              fontSize: 10,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Slider(
+                            value: _mockMotion,
+                            min: 0,
+                            max: 5,
+                            divisions: 50,
+                            activeColor: Colors.blue,
+                            inactiveColor: Colors.white.withValues(alpha: 0.3),
+                            onChanged: (value) {
+                              setState(() => _mockMotion = value);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
+                  ],
+                ),
 
-            const SizedBox(height: 16),
-            const Text(
-              'Mock State Override',
-              style: TextStyle(
-                fontFamily: 'GeneralSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
+                const SizedBox(height: 8),
 
-            // Mock State Buttons
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildMockButton('CALM', WellnessState.calm, Colors.green),
-                _buildMockButton('STRESS', WellnessState.stress, Colors.orange),
-                _buildMockButton('CARDIO', WellnessState.cardio, Colors.red),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Mock Sensor Data
-            const Text(
-              'Mock Sensor Data',
-              style: TextStyle(
-                fontFamily: 'GeneralSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'HR: $_mockHeartRate BPM',
-                        style: const TextStyle(
-                          fontFamily: 'GeneralSans',
-                          fontSize: 10,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Slider(
-                        value: _mockHeartRate.toDouble(),
-                        min: 50,
-                        max: 180,
-                        divisions: 130,
-                        activeColor: Colors.red,
-                        inactiveColor: Colors.white.withValues(alpha: 0.3),
-                        onChanged: (value) {
-                          setState(() => _mockHeartRate = value.toInt());
-                        },
-                      ),
-                    ],
+                // Test Scenarios
+                const Text(
+                  'Test Scenarios',
+                  style: TextStyle(
+                    fontFamily: 'GeneralSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
-              ],
-            ),
+                const SizedBox(height: 8),
 
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Motion: ${_mockMotion.toStringAsFixed(1)} m/s²',
-                        style: const TextStyle(
-                          fontFamily: 'GeneralSans',
-                          fontSize: 10,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Slider(
-                        value: _mockMotion,
-                        min: 0,
-                        max: 5,
-                        divisions: 50,
-                        activeColor: Colors.blue,
-                        inactiveColor: Colors.white.withValues(alpha: 0.3),
-                        onChanged: (value) {
-                          setState(() => _mockMotion = value);
-                        },
-                      ),
-                    ],
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildScenarioButton(
+                      'Stress',
+                      () => _simulateScenario(120, 0.3),
+                    ),
+                    _buildScenarioButton(
+                      'Exercise',
+                      () => _simulateScenario(150, 3.5),
+                    ),
+                    _buildScenarioButton(
+                      'Calm',
+                      () => _simulateScenario(70, 0.2),
+                    ),
+                    _buildScenarioButton(
+                      'Watch Disconnect',
+                      () => _simulateWatchDisconnect(),
+                    ),
+                  ],
                 ),
               ],
             ),
-
-            const SizedBox(height: 8),
-
-            // Test Scenarios
-            const Text(
-              'Test Scenarios',
-              style: TextStyle(
-                fontFamily: 'GeneralSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildScenarioButton(
-                  'Stress',
-                  () => _simulateScenario(120, 0.3),
-                ),
-                _buildScenarioButton(
-                  'Exercise',
-                  () => _simulateScenario(150, 3.5),
-                ),
-                _buildScenarioButton('Calm', () => _simulateScenario(70, 0.2)),
-                _buildScenarioButton(
-                  'Watch Disconnect',
-                  () => _simulateWatchDisconnect(),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
