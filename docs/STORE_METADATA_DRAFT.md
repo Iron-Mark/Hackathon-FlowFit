@@ -1,6 +1,6 @@
 # FlowFit Store Metadata Draft
 
-Last updated: 2026-07-04
+Last updated: 2026-07-21
 
 This is a release handoff pack for Google Play, App Store, and Flutter web
 release work. Final store upload still depends on the production Supabase
@@ -24,16 +24,16 @@ queue.
 
 ## Short Description
 
-Track workouts, wellness goals, heart-rate trends, and Buddy progress.
+Track workouts, wellness goals, heart-rate trends, and Flowy's progress.
 
 ## Full Description
 
 FlowFit combines workout tracking, wellness goals, and companion-style progress
 into one fitness app. Create a profile, set daily goals, complete onboarding,
-customize your Buddy companion, and track sessions such as walking, running,
+customize Flowy, your in-app buddy, and track sessions such as walking, running,
 and activity-focused routines.
 
-For supported Wear OS and Samsung Health Sensor API devices, FlowFit can show
+For supported Wear OS and Samsung Health Sensor SDK devices, FlowFit can show
 heart-rate information and watch-to-phone sensor updates after you grant the
 required permissions. Location, notification, camera, and photo features are
 used only for the features you choose to enable.
@@ -70,7 +70,7 @@ credentials, debug labels, staging project refs, or private user data.
 
 1. Auth or welcome screen with FlowFit branding.
 2. Profile onboarding with fitness goals.
-3. Buddy onboarding/customization.
+3. Flowy onboarding/customization.
 4. Dashboard or progress overview.
 5. Workout tracking/session screen.
 6. Privacy or account deletion flow if the store requires account-control proof.
@@ -133,7 +133,7 @@ credentials, debug labels, staging project refs, or private user data.
 - [ ] Android AAB is signed with the upload key, not debug signing.
 - [ ] iOS archive/IPA is signed with the Apple Developer team and provisioning
       profile, and the manifest includes `ios-app-store-ipa`.
-- [ ] Real device smoke covers signup, login, onboarding, Buddy setup, workout
+- [ ] Real device smoke covers signup, login, onboarding, Flowy setup, workout
       creation, and account deletion request.
 
 ## Release Notes Draft
@@ -141,7 +141,7 @@ credentials, debug labels, staging project refs, or private user data.
 Initial FlowFit release:
 
 - Fitness profile and goal onboarding.
-- Buddy companion setup and customization.
+- Flowy, your in-app buddy: setup and customization.
 - Workout and wellness tracking surfaces.
 - Wear OS watch-to-phone sensor integration.
 - Public privacy and account deletion pages.

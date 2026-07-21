@@ -1,6 +1,6 @@
 # FlowFit Privacy and Data Map
 
-Last updated: 2026-06-15
+Last updated: 2026-07-21
 
 This is an engineering source of truth for Play Console Data safety, App Store
 privacy labels, privacy-policy drafting, and reviewer notes. It is not legal
@@ -66,6 +66,39 @@ Sources:
 Before submission, review each SDK provider's current privacy guidance and
 reflect any automatic collection/transmission in Play Data safety and App Store
 privacy labels.
+
+## Children's Audience and Parental Consent (Posture, Not Yet Implemented)
+
+This section records FlowFit's intended posture toward a child audience. It is a
+planning posture only: the controls below are not yet implemented, and nothing
+here asserts COPPA, Google Play Families, or Apple Kids Category compliance. The
+owner/legal enrollment decision is still open; see the DECISION-PENDING block in
+`docs/STORE_SUBMISSION_CHECKLIST.md`.
+
+- Intended child audience: ages 7-12. The profile model already carries a
+  kids-mode flag (see the Profile data row above); a child-directed release
+  would treat these users as the primary audience.
+- Parental/guardian consent: verifiable parental consent is required before
+  collecting personal data from a child, and is NOT yet implemented. No neutral
+  age screen or consent gate currently blocks child data collection.
+- Proposed data model to support this posture (not yet built), aligned with the
+  planned relational entities:
+  - `guardians` — parent/guardian contact and verification records linked to a
+    child account.
+  - `parental_consent` — per-child consent state, method, scope, and timestamp,
+    checked before enabling data collection for a child account.
+  - `data_retention_schedule` — per-data-category retention windows and deletion
+    triggers covering child and general data.
+- Defined-retention placeholders (values TBD, to be finalized with legal review
+  and reflected in `data_retention_schedule`):
+  - Account identifiers: retained while the account is active; deleted on an
+    account-deletion request. Retention window: TBD.
+  - Profile and Buddy data: retained while the account is active. Retention
+    window: TBD.
+  - Workout, heart-rate, activity/motion, and location records: retention window
+    TBD; child-data minimization to be applied before any child-directed
+    release.
+  - Diagnostics/logs: retention window TBD; not transmitted in production today.
 
 ## Security and Retention
 

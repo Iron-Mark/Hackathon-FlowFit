@@ -1,6 +1,6 @@
 # FlowFit Store Submission Checklist
 
-Last updated: 2026-07-04
+Last updated: 2026-07-21
 
 This checklist tracks store-facing readiness for Google Play, App Store, and
 Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
@@ -75,6 +75,39 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       production UI; use production route names such as `/activity-classifier`.
 - [ ] Real device smoke covers signup, login, profile onboarding, Buddy
       onboarding, workout creation, account deletion request, and signout.
+
+## Children's Audience, COPPA, and Families/Kids (DECISION-PENDING)
+
+> DECISION-PENDING: This block is a scaffold only. It stays blocked until the
+> owner/legal decision on whether FlowFit targets a child audience and enrolls
+> in Google Play's Designed for Families / Teacher Approved program and Apple's
+> Kids Category is finalized. Do not treat any item below as executed: none of
+> these obligations are implemented yet, and nothing here asserts COPPA, Google
+> Play Families, or Apple Kids Category compliance.
+
+- [ ] Owner/legal decision recorded: whether FlowFit targets a child audience
+      (see the kids posture in `docs/PRIVACY_DATA_MAP.md`, ages 7-12) and
+      enrolls in Google Play Families and/or the Apple Kids Category.
+- [ ] Google Play target-audience and content declaration set to the decided
+      audience; if children are included, complete the Families policy
+      declaration and Designed for Families program requirements.
+- [ ] Apple age rating and, if applicable, Kids Category age band (5 and under,
+      6-8, 9-11) selected to match the decided audience.
+- [ ] Certified/approved ad SDKs only, or no ads: if any ads or monetization
+      SDKs ship in a child-directed build, confirm each is enrolled in the
+      store's self-certified families ads program. FlowFit ships no ad SDK
+      today; revisit if that changes.
+- [ ] Neutral age screen (age gate) implemented before any child-directed
+      experience so age is collected in a neutral, non-incentivized way. Not yet
+      implemented; `docs/PRIVACY_DATA_MAP.md` records the parental-consent gap.
+- [ ] Verifiable parental/guardian consent flow implemented for users under the
+      applicable consent age before collecting personal data. Not yet
+      implemented.
+- [ ] Children's privacy policy (or a clearly labeled children's section of the
+      privacy policy) published and linked, describing child-data practices,
+      retention, and parental rights. Pending final copy and legal review.
+- [ ] Child-directed data minimization reviewed against COPPA and Google Play
+      Families / Apple Kids requirements before submission.
 
 ## Google Play
 
