@@ -1,5 +1,7 @@
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
+
 /// Logging utility for the application
 ///
 /// Provides structured logging with different severity levels.
@@ -40,6 +42,12 @@ class Logger {
     Object? error,
     StackTrace? stackTrace,
   }) {
+    // Never emit logs in release builds: this sink is the single choke point
+    // every level funnels through, so short-circuiting here neutralizes PII
+    // (child biometrics, email, auth tokens) leaking into production logs.
+    // Debug builds (including tests) keep full logging.
+    if (!kDebugMode) return;
+
     final timestamp = DateTime.now().toIso8601String();
     final logMessage = '[$timestamp] [$level] [$_className] $message';
 

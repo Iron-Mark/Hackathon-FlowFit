@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -60,7 +61,9 @@ class _ActiveRunningScreenState extends ConsumerState<ActiveRunningScreen> {
           setState(() {
             _currentHeartRate = heartRateData.bpm;
           });
-          debugPrint('💓 Live HR from watch: ${heartRateData.bpm} bpm');
+          if (kDebugMode) {
+            debugPrint('💓 Live HR from watch: ${heartRateData.bpm} bpm');
+          }
         }
       },
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
@@ -47,7 +48,7 @@ class DeepLinkHandler {
       final event = data.event;
       final session = data.session;
 
-      debugPrint('Auth state changed: $event');
+      if (kDebugMode) debugPrint('Auth state changed: $event');
 
       if (shouldNavigateToSurveyForAuthEvent(
         event: event,
@@ -55,8 +56,11 @@ class DeepLinkHandler {
         emailConfirmed: session?.user.emailConfirmedAt != null,
       )) {
         final user = session!.user;
-        debugPrint('User signed in via deep link: ${user.email}');
-        debugPrint('Email verified! Redirecting to survey flow...');
+        // Never log the user's email: emit only a redacted event label.
+        if (kDebugMode) {
+          debugPrint('User signed in via deep link');
+          debugPrint('Email verified! Redirecting to survey flow...');
+        }
 
         // Navigate to survey intro screen after email verification
         Future.delayed(const Duration(milliseconds: 500), () {
@@ -71,7 +75,7 @@ class DeepLinkHandler {
           }
         });
       } else if (event == AuthChangeEvent.tokenRefreshed) {
-        debugPrint('Token refreshed');
+        if (kDebugMode) debugPrint('Token refreshed');
       }
     });
   }
@@ -79,7 +83,8 @@ class DeepLinkHandler {
   /// Handle incoming deep link URI
   /// This processes the auth callback from email verification
   static Future<bool> handleDeepLink(Uri uri) async {
-    debugPrint('Handling deep link: $uri');
+    // Never log the raw URI: it can carry the auth code/token in its query.
+    if (kDebugMode) debugPrint('Handling deep link: auth callback received');
 
     // Check if this is an auth callback
     if (uri.host == 'auth-callback' || uri.path.contains('auth-callback')) {
@@ -89,18 +94,21 @@ class DeepLinkHandler {
 
         // Extract any error information
         final error = uri.queryParameters['error'];
-        final errorDescription = uri.queryParameters['error_description'];
 
         if (error != null) {
-          debugPrint('Auth error: $error - $errorDescription');
+          // Redacted: do not log raw error/description from the callback URI.
+          if (kDebugMode) debugPrint('Auth error received');
           return false;
         }
 
         // Success - the auth state listener will handle navigation
-        debugPrint('Deep link auth callback processed successfully');
+        if (kDebugMode) {
+          debugPrint('Deep link auth callback processed successfully');
+        }
         return true;
       } catch (e) {
-        debugPrint('Error handling deep link: $e');
+        // Redacted: the exception may embed the raw URI/code.
+        if (kDebugMode) debugPrint('Error handling deep link');
         return false;
       }
     }
