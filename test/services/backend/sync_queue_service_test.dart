@@ -111,6 +111,12 @@ void main() {
     test('exposes a static dead-letter purge for account deletion', () {
       expect(source, contains('clearDeadLetterForUser'));
     });
+
+    test('bounds dead-letter resurrection and tombstones deleted users', () {
+      expect(source, contains('_maxDeadLetterAttempts'));
+      expect(source, contains('_deletedUsersKey'));
+      expect(source, contains('parked.parkCount >= _maxDeadLetterAttempts'));
+    });
   });
 
   group('dead-letter restore', () {
@@ -179,6 +185,57 @@ void main() {
       expect(await service.hasPendingSync('user-a'), isFalse);
       expect(prefs.getString('sync_queue_dead_letter'), isNull);
     });
+
+    test('drops a payload that has been parked the maximum number of times '
+        'instead of resurrecting it forever', () async {
+      // parkCount at the give-up bound: a write the backend keeps rejecting.
+      final exhausted = SyncQueueItem(
+        userId: 'user-a',
+        profile: _profile('user-a'),
+        queuedAt: DateTime(2026, 7, 20, 12),
+        retryCount: 5,
+        parkCount: 2,
+      );
+      SharedPreferences.setMockInitialValues({
+        'sync_queue_dead_letter': jsonEncode([exhausted.toJson()]),
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final service = SyncQueueService(
+        prefs: prefs,
+        profileRepository: _DeadLetterRestoreRepository(backendProfile: null),
+      );
+      addTearDown(service.dispose);
+
+      await pumpEventQueue();
+
+      // Not re-enqueued, and cleared from the dead-letter store for good.
+      expect(await service.getPendingCount(), 0);
+      expect(await service.hasPendingSync('user-a'), isFalse);
+      expect(prefs.getString('sync_queue_dead_letter'), isNull);
+    });
+
+    test('does not re-persist a user tombstoned by account deletion, even if '
+        'the restore pass held their payload', () async {
+      // user-a is parked AND already tombstoned (account deletion raced the
+      // live restore pass). Restore must not re-enqueue or re-park them.
+      SharedPreferences.setMockInitialValues({
+        'sync_queue_dead_letter': jsonEncode([parkedItem().toJson()]),
+        'sync_queue_deleted_users': <String>['user-a'],
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final service = SyncQueueService(
+        prefs: prefs,
+        profileRepository: _DeadLetterRestoreRepository(backendProfile: null),
+      );
+      addTearDown(service.dispose);
+
+      await pumpEventQueue();
+
+      expect(await service.getPendingCount(), 0);
+      expect(await service.hasPendingSync('user-a'), isFalse);
+      expect(prefs.getString('sync_queue_dead_letter'), isNull);
+      expect(prefs.getString('sync_queue'), anyOf(isNull, equals('[]')));
+    });
   });
 
   group('clearDeadLetterForUser', () {
@@ -219,5 +276,20 @@ void main() {
         expect(prefs.getString('sync_queue_dead_letter'), isNull);
       },
     );
+
+    test('tombstones the purged user so a live instance cannot re-persist '
+        'them', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await SyncQueueService.clearDeadLetterForUser(prefs, 'user-a');
+
+      // The tombstone is written even when nothing was parked (the payload may
+      // still be in the main queue or arrive via a racing restore).
+      expect(
+        prefs.getStringList('sync_queue_deleted_users'),
+        contains('user-a'),
+      );
+    });
   });
 }

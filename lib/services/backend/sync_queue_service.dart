@@ -18,12 +18,18 @@ class SyncQueueItem {
   final int retryCount;
   final DateTime? nextRetryAt;
 
+  /// Number of times this payload has been parked in the dead-letter store.
+  /// Bounds resurrection: a payload the backend keeps rejecting is dropped
+  /// once this reaches the service's max dead-letter attempts.
+  final int parkCount;
+
   const SyncQueueItem({
     required this.userId,
     required this.profile,
     required this.queuedAt,
     this.retryCount = 0,
     this.nextRetryAt,
+    this.parkCount = 0,
   });
 
   Map<String, dynamic> toJson() {
@@ -33,6 +39,7 @@ class SyncQueueItem {
       'queuedAt': queuedAt.toIso8601String(),
       'retryCount': retryCount,
       'nextRetryAt': nextRetryAt?.toIso8601String(),
+      'parkCount': parkCount,
     };
   }
 
@@ -45,6 +52,7 @@ class SyncQueueItem {
       nextRetryAt: json['nextRetryAt'] != null
           ? DateTime.parse(json['nextRetryAt'] as String)
           : null,
+      parkCount: json['parkCount'] as int? ?? 0,
     );
   }
 
@@ -54,6 +62,7 @@ class SyncQueueItem {
     DateTime? queuedAt,
     int? retryCount,
     DateTime? nextRetryAt,
+    int? parkCount,
   }) {
     return SyncQueueItem(
       userId: userId ?? this.userId,
@@ -61,6 +70,7 @@ class SyncQueueItem {
       queuedAt: queuedAt ?? this.queuedAt,
       retryCount: retryCount ?? this.retryCount,
       nextRetryAt: nextRetryAt ?? this.nextRetryAt,
+      parkCount: parkCount ?? this.parkCount,
     );
   }
 }
@@ -80,10 +90,20 @@ class SyncQueueService {
   // Storage key for items parked after exhausting their retries
   static const String _deadLetterKey = 'sync_queue_dead_letter';
 
+  // Storage key for user ids whose local sync state was purged on account
+  // deletion. A live instance consults this so a racing restore/process pass
+  // can never re-persist or re-upload a deleted user's payload.
+  static const String _deletedUsersKey = 'sync_queue_deleted_users';
+
   // Retry configuration
   static const int _maxRetries = 5;
   static const Duration _initialBackoff = Duration(seconds: 5);
   static const int _backoffMultiplier = 2;
+
+  // Give-up bound for the dead-letter store: a payload the backend keeps
+  // rejecting is dropped once it has been parked this many times, instead of
+  // resurrecting forever through the restore pass.
+  static const int _maxDeadLetterAttempts = 2;
 
   // Connectivity monitoring
   Timer? _connectivityTimer;
@@ -208,6 +228,14 @@ class SyncQueueService {
     SharedPreferences prefs,
     String userId,
   ) async {
+    // Tombstone first so a live instance's restore/process pass drops this
+    // user even if it races the purge below (its in-flight pass can hold the
+    // payload in memory across an await and re-persist it otherwise).
+    final deleted = _loadDeletedUsersFrom(prefs);
+    if (deleted.add(userId)) {
+      await prefs.setStringList(_deletedUsersKey, deleted.toList());
+    }
+
     final jsonString = prefs.getString(_deadLetterKey);
     if (jsonString == null) {
       return;
@@ -231,6 +259,11 @@ class SyncQueueService {
     } catch (_) {
       await prefs.remove(_deadLetterKey);
     }
+  }
+
+  /// Load the set of user ids tombstoned by account deletion.
+  static Set<String> _loadDeletedUsersFrom(SharedPreferences prefs) {
+    return prefs.getStringList(_deletedUsersKey)?.toSet() ?? <String>{};
   }
 
   /// Dispose resources
@@ -306,14 +339,18 @@ class SyncQueueService {
   Future<void> _parkInDeadLetter(SyncQueueItem item) async {
     final deadLetters = await _loadDeadLetters();
 
+    // Count this park so a permanently-rejected payload is eventually dropped
+    // by the restore pass instead of looping forever.
+    final parked = item.copyWith(parkCount: item.parkCount + 1);
+
     final existingIndex = deadLetters.indexWhere(
-      (parked) => parked.userId == item.userId,
+      (existing) => existing.userId == parked.userId,
     );
 
     if (existingIndex >= 0) {
-      deadLetters[existingIndex] = item;
+      deadLetters[existingIndex] = parked;
     } else {
-      deadLetters.add(item);
+      deadLetters.add(parked);
     }
 
     await _saveDeadLetters(deadLetters);
@@ -422,20 +459,47 @@ class SyncQueueService {
           continue;
         }
 
-        // Re-enqueue with a fresh retry budget and no pending backoff
+        // Give-up bound: a payload that has already been parked the maximum
+        // number of times is dropped instead of resurrected, so a write the
+        // backend permanently rejects cannot loop park -> restore -> fail.
+        if (parked.parkCount >= _maxDeadLetterAttempts) {
+          _logger.error(
+            'Dropping dead-letter item for user ${parked.userId}: exceeded '
+            'max dead-letter attempts ($_maxDeadLetterAttempts)',
+          );
+          continue;
+        }
+
+        // Re-enqueue with a fresh retry budget and no pending backoff. The
+        // park count carries forward so the give-up bound above still applies.
         queue.add(
           SyncQueueItem(
             userId: parked.userId,
             profile: parked.profile,
             queuedAt: parked.queuedAt,
+            parkCount: parked.parkCount,
           ),
         );
         restoredCount++;
       }
 
-      await _saveQueue(queue);
-      await _saveDeadLetters(stillParked);
-      _queueStatusController.add(queue.length);
+      // Re-read the deletion tombstones after the awaits above: an account
+      // deletion may have raced this pass and purged a user we still hold in
+      // memory. Exclude those users from both stores so a deleted user's
+      // payload is never re-persisted.
+      final deletedUsers = _loadDeletedUsersFrom(_prefs);
+      final queueToSave = deletedUsers.isEmpty
+          ? queue
+          : queue.where((item) => !deletedUsers.contains(item.userId)).toList();
+      final parkedToSave = deletedUsers.isEmpty
+          ? stillParked
+          : stillParked
+                .where((item) => !deletedUsers.contains(item.userId))
+                .toList();
+
+      await _saveQueue(queueToSave);
+      await _saveDeadLetters(parkedToSave);
+      _queueStatusController.add(queueToSave.length);
 
       if (restoredCount > 0) {
         _logger.info(
@@ -521,7 +585,23 @@ class SyncQueueService {
         return;
       }
 
-      final queue = await _loadQueue();
+      final loaded = await _loadQueue();
+
+      // Drop any deleted user's payload before it can be re-uploaded. Final
+      // guard for the account-deletion race: even if a racing restore pass
+      // slipped a tombstoned user back into the queue, it never reaches
+      // saveBackendProfile.
+      final deletedUsers = _loadDeletedUsersFrom(_prefs);
+      final queue = deletedUsers.isEmpty
+          ? loaded
+          : loaded
+                .where((item) => !deletedUsers.contains(item.userId))
+                .toList();
+      if (queue.length != loaded.length) {
+        await _saveQueue(queue);
+        _queueStatusController.add(queue.length);
+      }
+
       if (queue.isEmpty) {
         _logger.debug('Queue is empty, nothing to process');
         return;
