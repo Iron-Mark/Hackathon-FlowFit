@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:flowfit/models/heart_rate_data.dart';
 
+import 'package:flowfit/features/activity_classifier/domain/activity_sample_buffer.dart';
 import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
 import 'package:flowfit/features/activity_classifier/presentation/watch_data_listener.dart';
 import 'package:flowfit/features/activity_classifier/presentation/widgets/tracker_source_controls.dart';
@@ -32,8 +33,7 @@ class TrackerPage extends ConsumerStatefulWidget {
 
 class _TrackerPageState extends ConsumerState<TrackerPage> {
   // Buffers
-  final List<List<double>> _dataBuffer = [];
-  static const int _windowSize = 320; // 10 seconds @ ~32Hz
+  final ActivitySampleBuffer _buffer = ActivitySampleBuffer();
 
   // State
   double _simulatedHR = 80.0; // Slider to control Heart Rate manually
@@ -201,18 +201,11 @@ class _TrackerPageState extends ConsumerState<TrackerPage> {
         // Sensor batch contains samples as 4-feature vectors [accX, accY, accZ, bpm]
         // Add all samples from the batch to our buffer
         for (final sample in sensorBatch.samples) {
-          if (sample.length == 4) {
-            _dataBuffer.add(sample);
-
-            // Keep buffer at exactly 320 items
-            if (_dataBuffer.length > _windowSize) {
-              _dataBuffer.removeAt(0);
-            }
-          }
+          _buffer.add(sample);
         }
 
         // Run inference when we have a full window
-        if (_dataBuffer.length == _windowSize && !_viewModel.isLoading) {
+        if (_buffer.isReady && !_viewModel.isLoading) {
           _runInference();
         }
 
@@ -249,25 +242,18 @@ class _TrackerPageState extends ConsumerState<TrackerPage> {
     final activeBpm = _forceSimulate
         ? _simulatedHR.round()
         : (_currentBpmValue ?? _simulatedHR.round());
-    _dataBuffer.add([event.x, event.y, event.z, activeBpm.toDouble()]);
+    _buffer.add([event.x, event.y, event.z, activeBpm.toDouble()]);
 
-    // 2. Keep buffer at exactly 320 items
-    if (_dataBuffer.length > _windowSize) {
-      _dataBuffer.removeAt(0); // Slide window
-    }
-
-    // 3. Run inference every ~32 samples (approx once per second)
+    // 2. Run inference once the window is full.
     // We don't run on every frame to save battery
-    if (_dataBuffer.length == _windowSize &&
-        !_viewModel.isLoading &&
-        _dataBuffer.length % 32 == 0) {
+    if (_buffer.isReady && !_viewModel.isLoading) {
       _runInference();
     }
   }
 
   Future<void> _runInference() async {
     // Make a defensive copy of the window for inference
-    final input = List<List<double>>.from(_dataBuffer);
+    final input = _buffer.window();
 
     try {
       await _viewModel.classify(input);
@@ -547,8 +533,8 @@ class _TrackerPageState extends ConsumerState<TrackerPage> {
               pluginAvailable: _pluginAvailable,
               currentBpmValue: _currentBpmValue,
               simulatedHr: _simulatedHR,
-              bufferLength: _dataBuffer.length,
-              windowSize: _windowSize,
+              bufferLength: _buffer.length,
+              windowSize: _buffer.windowSize,
             ),
 
             // Bottom padding for scrolling
