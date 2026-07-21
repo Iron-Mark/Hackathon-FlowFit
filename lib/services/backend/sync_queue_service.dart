@@ -198,6 +198,41 @@ class SyncQueueService {
     _queueStatusController.add(0);
   }
 
+  /// Purge a deleted user's parked payload from the shared dead-letter store.
+  ///
+  /// Static on purpose: constructing a real [SyncQueueService] would start its
+  /// timers and kick off a restore pass that could re-enqueue the very payload
+  /// we are trying to purge. A corrupted store is dropped entirely so a deleted
+  /// user's payload can never survive.
+  static Future<void> clearDeadLetterForUser(
+    SharedPreferences prefs,
+    String userId,
+  ) async {
+    final jsonString = prefs.getString(_deadLetterKey);
+    if (jsonString == null) {
+      return;
+    }
+
+    try {
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      final remaining = jsonList
+          .map((json) => SyncQueueItem.fromJson(json as Map<String, dynamic>))
+          .where((item) => item.userId != userId)
+          .toList();
+
+      if (remaining.isEmpty) {
+        await prefs.remove(_deadLetterKey);
+      } else {
+        await prefs.setString(
+          _deadLetterKey,
+          jsonEncode(remaining.map((item) => item.toJson()).toList()),
+        );
+      }
+    } catch (_) {
+      await prefs.remove(_deadLetterKey);
+    }
+  }
+
   /// Dispose resources
   void dispose() {
     _connectivityTimer?.cancel();

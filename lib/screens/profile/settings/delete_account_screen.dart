@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flowfit/services/backend/sync_queue_service.dart';
 import 'package:flowfit/services/storage/local_account_data_cleanup.dart';
 import 'package:flowfit/theme/app_theme.dart';
 import 'package:flowfit/utils/deep_link_handler.dart';
@@ -190,6 +191,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     for (final key in keys) {
       await prefs.remove(key);
     }
+
+    await SyncQueueService.clearDeadLetterForUser(prefs, userId);
 
     try {
       await clearLocalDatabaseAccountData();

@@ -107,6 +107,10 @@ void main() {
       expect(source, contains('parking item in dead-letter store'));
       expect(source, isNot(contains('discarding item')));
     });
+
+    test('exposes a static dead-letter purge for account deletion', () {
+      expect(source, contains('clearDeadLetterForUser'));
+    });
   });
 
   group('dead-letter restore', () {
@@ -175,5 +179,45 @@ void main() {
       expect(await service.hasPendingSync('user-a'), isFalse);
       expect(prefs.getString('sync_queue_dead_letter'), isNull);
     });
+  });
+
+  group('clearDeadLetterForUser', () {
+    SyncQueueItem deadLetter(String userId) {
+      return SyncQueueItem(
+        userId: userId,
+        profile: _profile(userId),
+        queuedAt: DateTime(2026, 7, 20, 12),
+        retryCount: 5,
+      );
+    }
+
+    test(
+      'purges only the target user, leaving other parked payloads',
+      () async {
+        SharedPreferences.setMockInitialValues({
+          'sync_queue_dead_letter': jsonEncode([
+            deadLetter('user-a').toJson(),
+            deadLetter('user-b').toJson(),
+          ]),
+        });
+        final prefs = await SharedPreferences.getInstance();
+
+        await SyncQueueService.clearDeadLetterForUser(prefs, 'user-a');
+
+        final remaining =
+            (jsonDecode(prefs.getString('sync_queue_dead_letter')!)
+                    as List<dynamic>)
+                .map(
+                  (json) =>
+                      SyncQueueItem.fromJson(json as Map<String, dynamic>),
+                )
+                .toList();
+        expect(remaining.map((item) => item.userId), ['user-b']);
+
+        // Purging the last parked user drops the key entirely.
+        await SyncQueueService.clearDeadLetterForUser(prefs, 'user-b');
+        expect(prefs.getString('sync_queue_dead_letter'), isNull);
+      },
+    );
   });
 }

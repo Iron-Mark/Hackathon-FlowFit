@@ -55,6 +55,14 @@ void main() {
       screenSource,
       isNot(contains('DatabaseService.instance.clearAllData()')),
     );
+    expect(
+      screenSource,
+      contains('package:flowfit/services/backend/sync_queue_service.dart'),
+    );
+    expect(
+      screenSource,
+      contains('SyncQueueService.clearDeadLetterForUser(prefs, userId)'),
+    );
   });
 
   test('canonical migration defines account deletion request backend', () {
