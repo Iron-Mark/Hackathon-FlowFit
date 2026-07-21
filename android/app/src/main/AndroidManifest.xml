@@ -18,6 +18,7 @@
     <application
         android:name="com.msiazondev.flowfit.FlowFitApp"
         android:label="FlowFit"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">
         
         <!-- Wear OS metadata -->
