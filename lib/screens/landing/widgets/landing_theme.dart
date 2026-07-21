@@ -17,7 +17,7 @@ class LandingPalette {
 }
 
 ButtonStyle landingPrimaryButtonStyle({
-  Color background = LandingPalette.blue,
+  Color background = LandingPalette.blueDeep,
   Color foreground = Colors.white,
 }) {
   return FilledButton.styleFrom(

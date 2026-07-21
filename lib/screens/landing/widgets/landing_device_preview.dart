@@ -9,80 +9,88 @@ class LandingDevicePreview extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCompact = MediaQuery.sizeOf(context).width < 520;
 
-    return AspectRatio(
-      aspectRatio: isCompact ? 0.76 : 1.04,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Flowy peeks out from behind the panel so the buddy — the
-          // product's core idea — is visible before the first scroll.
-          // Painted beneath the card, head above its top edge. Static on
-          // purpose: landing tests pumpAndSettle, so no animations here.
-          Positioned(
-            right: 30,
-            top: -54,
-            child: SvgPicture.asset(
-              'assets/flowy.svg',
-              width: 96,
-              height: 96,
-              fit: BoxFit.contain,
-              semanticsLabel: 'Flowy, the FlowFit buddy',
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFFC8DAF1)),
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1A174EA6),
-                    blurRadius: 30,
-                    offset: Offset(0, 18),
-                  ),
-                ],
-              ),
-              child: const Padding(
-                padding: EdgeInsets.all(22),
-                child: LandingProgressPanel(),
+    // The device mock shows fabricated metrics ("72 BPM", "Active minutes 42").
+    // Exclude the whole subtree from semantics so assistive tech does not
+    // announce the placeholder numbers as the user's real health data.
+    return ExcludeSemantics(
+      child: AspectRatio(
+        aspectRatio: isCompact ? 0.76 : 1.04,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Flowy peeks out from behind the panel so the buddy — the
+            // product's core idea — is visible before the first scroll.
+            // Painted beneath the card, head above its top edge. Static on
+            // purpose: landing tests pumpAndSettle, so no animations here.
+            Positioned(
+              right: 30,
+              top: -54,
+              child: SvgPicture.asset(
+                'assets/flowy.svg',
+                width: 96,
+                height: 96,
+                fit: BoxFit.contain,
+                semanticsLabel: 'Flowy, the FlowFit buddy',
               ),
             ),
-          ),
-          const Positioned(right: -8, bottom: 18, child: LandingWatchFace()),
-          Positioned(
-            left: 22,
-            bottom: -18,
-            child: Container(
-              width: 178,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: LandingPalette.ink,
-                borderRadius: BorderRadius.circular(8),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFC8DAF1)),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A174EA6),
+                      blurRadius: 30,
+                      offset: Offset(0, 18),
+                    ),
+                  ],
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.all(22),
+                  child: LandingProgressPanel(),
+                ),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.favorite_rounded, color: LandingPalette.red),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '72 BPM synced',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: 'GeneralSans',
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0,
+            ),
+            const Positioned(right: -8, bottom: 18, child: LandingWatchFace()),
+            Positioned(
+              left: 22,
+              bottom: -18,
+              child: Container(
+                width: 178,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: LandingPalette.ink,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.favorite_rounded, color: LandingPalette.red),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '72 BPM synced',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: 'GeneralSans',
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
