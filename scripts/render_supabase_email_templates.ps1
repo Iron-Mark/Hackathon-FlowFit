@@ -123,7 +123,11 @@ function Assert-RenderedTemplate {
         [Parameter(Mandatory = $true)]
         [string]$Content,
         [Parameter(Mandatory = $true)]
-        [string]$SupportEmail
+        [string]$SupportEmail,
+        # The Supabase action variable this template must preserve. URL-based
+        # templates (confirm/reset/magic/change) use '{{ .ConfirmationURL }}';
+        # the reauthentication OTP email uses '{{ .Token }}' instead.
+        [string]$ActionVar = '{{ .ConfirmationURL }}'
     )
 
     if ($Content.Contains($script:replacementToken)) {
@@ -135,8 +139,8 @@ function Assert-RenderedTemplate {
     if (-not $Content.Contains($SupportEmail)) {
         throw "Rendered template does not contain configured support email: $Path"
     }
-    if (-not $Content.Contains('{{ .ConfirmationURL }}')) {
-        throw "Rendered template must preserve Supabase {{ .ConfirmationURL }} variable: $Path"
+    if (-not $Content.Contains($ActionVar)) {
+        throw "Rendered template must preserve Supabase $ActionVar variable: $Path"
     }
     if (-not $Content.Contains('{{ .SiteURL }}')) {
         throw "Rendered template must preserve Supabase {{ .SiteURL }} variable: $Path"
@@ -160,18 +164,31 @@ try {
     $outRoot = Resolve-RepoOutputDirectory -Path $OutDir
     New-Item -ItemType Directory -Force -Path $outRoot | Out-Null
 
-    $templates = @(
-        [pscustomobject]@{
-            source = 'supabase/email_templates/confirm_signup.html'
-            output = 'confirm_signup.html'
-            format = 'html'
-        },
-        [pscustomobject]@{
-            source = 'supabase/email_templates/confirm_signup.txt'
-            output = 'confirm_signup.txt'
-            format = 'text'
-        }
+    $urlVar = '{{ .ConfirmationURL }}'
+    $tokenVar = '{{ .Token }}'
+    $templateNames = @(
+        [pscustomobject]@{ name = 'confirm_signup'; actionVar = $urlVar },
+        [pscustomobject]@{ name = 'reset_password'; actionVar = $urlVar },
+        [pscustomobject]@{ name = 'magic_link'; actionVar = $urlVar },
+        [pscustomobject]@{ name = 'change_email'; actionVar = $urlVar },
+        [pscustomobject]@{ name = 'reauthentication'; actionVar = $tokenVar }
     )
+
+    $templates = @()
+    foreach ($t in $templateNames) {
+        $templates += [pscustomobject]@{
+            source    = "supabase/email_templates/$($t.name).html"
+            output    = "$($t.name).html"
+            format    = 'html'
+            actionVar = $t.actionVar
+        }
+        $templates += [pscustomobject]@{
+            source    = "supabase/email_templates/$($t.name).txt"
+            output    = "$($t.name).txt"
+            format    = 'text'
+            actionVar = $t.actionVar
+        }
+    }
 
     $outputs = @()
     foreach ($template in $templates) {
@@ -188,7 +205,7 @@ try {
         $rendered = $sourceContent.Replace($replacementToken, $supportEmail)
         $outputPath = Join-Path $outRoot $template.output
         Set-Content -LiteralPath $outputPath -Encoding utf8NoBOM -Value $rendered
-        Assert-RenderedTemplate -Path $outputPath -Content $rendered -SupportEmail $supportEmail
+        Assert-RenderedTemplate -Path $outputPath -Content $rendered -SupportEmail $supportEmail -ActionVar $template.actionVar
 
         $item = Get-Item -LiteralPath $outputPath
         $outputs += [pscustomobject]@{
@@ -206,7 +223,7 @@ try {
         supportEmail = $supportEmail
         outputDirectory = Get-RepoRelativePath -Path $outRoot
         templates = $outputs
-        dashboardStep = 'Supabase Dashboard -> Authentication -> Email Templates -> Confirm signup'
+        dashboardStep = 'Supabase Dashboard -> Authentication -> Email Templates -> paste each rendered file into its matching template (Confirm signup, Reset password, Magic Link, Change Email Address, Reauthentication)'
     }
     $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $manifestPath -Encoding utf8NoBOM
 

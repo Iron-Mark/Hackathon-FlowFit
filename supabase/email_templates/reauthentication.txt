@@ -1,0 +1,21 @@
+⚡ FlowFit - Your verification code
+
+Hi there,
+
+A sensitive action on your child's FlowFit account, such as confirming account changes, needs one more check.
+
+To verify it's really you, enter this code:
+
+{{ .Token }}
+
+🔒 Keep this code private
+This code expires shortly. Never share it with anyone. FlowFit staff will never ask you for it.
+
+If you didn't request this, you can safely ignore this email and your account is unchanged.
+
+---
+FlowFit - Your Personal Fitness Companion
+Questions? Contact us at REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL
+
+Privacy Policy: {{ .SiteURL }}/privacy.html
+Account Deletion: {{ .SiteURL }}/account-deletion.html

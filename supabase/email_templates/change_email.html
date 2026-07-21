@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm your new FlowFit email</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f2f7ff;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffffff;
+      margin: 0;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    h1 {
+      color: #4A90E2;
+      font-size: 28px;
+      margin: 0 0 20px 0;
+      font-weight: 700;
+    }
+    p {
+      color: #555;
+      font-size: 16px;
+      margin: 0 0 20px 0;
+    }
+    .button-container {
+      text-align: center;
+      margin: 40px 0;
+    }
+    .button {
+      display: inline-block;
+      padding: 16px 40px;
+      background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: translateY(-2px);
+    }
+    .info-box {
+      background-color: #f8f9fa;
+      border-left: 4px solid #4A90E2;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 8px;
+    }
+    .info-box p {
+      margin: 0;
+      font-size: 14px;
+      color: #666;
+    }
+    .footer {
+      background-color: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e0e0e0;
+    }
+    .footer p {
+      font-size: 13px;
+      color: #888;
+      margin: 5px 0;
+    }
+    .footer a {
+      color: #4A90E2;
+      text-decoration: none;
+    }
+    .icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">⚡ FlowFit</div>
+    </div>
+
+    <div class="content">
+      <div style="text-align: center;">
+        <div class="icon">✉️</div>
+      </div>
+
+      <h1>Confirm your new email</h1>
+
+      <p>Hi there,</p>
+
+      <p>We received a request to change the email address on your child's <strong>FlowFit</strong> account. To finish the change, please confirm this new email address by tapping the button below.</p>
+
+      <div class="button-container">
+        <a href="{{ .ConfirmationURL }}" class="button">
+          Confirm new email
+        </a>
+      </div>
+
+      <div class="info-box">
+        <p><strong>🔒 Keeping the account safe</strong></p>
+        <p>This link works only for your account and will expire after a short while, so it's best to confirm soon.</p>
+      </div>
+
+      <p>If the button doesn't work, copy and paste this link into your browser:</p>
+      <p style="word-break: break-all; color: #4A90E2; font-size: 14px;">
+        {{ .ConfirmationURL }}
+      </p>
+
+      <p style="margin-top: 30px; font-size: 14px; color: #888;">
+        If you didn't request this, you can safely ignore this email. The email address on the account will stay unchanged.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p><strong>FlowFit</strong> - Your Personal Fitness Companion</p>
+      <p>Questions? Contact us at <a href="mailto:REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL">REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL</a></p>
+      <p style="margin-top: 15px;">
+        <a href="{{ .SiteURL }}/privacy.html">Privacy Policy</a> • <a href="{{ .SiteURL }}/account-deletion.html">Account Deletion</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

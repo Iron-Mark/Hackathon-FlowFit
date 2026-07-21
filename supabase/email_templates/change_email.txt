@@ -1,0 +1,21 @@
+⚡ FlowFit - Confirm your new email
+
+Hi there,
+
+We received a request to change the email address on your child's FlowFit account.
+
+To finish the change, please confirm this new email address by clicking the link below:
+
+{{ .ConfirmationURL }}
+
+🔒 Keeping the account safe
+This link works only for your account and will expire after a short while, so it's best to confirm soon.
+
+If you didn't request this, you can safely ignore this email. The email address on the account will stay unchanged.
+
+---
+FlowFit - Your Personal Fitness Companion
+Questions? Contact us at REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL
+
+Privacy Policy: {{ .SiteURL }}/privacy.html
+Account Deletion: {{ .SiteURL }}/account-deletion.html

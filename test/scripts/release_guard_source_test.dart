@@ -4105,7 +4105,9 @@ function Resolve-DnsName {
       expect(manifestJson['supportEmail'], 'support@release.flowfit.app');
       expect(manifestJson['outputDirectory'], contains('build/'));
       final templates = manifestJson['templates'] as List<dynamic>;
-      expect(templates, hasLength(2));
+      // confirm_signup, reset_password, magic_link, change_email,
+      // reauthentication — each in html + txt.
+      expect(templates, hasLength(10));
       for (final template in templates.cast<Map<String, dynamic>>()) {
         expect(template['sha256'], matches(RegExp(r'^[a-f0-9]{64}$')));
         expect(template['bytes'], greaterThan(0));

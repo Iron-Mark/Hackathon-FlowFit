@@ -1,0 +1,21 @@
+⚡ FlowFit - Your sign-in link
+
+Hi there,
+
+Here's your one-tap link to sign in to your FlowFit account. No password needed.
+
+To sign in, click the link below:
+
+{{ .ConfirmationURL }}
+
+🔒 One tap, one time
+This link can be used once and will expire after a short while, so it's best to use it soon.
+
+If you didn't request this, you can safely ignore this email.
+
+---
+FlowFit - Your Personal Fitness Companion
+Questions? Contact us at REPLACE_WITH_FLOWFIT_SUPPORT_EMAIL
+
+Privacy Policy: {{ .SiteURL }}/privacy.html
+Account Deletion: {{ .SiteURL }}/account-deletion.html
