@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:solar_icons/solar_icons.dart';
-// Hide running_session_provider's own phoneDataListenerProvider so this
-// screen reads the activity-classifier chain's listener (the instance the
-// retired ActivityClassifierScope used to supply).
-import 'package:flowfit/providers/running_session_provider.dart'
-    hide phoneDataListenerProvider;
+import 'package:flowfit/providers/running_session_provider.dart';
 import 'package:flowfit/models/workout_session.dart';
 import 'package:flowfit/features/activity_classifier/presentation/providers.dart';
 import 'package:flowfit/screens/workout/running/running_activity_detection.dart';

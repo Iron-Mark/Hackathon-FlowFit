@@ -54,9 +54,6 @@ String requireWorkoutSessionUserId(String? Function() readCurrentUserId) {
   return userId;
 }
 
-/// Provider for phone data listener (for smartwatch data)
-final phoneDataListenerProvider = Provider((ref) => PhoneDataListener());
-
 /// Provider for phone step counter service (uses phone's accelerometer)
 final phoneStepCounterServiceProvider = Provider<PhoneStepCounterService>((
   ref,
@@ -346,7 +343,7 @@ final runningSessionProvider =
         calorieService: ref.watch(calorieCalculatorServiceProvider),
         sessionService: ref.watch(workoutSessionServiceProvider),
         phoneStepCounterService: ref.watch(phoneStepCounterServiceProvider),
-        phoneDataListener: ref.watch(phoneDataListenerProvider),
+        phoneDataListener: PhoneDataListener(),
         readCurrentUserId: () => ref.read(workoutSessionUserIdProvider),
       ),
     );

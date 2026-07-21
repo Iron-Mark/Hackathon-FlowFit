@@ -13,11 +13,7 @@ import 'package:flowfit/models/sensor_batch.dart';
 import 'package:flowfit/models/walking_session.dart';
 import 'package:flowfit/models/workout_session.dart';
 import 'package:flowfit/providers/resistance_session_provider.dart';
-// Hide the running provider module's phoneDataListenerProvider: the override
-// below must target the activity-classifier chain's provider, which is the
-// one ActiveRunningScreen reads.
-import 'package:flowfit/providers/running_session_provider.dart'
-    hide phoneDataListenerProvider;
+import 'package:flowfit/providers/running_session_provider.dart';
 import 'package:flowfit/providers/walking_session_provider.dart';
 import 'package:flowfit/screens/workout/resistance/active_resistance_screen.dart';
 import 'package:flowfit/screens/workout/running/active_running_screen.dart';
