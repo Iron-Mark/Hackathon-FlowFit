@@ -63,6 +63,25 @@ class GeofenceService extends ChangeNotifier {
       accuracy: LocationAccuracy.high,
       distanceFilter: 5, // small filter
     );
+
+    if (_positionSub == null) {
+      // Fresh (re)start over a possibly app-scoped repository that retained
+      // runtime statuses from an earlier monitoring session (e.g. a previous
+      // /mission visit). Re-seed active missions to unknown so enter/exit is
+      // re-derived from live location instead of a stale snapshot, matching
+      // activateMission and the repository's hydrate(). Without this, re-opening
+      // the map after leaving a zone fires a spurious exit from the stale
+      // inside status.
+      final active = (await repository.getAll()).where((m) => m.isActive);
+      for (final mission in active) {
+        if (mission.status != GeofenceStatus.unknown) {
+          await repository.update(
+            mission.copyWith(status: GeofenceStatus.unknown),
+          );
+        }
+      }
+    }
+
     _positionSub ??=
         (_positionStreamOverride ??
                 Geolocator.getPositionStream(

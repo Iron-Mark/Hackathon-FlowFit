@@ -104,4 +104,42 @@ void main() {
     await service.stopMonitoring();
     await controller.close();
   });
+
+  test('re-derives status from live location on start instead of firing a '
+      'stale exit from a shared repository', () async {
+    final controller = StreamController<Position>();
+    // A shared/app-scoped repo that retained a mission left "inside" by a
+    // previous monitoring session (the map was re-opened after leaving).
+    final repo = InMemoryGeofenceRepository();
+    final mission = GeofenceMission(
+      id: 'r1',
+      title: 'Reentry',
+      center: const LatLng(0.0, 0.0),
+      radiusMeters: 50,
+      type: GeofenceMissionType.safetyNet,
+      isActive: true,
+      status: GeofenceStatus.inside,
+    );
+    await repo.add(mission);
+
+    final service = GeofenceService(
+      repository: repo,
+      positionStreamOverride: controller.stream,
+    );
+    final events = <GeofenceEvent>[];
+    service.events.listen((e) => events.add(e));
+
+    // Starting a fresh session must reset the stale status before the first fix.
+    await service.startMonitoring(requirePermissions: false);
+    expect(repo.getById('r1')?.status, GeofenceStatus.unknown);
+
+    // First live fix is outside the radius. With the stale "inside" status this
+    // would emit a spurious exited event; after the reset it must not.
+    controller.add(_p(1.0, 1.0));
+    await Future.delayed(const Duration(milliseconds: 50));
+    expect(events.any((e) => e.type == GeofenceEventType.exited), isFalse);
+
+    await service.stopMonitoring();
+    await controller.close();
+  });
 }
