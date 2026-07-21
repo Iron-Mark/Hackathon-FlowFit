@@ -67,6 +67,12 @@ class TermsOfServiceScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSection(
               context,
+              'Eligibility & Parental Acceptance',
+              'FlowFit is intended for children aged 7 to 12. A parent or guardian must review and accept these terms on the child\'s behalf, and the parent or guardian sets up, holds, and controls the account. Where these terms refer to your agreement or your responsibility, they apply to the parent or guardian who created and supervises the account.',
+            ),
+            const SizedBox(height: 20),
+            _buildSection(
+              context,
               'Use License',
               'Permission is granted to temporarily download one copy of FlowFit for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title.',
             ),
@@ -74,7 +80,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             _buildSection(
               context,
               'User Account',
-              'You are responsible for maintaining the confidentiality of your account and password. You agree to accept responsibility for all activities that occur under your account.',
+              'The parent or guardian who sets up the account is responsible for maintaining the confidentiality of the account and password, and accepts responsibility for all activities that occur under the account.',
             ),
             const SizedBox(height: 20),
             _buildSection(
@@ -86,7 +92,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             _buildSection(
               context,
               'Data Collection',
-              'We collect and process your personal data in accordance with our Privacy Policy. By using FlowFit, you consent to such processing and you warrant that all data provided by you is accurate.',
+              'We collect and process personal data in accordance with our Privacy Policy. By setting up and supervising the account, the parent or guardian consents to such processing and confirms that the data provided is accurate.',
             ),
             const SizedBox(height: 20),
             _buildSection(
@@ -156,7 +162,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Center(
               child: Text(
-                'Last updated: November 27, 2025',
+                'Last updated: July 21, 2026',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

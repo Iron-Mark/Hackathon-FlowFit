@@ -103,6 +103,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
             const SizedBox(height: 20),
             _buildSection(
               context,
+              'Children\'s Privacy & Information for Parents',
+              'FlowFit is designed for children aged 7 to 12, and a parent or guardian should create and supervise the account. Data collected from a child may include their name or nickname, age, height and weight, activity and steps, heart rate and beat-to-beat intervals from a paired watch, foreground location used only for wellness missions, and mood check-ins. A parent or guardian can review, export, and request deletion of the child\'s data, and can contact FlowFit support at ${FlowFitRuntimeConfig.supportEmail} to do so. The account holder is responsible for the account.',
+            ),
+            const SizedBox(height: 20),
+            _buildSection(
+              context,
               'Policy Updates',
               'We may update this Privacy Policy when features, service providers, or legal requirements change. Review this screen and the public store privacy policy for the latest version.',
             ),
@@ -156,7 +162,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             Center(
               child: Text(
-                'Last updated: June 14, 2026',
+                'Last updated: July 21, 2026',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
