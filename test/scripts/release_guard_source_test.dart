@@ -5,6 +5,11 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  const androidSetupAction =
+      'android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699';
+  const flutterAction =
+      'subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2';
+
   late String gradleBuild;
   late String releasePreflight;
   late String storeReleaseBuild;
@@ -2466,7 +2471,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
   });
 
   test('ci installs Android SDK packages explicitly after setup-android', () {
-    expect(ciWorkflow, contains('android-actions/setup-android@v4'));
+    expect(ciWorkflow, contains(androidSetupAction));
     expect(ciWorkflow, contains('packages: ""'));
     expect(
       ciWorkflow,
@@ -2476,7 +2481,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       ),
     );
     expect(
-      ciWorkflow.indexOf('android-actions/setup-android@v4'),
+      ciWorkflow.indexOf(androidSetupAction),
       lessThan(ciWorkflow.indexOf('sdkmanager "platform-tools"')),
     );
   });
@@ -2491,8 +2496,18 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       expect(workflow, isNot(contains('actions/upload-artifact@v4')));
     }
     expect(ciWorkflow, contains('actions/setup-java@v5'));
-    expect(ciWorkflow, contains('android-actions/setup-android@v4'));
+    expect(ciWorkflow, contains(androidSetupAction));
+    expect(androidProductionReleaseWorkflow, contains(androidSetupAction));
+    for (final workflow in [
+      ciWorkflow,
+      pagesWorkflow,
+      androidProductionReleaseWorkflow,
+    ]) {
+      expect(workflow, contains(flutterAction));
+      expect(workflow, isNot(contains('subosito/flutter-action@v2')));
+    }
     expect(ciWorkflow, isNot(contains('actions/setup-java@v4')));
+    expect(ciWorkflow, isNot(contains('android-actions/setup-android@v4')));
     expect(ciWorkflow, isNot(contains('android-actions/setup-android@v3')));
   });
 
