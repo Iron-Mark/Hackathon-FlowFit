@@ -56,7 +56,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                         const SizedBox(height: 16),
 
                         Text(
-                          "Let's personalize your experience",
+                          'Ask a parent or guardian to help personalize FlowFit',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: AppTheme.text,
                           ),
@@ -69,7 +69,8 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                         _buildAgeCard(
                           context,
                           title: "I'm 7-12 years old",
-                          subtitle: 'Fun whale-themed experience',
+                          subtitle:
+                              'Buddy mode — a parent or guardian should help',
                           icon: Icons.child_care,
                           gradient: const LinearGradient(
                             colors: [Color(0xFF4ECDC4), Color(0xFF44A08D)],
@@ -114,7 +115,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Your privacy matters. We follow strict data protection standards.',
+                                  'A parent or guardian should help with this step. Kids aged 7–12 use Buddy mode; we collect fitness data only for the signed-in family account.',
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: Colors.grey[700],
                                   ),

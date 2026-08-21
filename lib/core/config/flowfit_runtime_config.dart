@@ -14,7 +14,13 @@ class FlowFitRuntimeConfig {
 
   static const String supportEmail = String.fromEnvironment(
     'FLOWFIT_SUPPORT_EMAIL',
-    defaultValue: 'marksiazon.dev@gmail.com',
+    defaultValue: 'support@flowfit.com',
+  );
+
+  /// Optional OpenRouteService key. Empty by default so GPS traces are not
+  /// sent to a third party unless a release build opts in.
+  static const String openRouteApiKey = String.fromEnvironment(
+    'FLOWFIT_OPENROUTE_API_KEY',
   );
 
   static const String publicWebBaseUrl = String.fromEnvironment(

@@ -63,7 +63,6 @@ class SupportRequestService {
         .from(SupabaseTables.supportRequests)
         .insert({
           'user_id': user.id,
-          'user_email': user.email,
           'category': normalized.category,
           'subject': normalized.subject,
           'message': normalized.message,

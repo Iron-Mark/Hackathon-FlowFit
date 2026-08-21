@@ -80,6 +80,9 @@
             android:required="false" />
             
         <!-- Data listener service for receiving data from watch -->
+        <!-- WearableListenerService must stay exported so Google Play
+             services can bind with BIND_LISTENER_SERVICE. Do not set
+             android:exported="false". -->
         <service
             android:name="com.msiazondev.flowfit.PhoneDataListenerService"
             android:enabled="true"

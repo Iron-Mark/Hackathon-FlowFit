@@ -59,18 +59,19 @@ class DeepLinkHandler {
         // Never log the user's email: emit only a redacted event label.
         if (kDebugMode) {
           debugPrint('User signed in via deep link');
-          debugPrint('Email verified! Redirecting to survey flow...');
+          debugPrint('Email verified! Redirecting to age gate...');
         }
 
-        // Navigate to survey intro screen after email verification
+        // Age gate is the only post-verify entry. Splash/login already send
+        // incomplete profiles here; never skip it for the email-link path.
         Future.delayed(const Duration(milliseconds: 500), () {
           final context = navigatorKey.currentContext;
           if (context != null && context.mounted) {
             Navigator.pushNamedAndRemoveUntil(
               context,
-              '/survey_intro',
+              '/age-gate',
               (route) => false,
-              arguments: {'userId': user.id, 'email': user.email},
+              arguments: {'userId': user.id},
             );
           }
         });
