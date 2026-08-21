@@ -68,22 +68,22 @@ Before submission, review each SDK provider's current privacy guidance and
 reflect any automatic collection/transmission in Play Data safety and App Store
 privacy labels.
 
-## Children's Audience and Parental Consent (Posture, Not Yet Implemented)
+## Children's Audience and Parental Consent (Current Controls)
 
-This section records FlowFit's intended posture toward a child audience. It is a
-planning posture only: the controls below are not yet implemented, and nothing
-here asserts COPPA, Google Play Families, or Apple Kids Category compliance. The
-owner/legal enrollment decision is still open; see the DECISION-PENDING block in
+This section records FlowFit's intended posture toward a child audience and
+the controls that already ship. Nothing here asserts COPPA, Google Play
+Families, or Apple Kids Category compliance. The owner/legal enrollment
+decision is still open; see the DECISION-PENDING block in
 `docs/STORE_SUBMISSION_CHECKLIST.md`.
 
 - Intended child audience: ages 7-12. The profile model already carries a
   kids-mode flag (see the Profile data row above); a child-directed release
   would treat these users as the primary audience.
+- Age gate: a self-attested `/age-gate` screen is implemented and splits
+  7-12 Buddy mode from 13+ survey onboarding. It is not verifiable parental
+  consent and does not block data collection on its own.
 - Parental/guardian consent: verifiable parental consent is required before
-  collecting personal data from a child, and is NOT yet implemented. A
-  self-attested age gate (`/age-gate`) splits 7-12 Buddy mode from 13+
-  survey onboarding; it is not verifiable parental consent and does not
-  block data collection on its own.
+  collecting personal data from a child, and is NOT yet implemented.
 - Proposed data model to support this posture (not yet built), aligned with the
   planned relational entities:
   - `guardians` — parent/guardian contact and verification records linked to a

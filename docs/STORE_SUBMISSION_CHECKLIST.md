@@ -1,6 +1,6 @@
 # FlowFit Store Submission Checklist
 
-Last updated: 2026-07-21
+Last updated: 2026-08-21
 
 This checklist tracks store-facing readiness for Google Play, App Store, and
 Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
@@ -22,10 +22,14 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       remove `.mcp.json` after capturing release evidence.
 - [ ] Supabase Auth advisor warnings are resolved or explicitly accepted for
       release: leaked-password protection and additional MFA options.
-- [x] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
+- [ ] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
       `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
-      returns only passing backend verification rows.
-      Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.
+      returns only passing backend verification rows on the live production
+      project. CI Docker validation already covers
+      `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`
+      locally. That hardening migration is not yet applied to live
+      `xhmkghwijqpvnbpeeckg`. Prior 2026-06-23 advisor evidence is stale for
+      this migration.
 - [ ] Supabase Auth confirm-signup email templates are rendered with
       `scripts/render_supabase_email_templates.ps1 -SupportEmailVerified` and
       `build/supabase-email-templates/confirm_signup.html` is copied into the
@@ -51,12 +55,12 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       `com.flowfit.smoke`, `com.example.*`, `com.yourcompany.*`, `.example`,
       `.invalid`, `.test`, localhost, or IP-loopback web hosts for production
       artifacts.
-- [ ] Public privacy-policy URL is live, accessible without login, not a PDF,
-      and matches `docs/PRIVACY_DATA_MAP.md`. After deploying Flutter web, use
-      `https://<your-web-host>/privacy.html`.
-- [ ] Public account-deletion URL is live and lets users initiate deletion
-      without reinstalling the app. After deploying Flutter web, use
-      `https://<your-web-host>/account-deletion.html`.
+- [x] Public privacy-policy URL is live, accessible without login, not a PDF,
+      and matches `docs/PRIVACY_DATA_MAP.md`. Deployed origin:
+      `https://iron-mark.github.io/Hackathon-FlowFit/privacy.html`.
+- [x] Public account-deletion URL is live and lets users initiate deletion
+      without reinstalling the app. Deployed origin:
+      `https://iron-mark.github.io/Hackathon-FlowFit/account-deletion.html`.
 - [ ] In-app Privacy Policy, Terms, and Delete Account screens have final
       maintainer/legal-reviewed copy.
 - [x] The source default `support@flowfit.com` has been replaced by a verified
@@ -97,9 +101,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       SDKs ship in a child-directed build, confirm each is enrolled in the
       store's self-certified families ads program. FlowFit ships no ad SDK
       today; revisit if that changes.
-- [ ] Neutral age screen (age gate) implemented before any child-directed
-      experience so age is collected in a neutral, non-incentivized way. Not yet
-      implemented; `docs/PRIVACY_DATA_MAP.md` records the parental-consent gap.
+- [x] Neutral age screen (`/age-gate`) is implemented before Buddy or survey
+      onboarding. Age is self-attested and splits 7-12 Buddy mode from 13+
+      survey onboarding. This is not verifiable parental consent.
+      `docs/PRIVACY_DATA_MAP.md` records the remaining VPC gap.
 - [ ] Verifiable parental/guardian consent flow implemented for users under the
       applicable consent age before collecting personal data. Not yet
       implemented.
@@ -246,6 +251,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [x] Run `scripts/verify_web_deployment.ps1` against the deployed HTTPS
       origin and archive `build/web-deployment-verification.json`.
       Evidence from 2026-06-23: `build/web-deployment-verification.json`.
+      GitHub Pages origin remains live as of 2026-08-21:
+      `https://iron-mark.github.io/Hackathon-FlowFit/`.
 - [ ] Configure production Supabase redirect URLs for the web origin.
 - [ ] Smoke signup/login/onboarding/workout flow on deployed URL.
 - [ ] Decide whether JS or Wasm is the release target. Current repo is JS-ready

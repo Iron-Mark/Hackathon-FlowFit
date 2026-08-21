@@ -41,10 +41,15 @@ See `README.md` and `.github/copilot-instructions.md` for full developer workflo
 - Old notes about `solar_icons`, `track_screen.dart`, invalid `const`
   constructors, and roughly 42 failing tests are obsolete for this branch. Run
   fresh `flutter analyze` and `flutter test` before reporting pass/fail status.
-- Store release remains blocked until external inputs exist: real Supabase
-  project/MCP OAuth, production Supabase client values, Android upload signing,
-  deployed HTTPS web origin, verified support inbox, and macOS/Xcode signing
-  for iOS.
+- Store release remains blocked until external inputs exist: apply
+  `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`
+  to the live production project, Android upload signing, and macOS/Xcode
+  signing for iOS. Flutter web Pages is live at
+  `https://iron-mark.github.io/Hackathon-FlowFit/` (including
+  `privacy.html` and `account-deletion.html`). Pages deploy vars substitute a
+  verified support inbox; committed source still uses the
+  `support@flowfit.com` replacement token. A self-attested `/age-gate` ships
+  and is not verifiable parental consent.
 
 ### Running the app
 
