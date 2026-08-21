@@ -175,11 +175,18 @@ MCP path after Codex reload:
 CLI path if you prefer terminal auth:
 
 ```powershell
-npx -y supabase@latest login
-npx -y supabase@latest link --project-ref <new-flowfit-dev-ref>
-npx -y supabase@latest db push --linked --dry-run
-npx -y supabase@latest db push --linked
+npx -y supabase@2.115.0 login
+npx -y supabase@2.115.0 link --project-ref <new-flowfit-dev-ref>
+npx -y supabase@2.115.0 db push --linked --dry-run
+npx -y supabase@2.115.0 db push --linked
 ```
+
+On the live FlowFit project (`xhmkghwijqpvnbpeeckg`), push includes
+`20260821000000_harden_support_deletion_and_auth.sql`. That migration is
+required for JWT-bound support emails, `support_requests` purge on account
+deletion, and `auth.users` removal through `private.delete_own_auth_user()`.
+Do not apply it through a write-capable production MCP session unless the
+owner explicitly approves; prefer the pinned CLI `db push --linked` path.
 
 ## 5. Verify Database Shape
 
@@ -219,14 +226,14 @@ $dbPassword = (Get-Content -Raw .env |
   Select-String -Pattern '(?m)^\s*SUPABASE_DB_PASSWORD\s*=\s*(.+?)\s*$').Matches[0].Groups[1].Value.Trim().Trim('"').Trim("'")
 $dbUrl = "postgresql://postgres.${projectRef}:$([uri]::EscapeDataString($dbPassword))@${poolerHost}:5432/postgres?sslmode=require"
 
-npx -y supabase@latest db lint `
+npx -y supabase@2.115.0 db lint `
   --db-url $dbUrl `
   --schema public `
   --level warning `
   --fail-on error `
   --output-format json
 
-npx -y supabase@latest db advisors `
+npx -y supabase@2.115.0 db advisors `
   --db-url $dbUrl `
   --type all `
   --level warn `
