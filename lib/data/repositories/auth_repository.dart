@@ -5,6 +5,7 @@ import 'package:flowfit/domain/exceptions/auth_exceptions.dart'
     as domain_exceptions;
 import 'package:flowfit/core/utils/error_logger.dart';
 import 'package:flowfit/core/config/flowfit_runtime_config.dart';
+import 'package:flowfit/domain/password_policy.dart';
 
 /// Implementation of IAuthRepository using Supabase as the backend.
 class AuthRepository implements IAuthRepository {
@@ -35,9 +36,7 @@ class AuthRepository implements IAuthRepository {
       }
 
       // Validate password length and the local/auth letters+digits policy.
-      final hasLetter = RegExp(r'[A-Za-z]').hasMatch(password);
-      final hasDigit = RegExp(r'\d').hasMatch(password);
-      if (password.length < 8 || !hasLetter || !hasDigit) {
+      if (!PasswordPolicy.isSatisfied(password)) {
         ErrorLogger.logWarning('AuthRepository.signUp', 'Password too weak');
         throw domain_exceptions.WeakPasswordException();
       }

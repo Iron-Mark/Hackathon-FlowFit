@@ -6,6 +6,7 @@ This directory contains the domain entities, repository interfaces, and exceptio
 
 ```
 domain/
+├── password_policy.dart  # Shared letters+digits password rule
 ├── entities/           # Domain entities (immutable data classes)
 │   ├── user.dart
 │   ├── user_profile.dart
@@ -61,7 +62,7 @@ Defines the contract for profile operations:
 
 All authentication exceptions extend `AuthException`:
 - `InvalidEmailException` - Invalid email format
-- `WeakPasswordException` - Password too weak
+- `WeakPasswordException` - Password too weak (length 8+, letter + digit)
 - `EmailAlreadyExistsException` - Email already registered
 - `InvalidCredentialsException` - Wrong email/password
 - `NetworkException` - Network error

@@ -14,6 +14,10 @@ void main() {
 
     expect(find.text('FlowFit'), findsWidgets);
     expect(find.textContaining('parent or guardian'), findsWidgets);
+    expect(
+      find.textContaining('A fitness buddy for families.'),
+      findsOneWidget,
+    );
     expect(find.text('Try Web App'), findsWidgets);
     expect(find.text('Download APK'), findsWidgets);
     expect(find.text('What FlowFit connects'.toUpperCase()), findsOneWidget);

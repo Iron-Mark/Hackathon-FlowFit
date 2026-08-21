@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flowfit/domain/password_policy.dart';
 import 'package:flowfit/domain/entities/user.dart' as domain_user;
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
 import 'package:flowfit/presentation/providers/providers.dart';
@@ -97,6 +98,47 @@ void main() {
   });
 
   group('SignUpScreen actions', () {
+    testWidgets('signup copy tells a parent or guardian to supervise', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_signupHarness());
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('parent or guardian'), findsOneWidget);
+      expect(find.text(PasswordPolicy.helperText), findsOneWidget);
+    });
+
+    testWidgets('letter-only password is rejected before signup', (
+      tester,
+    ) async {
+      final authRepository = _FakeAuthRepository();
+
+      await tester.pumpWidget(_signupHarness(authRepository: authRepository));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Enter your full name'),
+        'Test Member',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Enter your email'),
+        'member@flowfit.test',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Enter your password'),
+        'abcdefgh',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Re-enter your password'),
+        'abcdefgh',
+      );
+      await _acceptRequiredSignupConsent(tester);
+      await _tapCreateAccount(tester);
+
+      expect(authRepository.signUpCalls, 0);
+      expect(find.text(PasswordPolicy.errorText), findsOneWidget);
+    });
+
     testWidgets('required consent blocks account creation', (tester) async {
       final authRepository = _FakeAuthRepository();
 

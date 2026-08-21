@@ -163,7 +163,7 @@ _______________________________________________________________________
 
 **Expected Result**:
 - Validation error appears below password field
-- Message: "Password must be at least 8 characters"
+- Message: "Password must be at least 8 characters with a letter and a digit"
 - No API call made to Supabase
 - User remains on Signup screen
 

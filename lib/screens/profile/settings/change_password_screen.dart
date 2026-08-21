@@ -4,6 +4,7 @@ import 'package:solar_icons/solar_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flowfit/theme/app_theme.dart';
 import 'package:flowfit/utils/deep_link_handler.dart';
+import 'package:flowfit/domain/password_policy.dart';
 
 typedef ChangePasswordAction =
     Future<void> Function({
@@ -277,8 +278,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a new password';
                     }
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
+                    if (!PasswordPolicy.isSatisfied(value)) {
+                      return PasswordPolicy.errorText;
                     }
                     if (value == _currentPasswordController.text) {
                       return 'New password must be different';

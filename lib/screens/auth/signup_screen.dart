@@ -5,6 +5,7 @@ import 'package:solar_icons/solar_icons.dart';
 import 'package:flowfit/theme/app_theme.dart';
 import 'package:flowfit/presentation/providers/providers.dart';
 import 'package:flowfit/domain/entities/auth_state.dart';
+import 'package:flowfit/domain/password_policy.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -165,7 +166,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Join FlowFit and start your journey today.',
+                  'A parent or guardian should create and supervise the account.',
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(color: AppTheme.text),
@@ -339,8 +340,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a password';
                     }
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
+                    if (!PasswordPolicy.isSatisfied(value)) {
+                      return PasswordPolicy.errorText;
                     }
                     return null;
                   },
@@ -348,7 +349,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
                 const SizedBox(height: 8),
                 Text(
-                  'Must be at least 8 characters',
+                  PasswordPolicy.helperText,
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),

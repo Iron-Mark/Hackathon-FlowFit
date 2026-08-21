@@ -282,7 +282,7 @@ Target = TDEE + goal_adjustment
 
 ### Signup Screen
 - [ ] Email validation works
-- [ ] Password must be 8+ characters
+- [ ] Password must be 8+ characters with a letter and a digit
 - [ ] Confirm password matches
 - [ ] Cannot submit without required consents
 - [ ] Optional marketing checkbox works
