@@ -82,12 +82,13 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 
 ## Children's Audience, COPPA, and Families/Kids (DECISION-PENDING)
 
-> DECISION-PENDING: This block is a scaffold only. It stays blocked until the
-> owner/legal decision on whether FlowFit targets a child audience and enrolls
-> in Google Play's Designed for Families / Teacher Approved program and Apple's
-> Kids Category is finalized. Do not treat any item below as executed: none of
-> these obligations are implemented yet, and nothing here asserts COPPA, Google
-> Play Families, or Apple Kids Category compliance.
+> DECISION-PENDING: This block is a scaffold for store Families/Kids
+> enrollment. It stays blocked until the owner/legal decision on whether
+> FlowFit targets a child audience and enrolls in Google Play's Designed for
+> Families / Teacher Approved program and Apple's Kids Category is finalized.
+> The self-attested `/age-gate` ships. Verifiable parental consent, store
+> Families/Kids enrollment, and COPPA assertions do not. Nothing here asserts
+> COPPA, Google Play Families, or Apple Kids Category compliance.
 
 - [ ] Owner/legal decision recorded: whether FlowFit targets a child audience
       (see the kids posture in `docs/PRIVACY_DATA_MAP.md`, ages 7-12) and
