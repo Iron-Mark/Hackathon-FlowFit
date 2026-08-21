@@ -23,7 +23,7 @@ Welcome → Signup (with privacy) → Survey Intro → 4 Survey Screens → Dash
 - Confirm password field
 - **Privacy Consent Section**:
   - ✅ Terms of Service & Privacy Policy (required)
-  - ✅ Galaxy Watch data collection consent (required)
+  - ✅ Galaxy Watch data collection consent (required on phone/Wear, optional on web)
   - ☐ Marketing emails (optional)
 
 **Navigation**:

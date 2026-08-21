@@ -29,6 +29,7 @@ This guide provides step-by-step instructions for manually testing the complete 
 9. Enter Confirm Password: "TestPassword123!"
 10. Check "I agree to FlowFit's Terms of Service and Privacy Policy"
 11. Check "I consent to health data collection from my Galaxy Watch"
+    (required on phone/Wear; optional on the web preview)
 12. Optionally check "Send me tips & updates"
 
 **Submit Signup**:

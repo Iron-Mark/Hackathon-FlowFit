@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +9,11 @@ import 'package:flowfit/domain/entities/auth_state.dart';
 import 'package:flowfit/domain/password_policy.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
-  const SignUpScreen({super.key});
+  const SignUpScreen({super.key, this.requireWatchDataConsent = !kIsWeb});
+
+  /// Phone and Wear require Galaxy Watch health consent. Web preview has no
+  /// watch pairing, so the checkbox stays optional there.
+  final bool requireWatchDataConsent;
 
   @override
   ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
@@ -40,7 +45,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     if (_isSubmittingSignUp) return;
 
     // Validate consent checkboxes first
-    if (!_termsAccepted || !_watchDataConsent) {
+    final watchConsentMissing =
+        widget.requireWatchDataConsent && !_watchDataConsent;
+    if (!_termsAccepted || watchConsentMissing) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please accept required terms to continue'),
@@ -444,9 +451,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   value: _watchDataConsent,
                   onChanged: (value) =>
                       setState(() => _watchDataConsent = value ?? false),
-                  label:
-                      'I consent to health data collection from my Galaxy Watch for app features',
-                  required: true,
+                  label: widget.requireWatchDataConsent
+                      ? 'I consent to health data collection from my Galaxy Watch for app features'
+                      : 'I consent to health data collection from my Galaxy Watch when I use one (Optional)',
+                  required: widget.requireWatchDataConsent,
                 ),
 
                 const SizedBox(height: 16),

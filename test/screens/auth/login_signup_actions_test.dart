@@ -139,6 +139,39 @@ void main() {
       expect(find.text(PasswordPolicy.errorText), findsOneWidget);
     });
 
+    testWidgets('web signup does not require Galaxy Watch consent', (
+      tester,
+    ) async {
+      final authRepository = _FakeAuthRepository();
+
+      await tester.pumpWidget(
+        _signupHarness(
+          authRepository: authRepository,
+          requireWatchDataConsent: false,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'I consent to health data collection from my Galaxy Watch when I use one (Optional)',
+        ),
+        findsOneWidget,
+      );
+
+      await _enterSignupFields(tester);
+      await _acceptTermsConsent(tester);
+      await _tapCreateAccount(tester);
+
+      expect(authRepository.signUpCalls, 1);
+      expect(authRepository.lastSignUpMetadata, {
+        'terms_accepted': true,
+        'watch_data_consent': false,
+        'marketing_opt_in': false,
+      });
+      expect(find.text('route:age-gate:test-user'), findsOneWidget);
+    });
+
     testWidgets('required consent blocks account creation', (tester) async {
       final authRepository = _FakeAuthRepository();
 
@@ -275,7 +308,10 @@ Widget _loginHarness({PasswordResetSender? sendPasswordReset}) {
   );
 }
 
-Widget _signupHarness({_FakeAuthRepository? authRepository}) {
+Widget _signupHarness({
+  _FakeAuthRepository? authRepository,
+  bool requireWatchDataConsent = true,
+}) {
   return ProviderScope(
     overrides: [
       authRepositoryProvider.overrideWithValue(
@@ -283,7 +319,7 @@ Widget _signupHarness({_FakeAuthRepository? authRepository}) {
       ),
     ],
     child: MaterialApp(
-      home: const SignUpScreen(),
+      home: SignUpScreen(requireWatchDataConsent: requireWatchDataConsent),
       routes: {
         '/login': (_) => const _RouteMarker('route:login'),
         '/terms-of-service': (_) => const _RouteMarker('route:terms'),
@@ -326,11 +362,16 @@ Future<void> _enterSignupFields(WidgetTester tester) async {
   );
 }
 
-Future<void> _acceptRequiredSignupConsent(WidgetTester tester) async {
+Future<void> _acceptTermsConsent(WidgetTester tester) async {
   final checkboxes = find.byType(Checkbox);
   await tester.ensureVisible(checkboxes.at(0));
   await tester.tap(checkboxes.at(0));
   await tester.pumpAndSettle();
+}
+
+Future<void> _acceptRequiredSignupConsent(WidgetTester tester) async {
+  await _acceptTermsConsent(tester);
+  final checkboxes = find.byType(Checkbox);
   await tester.ensureVisible(checkboxes.at(1));
   await tester.tap(checkboxes.at(1));
   await tester.pumpAndSettle();
