@@ -128,6 +128,16 @@ function Get-OptionalMapTileDartDefines {
     return $defines
 }
 
+function Get-OptionalOpenRouteDartDefines {
+    $defines = @()
+    $value = [Environment]::GetEnvironmentVariable('FLOWFIT_OPENROUTE_API_KEY')
+    if (-not [string]::IsNullOrWhiteSpace($value)) {
+        $defines += "--dart-define=FLOWFIT_OPENROUTE_API_KEY=$($value.Trim())"
+    }
+
+    return $defines
+}
+
 function Get-DirectoryDigest {
     param([Parameter(Mandatory = $true)][string]$Path)
 
@@ -949,6 +959,7 @@ function Invoke-AndroidReleaseBuild {
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )
     $androidBuildCommand += Get-OptionalMapTileDartDefines
+    $androidBuildCommand += Get-OptionalOpenRouteDartDefines
     Invoke-CheckedCommand 'Android Play Store App Bundle' $androidBuildCommand
 
     $artifactPath = 'build/app/outputs/bundle/release/app-release.aab'
@@ -996,6 +1007,7 @@ function Invoke-IosReleaseBuild {
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )
     $command += Get-OptionalMapTileDartDefines
+    $command += Get-OptionalOpenRouteDartDefines
 
     $exportOptionsPlist = [Environment]::GetEnvironmentVariable('FLOWFIT_IOS_EXPORT_OPTIONS_PLIST')
     if (-not [string]::IsNullOrWhiteSpace($exportOptionsPlist)) {
@@ -1056,6 +1068,7 @@ function Invoke-WebReleaseBuild {
         "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($script:supabaseClientConfig.PublishableKey)"
     )
     $webBuildCommand += Get-OptionalMapTileDartDefines
+    $webBuildCommand += Get-OptionalOpenRouteDartDefines
 
     Invoke-CheckedCommand "Flutter web $webBuildBackend release build" $webBuildCommand
     Assert-WebCompliancePages -SupportEmail $supportEmail -PublicWebBaseUrl $publicWebBaseUrl

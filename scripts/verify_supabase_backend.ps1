@@ -12,6 +12,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).ProviderPath
+$script:SupabaseCliSpec = 'supabase@2.115.0'
+if (-not [string]::IsNullOrWhiteSpace($env:SUPABASE_CLI_SPEC)) {
+    $script:SupabaseCliSpec = $env:SUPABASE_CLI_SPEC.Trim()
+}
 
 function Resolve-VerificationSqlPath {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -204,7 +208,7 @@ if ($RequireAllPass -and $Output -ne 'json') {
 }
 
 if (-not (Get-Command npx -ErrorAction SilentlyContinue)) {
-    throw 'npx is required to run supabase@latest. Install Node.js/npm or run the SQL through Supabase MCP execute_sql or the dashboard SQL editor.'
+    throw "npx is required to run ${script:SupabaseCliSpec}. Install Node.js/npm or run the SQL through Supabase MCP execute_sql or the dashboard SQL editor."
 }
 
 $cliSqlFile = $resolvedSqlFile
@@ -222,7 +226,7 @@ try {
 
 $commandArgs = @(
     '-y',
-    'supabase@latest',
+    $script:SupabaseCliSpec,
     'db',
     'query',
     '--file',
