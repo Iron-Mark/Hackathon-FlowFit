@@ -34,9 +34,11 @@ class AuthRepository implements IAuthRepository {
         throw domain_exceptions.InvalidEmailException();
       }
 
-      // Validate password length
-      if (password.length < 8) {
-        ErrorLogger.logWarning('AuthRepository.signUp', 'Password too short');
+      // Validate password length and the local/auth letters+digits policy.
+      final hasLetter = RegExp(r'[A-Za-z]').hasMatch(password);
+      final hasDigit = RegExp(r'\d').hasMatch(password);
+      if (password.length < 8 || !hasLetter || !hasDigit) {
+        ErrorLogger.logWarning('AuthRepository.signUp', 'Password too weak');
         throw domain_exceptions.WeakPasswordException();
       }
 

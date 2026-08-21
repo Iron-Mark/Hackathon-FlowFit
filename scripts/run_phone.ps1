@@ -182,6 +182,16 @@ function Get-OptionalMapTileDartDefines {
     return $defines
 }
 
+function Get-OptionalOpenRouteDartDefines {
+    $defines = @()
+    $value = [Environment]::GetEnvironmentVariable('FLOWFIT_OPENROUTE_API_KEY')
+    if (-not [string]::IsNullOrWhiteSpace($value)) {
+        $defines += "--dart-define=FLOWFIT_OPENROUTE_API_KEY=$($value.Trim())"
+    }
+
+    return $defines
+}
+
 Import-ReleaseEnvFile -Path $EnvFile
 $config = Resolve-SupabaseClientConfig
 
@@ -196,6 +206,7 @@ $command = @(
     "--dart-define=SUPABASE_PUBLISHABLE_KEY=$($config.PublishableKey)"
 )
 $command += Get-OptionalMapTileDartDefines
+$command += Get-OptionalOpenRouteDartDefines
 if ($Release) {
     $command += '--release'
 }

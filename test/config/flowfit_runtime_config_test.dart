@@ -27,7 +27,8 @@ void main() {
   });
 
   test('support email has a verified maintainer inbox fallback', () {
-    expect(FlowFitRuntimeConfig.supportEmail, 'marksiazon.dev@gmail.com');
+    expect(FlowFitRuntimeConfig.supportEmail, 'support@flowfit.com');
+    expect(FlowFitRuntimeConfig.openRouteApiKey, isEmpty);
   });
 
   test('public web URL has a maintained fork fallback', () {

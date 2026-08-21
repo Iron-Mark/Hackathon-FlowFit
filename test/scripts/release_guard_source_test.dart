@@ -9,6 +9,19 @@ void main() {
       'android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699';
   const flutterAction =
       'subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2';
+  const checkoutAction =
+      'actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803';
+  const setupJavaAction =
+      'actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961';
+  const uploadArtifactAction =
+      'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a';
+  const configurePagesAction =
+      'actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d';
+  const uploadPagesArtifactAction =
+      'actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9';
+  const deployPagesAction =
+      'actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128';
+  const supabaseCliSpec = 'supabase@2.115.0';
 
   late String gradleBuild;
   late String releasePreflight;
@@ -1729,6 +1742,8 @@ storeFile=upload-keystore.jks
       'request_account_deletion',
       'has_pending_account_deletion',
       'update_updated_at_column',
+      'normalize_support_request_row',
+      'delete_own_auth_user',
     ]) {
       expect(supabaseBackendVerificationSql, contains(routine));
     }
@@ -1752,7 +1767,8 @@ storeFile=upload-keystore.jks
   });
 
   test('Supabase backend verification runner validates SQL safely', () {
-    expect(verifySupabaseBackend, contains('supabase@latest'));
+    expect(verifySupabaseBackend, contains(supabaseCliSpec));
+    expect(verifySupabaseBackend, isNot(contains('supabase@latest')));
     expect(verifySupabaseBackend, contains('db'));
     expect(verifySupabaseBackend, contains('query'));
     expect(verifySupabaseBackend, contains('--linked'));
@@ -1801,7 +1817,8 @@ storeFile=upload-keystore.jks
     expect(ciWorkflow, contains('Supabase Docker Local Validation'));
     expect(ciWorkflow, contains('docker version'));
     expect(ciWorkflow, contains('npm --version'));
-    expect(ciWorkflow, contains('npx -y supabase@latest start'));
+    expect(ciWorkflow, contains('SUPABASE_CLI_SPEC: $supabaseCliSpec'));
+    expect(ciWorkflow, contains('npx -y "\${SUPABASE_CLI_SPEC}" start'));
     expect(
       ciWorkflow,
       contains(
@@ -1810,7 +1827,7 @@ storeFile=upload-keystore.jks
     );
     expect(
       ciWorkflow,
-      contains('npx -y supabase@latest db reset --local --no-seed'),
+      contains('npx -y "\${SUPABASE_CLI_SPEC}" db reset --local --no-seed'),
     );
     expect(ciWorkflow, contains('scripts/verify_supabase_backend.ps1'));
     expect(ciWorkflow, contains('-Local'));
@@ -1820,8 +1837,15 @@ storeFile=upload-keystore.jks
       ciWorkflow,
       contains('build/supabase-local-backend-verification.json'),
     );
-    expect(ciWorkflow, contains('npx -y supabase@latest stop --no-backup'));
+    expect(
+      ciWorkflow,
+      contains('npx -y "\${SUPABASE_CLI_SPEC}" stop --no-backup'),
+    );
     expect(ciWorkflow, contains('flowfit-supabase-local-validation'));
+    expect(ciWorkflow, isNot(contains('supabase@latest')));
+    expect(ciWorkflow, isNot(contains('supabase-local-status.json')));
+    expect(ciWorkflow, isNot(contains('supabase-local-start.log')));
+    expect(ciWorkflow, contains('[redacted-jwt]'));
     expect(scriptsReadme, contains('GitHub Actions runs the same check'));
     expect(releaseReadinessRunbook, contains('supabase-local-validation'));
     expect(
@@ -1878,6 +1902,7 @@ drop table public.user_profiles;
     expect(runPhoneScript, contains('--dart-define=SUPABASE_URL='));
     expect(runPhoneScript, contains('--dart-define=SUPABASE_PUBLISHABLE_KEY='));
     expect(runPhoneScript, contains('Get-OptionalMapTileDartDefines'));
+    expect(runPhoneScript, contains('Get-OptionalOpenRouteDartDefines'));
     expect(runPhoneScript, contains('FLOWFIT_MAP_TILE_URL_TEMPLATE'));
     expect(runPhoneScript, contains('FLOWFIT_MAP_TILE_SUBDOMAINS'));
     expect(runPhoneScript, contains('Assert-MapTileUrlTemplate'));
@@ -2115,6 +2140,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(storeReleaseBuild, contains('flowfit-web-release.zip'));
     expect(storeReleaseBuild, contains('Compress-Archive'));
     expect(storeReleaseBuild, contains('Get-OptionalMapTileDartDefines'));
+    expect(storeReleaseBuild, contains('Get-OptionalOpenRouteDartDefines'));
     expect(storeReleaseBuild, contains('FLOWFIT_MAP_TILE_URL_TEMPLATE'));
     expect(storeReleaseBuild, contains('FLOWFIT_MAP_TILE_SUBDOMAINS'));
     expect(storeReleaseBuild, contains('Assert-MapTileUrlTemplate'));
@@ -2148,6 +2174,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
       contains('--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL='),
     );
     expect(storeReleaseBuild, contains('Get-OptionalMapTileDartDefines'));
+    expect(storeReleaseBuild, contains('Get-OptionalOpenRouteDartDefines'));
   });
 
   test('CI web builds pass Supabase client dart defines', () {
@@ -2490,12 +2517,15 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(ciWorkflow, contains('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24'));
     expect(pagesWorkflow, contains('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24'));
     for (final workflow in [ciWorkflow, pagesWorkflow]) {
-      expect(workflow, contains('actions/checkout@v6'));
-      expect(workflow, contains('actions/upload-artifact@v7'));
+      expect(workflow, contains(checkoutAction));
+      expect(workflow, contains(uploadArtifactAction));
       expect(workflow, isNot(contains('actions/checkout@v4')));
       expect(workflow, isNot(contains('actions/upload-artifact@v4')));
     }
-    expect(ciWorkflow, contains('actions/setup-java@v5'));
+    expect(ciWorkflow, contains(setupJavaAction));
+    expect(androidProductionReleaseWorkflow, contains(checkoutAction));
+    expect(androidProductionReleaseWorkflow, contains(setupJavaAction));
+    expect(androidProductionReleaseWorkflow, contains(uploadArtifactAction));
     expect(ciWorkflow, contains(androidSetupAction));
     expect(androidProductionReleaseWorkflow, contains(androidSetupAction));
     for (final workflow in [
@@ -2579,10 +2609,19 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     );
     expect(releaseReadinessRunbook, contains('readiness-only check'));
     expect(releaseReadinessRunbook, contains('limited to pushes on `main`'));
-    expect(pagesWorkflow, contains('actions/configure-pages@v6'));
-    expect(pagesWorkflow, contains('actions/upload-pages-artifact@v5'));
-    expect(pagesWorkflow, contains('actions/deploy-pages@v5'));
-    expect(pagesWorkflow, contains('actions/upload-artifact@v7'));
+    expect(pagesWorkflow, contains(configurePagesAction));
+    expect(pagesWorkflow, contains(uploadPagesArtifactAction));
+    expect(pagesWorkflow, contains(deployPagesAction));
+    expect(pagesWorkflow, contains(uploadArtifactAction));
+    final deployJobIndex = pagesWorkflow.indexOf(
+      'name: Build and Deploy Flutter Web',
+    );
+    expect(deployJobIndex, isNonNegative);
+    expect(pagesWorkflow.indexOf('pages: write'), greaterThan(deployJobIndex));
+    expect(
+      pagesWorkflow.indexOf('id-token: write'),
+      greaterThan(deployJobIndex),
+    );
     expect(pagesWorkflow, contains('scripts/store_release_build.ps1'));
     expect(pagesWorkflow, contains('-Target Web'));
     expect(pagesWorkflow, contains('-SkipFlutterPubGet'));
@@ -3668,6 +3707,7 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
 
   test('in-app help and legal surfaces use runtime release contact config', () {
     expect(flowFitRuntimeConfig, contains('FLOWFIT_SUPPORT_EMAIL'));
+    expect(flowFitRuntimeConfig, contains('FLOWFIT_OPENROUTE_API_KEY'));
     expect(flowFitRuntimeConfig, contains('FLOWFIT_PUBLIC_WEB_BASE_URL'));
     expect(flowFitRuntimeConfig, contains('FLOWFIT_MAP_TILE_URL_TEMPLATE'));
     expect(flowFitRuntimeConfig, contains('FLOWFIT_MAP_TILE_SUBDOMAINS'));
@@ -4136,6 +4176,10 @@ function Resolve-DnsName {
 
   test('Supabase auth password policy matches app minimum length', () {
     expect(supabaseConfig, contains('minimum_password_length = 8'));
+    expect(
+      supabaseConfig,
+      contains('password_requirements = "letters_digits"'),
+    );
   });
 
   test('store docs and manifests keep location foreground-only', () {

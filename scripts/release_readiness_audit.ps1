@@ -981,7 +981,7 @@ function Test-SupabaseMigration {
     $verificationScript = Read-RepoText $verificationScriptPath
     if (
         $null -ne $verificationScript -and
-        $verificationScript.Contains('supabase@latest') -and
+        $verificationScript.Contains('supabase@2.115.0') -and
         $verificationScript.Contains("'db'") -and
         $verificationScript.Contains("'query'") -and
         $verificationScript.Contains('--linked') -and
@@ -1673,7 +1673,7 @@ function Test-Tooling {
     if (Get-Command supabase -ErrorAction SilentlyContinue) {
         Add-Pass 'Supabase CLI' 'Supabase CLI is available directly.'
     } elseif (Get-Command npx -ErrorAction SilentlyContinue) {
-        Add-Pass 'Supabase CLI' 'npx is available for on-demand Supabase CLI commands, for example npx -y supabase@latest.'
+        Add-Pass 'Supabase CLI' 'npx is available for on-demand Supabase CLI commands, for example npx -y supabase@2.115.0.'
     } else {
         Add-Warn 'Supabase CLI' 'Supabase CLI is not installed globally and npx is unavailable; use Supabase MCP after OAuth or install the CLI.' -StrictFailure $false
     }

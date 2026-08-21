@@ -6,7 +6,6 @@ import 'package:flowfit/core/config/flowfit_runtime_config.dart';
 
 /// Service for OpenRouteService API integration
 class OpenRouteService {
-  static const String apiKey = '5b3ce35978511000001cf62248';
   static const String baseUrl = 'https://api.openrouteservice.org';
 
   static const Map<String, int> _categoryIdsByName = {
@@ -33,10 +32,12 @@ class OpenRouteService {
   };
 
   final http.Client _httpClient;
+  final String _apiKey;
   DefaultCacheManager? _cacheManager;
 
-  OpenRouteService({http.Client? httpClient})
-    : _httpClient = httpClient ?? http.Client();
+  OpenRouteService({http.Client? httpClient, String? apiKey})
+    : _httpClient = httpClient ?? http.Client(),
+      _apiKey = (apiKey ?? FlowFitRuntimeConfig.openRouteApiKey).trim();
 
   DefaultCacheManager get _mapTileCache =>
       _cacheManager ??= DefaultCacheManager();
@@ -44,13 +45,14 @@ class OpenRouteService {
   /// Encodes a list of GPS coordinates into a polyline string
   Future<String> encodePolyline(List<LatLng> points) async {
     if (points.isEmpty) return '';
+    if (_apiKey.isEmpty) return '';
 
     try {
       final coordinates = points.map((p) => [p.longitude, p.latitude]).toList();
 
       final response = await _httpClient.post(
         Uri.parse('$baseUrl/v2/directions/foot-walking/geojson'),
-        headers: {'Authorization': apiKey, 'Content-Type': 'application/json'},
+        headers: {'Authorization': _apiKey, 'Content-Type': 'application/json'},
         body: jsonEncode({'coordinates': coordinates}),
       );
 
@@ -157,11 +159,12 @@ class OpenRouteService {
   }) async {
     final categoryIds = _resolveCategoryIds(categories);
     if (categoryIds.isEmpty) return [];
+    if (_apiKey.isEmpty) return [];
 
     try {
       final response = await _httpClient.post(
         Uri.parse('$baseUrl/pois'),
-        headers: {'Authorization': apiKey, 'Content-Type': 'application/json'},
+        headers: {'Authorization': _apiKey, 'Content-Type': 'application/json'},
         body: jsonEncode({
           'request': 'pois',
           'geometry': {

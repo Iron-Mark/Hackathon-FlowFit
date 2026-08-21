@@ -2,17 +2,21 @@
 
 This directory contains the active FlowFit Supabase migration set.
 
-## Active Migration
+## Active Migrations
 
 - `20260614062844_recreate_flowfit_backend.sql`
+- `20260703010000_add_support_requests.sql` and later incremental migrations
+- `20260821000000_harden_support_deletion_and_auth.sql`
 
-This is the canonical recovery migration for the maintained fork. It creates or
+`20260614062844_recreate_flowfit_backend.sql` is the canonical recovery
+migration for the maintained fork. It creates or
 repairs the current app backend schema:
 
 - `public.user_profiles`
 - `public.buddy_profiles`
 - `public.workout_sessions`
 - `public.heart_rate`
+- `public.support_requests` (added by later incremental migrations)
 - `public.account_deletion_requests`
 - `public.flowfit_recovery_quarantine`
 
@@ -22,6 +26,12 @@ Invalid legacy rows are copied into the service-role-only quarantine table
 before cleanup deletes run, so partially populated development repair attempts
 are auditable. Back up production or valuable data and write a purpose-built
 data migration instead of applying this recovery migration directly.
+
+The 2026-08-21 hardening migration binds support-request email to the JWT,
+purges `support_requests` on account deletion, adds an `auth.users` foreign
+key with `ON DELETE CASCADE`, and deletes the caller's auth user through
+`private.delete_own_auth_user()`. Apply it to the live linked project with
+the pinned CLI below after a dry run.
 
 ## Legacy Migrations
 
@@ -40,8 +50,8 @@ produce stale tables or conflicting policies.
 After creating and linking a new `flowfit-dev` Supabase project:
 
 ```powershell
-npx -y supabase@latest db push --linked --dry-run
-npx -y supabase@latest db push --linked
+npx -y supabase@2.115.0 db push --linked --dry-run
+npx -y supabase@2.115.0 db push --linked
 ```
 
 For full recovery steps, MCP setup, dashboard settings, credential recovery, and

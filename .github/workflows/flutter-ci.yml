@@ -11,6 +11,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  SUPABASE_CLI_SPEC: supabase@2.115.0
 
 permissions:
   contents: read
@@ -23,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -50,7 +51,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Verify Docker and npm tooling
         shell: bash
@@ -68,17 +69,28 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build
-          npx -y supabase@latest start \
+          redact() {
+            sed -E \
+              -e 's/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/[redacted-jwt]/g' \
+              -e 's#postgres(ql)?://[^[:space:]]+#[redacted-db-url]#g' \
+              -e 's/sb_(secret|publishable)_[A-Za-z0-9]+/[redacted-key]/g'
+          }
+          start_log="$(mktemp)"
+          if ! npx -y "${SUPABASE_CLI_SPEC}" start \
             --exclude analytics,edge-runtime,functions,imgproxy,studio,vector \
-            2>&1 | tee build/supabase-local-start.log
-          npx -y supabase@latest status -o json \
-            > build/supabase-local-status.json
+            >"$start_log" 2>&1; then
+            echo 'supabase start failed; redacted log follows'
+            redact < "$start_log" || true
+            rm -f "$start_log"
+            exit 1
+          fi
+          rm -f "$start_log"
 
       - name: Reset local database from migrations
         shell: bash
         run: |
           set -euo pipefail
-          npx -y supabase@latest db reset --local --no-seed \
+          npx -y "${SUPABASE_CLI_SPEC}" db reset --local --no-seed \
             2>&1 | tee build/supabase-local-db-reset.log
 
       - name: Verify local Supabase backend
@@ -100,16 +112,14 @@ jobs:
       - name: Stop local Supabase Docker stack
         if: always()
         shell: bash
-        run: npx -y supabase@latest stop --no-backup || true
+        run: npx -y "${SUPABASE_CLI_SPEC}" stop --no-backup || true
 
       - name: Upload Supabase local validation evidence
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flowfit-supabase-local-validation
           path: |
-            build/supabase-local-start.log
-            build/supabase-local-status.json
             build/supabase-local-db-reset.log
             build/supabase-local-backend-verification.json
             build/supabase-local-containers.txt
@@ -122,7 +132,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Free CI disk space
         shell: bash
@@ -137,7 +147,7 @@ jobs:
           df -h
 
       - name: Set up Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: "17"
@@ -274,21 +284,21 @@ jobs:
           test -f build/web-wasm/account-deletion.html
 
       - name: Upload web build artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flowfit-web-smoke-not-for-store
           path: build/web
           if-no-files-found: error
 
       - name: Upload web Wasm build artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flowfit-web-wasm-smoke-not-for-store
           path: build/web-wasm
           if-no-files-found: error
 
       - name: Upload web static verification evidence
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flowfit-web-static-verification-smoke
           path: |
@@ -333,7 +343,7 @@ jobs:
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
 
       - name: Upload release smoke App Bundle
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flowfit-release-smoke-not-for-store
           path: build/app/outputs/bundle/release/app-release.aab

@@ -111,7 +111,7 @@ class LandingHeroCopy extends StatelessWidget {
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
           child: Text(
-            'A fitness buddy that makes healthy habits stick for kids — heart-rate sessions from the watch, whole-day tracking on the phone, one companion in front of it all.',
+            'A fitness buddy for families — heart-rate sessions from the watch, whole-day tracking on the phone, one companion in front of it all. A parent or guardian should create and supervise the account.',
             style: textTheme.titleLarge?.copyWith(
               color: LandingPalette.muted,
               fontFamily: 'GeneralSans',

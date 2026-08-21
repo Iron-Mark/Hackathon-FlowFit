@@ -563,14 +563,14 @@ $dbPassword = (Get-Content -Raw .env |
   Select-String -Pattern '(?m)^\s*SUPABASE_DB_PASSWORD\s*=\s*(.+?)\s*$').Matches[0].Groups[1].Value.Trim().Trim('"').Trim("'")
 $dbUrl = "postgresql://postgres.${projectRef}:$([uri]::EscapeDataString($dbPassword))@${poolerHost}:5432/postgres?sslmode=require"
 
-npx -y supabase@latest db lint `
+npx -y supabase@2.115.0 db lint `
   --db-url $dbUrl `
   --schema public `
   --level warning `
   --fail-on error `
   --output-format json
 
-npx -y supabase@latest db advisors `
+npx -y supabase@2.115.0 db advisors `
   --db-url $dbUrl `
   --type all `
   --level warn `
@@ -744,10 +744,10 @@ pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -ValidateOnly
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
 
 # CI-style local Docker backend verification:
-npx -y supabase@latest start --exclude analytics,edge-runtime,functions,imgproxy,studio,vector
-npx -y supabase@latest db reset --local --no-seed
+npx -y supabase@2.115.0 start --exclude analytics,edge-runtime,functions,imgproxy,studio,vector
+npx -y supabase@2.115.0 db reset --local --no-seed
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Local -Output json -RequireAllPass -OutFile build/supabase-local-backend-verification.json
-npx -y supabase@latest stop --no-backup
+npx -y supabase@2.115.0 stop --no-backup
 
 # Native Android live-auth E2E evidence for strict audit:
 pwsh -NoProfile -File scripts/verify_android_live_auth_smoke.ps1 -Device emulator-5554 -EnvFile .env.release -OutFile build/android-live-auth-smoke-latest.json
