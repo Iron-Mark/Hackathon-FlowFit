@@ -95,6 +95,8 @@ void main() {
         findsOneWidget,
       );
 
+      await tester.ensureVisible(find.text('Sign Up'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Sign Up'));
       await tester.pumpAndSettle();
 
