@@ -90,6 +90,11 @@ void main() {
       await tester.pumpWidget(_loginHarness());
       await tester.pumpAndSettle();
 
+      expect(
+        find.text('A parent or guardian should supervise this account.'),
+        findsOneWidget,
+      );
+
       await tester.tap(find.text('Sign Up'));
       await tester.pumpAndSettle();
 
