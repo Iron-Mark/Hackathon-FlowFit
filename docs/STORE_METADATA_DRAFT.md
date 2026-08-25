@@ -31,7 +31,8 @@ Track workouts, wellness goals, heart-rate trends, and Flowy's progress.
 FlowFit combines workout tracking, wellness goals, and companion-style progress
 into one fitness app. Create a profile, set daily goals, complete onboarding,
 customize Flowy, your in-app buddy, and track sessions such as walking, running,
-and activity-focused routines.
+and activity-focused routines. A parent or guardian should create and supervise
+the account.
 
 For supported Wear OS and Samsung Health Sensor SDK devices, FlowFit can show
 heart-rate information and watch-to-phone sensor updates after you grant the
@@ -151,3 +152,4 @@ Initial FlowFit release:
 - Wear OS watch-to-phone sensor integration.
 - Public privacy and account deletion pages.
 - In-app account deletion request flow.
+- Parent-supervise copy on signup, login, and account-control surfaces.

@@ -262,6 +262,15 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   textAlign: TextAlign.center,
                 ),
 
+                const SizedBox(height: 8),
+                Text(
+                  'A parent or guardian should submit this request.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppTheme.text.withValues(alpha: 0.8),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
                 const SizedBox(height: 16),
 
                 // Warning Message

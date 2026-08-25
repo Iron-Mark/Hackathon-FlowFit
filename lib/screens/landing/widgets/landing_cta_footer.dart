@@ -154,7 +154,7 @@ class LandingFooter extends StatelessWidget {
           SizedBox(
             width: isNarrow ? double.infinity : 360,
             child: const Text(
-              'FlowFit web MVP release surface',
+              'Parent-supervised kids fitness for Wear OS and Android.',
               style: TextStyle(
                 color: LandingPalette.muted,
                 fontFamily: 'GeneralSans',

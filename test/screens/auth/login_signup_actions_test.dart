@@ -58,7 +58,9 @@ void main() {
       expect(calls.single.email, 'member@flowfit.test');
       expect(calls.single.redirectTo, 'com.msiazondev.flowfit://auth-callback');
       expect(
-        find.text('Password reset email sent. Check your inbox.'),
+        find.text(
+          'Password reset email sent. Check your inbox. A parent or guardian should help open it.',
+        ),
         findsOneWidget,
       );
     });
