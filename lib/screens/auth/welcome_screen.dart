@@ -128,7 +128,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Your journey to a healthier, happier you starts here. We’re all about gentle encouragement and celebrating every step.',
+                              "A parent or guardian should create and supervise the account. We're all about gentle encouragement and celebrating every step.",
                               style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(color: AppTheme.text, height: 1.5),
                               textAlign: TextAlign.center,

@@ -23,7 +23,7 @@ Welcome → Signup (with privacy) → Survey Intro → 4 Survey Screens → Dash
 - Confirm password field
 - **Privacy Consent Section**:
   - ✅ Terms of Service & Privacy Policy (required)
-  - ✅ Galaxy Watch data collection consent (required)
+  - ✅ Galaxy Watch data collection consent (required on phone/Wear, optional on web)
   - ☐ Marketing emails (optional)
 
 **Navigation**:
@@ -282,7 +282,7 @@ Target = TDEE + goal_adjustment
 
 ### Signup Screen
 - [ ] Email validation works
-- [ ] Password must be 8+ characters
+- [ ] Password must be 8+ characters with a letter and a digit
 - [ ] Confirm password matches
 - [ ] Cannot submit without required consents
 - [ ] Optional marketing checkbox works

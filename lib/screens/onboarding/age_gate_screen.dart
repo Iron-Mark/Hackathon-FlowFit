@@ -70,7 +70,7 @@ class _AgeGateScreenState extends ConsumerState<AgeGateScreen> {
                           context,
                           title: "I'm 7-12 years old",
                           subtitle:
-                              'Buddy mode — a parent or guardian should help',
+                              'Buddy mode. A parent or guardian should help',
                           icon: Icons.child_care,
                           gradient: const LinearGradient(
                             colors: [Color(0xFF4ECDC4), Color(0xFF44A08D)],

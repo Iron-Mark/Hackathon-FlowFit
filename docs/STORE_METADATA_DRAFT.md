@@ -1,6 +1,6 @@
 # FlowFit Store Metadata Draft
 
-Last updated: 2026-07-21
+Last updated: 2026-08-21
 
 This is a release handoff pack for Google Play, App Store, and Flutter web
 release work. Final store upload still depends on the production Supabase
@@ -124,12 +124,16 @@ credentials, debug labels, staging project refs, or private user data.
 - [ ] Supabase Auth advisor warnings are resolved or explicitly accepted for
       release: leaked-password protection and additional MFA options.
       Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.
+      Live production still needs the 2026-08-21 hardening migration applied
+      before this item can be re-checked.
 - [ ] Supabase redirect URLs include Android, iOS, and web production origins.
 - [x] Public `privacy.html` loads from the deployed HTTPS origin.
 - [x] Public `account-deletion.html` loads from the deployed HTTPS origin.
 - [x] `build/web-deployment-verification.json` shows the deployed web base URL,
       public compliance pages, support inbox, and manifest all pass.
       Evidence from 2026-06-23: `build/web-deployment-verification.json`.
+      GitHub Pages origin remains live as of 2026-08-21:
+      `https://iron-mark.github.io/Hackathon-FlowFit/`.
 - [ ] Android AAB is signed with the upload key, not debug signing.
 - [ ] iOS archive/IPA is signed with the Apple Developer team and provisioning
       profile, and the manifest includes `ios-app-store-ipa`.

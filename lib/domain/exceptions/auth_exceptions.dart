@@ -1,3 +1,5 @@
+import 'package:flowfit/domain/password_policy.dart';
+
 /// Base class for all authentication-related exceptions.
 abstract class AuthException implements Exception {
   final String message;
@@ -18,8 +20,7 @@ class InvalidEmailException extends AuthException {
 
 /// Exception thrown when a password is too weak.
 class WeakPasswordException extends AuthException {
-  WeakPasswordException()
-    : super('Password must be at least 8 characters', 'weak_password');
+  WeakPasswordException() : super(PasswordPolicy.errorText, 'weak_password');
 }
 
 /// Exception thrown when attempting to register with an email that already exists.

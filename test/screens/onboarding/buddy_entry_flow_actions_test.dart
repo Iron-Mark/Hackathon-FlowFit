@@ -29,6 +29,11 @@ void main() {
       },
     );
 
+    expect(
+      find.text('Buddy mode. A parent or guardian should help'),
+      findsOneWidget,
+    );
+
     await tester.tap(find.text("I'm 7-12 years old"));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
