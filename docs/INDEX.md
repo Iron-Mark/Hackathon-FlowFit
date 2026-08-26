@@ -1,242 +1,90 @@
 # FlowFit Documentation Index
 
-## 📚 Documentation Structure
+Living docs for the maintained fork. Dated packs under `docs/release/` and
+`.kiro/specs/` are historical snapshots, not current status.
 
-All documentation has been organized into logical folders for easy navigation.
+## Start here
 
----
+- [README.md](../README.md) - project overview and setup
+- [AGENTS.md](../AGENTS.md) - agent workflow, toolchain, and current blockers
+- [00_START_HERE.md](00_START_HERE.md) - short navigation paths
+- [QUICK_START.md](QUICK_START.md) - local commands
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - common issues
+- [brand-voice.md](brand-voice.md) - consumer copy rules (no em dashes)
 
-## 📁 Root Directory
+## Release and store (current)
 
-Essential documentation that should be easily accessible:
+- [RELEASE_READINESS_RUNBOOK.md](RELEASE_READINESS_RUNBOOK.md) - signing,
+  Supabase, web, CI smoke retention, and store gates
+- [STORE_SUBMISSION_CHECKLIST.md](STORE_SUBMISSION_CHECKLIST.md) - Play, App
+  Store, and Flutter web checklist
+- [STORE_METADATA_DRAFT.md](STORE_METADATA_DRAFT.md) - listing copy and review
+  notes
+- [PRIVACY_DATA_MAP.md](PRIVACY_DATA_MAP.md) - data inventory for store privacy
+  labels; points to `ios/Runner/PrivacyInfo.xcprivacy`
+- [SUPABASE_RECOVERY_RUNBOOK.md](SUPABASE_RECOVERY_RUNBOOK.md) - rebuild on a
+  new Supabase project
+- [scripts/README.md](scripts/README.md) - script reference, including
+  `verify_store_metadata.ps1`, `verify_store_artifacts.ps1`, and
+  `verify_offline_app_actions.ps1`
 
-- **README.md** - Main project overview and setup instructions
-- **docs/QUICK_START.md** - Quick start guide for developers
-- **docs/TROUBLESHOOTING.md** - Common issues and solutions
-- **docs/architecture/ARCHITECTURE_REVIEW_2026-07-14.md** - Architecture survey, guard-test constraint map, executed refactor stages, and the ranked refactor roadmap
-- **docs/architecture/PROFILE_UNIFICATION_PLAN_2026-07-20.md** - Staged migration plan to unify the two UserProfile stacks: target architecture, per-stage file and test lists, data-safety analysis against the live schema, and risk register
+## Architecture
 
----
+- [architecture/ARCHITECTURE_REVIEW_2026-07-14.md](architecture/ARCHITECTURE_REVIEW_2026-07-14.md)
+- [architecture/PROFILE_UNIFICATION_PLAN_2026-07-20.md](architecture/PROFILE_UNIFICATION_PLAN_2026-07-20.md)
+- [code/lib/ARCHITECTURE.md](code/lib/ARCHITECTURE.md)
 
-## 🎤 Presentation Documentation (`docs/presentation/`)
+## Presentation (`docs/presentation/`)
 
-Documentation specifically for presenting the project to judges or stakeholders:
+- [PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md](presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md)
+- [SAMSUNG_TECHNOLOGIES_USED.md](presentation/SAMSUNG_TECHNOLOGIES_USED.md)
+- [WEAR_OS_INTEGRATION_SUMMARY.md](presentation/WEAR_OS_INTEGRATION_SUMMARY.md)
 
-### Main Presentation Guide
-- **PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md** ⭐
-  - Complete presentation guide with layman's terms
-  - Technical deep dive on Wear OS integration
-  - Demo script and talking points
-  - Q&A preparation
-  - Data flow diagrams
+## Features and implementation
 
-### Technical References
-- **SAMSUNG_TECHNOLOGIES_USED.md**
-  - Complete list of Samsung technologies used
-  - Samsung Health SDK details
-  - Integration architecture
-  - Talking points for judges
+- [features/](features/) - AI detection, wellness, share
+- [implementation/](implementation/) - deeper implementation notes
+- [code/lib/](code/lib/) - code-adjacent READMEs
 
-- **WEAR_OS_INTEGRATION_SUMMARY.md**
-  - Quick technical summary
-  - Step-by-step data flow
-  - Performance metrics
-  - Demo checklist
+## Historical snapshots (do not treat as current)
 
----
+Keep for evidence; prefer the living docs above for status.
 
-## 🔧 Implementation Documentation (`docs/implementation/`)
+- [release/MVP_LAUNCH_READINESS_2026-07-02.md](release/MVP_LAUNCH_READINESS_2026-07-02.md)
+- [release/FINAL_LAUNCH_EVIDENCE_2026-07-04.md](release/FINAL_LAUNCH_EVIDENCE_2026-07-04.md)
+- [release/PLAY_CONSOLE_SUBMISSION_PACK_2026-07-04.md](release/PLAY_CONSOLE_SUBMISSION_PACK_2026-07-04.md)
+- [release/RELEASE_HANDOFF_NEXT_ACTIONS_2026-07-04.md](release/RELEASE_HANDOFF_NEXT_ACTIONS_2026-07-04.md)
+- [BUILD_STATUS.md](BUILD_STATUS.md) - June 2026 local recovery notes
+- [audits/](audits/) and [qa/](qa/) - dated audits
 
-Technical implementation details and verification:
+## Scripts (`scripts/`)
 
-### Backend Recovery
-- **SUPABASE_RECOVERY_RUNBOOK.md** (root docs runbook)
-  - New Supabase development project setup
-  - Project-scoped MCP configuration
-  - Canonical migration and verification commands
-  - Local Flutter credential recovery
+Common release helpers: `fetch_fonts.ps1`, `release_preflight.ps1`,
+`release_readiness_audit.ps1`, `verify_offline_app_actions.ps1`,
+`verify_web_deployment.ps1`, `store_release_build.ps1`,
+`verify_store_metadata.ps1`, `verify_store_artifacts.ps1`,
+`verify_support_inbox.ps1`, `configure_supabase_mcp.ps1`,
+`create_android_upload_keystore.ps1`, `export_android_signing_env.ps1`,
+`create_ios_export_options.ps1`. Full list: [scripts/README.md](scripts/README.md).
 
-### Release Readiness
-- **RELEASE_READINESS_RUNBOOK.md** (root docs runbook)
-  - Play Store signing and package configuration
-  - App Store/macOS signing requirements
-  - Flutter web build and hosting notes
-  - Local verification command list
+## Quick paths
 
-- **release/MVP_LAUNCH_READINESS_2026-07-02.md**
-  - Current MVP launch verdict, verified local gates, Supabase/support blockers,
-    and next release plan
+### Development
 
-- **release/FINAL_LAUNCH_EVIDENCE_2026-07-04.md**
-  - Final merged-main MVP evidence, live web status, CI status, support inbox
-    proof, Android AAB hash, and remaining external launch steps
+1. [../README.md](../README.md) and [QUICK_START.md](QUICK_START.md)
+2. [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+3. Feature notes under [features/](features/)
 
-- **release/PLAY_CONSOLE_SUBMISSION_PACK_2026-07-04.md**
-  - Current Play Console internal testing candidate, listing copy, review notes,
-    data-entry checklist, and real-device QA template
+### Release
 
-- **STORE_SUBMISSION_CHECKLIST.md**
-  - Play Store, App Store, and Flutter web submission checklist
-  - Privacy/account deletion URL requirements
-  - Store asset and review readiness tracking
+1. [AGENTS.md](../AGENTS.md) current status
+2. [RELEASE_READINESS_RUNBOOK.md](RELEASE_READINESS_RUNBOOK.md)
+3. [STORE_SUBMISSION_CHECKLIST.md](STORE_SUBMISSION_CHECKLIST.md)
 
-- **STORE_METADATA_DRAFT.md**
-  - Draft Play/App Store listing copy
-  - Screenshot shot list and review notes
-  - Release evidence checklist
+### Presentation
 
-- **PRIVACY_DATA_MAP.md**
-  - Data inventory for Play Data safety and App Store privacy labels
-  - Points to `ios/Runner/PrivacyInfo.xcprivacy` as the iOS app privacy
-    manifest source
-  - Third-party SDK data considerations
-  - Account deletion, retention, and disclosure notes
-
-### AI Classification
-- **AI_DETECTION_COMPLETE_IMPLEMENTATION.md**
-  - Complete AI detection implementation guide
-  - Architecture diagrams
-  - Code examples
-  - Data persistence strategy
+1. [presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md](presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md)
 
 ---
 
-## ✨ Feature Documentation (`docs/features/`)
-
-Documentation for specific features implemented:
-
-### AI & Activity Classification
-- **AI_MODE_DETECTION_FEATURE.md**
-  - AI activity mode detection overview
-  - Feature description
-  - How it works
-
-- **AI_MODE_LIVE_DETECTION.md**
-  - Live detection implementation
-  - Continuous monitoring
-  - Real-time updates
-
-### Workout Features
-- **SHARE_ACHIEVEMENT_FEATURE.md**
-  - Achievement sharing feature
-  - Social media integration
-
-### Wellness Features
-- **WELLNESS_MAP_GPS_TRACKING.md**
-  - GPS tracking for wellness
-
-- **WELLNESS_STEP_COUNTER.md**
-  - Step counter implementation
-
----
-
-## 🛠️ Scripts (`scripts/`)
-
-Build and deployment scripts:
-
-- **fetch_fonts.ps1** - Download General Sans fonts from Fontshare (the .otf
-  files are not committed for license reasons; run once after cloning)
-- **build_and_install.bat** - Build and install to device
-- **run_phone.bat** - Run phone app
-- **run_watch.bat** - Run watch app
-- **test-phone.bat** - Test phone app
-- **test-watch.bat** - Test watch app
-- **release_preflight.ps1** - Local analyzer, test, web, optional Wasm,
-  Android, Wear, and release-smoke gate
-- **verify_offline_app_actions.ps1** - Supabase-free route/action guard and
-  broad button-driven feature smoke
-- **release_readiness_audit.ps1** - Non-secret Supabase, signing, web, and
-  store readiness audit
-- **verify_support_inbox.ps1** - Non-secret support inbox verification
-  evidence for store/web release handoff
-- **verify_store_metadata.ps1** - Store listing, privacy-map, checklist, and
-  icon-asset evidence for Play/App Store/web handoff
-- **verify_store_artifacts.ps1** - Re-hash and validate
-  `build/store-release-artifacts.json` outputs before store/web handoff
-- **create_android_upload_keystore.ps1** - Ignored Android upload signing
-  material generator and private CI secret handoff
-- **export_android_signing_env.ps1** - Ignored private Android signing secret
-  handoff exporter from existing local keystore material
-- **create_ios_export_options.ps1** - Ignored App Store/TestFlight
-  export-options plist generator for macOS release hosts
-- **store_release_build.ps1** - Production Android, iOS, and web artifact
-  wrapper
-
----
-
-## 🎯 Quick Navigation
-
-### For Presentation:
-1. Start with: `docs/presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md`
-2. Reference: `docs/presentation/SAMSUNG_TECHNOLOGIES_USED.md`
-3. Quick facts: `docs/presentation/WEAR_OS_INTEGRATION_SUMMARY.md`
-
-### For Development:
-1. Setup: `README.md` and `docs/QUICK_START.md`
-2. Issues: `docs/TROUBLESHOOTING.md`
-3. Implementation: `docs/implementation/`
-4. Features: `docs/features/`
-
-### For Verification:
-1. Complete Guide: `docs/implementation/AI_DETECTION_COMPLETE_IMPLEMENTATION.md`
-
----
-
-## 📊 Documentation Statistics
-
-- **Markdown Documents:** 90 files
-- **Archived Markdown Documents:** 1 file (`docs/archive/`)
-- **Presentation Docs:** 3 files
-- **Scripts:** 30 files
-
----
-
-## 🔍 Search Tips
-
-### Find by Topic:
-- **AI Classification:** Search for "AI_" prefix
-- **Wellness Features:** Search for "WELLNESS_" prefix
-- **Workout Features:** Search for "WORKOUT_" or "RUNNING_"
-- **Integration:** Look in `docs/implementation/`
-
-### Find by Purpose:
-- **Presenting:** `docs/presentation/`
-- **Building:** `scripts/`
-- **Understanding:** `docs/features/`
-- **Debugging:** `docs/TROUBLESHOOTING.md` or `docs/implementation/`
-
----
-
-## 📝 Documentation Conventions
-
-### File Naming:
-- **UPPERCASE_WITH_UNDERSCORES.md** - Documentation files
-- **lowercase_with_underscores.bat/sh** - Script files
-
-### Folder Structure:
-```
-flowfit/
-├── README.md                    # Main readme
-├── docs/QUICK_START.md              # Quick start guide
-├── docs/TROUBLESHOOTING.md          # Troubleshooting
-├── docs/
-│   ├── INDEX.md                # This file
-│   ├── presentation/           # For judges/stakeholders
-│   ├── implementation/         # Technical implementation
-│   └── features/               # Feature documentation
-└── scripts/                    # Build/deployment scripts
-```
-
----
-
-## 🚀 Getting Started
-
-1. **New to the project?** Start with `README.md`
-2. **Want to run it?** Check `docs/QUICK_START.md`
-3. **Preparing presentation?** Go to `docs/presentation/`
-4. **Having issues?** Check `docs/TROUBLESHOOTING.md`
-
----
-
-**Last Updated:** July 12, 2026
-**Maintained By:** Development Team
+Last updated: 2026-08-26

@@ -1,6 +1,6 @@
 # FlowFit Store Metadata Draft
 
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 
 This is a release handoff pack for Google Play, App Store, and Flutter web
 release work. Final store upload still depends on the production Supabase
@@ -134,7 +134,7 @@ credentials, debug labels, staging project refs, or private user data.
 - [x] `build/web-deployment-verification.json` shows the deployed web base URL,
       public compliance pages, support inbox, and manifest all pass.
       Evidence from 2026-06-23: `build/web-deployment-verification.json`.
-      GitHub Pages origin remains live as of 2026-08-25 on commit `5ad9cb4`:
+      GitHub Pages origin remains live as of 2026-08-26 on commit `0537627`:
       `https://iron-mark.github.io/Hackathon-FlowFit/`.
 - [ ] Android AAB is signed with the upload key, not debug signing.
 - [ ] iOS archive/IPA is signed with the Apple Developer team and provisioning

@@ -1,6 +1,6 @@
 # FlowFit Store Submission Checklist
 
-Last updated: 2026-08-25
+Last updated: 2026-08-26
 
 This checklist tracks store-facing readiness for Google Play, App Store, and
 Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
@@ -252,7 +252,7 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [x] Run `scripts/verify_web_deployment.ps1` against the deployed HTTPS
       origin and archive `build/web-deployment-verification.json`.
       Evidence from 2026-06-23: `build/web-deployment-verification.json`.
-      GitHub Pages origin remains live as of 2026-08-25 on commit `5ad9cb4`
+      GitHub Pages origin remains live as of 2026-08-26 on commit `0537627`
       (`https://iron-mark.github.io/Hackathon-FlowFit/`).
 - [ ] Configure production Supabase redirect URLs for the web origin.
 - [ ] Smoke signup/login/onboarding/workout flow on deployed URL.

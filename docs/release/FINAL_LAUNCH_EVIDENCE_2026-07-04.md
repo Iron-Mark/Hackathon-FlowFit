@@ -1,7 +1,11 @@
 # FlowFit Final Launch Evidence - 2026-07-04
 
-This handoff records the current repo-controlled MVP launch evidence after the
-current release refresh on `main`.
+> Historical snapshot from 2026-07-04. For current status use
+> [AGENTS.md](../../AGENTS.md) and
+> [STORE_SUBMISSION_CHECKLIST.md](../STORE_SUBMISSION_CHECKLIST.md).
+
+This handoff records the repo-controlled MVP launch evidence after the
+2026-07-04 release refresh on `main`.
 
 ## Verdict
 

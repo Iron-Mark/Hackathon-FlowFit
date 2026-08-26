@@ -37,20 +37,26 @@ See `README.md` and `.github/copilot-instructions.md` for full developer workflo
 
 ### Current status
 
-- The maintained fork has Flutter web, Android phone, and Wear OS build paths.
-- Old notes about `solar_icons`, `track_screen.dart`, invalid `const`
-  constructors, and roughly 42 failing tests are obsolete for this branch. Run
-  fresh `flutter analyze` and `flutter test` before reporting pass/fail status.
-- Store release remains blocked until external inputs exist: independent
-  live backend verification of
-  `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`,
-  Android upload signing, and macOS/Xcode signing for iOS. Flutter web Pages
-  is live at `https://iron-mark.github.io/Hackathon-FlowFit/` (including
-  `privacy.html` and `account-deletion.html`) as of 2026-08-25. Pages deploy
+- Flutter web, Android phone, and Wear OS build paths ship on `main`.
+- Parent-supervise copy covers landing, welcome, signup, login, email
+  verification, password reset, delete account, and store metadata. The
+  `/age-gate` is self-attested only and is not verifiable parental consent.
+- GitHub Pages is live at
+  `https://iron-mark.github.io/Hackathon-FlowFit/` (including `privacy.html`
+  and `account-deletion.html`) as of 2026-08-26 on `0537627`. Pages deploy
   vars substitute a verified support inbox; committed source still uses the
-  `support@flowfit.com` replacement token. A self-attested `/age-gate` ships
-  and is not verifiable parental consent. Owner reported applying the
-  hardening SQL in the live editor on 2026-08-25.
+  `support@flowfit.com` replacement token.
+- CI keeps large web/Wasm/AAB smoke trees short-lived (failure or
+  `workflow_dispatch` only). Weekly
+  `.github/workflows/prune-ci-smoke-artifacts.yml` reclaims older copies.
+- Store release remains blocked on owner inputs: independent live
+  `verify_flowfit_backend.sql` evidence for
+  `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`
+  (owner reported applying it on 2026-08-25), Supabase MCP OAuth or access
+  token for live verify, dashboard auth email templates, mailbox smoke,
+  Android upload signing, macOS/Xcode signing, and Families/Kids legal
+  decision.
+- Run fresh `flutter analyze` and `flutter test` before reporting pass/fail.
 
 ### Running the app
 

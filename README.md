@@ -1,31 +1,27 @@
 # FlowFit
 
-A comprehensive health and fitness tracking application for Wear OS (Galaxy Watch) with companion phone app support. Built with Flutter and integrated with Samsung Health Sensor SDK.
+Parent-supervised kids fitness for Wear OS, Android, and Flutter web. Built with
+Flutter and integrated with Samsung Health Sensor SDK where supported.
 
-flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dart
-scripts\run_phone.bat
+> Documentation lives in [`docs/`](docs/). Start with [docs/INDEX.md](docs/INDEX.md)
+> and [AGENTS.md](AGENTS.md) for current status.
 
+## Overview
 
-
-> 📁 **Project recently reorganized!** All documentation is now in [`docs/`](docs/) and scripts in [`scripts/`](scripts/). See [docs/INDEX.md](docs/INDEX.md) for complete documentation index.
-
-## 🎯 Overview
-
-FlowFit is a dual-platform fitness app that runs on:
-- **Galaxy Watch (Wear OS)** - Primary device for real-time health tracking
-- **Android Phone** - Companion app for data visualization and management
+FlowFit runs on:
+- **Galaxy Watch (Wear OS)** - heart-rate and workout sessions
+- **Android Phone** - companion tracking, goals, and settings
+- **Flutter web** - landing page, public privacy/deletion pages, and browser preview
 
 ### Key Features
-- ✅ **Real-time Heart Rate Monitoring** - Continuous HR tracking with Samsung Health Sensor SDK
-- ✅ **Inter-Beat Interval (IBI) Data** - Advanced HRV analysis
-- ✅ **Activity Tracking** - Workout logging and exercise monitoring
-- ✅ **Sleep Tracking** - Sleep mode with sensor integration
-- ✅ **Nutrition Logging** - Food diary and calorie tracking
-- ✅ **Mood Tracking** - Mental wellness monitoring
-- ✅ **Data Synchronization** - Watch ↔ Phone data transfer
-- ✅ **Supabase Backend** - Cloud storage and sync when configured with a live project
+- Real-time heart-rate monitoring with Samsung Health Sensor SDK (where supported)
+- Inter-beat interval (IBI) data for HRV-oriented sessions
+- Workout and wellness tracking (walking, running, resistance, missions)
+- Watch ↔ phone sync
+- Parent-supervise account path with self-attested age gate
+- Supabase backend sync when configured with a live project
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────┐
@@ -54,22 +50,23 @@ FlowFit is a dual-platform fitness app that runs on:
 └─────────────────────────────────────┘
 ```
 
-## 📱 Devices
+## Devices
 
-### Watch Device (SM_R930)
+Example hardware IDs below are from past local sessions. Always run
+`flutter devices` and `adb devices` on your machine.
+
+### Watch Device (example)
 - **Model**: Galaxy Watch (SM_R930)
-- **Device ID**: `adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp`
 - **Platform**: Wear OS powered by Samsung
 - **Purpose**: Primary health tracking device
-- **Run Command**: `flutter run -d adb-RFAX21TD0NA-FFYRNh._adb-tls-connect._tcp -t lib/main_wear.dart`
+- **Run Command**: `flutter run -d <watch-device-id> -t lib/main_wear.dart`
 
-### Phone Device (22101320G)
-- **Model**: Android Phone (22101320G)
-- **Device ID**: `6ece264d`
+### Phone Device (example)
 - **Purpose**: Companion app for data visualization
-- **Run Command**: `scripts\run_phone.bat`
+- **Run Command**: `pwsh -NoProfile -File scripts/run_phone.ps1` or
+  `scripts\run_phone.bat` on Windows
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -120,6 +117,9 @@ startup path is still available at `/#/app`, and direct app routes such as
 `/#/welcome` continue to work for smoke tests and previews. The landing page
 uses `FLOWFIT_APK_DOWNLOAD_URL` for its APK CTA and defaults to the maintained
 fork's latest GitHub release page until a signed APK artifact URL is supplied.
+
+Public Pages origin:
+`https://iron-mark.github.io/Hackathon-FlowFit/`
 
 ### Testing Connection
 
@@ -380,7 +380,7 @@ pwsh -NoProfile -File scripts\run_phone.ps1 -Device <device-id>
 
 ## 📈 Roadmap
 
-- [ ] Complete watch-to-phone data transfer implementation
+- [x] Watch-to-phone data transfer path (Wear OS companion builds)
 - [ ] Add workout heart rate zones
 - [ ] Implement HRV analysis and trends
 - [ ] Add resting heart rate calculation

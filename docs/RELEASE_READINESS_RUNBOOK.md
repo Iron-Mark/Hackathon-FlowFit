@@ -1,9 +1,10 @@
 # FlowFit Release Readiness Runbook
 
-Last updated: 2026-06-15
+Last updated: 2026-08-26
 
-This is the current source of truth for getting FlowFit ready for Play Store,
-App Store, and Flutter web deployment.
+Living runbook for Play Store, App Store, and Flutter web deployment. Cross-check
+store blockers with [AGENTS.md](../AGENTS.md) and
+[STORE_SUBMISSION_CHECKLIST.md](STORE_SUBMISSION_CHECKLIST.md).
 
 ## Current Local Status
 
