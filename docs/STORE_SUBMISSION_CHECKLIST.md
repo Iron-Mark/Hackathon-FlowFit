@@ -1,6 +1,6 @@
 # FlowFit Store Submission Checklist
 
-Last updated: 2026-08-21
+Last updated: 2026-08-25
 
 This checklist tracks store-facing readiness for Google Play, App Store, and
 Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
@@ -25,11 +25,11 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
       `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
       returns only passing backend verification rows on the live production
-      project. CI Docker validation already covers
+      project. Owner reported applying
       `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`
-      locally. That hardening migration is not yet applied to live
-      `xhmkghwijqpvnbpeeckg`. Prior 2026-06-23 advisor evidence is stale for
-      this migration.
+      in the live SQL editor on 2026-08-25. Independent
+      `verify_flowfit_backend.sql` evidence has not been captured from this
+      Cloud Agent, so this item stays open.
 - [ ] Supabase Auth confirm-signup email templates are rendered with
       `scripts/render_supabase_email_templates.ps1 -SupportEmailVerified` and
       `build/supabase-email-templates/confirm_signup.html` is copied into the
@@ -252,8 +252,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [x] Run `scripts/verify_web_deployment.ps1` against the deployed HTTPS
       origin and archive `build/web-deployment-verification.json`.
       Evidence from 2026-06-23: `build/web-deployment-verification.json`.
-      GitHub Pages origin remains live as of 2026-08-21:
-      `https://iron-mark.github.io/Hackathon-FlowFit/`.
+      GitHub Pages origin remains live as of 2026-08-25 on commit `5ad9cb4`
+      (`https://iron-mark.github.io/Hackathon-FlowFit/`).
 - [ ] Configure production Supabase redirect URLs for the web origin.
 - [ ] Smoke signup/login/onboarding/workout flow on deployed URL.
 - [ ] Decide whether JS or Wasm is the release target. Current repo is JS-ready

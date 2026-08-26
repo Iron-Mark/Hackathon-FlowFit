@@ -143,7 +143,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password reset email sent. Check your inbox.'),
+          content: Text(
+            'Password reset email sent. Check your inbox. A parent or guardian should help open it.',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -213,6 +215,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryBlue,
                   ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 8),
+
+                Text(
+                  'A parent or guardian should supervise this account.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: AppTheme.text),
                   textAlign: TextAlign.center,
                 ),
 

@@ -41,15 +41,16 @@ See `README.md` and `.github/copilot-instructions.md` for full developer workflo
 - Old notes about `solar_icons`, `track_screen.dart`, invalid `const`
   constructors, and roughly 42 failing tests are obsolete for this branch. Run
   fresh `flutter analyze` and `flutter test` before reporting pass/fail status.
-- Store release remains blocked until external inputs exist: apply
-  `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`
-  to the live production project, Android upload signing, and macOS/Xcode
-  signing for iOS. Flutter web Pages is live at
-  `https://iron-mark.github.io/Hackathon-FlowFit/` (including
-  `privacy.html` and `account-deletion.html`). Pages deploy vars substitute a
-  verified support inbox; committed source still uses the
+- Store release remains blocked until external inputs exist: independent
+  live backend verification of
+  `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`,
+  Android upload signing, and macOS/Xcode signing for iOS. Flutter web Pages
+  is live at `https://iron-mark.github.io/Hackathon-FlowFit/` (including
+  `privacy.html` and `account-deletion.html`) as of 2026-08-25. Pages deploy
+  vars substitute a verified support inbox; committed source still uses the
   `support@flowfit.com` replacement token. A self-attested `/age-gate` ships
-  and is not verifiable parental consent.
+  and is not verifiable parental consent. Owner reported applying the
+  hardening SQL in the live editor on 2026-08-25.
 
 ### Running the app
 

@@ -58,7 +58,9 @@ void main() {
       expect(calls.single.email, 'member@flowfit.test');
       expect(calls.single.redirectTo, 'com.msiazondev.flowfit://auth-callback');
       expect(
-        find.text('Password reset email sent. Check your inbox.'),
+        find.text(
+          'Password reset email sent. Check your inbox. A parent or guardian should help open it.',
+        ),
         findsOneWidget,
       );
     });
@@ -90,6 +92,13 @@ void main() {
       await tester.pumpWidget(_loginHarness());
       await tester.pumpAndSettle();
 
+      expect(
+        find.text('A parent or guardian should supervise this account.'),
+        findsOneWidget,
+      );
+
+      await tester.ensureVisible(find.text('Sign Up'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Sign Up'));
       await tester.pumpAndSettle();
 

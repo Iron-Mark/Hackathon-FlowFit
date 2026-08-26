@@ -4,6 +4,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
+  testWidgets('delete account tells a parent or guardian to submit', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _buildScreen(deleteAccount: ({required String password}) async {}),
+    );
+
+    expect(
+      find.text('A parent or guardian should submit this request.'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('delete account requires the permanent action checkbox', (
     tester,
   ) async {
