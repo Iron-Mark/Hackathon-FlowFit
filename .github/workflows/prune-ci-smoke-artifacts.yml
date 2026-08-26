@@ -1,0 +1,104 @@
+name: Prune CI smoke artifacts
+
+# Deletes retained not-for-store web/Wasm/AAB smoke trees. Flutter CI now
+# uploads those trees only on failure or manual dispatch, but older runs
+# kept ~100 MB copies for 90 days. This job reclaims that Actions storage.
+# JSON evidence and GitHub Pages deploy artifacts are left in place.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: prune-ci-smoke-artifacts
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    name: Delete retained smoke trees
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: write
+    steps:
+      - name: Delete named smoke artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess
+
+          names = {
+              "flowfit-release-smoke-not-for-store",
+              "flowfit-web-smoke-not-for-store",
+              "flowfit-web-wasm-smoke-not-for-store",
+          }
+          repo = os.environ["GH_REPO"]
+          deleted = 0
+          skipped = 0
+          bytes_removed = 0
+          page = 1
+
+          def gh_api(path, method="GET"):
+              cmd = ["gh", "api", "-X", method, path]
+              result = subprocess.run(cmd, capture_output=True, text=True)
+              if result.returncode != 0:
+                  raise RuntimeError(
+                      f"{method} {path} failed: {result.stderr or result.stdout}"
+                  )
+              return result.stdout
+
+          ids = []
+          while page <= 50:
+              payload = json.loads(
+                  gh_api(f"repos/{repo}/actions/artifacts?per_page=100&page={page}")
+              )
+              artifacts = payload.get("artifacts") or []
+              if not artifacts:
+                  break
+              for artifact in artifacts:
+                  if artifact.get("name") in names and not artifact.get("expired"):
+                      ids.append(
+                          (artifact["id"], artifact["name"], artifact["size_in_bytes"])
+                      )
+              if len(artifacts) < 100:
+                  break
+              page += 1
+
+          for artifact_id, name, size in ids:
+              delete = subprocess.run(
+                  [
+                      "gh",
+                      "api",
+                      "-X",
+                      "DELETE",
+                      f"repos/{repo}/actions/artifacts/{artifact_id}",
+                  ],
+                  capture_output=True,
+                  text=True,
+              )
+              if delete.returncode == 0:
+                  deleted += 1
+                  bytes_removed += size
+                  print(f"deleted {name} {artifact_id} ({size} bytes)")
+              else:
+                  skipped += 1
+                  print(
+                      f"skip {name} {artifact_id}: {delete.stderr or delete.stdout}"
+                  )
+
+          summary = (
+              f"Deleted {deleted} smoke artifacts "
+              f"({bytes_removed / (1024 * 1024):.1f} MB); skipped {skipped}."
+          )
+          print(summary)
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a", encoding="utf-8") as handle:
+                  handle.write(f"{summary}\n")
+          PY

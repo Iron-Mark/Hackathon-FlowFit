@@ -2583,6 +2583,35 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(webCleanupIndex, lessThan(androidBuildIndex));
   });
 
+  test('ci keeps checkout shallow and large smoke artifacts short-lived', () {
+    expect(ciWorkflow, contains('cancel-in-progress:'));
+    expect(
+      ciWorkflow,
+      contains(
+        'group: \${{ github.workflow }}-\${{ github.event.pull_request.number || github.ref }}',
+      ),
+    );
+    expect(ciWorkflow, contains('fetch-depth: 1'));
+    expect(ciWorkflow, contains('persist-credentials: false'));
+    expect(
+      ciWorkflow,
+      contains('if: failure() || github.event_name == \'workflow_dispatch\''),
+    );
+    expect(ciWorkflow, contains('retention-days: 3'));
+    expect(ciWorkflow, contains('retention-days: 7'));
+    expect(ciWorkflow, contains('flowfit-web-smoke-not-for-store'));
+    expect(ciWorkflow, contains('flowfit-release-smoke-not-for-store'));
+    expect(ciWorkflow, contains('sparse-checkout:'));
+    expect(
+      File('.github/workflows/prune-ci-smoke-artifacts.yml').readAsStringSync(),
+      contains('flowfit-release-smoke-not-for-store'),
+    );
+    expect(pagesWorkflow, contains('fetch-depth: 1'));
+    expect(pagesWorkflow, contains('retention-days: 7'));
+    expect(androidProductionReleaseWorkflow, contains('fetch-depth: 1'));
+    expect(androidProductionReleaseWorkflow, contains('retention-days: 30'));
+  });
+
   test('GitHub Pages workflow publishes production web artifacts', () {
     expect(pagesWorkflow, contains('name: Flutter Web Pages'));
     expect(pagesWorkflow, contains('deploy-ready:'));

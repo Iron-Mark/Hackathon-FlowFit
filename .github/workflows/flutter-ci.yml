@@ -16,6 +16,10 @@ env:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   windows-action-smoke:
     name: Windows Offline App Action Smoke
@@ -25,6 +29,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Set up Flutter
         uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
@@ -52,6 +59,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          sparse-checkout: |
+            supabase
+            scripts
 
       - name: Verify Docker and npm tooling
         shell: bash
@@ -124,6 +137,7 @@ jobs:
             build/supabase-local-backend-verification.json
             build/supabase-local-containers.txt
           if-no-files-found: warn
+          retention-days: 7
 
   verify:
     name: Analyze, Test, and Build
@@ -133,6 +147,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Free CI disk space
         shell: bash
@@ -284,18 +301,22 @@ jobs:
           test -f build/web-wasm/account-deletion.html
 
       - name: Upload web build artifact
+        if: failure() || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flowfit-web-smoke-not-for-store
           path: build/web
-          if-no-files-found: error
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Upload web Wasm build artifact
+        if: failure() || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flowfit-web-wasm-smoke-not-for-store
           path: build/web-wasm
-          if-no-files-found: error
+          if-no-files-found: ignore
+          retention-days: 3
 
       - name: Upload web static verification evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -305,6 +326,7 @@ jobs:
             build/web-static-ci-smoke.json
             build/web-app-smoke-ci.json
           if-no-files-found: error
+          retention-days: 7
 
       - name: Free web artifact build outputs before Android
         shell: bash
@@ -343,8 +365,10 @@ jobs:
             --dart-define=SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
 
       - name: Upload release smoke App Bundle
+        if: failure() || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: flowfit-release-smoke-not-for-store
           path: build/app/outputs/bundle/release/app-release.aab
-          if-no-files-found: error
+          if-no-files-found: ignore
+          retention-days: 3

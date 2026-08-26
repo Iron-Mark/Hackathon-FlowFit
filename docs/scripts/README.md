@@ -966,7 +966,8 @@ support email, and Supabase client variables. The gate validates the Supabase UR
 shape, rejects the retired FlowFit project ref and placeholders, and allows only
 publishable client keys. It uploads `build/web` to GitHub Pages, deploys it, and
 verifies the deployed site with `scripts/verify_web_deployment.ps1`. It uploads
-the JSON verification evidence as `flowfit-github-pages-verification`.
+the JSON verification evidence as `flowfit-github-pages-verification` with a
+7-day retention.
 
 The workflow has a `deploy-ready` job. Pushes to `main` skip the production
 Pages deployment with a notice only while the public web URL, Supabase
