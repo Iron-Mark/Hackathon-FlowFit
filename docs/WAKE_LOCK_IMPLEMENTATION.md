@@ -282,7 +282,7 @@ PowerManager.SCREEN_DIM_WAKE_LOCK  // Drains battery
 2. **Check Doze Mode:**
    ```bash
    # Disable doze for testing
-   adb shell dumpsys deviceidle whitelist +com.example.flowfit
+   adb shell dumpsys deviceidle whitelist +com.msiazondev.flowfit
    ```
 
 3. **Check Wake Lock Status:**
@@ -335,7 +335,7 @@ PowerManager.SCREEN_DIM_WAKE_LOCK  // Drains battery
 2. **Force Release:**
    ```bash
    # Kill app to force release
-   adb shell am force-stop com.example.flowfit
+   adb shell am force-stop com.msiazondev.flowfit
    ```
 
 ---

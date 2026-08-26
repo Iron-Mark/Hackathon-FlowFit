@@ -105,7 +105,7 @@ Before attempting installation:
 - [ ] Developer options enabled on watch
 - [ ] ADB debugging enabled on watch
 - [ ] Watch has sufficient battery (>20%)
-- [ ] Previous version uninstalled (if any): `adb -s 6ece264d uninstall com.example.flowfit`
+- [ ] Previous version uninstalled (if any): `adb -s 6ece264d uninstall com.msiazondev.flowfit`
 
 ## Verification Steps
 
@@ -115,11 +115,11 @@ After installation:
    ```bash
    adb -s 6ece264d shell pm list packages | findstr flowfit
    ```
-   Should show: `package:com.example.flowfit`
+   Should show: `package:com.msiazondev.flowfit`
 
 2. **Launch app**:
    ```bash
-   adb -s 6ece264d shell am start -n com.example.flowfit/.MainActivity
+   adb -s 6ece264d shell am start -n com.msiazondev.flowfit/.MainActivity
    ```
 
 3. **View logs**:
@@ -136,7 +136,7 @@ After installation:
 ### "INSTALL_FAILED_UPDATE_INCOMPATIBLE"
 ```bash
 # Uninstall old version first
-adb -s 6ece264d uninstall com.example.flowfit
+adb -s 6ece264d uninstall com.msiazondev.flowfit
 # Then reinstall
 flutter run -d 6ece264d
 ```
@@ -188,7 +188,7 @@ When installing, watch will show:
 ```
 Install app?
 FlowFit
-com.example.flowfit
+com.msiazondev.flowfit
 
 [Cancel]  [Install]
 ```
@@ -251,7 +251,7 @@ If not present:
 ```bash
 # Complete clean reinstall
 flutter clean
-adb -s 6ece264d uninstall com.example.flowfit
+adb -s 6ece264d uninstall com.msiazondev.flowfit
 flutter pub get
 flutter run -d 6ece264d
 ```
@@ -276,10 +276,10 @@ adb devices
 adb -s 6ece264d install -r build\app\outputs\flutter-apk\app-debug.apk
 
 # Uninstall app
-adb -s 6ece264d uninstall com.example.flowfit
+adb -s 6ece264d uninstall com.msiazondev.flowfit
 
 # Launch app
-adb -s 6ece264d shell am start -n com.example.flowfit/.MainActivity
+adb -s 6ece264d shell am start -n com.msiazondev.flowfit/.MainActivity
 
 # View logs
 adb -s 6ece264d logcat | findstr "FlowFit"

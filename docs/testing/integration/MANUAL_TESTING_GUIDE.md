@@ -4,7 +4,9 @@ This guide provides step-by-step instructions for manually testing the complete 
 
 ## Prerequisites
 
-1. **Supabase Setup**: Ensure Supabase is configured with correct URL and anon key in `lib/secrets.dart`
+1. **Supabase Setup**: Configure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`
+   via Dart defines or ignored `lib/secrets.dart` (copy from
+   `lib/secrets.dart.example`). Do not use a service-role key.
 2. **Database Schema**: Verify `user_profiles` table exists with proper RLS policies
 3. **Test Device**: Use a physical device or emulator with network connectivity
 4. **Clean State**: Start with app uninstalled or data cleared for fresh testing
