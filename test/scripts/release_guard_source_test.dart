@@ -2601,6 +2601,11 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
     expect(ciWorkflow, contains('retention-days: 7'));
     expect(ciWorkflow, contains('flowfit-web-smoke-not-for-store'));
     expect(ciWorkflow, contains('flowfit-release-smoke-not-for-store'));
+    expect(ciWorkflow, contains('sparse-checkout:'));
+    expect(
+      File('.github/workflows/prune-ci-smoke-artifacts.yml').readAsStringSync(),
+      contains('flowfit-release-smoke-not-for-store'),
+    );
     expect(pagesWorkflow, contains('fetch-depth: 1'));
     expect(pagesWorkflow, contains('retention-days: 7'));
     expect(androidProductionReleaseWorkflow, contains('fetch-depth: 1'));

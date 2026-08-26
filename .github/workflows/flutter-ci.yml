@@ -62,6 +62,9 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
+          sparse-checkout: |
+            supabase
+            scripts
 
       - name: Verify Docker and npm tooling
         shell: bash

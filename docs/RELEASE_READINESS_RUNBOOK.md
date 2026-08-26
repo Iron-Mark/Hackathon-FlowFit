@@ -885,6 +885,9 @@ compiles a separate Wasm smoke artifact under `build/web-wasm`, verifies
 it as `flowfit-web-wasm-smoke-not-for-store` only on failure or
 `workflow_dispatch`. That keeps the normal JS web
 artifact as the default handoff while proving the Wasm backend still compiles.
+`.github/workflows/prune-ci-smoke-artifacts.yml` deletes retained copies of
+those three smoke trees weekly, or on manual dispatch, so older 90-day
+uploads can be reclaimed without rewriting git history.
 Before every Android build, CI refreshes Flutter's ignored
 `android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java`
 file by deleting any stale copy and rerunning `flutter pub get`. This prevents
