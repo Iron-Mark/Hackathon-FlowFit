@@ -1780,6 +1780,8 @@ storeFile=upload-keystore.jks
       verifySupabaseBackend,
       contains('Resolve-JsonPayloadFromCommandOutput'),
     );
+    expect(verifySupabaseBackend, contains('Extract-LeadingJsonPayload'));
+    expect(verifySupabaseBackend, contains('SUPABASE_NO_UPDATE_NOTIFIER'));
     expect(
       verifySupabaseBackend,
       contains('SUPABASE_BACKEND_VERIFICATION_SQL_OK'),
@@ -1818,6 +1820,7 @@ storeFile=upload-keystore.jks
     expect(ciWorkflow, contains('docker version'));
     expect(ciWorkflow, contains('npm --version'));
     expect(ciWorkflow, contains('SUPABASE_CLI_SPEC: $supabaseCliSpec'));
+    expect(ciWorkflow, contains('SUPABASE_NO_UPDATE_NOTIFIER'));
     expect(ciWorkflow, contains('npx -y "\${SUPABASE_CLI_SPEC}" start'));
     expect(
       ciWorkflow,

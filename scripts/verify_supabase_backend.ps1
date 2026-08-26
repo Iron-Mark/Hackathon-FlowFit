@@ -104,18 +104,79 @@ function Convert-CommandOutputToText {
     }) -join [System.Environment]::NewLine
 }
 
-function Resolve-JsonPayloadFromCommandOutput {
+function Extract-LeadingJsonPayload {
     param([Parameter(Mandatory = $true)][string]$Text)
 
     $trimmedText = $Text.Trim()
-    if ($trimmedText.StartsWith('{') -or $trimmedText.StartsWith('[')) {
+    if ([string]::IsNullOrWhiteSpace($trimmedText)) {
+        return ''
+    }
+
+    try {
+        $null = $trimmedText | ConvertFrom-Json -ErrorAction Stop
         return $trimmedText
+    } catch {
+        # fall through and try to isolate a leading JSON payload
+    }
+
+    $openChar = $trimmedText[0]
+    if ($openChar -ne '[' -and $openChar -ne '{') {
+        return $trimmedText
+    }
+
+    $closeChar = if ($openChar -eq '[') { ']' } else { '}' }
+    $depth = 0
+    $inString = $false
+    $escape = $false
+
+    for ($index = 0; $index -lt $trimmedText.Length; $index++) {
+        $character = $trimmedText[$index]
+        if ($inString) {
+            if ($escape) {
+                $escape = $false
+            } elseif ($character -eq '\') {
+                $escape = $true
+            } elseif ($character -eq '"') {
+                $inString = $false
+            }
+            continue
+        }
+
+        if ($character -eq '"') {
+            $inString = $true
+            continue
+        }
+
+        if ($character -eq $openChar) {
+            $depth++
+        } elseif ($character -eq $closeChar) {
+            $depth--
+            if ($depth -eq 0) {
+                return $trimmedText.Substring(0, $index + 1)
+            }
+        }
+    }
+
+    return $trimmedText
+}
+
+function Resolve-JsonPayloadFromCommandOutput {
+    param([Parameter(Mandatory = $true)][string]$Text)
+
+    $leadingJson = Extract-LeadingJsonPayload -Text $Text
+    if (-not [string]::IsNullOrWhiteSpace($leadingJson)) {
+        try {
+            $null = $leadingJson | ConvertFrom-Json -ErrorAction Stop
+            return $leadingJson
+        } catch {
+            # fall through to line scan
+        }
     }
 
     $lines = $Text -split "`r?`n"
     for ($index = 0; $index -lt $lines.Count; $index++) {
         $candidate = ($lines[$index..($lines.Count - 1)] -join [System.Environment]::NewLine).Trim()
-        if (-not ($candidate.StartsWith('{') -or $candidate.StartsWith('['))) {
+        if (-not $candidate.StartsWith('{') -and -not $candidate.StartsWith('[')) {
             continue
         }
 
@@ -123,11 +184,17 @@ function Resolve-JsonPayloadFromCommandOutput {
             $null = $candidate | ConvertFrom-Json -ErrorAction Stop
             return $candidate
         } catch {
-            continue
+            $candidateJson = Extract-LeadingJsonPayload -Text $candidate
+            try {
+                $null = $candidateJson | ConvertFrom-Json -ErrorAction Stop
+                return $candidateJson
+            } catch {
+                continue
+            }
         }
     }
 
-    return $trimmedText
+    return $leadingJson
 }
 
 function Assert-AllBackendChecksPassed {
@@ -244,10 +311,17 @@ if ($Linked) {
 }
 
 Push-Location $repoRoot
+$previousUpdateNotifier = $env:SUPABASE_NO_UPDATE_NOTIFIER
+$env:SUPABASE_NO_UPDATE_NOTIFIER = '1'
 try {
     $commandOutput = & npx @commandArgs 2>&1
     $exitCode = $LASTEXITCODE
 } finally {
+    if ($null -eq $previousUpdateNotifier) {
+        Remove-Item Env:SUPABASE_NO_UPDATE_NOTIFIER -ErrorAction SilentlyContinue
+    } else {
+        $env:SUPABASE_NO_UPDATE_NOTIFIER = $previousUpdateNotifier
+    }
     Pop-Location
 }
 
