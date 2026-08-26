@@ -865,7 +865,10 @@ The main verify job installs the required Android SDK packages, runs the
 advisory release-readiness audit, builds the JS web artifact with
 `--no-wasm-dry-run`, builds Android phone/Wear debug APKs, and produces a
 debug-signed release App Bundle smoke artifact named
-`flowfit-release-smoke-not-for-store`. The CI
+`flowfit-release-smoke-not-for-store`. Large smoke trees (web, Wasm, and the
+debug-signed AAB) upload only on job failure or `workflow_dispatch`, and they
+expire after 3 days. Green pull-request and `main` runs keep the JSON
+evidence only. The CI
 release smoke uses
 `com.msiazondev.flowfit` package/auth values plus matching Dart defines and
 validation-shaped dummy Supabase client Dart defines, mirroring the local
@@ -873,12 +876,14 @@ preflight. It also verifies the built public privacy and account-deletion pages,
 serves
 `build/web` locally, runs `scripts/verify_web_deployment.ps1` with
 `-AllowInsecureLocalhost`, and uploads
-`flowfit-web-static-verification-smoke` before uploading the web artifact.
+`flowfit-web-static-verification-smoke` before optionally uploading the web
+artifact on failure or manual dispatch.
 The CI web artifact is named `flowfit-web-smoke-not-for-store` because it uses
 dummy Supabase Dart defines and is not a production web deploy artifact. CI also
 compiles a separate Wasm smoke artifact under `build/web-wasm`, verifies
 `main.dart.wasm` and the public compliance pages are present there, and uploads
-it as `flowfit-web-wasm-smoke-not-for-store`. That keeps the normal JS web
+it as `flowfit-web-wasm-smoke-not-for-store` only on failure or
+`workflow_dispatch`. That keeps the normal JS web
 artifact as the default handoff while proving the Wasm backend still compiles.
 Before every Android build, CI refreshes Flutter's ignored
 `android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java`
