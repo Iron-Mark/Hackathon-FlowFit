@@ -46,8 +46,8 @@ are historical snapshots.
 ## Troubleshooting
 
 1. [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-2. [INSTALLATION_TROUBLESHOOTING.md](INSTALLATION_TROUBLESHOOTING.md) - replace
-   any `com.example.flowfit` examples with `com.msiazondev.flowfit`
+2. [INSTALLATION_TROUBLESHOOTING.md](INSTALLATION_TROUBLESHOOTING.md) - package
+   ID is `com.msiazondev.flowfit`
 3. [WATCH_CONNECTION_GUIDE.md](WATCH_CONNECTION_GUIDE.md)
 
 ## Commands
