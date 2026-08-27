@@ -12,6 +12,7 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   SUPABASE_CLI_SPEC: supabase@2.115.0
+  SUPABASE_NO_UPDATE_NOTIFIER: '1'
 
 permissions:
   contents: read
