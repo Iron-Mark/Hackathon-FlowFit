@@ -23,7 +23,7 @@ Complete or accept these before uploading:
 | Public privacy + deletion pages | Live | Verified 2026-08-27 against GitHub Pages |
 | Supabase auth email templates in dashboard | Owner | Render locally (below), paste into Supabase Auth |
 | Live `verify_flowfit_backend.sql` | Owner | MCP OAuth or SQL editor on production project |
-| Families/Kids legal decision | Owner | Self-attested age gate vs Designed for Families |
+| Families/Kids legal decision | Owner | Options memo: [FAMILIES_KIDS_OPTIONS.md](FAMILIES_KIDS_OPTIONS.md) |
 
 ## Release identity (do not change without store/console updates)
 

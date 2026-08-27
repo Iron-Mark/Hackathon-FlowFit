@@ -20,6 +20,8 @@ Living docs for the maintained fork. Dated packs under `docs/release/` and
   Store, and Flutter web checklist
 - [PLAY_INTERNAL_TEST_RUNBOOK.md](PLAY_INTERNAL_TEST_RUNBOOK.md) - Google Play
   internal testing upload for `com.msiazondev.flowfit`
+- [FAMILIES_KIDS_OPTIONS.md](FAMILIES_KIDS_OPTIONS.md) - audience decision
+  memo (Options A/B/C; not legal advice)
 - [STORE_METADATA_DRAFT.md](STORE_METADATA_DRAFT.md) - listing copy and review
   notes
 - [PRIVACY_DATA_MAP.md](PRIVACY_DATA_MAP.md) - data inventory for store privacy
