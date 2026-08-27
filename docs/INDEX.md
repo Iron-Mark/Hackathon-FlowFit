@@ -18,6 +18,8 @@ Living docs for the maintained fork. Dated packs under `docs/release/` and
   Supabase, web, CI smoke retention, and store gates
 - [STORE_SUBMISSION_CHECKLIST.md](STORE_SUBMISSION_CHECKLIST.md) - Play, App
   Store, and Flutter web checklist
+- [PLAY_INTERNAL_TEST_RUNBOOK.md](PLAY_INTERNAL_TEST_RUNBOOK.md) - Google Play
+  internal testing upload for `com.msiazondev.flowfit`
 - [STORE_METADATA_DRAFT.md](STORE_METADATA_DRAFT.md) - listing copy and review
   notes
 - [PRIVACY_DATA_MAP.md](PRIVACY_DATA_MAP.md) - data inventory for store privacy
@@ -87,4 +89,4 @@ Common release helpers: `fetch_fonts.ps1`, `release_preflight.ps1`,
 
 ---
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
