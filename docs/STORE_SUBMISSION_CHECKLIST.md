@@ -1,10 +1,17 @@
 # FlowFit Store Submission Checklist
 
-Last updated: 2026-08-26
+Last updated: 2026-08-27
 
 This checklist tracks store-facing readiness for Google Play, App Store, and
-Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
-`docs/STORE_METADATA_DRAFT.md`.
+Flutter web. Use it with:
+
+- [RELEASE_READINESS_RUNBOOK.md](RELEASE_READINESS_RUNBOOK.md)
+- [PLAY_INTERNAL_TEST_RUNBOOK.md](PLAY_INTERNAL_TEST_RUNBOOK.md)
+- [STORE_METADATA_DRAFT.md](STORE_METADATA_DRAFT.md)
+- [FAMILIES_KIDS_OPTIONS.md](FAMILIES_KIDS_OPTIONS.md) (audience decision memo)
+- [AGENTS.md](../AGENTS.md) (current blockers)
+
+Owner tracker: [issue #10](https://github.com/Iron-Mark/Hackathon-FlowFit/issues/10).
 
 ## Shared Before Any Store Submission
 
@@ -22,19 +29,21 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       remove `.mcp.json` after capturing release evidence.
 - [ ] Supabase Auth advisor warnings are resolved or explicitly accepted for
       release: leaked-password protection and additional MFA options.
-- [ ] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
-      `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
-      returns only passing backend verification rows on the live production
-      project. Owner reported applying
+- [ ] `pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked -Output json -RequireAllPass`
+      or the equivalent MCP `execute_sql` run of
+      `supabase/verification/verify_flowfit_backend.sql` returns only passing
+      backend verification rows on the live production project. Owner reported
+      applying
       `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`
       in the live SQL editor on 2026-08-25. Independent
       `verify_flowfit_backend.sql` evidence has not been captured from this
       Cloud Agent, so this item stays open.
-- [ ] Supabase Auth confirm-signup email templates are rendered with
-      `scripts/render_supabase_email_templates.ps1 -SupportEmailVerified` and
-      `build/supabase-email-templates/confirm_signup.html` is copied into the
-      dashboard body after the support inbox is verified. Keep the rendered
-      `.txt` file with the release handoff.
+- [ ] Supabase Auth email templates are rendered and pasted into the dashboard:
+      `pwsh -NoProfile -File scripts/render_supabase_email_templates.ps1 -SupportEmailVerified`
+      then copy `build/supabase-email-templates/confirm_signup.html` (and the
+      other rendered HTML files) into Authentication → Email Templates. Keep
+      the rendered `.txt` files with the release handoff. See
+      [PLAY_INTERNAL_TEST_RUNBOOK.md](PLAY_INTERNAL_TEST_RUNBOOK.md) §1.
 - [ ] Production Supabase client values are supplied through `SUPABASE_URL` and
       `SUPABASE_PUBLISHABLE_KEY`, either from the process environment, ignored
       `.env.release`, or ignored local fallback `lib/secrets.dart`.
@@ -51,6 +60,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Production wrapper builds set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the deployed
       public HTTPS base URL; manual Flutter release commands pass the same value
       with `--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=...`.
+      Current public origin:
+      `https://iron-mark.github.io/Hackathon-FlowFit`.
+      Verify with:
+      `pwsh -NoProfile -File scripts/verify_web_deployment.ps1 -BaseUrl 'https://iron-mark.github.io/Hackathon-FlowFit' -SupportEmail 'marksiazon.dev@gmail.com'`.
 - [ ] Strict audit rejects local smoke/example values; do not use
       `com.flowfit.smoke`, `com.example.*`, `com.yourcompany.*`, `.example`,
       `.invalid`, `.test`, localhost, or IP-loopback web hosts for production
@@ -79,6 +92,7 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       production UI; use production route names such as `/activity-classifier`.
 - [ ] Real device smoke covers signup, login, profile onboarding, Buddy
       onboarding, workout creation, account deletion request, and signout.
+      Play path: [PLAY_INTERNAL_TEST_RUNBOOK.md](PLAY_INTERNAL_TEST_RUNBOOK.md) §6.
 
 ## Children's Audience, COPPA, and Families/Kids (DECISION-PENDING)
 
@@ -89,6 +103,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 > The self-attested `/age-gate` ships. Verifiable parental consent, store
 > Families/Kids enrollment, and COPPA assertions do not. Nothing here asserts
 > COPPA, Google Play Families, or Apple Kids Category compliance.
+>
+> Decision memo (options A/B/C): [FAMILIES_KIDS_OPTIONS.md](FAMILIES_KIDS_OPTIONS.md).
 
 - [ ] Owner/legal decision recorded: whether FlowFit targets a child audience
       (see the kids posture in `docs/PRIVACY_DATA_MAP.md`, ages 7-12) and

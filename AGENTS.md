@@ -55,7 +55,10 @@ See `README.md` and `.github/copilot-instructions.md` for full developer workflo
   (owner reported applying it on 2026-08-25), Supabase MCP OAuth or access
   token for live verify, dashboard auth email templates, mailbox smoke,
   Android upload signing, macOS/Xcode signing, and Families/Kids legal
-  decision.
+  decision ([docs/FAMILIES_KIDS_OPTIONS.md](docs/FAMILIES_KIDS_OPTIONS.md)).
+  Play internal testing steps:
+  [docs/PLAY_INTERNAL_TEST_RUNBOOK.md](docs/PLAY_INTERNAL_TEST_RUNBOOK.md).
+  Tracker: https://github.com/Iron-Mark/Hackathon-FlowFit/issues/10
 - Run fresh `flutter analyze` and `flutter test` before reporting pass/fail.
 
 ### Running the app

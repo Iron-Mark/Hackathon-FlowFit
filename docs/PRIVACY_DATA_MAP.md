@@ -74,7 +74,8 @@ This section records FlowFit's intended posture toward a child audience and
 the controls that already ship. Nothing here asserts COPPA, Google Play
 Families, or Apple Kids Category compliance. The owner/legal enrollment
 decision is still open; see the DECISION-PENDING block in
-`docs/STORE_SUBMISSION_CHECKLIST.md`.
+`docs/STORE_SUBMISSION_CHECKLIST.md` and the options memo in
+`docs/FAMILIES_KIDS_OPTIONS.md`.
 
 - Intended child audience: ages 7-12. The profile model already carries a
   kids-mode flag (see the Profile data row above); a child-directed release
