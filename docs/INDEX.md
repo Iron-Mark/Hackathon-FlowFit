@@ -18,9 +18,10 @@ Essential documentation that should be easily accessible:
 
 ---
 
-## 🎤 Presentation Documentation (`docs/presentation/`)
+## 🎤 Presentation Documentation (`docs/archive/presentation/`) — archived
 
-Documentation specifically for presenting the project to judges or stakeholders:
+Hackathon judging/pitch material. The hackathon is over, so these moved to
+the archive; kept for reference, no longer part of the active doc set:
 
 ### Main Presentation Guide
 - **PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md** ⭐
@@ -166,10 +167,10 @@ Build and deployment scripts:
 
 ## 🎯 Quick Navigation
 
-### For Presentation:
-1. Start with: `docs/presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md`
-2. Reference: `docs/presentation/SAMSUNG_TECHNOLOGIES_USED.md`
-3. Quick facts: `docs/presentation/WEAR_OS_INTEGRATION_SUMMARY.md`
+### For Presentation (archived):
+1. Start with: `docs/archive/presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md`
+2. Reference: `docs/archive/presentation/SAMSUNG_TECHNOLOGIES_USED.md`
+3. Quick facts: `docs/archive/presentation/WEAR_OS_INTEGRATION_SUMMARY.md`
 
 ### For Development:
 1. Setup: `README.md` and `docs/QUICK_START.md`
@@ -185,8 +186,9 @@ Build and deployment scripts:
 ## 📊 Documentation Statistics
 
 - **Markdown Documents:** 90 files
-- **Archived Markdown Documents:** 1 file (`docs/archive/`)
-- **Presentation Docs:** 3 files
+- **Archived Markdown Documents:** 6 files (`docs/archive/`) — includes 3
+  presentation docs and 2 retired `.kiro/specs/` (advanced-sensor-integration,
+  dashboard-refactoring-merge)
 - **Scripts:** 30 files
 
 ---
@@ -200,7 +202,7 @@ Build and deployment scripts:
 - **Integration:** Look in `docs/implementation/`
 
 ### Find by Purpose:
-- **Presenting:** `docs/presentation/`
+- **Presenting (archived):** `docs/archive/presentation/`
 - **Building:** `scripts/`
 - **Understanding:** `docs/features/`
 - **Debugging:** `docs/TROUBLESHOOTING.md` or `docs/implementation/`
@@ -221,7 +223,7 @@ flowfit/
 ├── docs/TROUBLESHOOTING.md          # Troubleshooting
 ├── docs/
 │   ├── INDEX.md                # This file
-│   ├── presentation/           # For judges/stakeholders
+│   ├── archive/                # Retired docs (hackathon presentation, old kiro specs)
 │   ├── implementation/         # Technical implementation
 │   └── features/               # Feature documentation
 └── scripts/                    # Build/deployment scripts
@@ -233,7 +235,7 @@ flowfit/
 
 1. **New to the project?** Start with `README.md`
 2. **Want to run it?** Check `docs/QUICK_START.md`
-3. **Preparing presentation?** Go to `docs/presentation/`
+3. **Looking for old hackathon pitch material?** Archived at `docs/archive/presentation/`
 4. **Having issues?** Check `docs/TROUBLESHOOTING.md`
 
 ---
