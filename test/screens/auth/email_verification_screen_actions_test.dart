@@ -20,6 +20,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.textContaining('parent or guardian'), findsOneWidget);
+
     await _tapVisible(tester, find.text('I\'ve Verified My Email'));
 
     expect(checkCalls, 1);

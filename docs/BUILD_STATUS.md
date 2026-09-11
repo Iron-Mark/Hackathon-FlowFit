@@ -1,6 +1,10 @@
 # Build Status
 
-## ✅ Latest Local Build Status: READY
+> Historical local recovery notes from 2026-06-15. For current toolchain,
+> Pages, CI, and store blockers, use [AGENTS.md](../AGENTS.md) and
+> [STORE_SUBMISSION_CHECKLIST.md](STORE_SUBMISSION_CHECKLIST.md).
+
+## Latest Local Build Status: READY (as of 2026-06-15)
 
 **Last Updated**: 2026-06-15
 

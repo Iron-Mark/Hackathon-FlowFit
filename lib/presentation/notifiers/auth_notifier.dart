@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flowfit/domain/entities/auth_state.dart';
 import 'package:flowfit/domain/repositories/i_auth_repository.dart';
 import 'package:flowfit/domain/exceptions/auth_exceptions.dart';
+import 'package:flowfit/domain/password_policy.dart';
 
 /// StateNotifier for managing authentication state.
 ///
@@ -51,7 +52,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   ///
   /// Requirement 1.1: Create new user account with valid credentials
   /// Requirement 1.3: Reject invalid email format before sending to Supabase
-  /// Requirement 1.4: Reject password shorter than 8 characters
+  /// Requirement 1.4: Reject passwords that fail the letters+digits policy
   Future<void> signUp({
     required String email,
     required String password,
@@ -68,7 +69,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
 
       // Validate password strength locally (Requirement 1.4)
-      if (password.length < 8) {
+      if (!PasswordPolicy.isSatisfied(password)) {
         throw WeakPasswordException();
       }
 

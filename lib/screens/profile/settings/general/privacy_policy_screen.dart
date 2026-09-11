@@ -86,7 +86,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSection(
               context,
               'Service Providers',
-              'FlowFit uses Supabase for authentication and database sync. Device APIs and SDKs such as Samsung Health Sensor API, geolocation, camera, image picker, local notifications, and on-device ML packages may process data needed for the features you choose to use.',
+              'FlowFit uses Supabase for authentication and database sync. If a release is configured with an OpenRouteService key, foreground location may be sent to OpenRouteService only to look up nearby wellness points of interest. Device APIs and SDKs such as Samsung Health Sensor API, geolocation, camera, image picker, local notifications, and on-device ML packages may process data needed for the features you choose to use.',
             ),
             const SizedBox(height: 20),
             _buildSection(
@@ -162,7 +162,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             Center(
               child: Text(
-                'Last updated: July 21, 2026',
+                'Last updated: August 25, 2026',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

@@ -1,10 +1,17 @@
 # FlowFit Store Submission Checklist
 
-Last updated: 2026-07-21
+Last updated: 2026-08-27
 
 This checklist tracks store-facing readiness for Google Play, App Store, and
-Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
-`docs/STORE_METADATA_DRAFT.md`.
+Flutter web. Use it with:
+
+- [RELEASE_READINESS_RUNBOOK.md](RELEASE_READINESS_RUNBOOK.md)
+- [PLAY_INTERNAL_TEST_RUNBOOK.md](PLAY_INTERNAL_TEST_RUNBOOK.md)
+- [STORE_METADATA_DRAFT.md](STORE_METADATA_DRAFT.md)
+- [FAMILIES_KIDS_OPTIONS.md](FAMILIES_KIDS_OPTIONS.md) (audience decision memo)
+- [AGENTS.md](../AGENTS.md) (current blockers)
+
+Owner tracker: [issue #10](https://github.com/Iron-Mark/Hackathon-FlowFit/issues/10).
 
 ## Shared Before Any Store Submission
 
@@ -22,15 +29,21 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       remove `.mcp.json` after capturing release evidence.
 - [ ] Supabase Auth advisor warnings are resolved or explicitly accepted for
       release: leaked-password protection and additional MFA options.
-- [x] `scripts/verify_supabase_backend.ps1 -Linked` or the equivalent MCP
-      `execute_sql` run of `supabase/verification/verify_flowfit_backend.sql`
-      returns only passing backend verification rows.
-      Evidence from 2026-06-23: `build/supabase-db-lint-advisors-current.json`.
-- [ ] Supabase Auth confirm-signup email templates are rendered with
-      `scripts/render_supabase_email_templates.ps1 -SupportEmailVerified` and
-      `build/supabase-email-templates/confirm_signup.html` is copied into the
-      dashboard body after the support inbox is verified. Keep the rendered
-      `.txt` file with the release handoff.
+- [ ] `pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked -Output json -RequireAllPass`
+      or the equivalent MCP `execute_sql` run of
+      `supabase/verification/verify_flowfit_backend.sql` returns only passing
+      backend verification rows on the live production project. Owner reported
+      applying
+      `supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql`
+      in the live SQL editor on 2026-08-25. Independent
+      `verify_flowfit_backend.sql` evidence has not been captured from this
+      Cloud Agent, so this item stays open.
+- [ ] Supabase Auth email templates are rendered and pasted into the dashboard:
+      `pwsh -NoProfile -File scripts/render_supabase_email_templates.ps1 -SupportEmailVerified`
+      then copy `build/supabase-email-templates/confirm_signup.html` (and the
+      other rendered HTML files) into Authentication → Email Templates. Keep
+      the rendered `.txt` files with the release handoff. See
+      [PLAY_INTERNAL_TEST_RUNBOOK.md](PLAY_INTERNAL_TEST_RUNBOOK.md) §1.
 - [ ] Production Supabase client values are supplied through `SUPABASE_URL` and
       `SUPABASE_PUBLISHABLE_KEY`, either from the process environment, ignored
       `.env.release`, or ignored local fallback `lib/secrets.dart`.
@@ -47,16 +60,20 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [ ] Production wrapper builds set `FLOWFIT_PUBLIC_WEB_BASE_URL` to the deployed
       public HTTPS base URL; manual Flutter release commands pass the same value
       with `--dart-define=FLOWFIT_PUBLIC_WEB_BASE_URL=...`.
+      Current public origin:
+      `https://iron-mark.github.io/Hackathon-FlowFit`.
+      Verify with:
+      `pwsh -NoProfile -File scripts/verify_web_deployment.ps1 -BaseUrl 'https://iron-mark.github.io/Hackathon-FlowFit' -SupportEmail 'marksiazon.dev@gmail.com'`.
 - [ ] Strict audit rejects local smoke/example values; do not use
       `com.flowfit.smoke`, `com.example.*`, `com.yourcompany.*`, `.example`,
       `.invalid`, `.test`, localhost, or IP-loopback web hosts for production
       artifacts.
-- [ ] Public privacy-policy URL is live, accessible without login, not a PDF,
-      and matches `docs/PRIVACY_DATA_MAP.md`. After deploying Flutter web, use
-      `https://<your-web-host>/privacy.html`.
-- [ ] Public account-deletion URL is live and lets users initiate deletion
-      without reinstalling the app. After deploying Flutter web, use
-      `https://<your-web-host>/account-deletion.html`.
+- [x] Public privacy-policy URL is live, accessible without login, not a PDF,
+      and matches `docs/PRIVACY_DATA_MAP.md`. Deployed origin:
+      `https://iron-mark.github.io/Hackathon-FlowFit/privacy.html`.
+- [x] Public account-deletion URL is live and lets users initiate deletion
+      without reinstalling the app. Deployed origin:
+      `https://iron-mark.github.io/Hackathon-FlowFit/account-deletion.html`.
 - [ ] In-app Privacy Policy, Terms, and Delete Account screens have final
       maintainer/legal-reviewed copy.
 - [x] The source default `support@flowfit.com` has been replaced by a verified
@@ -75,15 +92,19 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       production UI; use production route names such as `/activity-classifier`.
 - [ ] Real device smoke covers signup, login, profile onboarding, Buddy
       onboarding, workout creation, account deletion request, and signout.
+      Play path: [PLAY_INTERNAL_TEST_RUNBOOK.md](PLAY_INTERNAL_TEST_RUNBOOK.md) §6.
 
 ## Children's Audience, COPPA, and Families/Kids (DECISION-PENDING)
 
-> DECISION-PENDING: This block is a scaffold only. It stays blocked until the
-> owner/legal decision on whether FlowFit targets a child audience and enrolls
-> in Google Play's Designed for Families / Teacher Approved program and Apple's
-> Kids Category is finalized. Do not treat any item below as executed: none of
-> these obligations are implemented yet, and nothing here asserts COPPA, Google
-> Play Families, or Apple Kids Category compliance.
+> DECISION-PENDING: This block is a scaffold for store Families/Kids
+> enrollment. It stays blocked until the owner/legal decision on whether
+> FlowFit targets a child audience and enrolls in Google Play's Designed for
+> Families / Teacher Approved program and Apple's Kids Category is finalized.
+> The self-attested `/age-gate` ships. Verifiable parental consent, store
+> Families/Kids enrollment, and COPPA assertions do not. Nothing here asserts
+> COPPA, Google Play Families, or Apple Kids Category compliance.
+>
+> Decision memo (options A/B/C): [FAMILIES_KIDS_OPTIONS.md](FAMILIES_KIDS_OPTIONS.md).
 
 - [ ] Owner/legal decision recorded: whether FlowFit targets a child audience
       (see the kids posture in `docs/PRIVACY_DATA_MAP.md`, ages 7-12) and
@@ -97,9 +118,10 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
       SDKs ship in a child-directed build, confirm each is enrolled in the
       store's self-certified families ads program. FlowFit ships no ad SDK
       today; revisit if that changes.
-- [ ] Neutral age screen (age gate) implemented before any child-directed
-      experience so age is collected in a neutral, non-incentivized way. Not yet
-      implemented; `docs/PRIVACY_DATA_MAP.md` records the parental-consent gap.
+- [x] Neutral age screen (`/age-gate`) is implemented before Buddy or survey
+      onboarding. Age is self-attested and splits 7-12 Buddy mode from 13+
+      survey onboarding. This is not verifiable parental consent.
+      `docs/PRIVACY_DATA_MAP.md` records the remaining VPC gap.
 - [ ] Verifiable parental/guardian consent flow implemented for users under the
       applicable consent age before collecting personal data. Not yet
       implemented.
@@ -246,6 +268,8 @@ Flutter web. Use it with `docs/RELEASE_READINESS_RUNBOOK.md` and
 - [x] Run `scripts/verify_web_deployment.ps1` against the deployed HTTPS
       origin and archive `build/web-deployment-verification.json`.
       Evidence from 2026-06-23: `build/web-deployment-verification.json`.
+      GitHub Pages origin remains live as of 2026-08-26 on commit `0537627`
+      (`https://iron-mark.github.io/Hackathon-FlowFit/`).
 - [ ] Configure production Supabase redirect URLs for the web origin.
 - [ ] Smoke signup/login/onboarding/workout flow on deployed URL.
 - [ ] Decide whether JS or Wasm is the release target. Current repo is JS-ready

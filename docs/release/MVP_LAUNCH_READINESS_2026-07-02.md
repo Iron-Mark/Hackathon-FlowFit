@@ -1,6 +1,10 @@
 # FlowFit MVP Launch Readiness - 2026-07-03 Refresh
 
-This snapshot records the current MVP release state after PR #13 merged to
+> Historical snapshot from early July 2026. For current status use
+> [AGENTS.md](../../AGENTS.md) and
+> [STORE_SUBMISSION_CHECKLIST.md](../STORE_SUBMISSION_CHECKLIST.md).
+
+This snapshot records the MVP release state after PR #13 merged to
 `main` and PR #15 refreshed the app-owned support queue, release gates, and
 app-web handoff evidence on `codex/flowfit-launch-evidence-refresh`.
 

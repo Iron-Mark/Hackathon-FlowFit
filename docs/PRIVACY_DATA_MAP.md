@@ -60,6 +60,7 @@ Sources:
 | Supabase | Auth, database, API transport | Stores account, profile, Buddy, workout, and heart-rate records configured by FlowFit. |
 | Samsung Health Sensor API | Wear OS heart-rate sensor access | Reads heart-rate sensor data on supported Samsung devices after permission. |
 | Geolocator/flutter_map | Location and map/geofence features | Accesses foreground location for wellness missions and routes while the app is open. |
+| OpenRouteService | Optional nearby POI lookup | Used only when `FLOWFIT_OPENROUTE_API_KEY` is set for a release. Sends foreground coordinates to OpenRouteService; omit the key to keep GPS traces on-device. |
 | Camera/image_picker/ultralytics_yolo/tflite_flutter | User-triggered camera/image inference | Processes camera frames/images for detection/classification features. |
 | flutter_local_notifications | Local alerts | Uses device notification permission for reminders; no remote push is configured in this repo. |
 
@@ -67,20 +68,23 @@ Before submission, review each SDK provider's current privacy guidance and
 reflect any automatic collection/transmission in Play Data safety and App Store
 privacy labels.
 
-## Children's Audience and Parental Consent (Posture, Not Yet Implemented)
+## Children's Audience and Parental Consent (Current Controls)
 
-This section records FlowFit's intended posture toward a child audience. It is a
-planning posture only: the controls below are not yet implemented, and nothing
-here asserts COPPA, Google Play Families, or Apple Kids Category compliance. The
-owner/legal enrollment decision is still open; see the DECISION-PENDING block in
-`docs/STORE_SUBMISSION_CHECKLIST.md`.
+This section records FlowFit's intended posture toward a child audience and
+the controls that already ship. Nothing here asserts COPPA, Google Play
+Families, or Apple Kids Category compliance. The owner/legal enrollment
+decision is still open; see the DECISION-PENDING block in
+`docs/STORE_SUBMISSION_CHECKLIST.md` and the options memo in
+`docs/FAMILIES_KIDS_OPTIONS.md`.
 
 - Intended child audience: ages 7-12. The profile model already carries a
   kids-mode flag (see the Profile data row above); a child-directed release
   would treat these users as the primary audience.
+- Age gate: a self-attested `/age-gate` screen is implemented and splits
+  7-12 Buddy mode from 13+ survey onboarding. It is not verifiable parental
+  consent and does not block data collection on its own.
 - Parental/guardian consent: verifiable parental consent is required before
-  collecting personal data from a child, and is NOT yet implemented. No neutral
-  age screen or consent gate currently blocks child data collection.
+  collecting personal data from a child, and is NOT yet implemented.
 - Proposed data model to support this posture (not yet built), aligned with the
   planned relational entities:
   - `guardians` — parent/guardian contact and verification records linked to a
@@ -109,8 +113,11 @@ owner/legal enrollment decision is still open; see the DECISION-PENDING block in
   Prefer `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` Dart defines; ignored
   `lib/secrets.dart` is only a local fallback for release/audit scripts.
 - Account deletion is initiated in-app through `request_account_deletion()`.
-  The function deletes app-owned public records immediately and creates a
-  pending `account_deletion_requests` row for privileged auth-account deletion.
+  The function deletes app-owned public records immediately, including
+  `support_requests`, queues a pending `account_deletion_requests` audit row,
+  then deletes the signed-in `auth.users` row through private
+  `delete_own_auth_user()`. Support request email is bound to the JWT, not
+  client-supplied.
 - While a deletion request is `pending` or `processing`, RLS blocks
   authenticated client inserts and updates on app-owned public data so another
   active session cannot recreate deleted rows before admin processing.

@@ -45,6 +45,9 @@ void main() {
     await tester.pumpWidget(buildHarness());
     await tester.pumpAndSettle();
 
+    expect(find.text('Find Your Flow'), findsOneWidget);
+    expect(find.textContaining('parent or guardian'), findsOneWidget);
+
     await tester.ensureVisible(find.text('Get Started'));
     await tester.tap(find.text('Get Started'));
     await tester.pumpAndSettle();

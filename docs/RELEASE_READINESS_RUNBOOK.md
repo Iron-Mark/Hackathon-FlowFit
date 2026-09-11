@@ -1,9 +1,10 @@
 # FlowFit Release Readiness Runbook
 
-Last updated: 2026-06-15
+Last updated: 2026-08-26
 
-This is the current source of truth for getting FlowFit ready for Play Store,
-App Store, and Flutter web deployment.
+Living runbook for Play Store, App Store, and Flutter web deployment. Cross-check
+store blockers with [AGENTS.md](../AGENTS.md) and
+[STORE_SUBMISSION_CHECKLIST.md](STORE_SUBMISSION_CHECKLIST.md).
 
 ## Current Local Status
 
@@ -563,14 +564,14 @@ $dbPassword = (Get-Content -Raw .env |
   Select-String -Pattern '(?m)^\s*SUPABASE_DB_PASSWORD\s*=\s*(.+?)\s*$').Matches[0].Groups[1].Value.Trim().Trim('"').Trim("'")
 $dbUrl = "postgresql://postgres.${projectRef}:$([uri]::EscapeDataString($dbPassword))@${poolerHost}:5432/postgres?sslmode=require"
 
-npx -y supabase@latest db lint `
+npx -y supabase@2.115.0 db lint `
   --db-url $dbUrl `
   --schema public `
   --level warning `
   --fail-on error `
   --output-format json
 
-npx -y supabase@latest db advisors `
+npx -y supabase@2.115.0 db advisors `
   --db-url $dbUrl `
   --type all `
   --level warn `
@@ -744,10 +745,10 @@ pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -ValidateOnly
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Linked
 
 # CI-style local Docker backend verification:
-npx -y supabase@latest start --exclude analytics,edge-runtime,functions,imgproxy,studio,vector
-npx -y supabase@latest db reset --local --no-seed
+npx -y supabase@2.115.0 start --exclude analytics,edge-runtime,functions,imgproxy,studio,vector
+npx -y supabase@2.115.0 db reset --local --no-seed
 pwsh -NoProfile -File scripts/verify_supabase_backend.ps1 -Local -Output json -RequireAllPass -OutFile build/supabase-local-backend-verification.json
-npx -y supabase@latest stop --no-backup
+npx -y supabase@2.115.0 stop --no-backup
 
 # Native Android live-auth E2E evidence for strict audit:
 pwsh -NoProfile -File scripts/verify_android_live_auth_smoke.ps1 -Device emulator-5554 -EnvFile .env.release -OutFile build/android-live-auth-smoke-latest.json
@@ -865,7 +866,10 @@ The main verify job installs the required Android SDK packages, runs the
 advisory release-readiness audit, builds the JS web artifact with
 `--no-wasm-dry-run`, builds Android phone/Wear debug APKs, and produces a
 debug-signed release App Bundle smoke artifact named
-`flowfit-release-smoke-not-for-store`. The CI
+`flowfit-release-smoke-not-for-store`. Large smoke trees (web, Wasm, and the
+debug-signed AAB) upload only on job failure or `workflow_dispatch`, and they
+expire after 3 days. Green pull-request and `main` runs keep the JSON
+evidence only. The CI
 release smoke uses
 `com.msiazondev.flowfit` package/auth values plus matching Dart defines and
 validation-shaped dummy Supabase client Dart defines, mirroring the local
@@ -873,13 +877,18 @@ preflight. It also verifies the built public privacy and account-deletion pages,
 serves
 `build/web` locally, runs `scripts/verify_web_deployment.ps1` with
 `-AllowInsecureLocalhost`, and uploads
-`flowfit-web-static-verification-smoke` before uploading the web artifact.
+`flowfit-web-static-verification-smoke` before optionally uploading the web
+artifact on failure or manual dispatch.
 The CI web artifact is named `flowfit-web-smoke-not-for-store` because it uses
 dummy Supabase Dart defines and is not a production web deploy artifact. CI also
 compiles a separate Wasm smoke artifact under `build/web-wasm`, verifies
 `main.dart.wasm` and the public compliance pages are present there, and uploads
-it as `flowfit-web-wasm-smoke-not-for-store`. That keeps the normal JS web
+it as `flowfit-web-wasm-smoke-not-for-store` only on failure or
+`workflow_dispatch`. That keeps the normal JS web
 artifact as the default handoff while proving the Wasm backend still compiles.
+`.github/workflows/prune-ci-smoke-artifacts.yml` deletes retained copies of
+those three smoke trees weekly, or on manual dispatch, so older 90-day
+uploads can be reclaimed without rewriting git history.
 Before every Android build, CI refreshes Flutter's ignored
 `android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java`
 file by deleting any stale copy and rerunning `flutter pub get`. This prevents

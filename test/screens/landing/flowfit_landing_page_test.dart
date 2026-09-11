@@ -13,6 +13,11 @@ void main() {
     await _pumpLanding(tester);
 
     expect(find.text('FlowFit'), findsWidgets);
+    expect(find.textContaining('parent or guardian'), findsWidgets);
+    expect(
+      find.textContaining('A fitness buddy for families.'),
+      findsOneWidget,
+    );
     expect(find.text('Try Web App'), findsWidgets);
     expect(find.text('Download APK'), findsWidgets);
     expect(find.text('What FlowFit connects'.toUpperCase()), findsOneWidget);
@@ -88,9 +93,14 @@ void main() {
     await _pumpLanding(tester);
 
     expect(tester.takeException(), isNull);
-    await tester.ensureVisible(find.text('FlowFit web MVP release surface'));
+    await tester.ensureVisible(
+      find.text('Parent-supervised kids fitness for Wear OS and Android.'),
+    );
     await tester.pumpAndSettle();
-    expect(find.text('FlowFit web MVP release surface'), findsOneWidget);
+    expect(
+      find.text('Parent-supervised kids fitness for Wear OS and Android.'),
+      findsOneWidget,
+    );
   });
 }
 

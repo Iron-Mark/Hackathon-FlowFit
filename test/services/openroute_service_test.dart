@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flowfit/services/location/openroute_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -16,6 +17,7 @@ void main() {
         Map<String, String>? requestHeaders;
 
         final service = OpenRouteService(
+          apiKey: 'test-openroute-key',
           httpClient: MockClient((request) async {
             requestUrl = request.url;
             requestHeaders = request.headers;
@@ -52,7 +54,7 @@ void main() {
         );
 
         expect(requestUrl?.path, '/pois');
-        expect(requestHeaders?['Authorization'], OpenRouteService.apiKey);
+        expect(requestHeaders?['Authorization'], 'test-openroute-key');
         expect(requestBody?['request'], 'pois');
         expect(requestBody?['geometry']['geojson']['coordinates'], [
           120.9842,
@@ -73,6 +75,7 @@ void main() {
 
     test('returns an empty list when the API is unavailable', () async {
       final service = OpenRouteService(
+        apiKey: 'test-openroute-key',
         httpClient: MockClient((request) async => http.Response('fail', 503)),
       );
 
@@ -102,6 +105,33 @@ void main() {
 
       expect(called, isFalse);
       expect(pois, isEmpty);
+    });
+
+    test('does not send coordinates when no API key is configured', () async {
+      var called = false;
+      final service = OpenRouteService(
+        apiKey: '',
+        httpClient: MockClient((request) async {
+          called = true;
+          return http.Response('{}', 200);
+        }),
+      );
+
+      final pois = await service.searchNearbyPOIs(
+        const LatLng(14.5995, 120.9842),
+        radius: 1500,
+        categories: ['park'],
+      );
+
+      expect(called, isFalse);
+      expect(pois, isEmpty);
+    });
+
+    test('does not embed a third-party API key', () {
+      final source = File(
+        'lib/services/location/openroute_service.dart',
+      ).readAsStringSync();
+      expect(source, isNot(contains('5b3ce359')));
     });
   });
 }

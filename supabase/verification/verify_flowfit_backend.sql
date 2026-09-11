@@ -179,6 +179,7 @@ expected_triggers(table_name, trigger_name) as (
     ('workout_sessions', 'update_workout_sessions_updated_at'),
     ('heart_rate', 'update_heart_rate_updated_at'),
     ('support_requests', 'update_support_requests_updated_at'),
+    ('support_requests', 'normalize_support_request_row'),
     ('account_deletion_requests', 'update_account_deletion_requests_updated_at')
 ),
 expected_indexes(index_name) as (
@@ -200,6 +201,10 @@ expected_constraints(table_name, constraint_name) as (
     (
       'support_requests',
       'support_requests_message_valid'
+    ),
+    (
+      'support_requests',
+      'support_requests_user_id_fkey'
     )
 ),
 missing_tables as (
@@ -561,6 +566,52 @@ flowfit_backend_verification as (
       ) then 'pass' else 'fail'
     end,
     'account deletion queue must survive later auth.users deletion for admin processing'
+  union all
+  select
+    'account deletion purges support requests',
+    case
+      when exists (
+        select 1
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'public'
+          and p.proname = 'request_account_deletion'
+          and p.prosecdef = false
+          and pg_get_functiondef(p.oid) ilike '%support_requests%'
+          and pg_get_functiondef(p.oid) ilike '%private.delete_own_auth_user%'
+      ) then 'pass' else 'fail'
+    end,
+    'request_account_deletion must delete support_requests and then the caller auth user'
+  union all
+  select
+    'private auth-user deletion helper is security definer',
+    case
+      when exists (
+        select 1
+        from pg_proc p
+        join pg_namespace n on n.oid = p.pronamespace
+        where n.nspname = 'private'
+          and p.proname = 'delete_own_auth_user'
+          and p.prosecdef = true
+          and p.pronargs = 0
+      ) then 'pass' else 'fail'
+    end,
+    'auth user deletion must live in private.delete_own_auth_user() as security definer'
+  union all
+  select
+    'support_requests force row level security',
+    case
+      when exists (
+        select 1
+        from pg_class c
+        join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = 'public'
+          and c.relname = 'support_requests'
+          and c.relrowsecurity
+          and c.relforcerowsecurity
+      ) then 'pass' else 'fail'
+    end,
+    'support_requests must FORCE RLS so table owners cannot bypass policies'
 )
 select check_name, status, detail
 from flowfit_backend_verification

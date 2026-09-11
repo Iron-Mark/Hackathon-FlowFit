@@ -432,7 +432,7 @@ class _EmailVerificationScreenState
 
               // Help Text
               Text(
-                'Didn\'t receive the email? Check your spam folder',
+                'Didn\'t receive the email? Check your spam folder. A parent or guardian should help open it.',
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),

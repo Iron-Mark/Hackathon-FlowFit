@@ -576,11 +576,13 @@ any non-pass row. `-OutFile` writes the raw Supabase CLI query output inside the
 repository, normally under `build/`, for non-secret release evidence.
 
 GitHub Actions runs the same check in the `supabase-local-validation` job. That
-job starts the Supabase Docker stack, resets the local database from tracked
+job starts the Supabase Docker stack with the pinned `supabase@2.115.0` CLI,
+resets the local database from tracked
 migrations with `supabase db reset --local --no-seed`, runs this verifier with
-`-Local -Output json -RequireAllPass`, uploads the JSON/log evidence as
-`flowfit-supabase-local-validation`, and stops the local containers after the
-run.
+`-Local -Output json -RequireAllPass`, uploads non-secret JSON and container
+evidence as `flowfit-supabase-local-validation`, and stops the local containers
+after the run. Start logs and `supabase status` JSON are not uploaded because
+they contain local JWTs, service-role keys, and database URLs.
 
 ---
 
@@ -964,7 +966,8 @@ support email, and Supabase client variables. The gate validates the Supabase UR
 shape, rejects the retired FlowFit project ref and placeholders, and allows only
 publishable client keys. It uploads `build/web` to GitHub Pages, deploys it, and
 verifies the deployed site with `scripts/verify_web_deployment.ps1`. It uploads
-the JSON verification evidence as `flowfit-github-pages-verification`.
+the JSON verification evidence as `flowfit-github-pages-verification` with a
+7-day retention.
 
 The workflow has a `deploy-ready` job. Pushes to `main` skip the production
 Pages deployment with a notice only while the public web URL, Supabase

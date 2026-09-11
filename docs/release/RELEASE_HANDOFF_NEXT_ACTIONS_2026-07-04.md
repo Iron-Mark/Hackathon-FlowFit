@@ -1,6 +1,10 @@
 # FlowFit Release Handoff — Next Actions (2026-07-04)
 
-## Current status (in-repo completed)
+> Historical snapshot from 2026-07-04. For current status use
+> [AGENTS.md](../../AGENTS.md) and
+> [STORE_SUBMISSION_CHECKLIST.md](../STORE_SUBMISSION_CHECKLIST.md).
+
+## Status as of 2026-07-04 (in-repo completed)
 
 - Landing marketing page exists and is wired as web entry (`/`) in `lib/main.dart` and `lib/screens/landing/flowfit_landing_page.dart`.
 - GitHub Pages verification: `build/web-deployment-verification-final-check.json` shows 15/15 checks passed.

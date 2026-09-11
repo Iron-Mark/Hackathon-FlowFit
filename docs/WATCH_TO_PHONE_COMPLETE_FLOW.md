@@ -163,7 +163,7 @@ adb -s [PHONE_DEVICE_ID] install build/app/outputs/flutter-apk/app-debug.apk
 
 ```bash
 # Launch the app
-adb -s [PHONE_DEVICE_ID] shell am start -n com.example.flowfit/.MainActivity
+adb -s [PHONE_DEVICE_ID] shell am start -n com.msiazondev.flowfit/.MainActivity
 
 # Or just tap the FlowFit icon on your phone
 ```
@@ -211,7 +211,7 @@ On your phone, you should see:
 **Solution:**
 ```bash
 # Check if service is registered
-adb -s [PHONE_DEVICE_ID] shell dumpsys package com.example.flowfit | grep PhoneDataListenerService
+adb -s [PHONE_DEVICE_ID] shell dumpsys package com.msiazondev.flowfit | grep PhoneDataListenerService
 
 # Check if app is running
 adb -s [PHONE_DEVICE_ID] shell ps | grep flowfit
@@ -292,7 +292,7 @@ adb -s $WATCH_DEVICE logcat -c
 
 # Launch phone app
 echo "🚀 Launching phone app..."
-adb -s $PHONE_DEVICE shell am start -n com.example.flowfit/.MainActivity
+adb -s $PHONE_DEVICE shell am start -n com.msiazondev.flowfit/.MainActivity
 sleep 3
 
 # Monitor both devices
@@ -370,7 +370,7 @@ flutter build apk
 adb -s [PHONE_DEVICE_ID] install build/app/outputs/flutter-apk/app-debug.apk
 
 # 2. Launch phone app
-adb -s [PHONE_DEVICE_ID] shell am start -n com.example.flowfit/.MainActivity
+adb -s [PHONE_DEVICE_ID] shell am start -n com.msiazondev.flowfit/.MainActivity
 
 # 3. Monitor phone logs
 adb -s [PHONE_DEVICE_ID] logcat | grep -E "PhoneDataListener|event sink"

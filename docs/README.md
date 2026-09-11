@@ -1,21 +1,24 @@
 # FlowFit Documentation
 
 Start here for maintained-fork setup, verification, release, and feature notes.
-Older historical implementation notes still exist in `docs/`, but the files
-below are the current navigation surface.
+Many older topic guides still live under `docs/`; prefer the hubs below for
+current status. Dated packs in `docs/release/` are historical evidence only.
 
-## Current Hubs
+## Current hubs
 
-- [Documentation index](INDEX.md) - full docs map by purpose.
-- [Quick start](QUICK_START.md) - local setup and common commands.
+- [Documentation index](INDEX.md) - living vs historical map
+- [AGENTS.md](../AGENTS.md) - toolchain, Pages/CI status, store blockers
+- [Quick start](QUICK_START.md) - local setup and common commands
 - [Release readiness runbook](RELEASE_READINESS_RUNBOOK.md) - signing,
-  Supabase, web, and store gates.
+  Supabase, web, CI artifact retention, and store gates
+- [Store submission checklist](STORE_SUBMISSION_CHECKLIST.md) - Play, App
+  Store, and web checklist
+- [Store metadata draft](STORE_METADATA_DRAFT.md) - listing copy
 - [Supabase recovery runbook](SUPABASE_RECOVERY_RUNBOOK.md) - rebuilding the
-  backend on a new Supabase project.
-- [Play Console submission pack](release/PLAY_CONSOLE_SUBMISSION_PACK_2026-07-04.md) -
-  artifact and submission handoff notes.
+  backend on a new Supabase project
+- [Brand voice](brand-voice.md) - consumer copy rules
 
-## Common Local Commands
+## Common local commands
 
 ```powershell
 flutter pub get
@@ -45,7 +48,7 @@ npm ci
 npm run web:smoke -- --base-url http://127.0.0.1:8799 --out-file build\web-app-smoke-current.json
 ```
 
-## Package Notes
+## Package notes
 
 - Production Android package: `com.msiazondev.flowfit`
 - Debug Android package: `com.msiazondev.flowfit.dev`

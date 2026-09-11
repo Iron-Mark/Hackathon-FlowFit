@@ -129,6 +129,35 @@ void main() {
     );
   });
 
+  test('later migration purges support tickets and the auth user', () {
+    final hardening = File(
+      'supabase/migrations/20260821000000_harden_support_deletion_and_auth.sql',
+    ).readAsStringSync().replaceAll('\r\n', '\n');
+
+    expect(hardening, contains('support_requests_user_id_fkey'));
+    expect(hardening, contains('normalize_support_request_row'));
+    expect(
+      hardening,
+      contains("new.user_email := nullif(auth.jwt() ->> 'email', '');"),
+    );
+    expect(
+      hardening,
+      contains(
+        'delete from public.support_requests where user_id = current_user_id;',
+      ),
+    );
+    expect(hardening, contains('private.delete_own_auth_user()'));
+    expect(hardening, contains('security definer'));
+    expect(hardening, contains('force row level security'));
+    expect(hardening, contains('delete from auth.users where id = uid'));
+    expect(
+      hardening,
+      contains(
+        'grant execute on function private.delete_own_auth_user() to authenticated;',
+      ),
+    );
+  });
+
   test('canonical migration repairs legacy profile checks', () {
     expect(
       migrationSource,

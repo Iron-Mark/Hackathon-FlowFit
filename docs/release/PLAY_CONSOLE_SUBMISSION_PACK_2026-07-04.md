@@ -1,7 +1,11 @@
 # FlowFit Play Console Submission Pack - 2026-07-04
 
-Use this pack for the first Google Play internal testing upload of the current
-MVP candidate.
+> Historical snapshot from 2026-07-04. For current status use
+> [AGENTS.md](../../AGENTS.md) and
+> [STORE_SUBMISSION_CHECKLIST.md](../STORE_SUBMISSION_CHECKLIST.md).
+
+Use this pack as a dated Play Console handoff record, not as current store
+status.
 
 ## Candidate
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flowfit/domain/password_policy.dart';
 import 'package:flowfit/screens/profile/settings/change_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -164,21 +165,60 @@ void main() {
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Enter current password'),
-      'same-password',
+      'same-password-1',
     );
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Enter new password'),
-      'same-password',
+      'same-password-1',
     );
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Confirm new password'),
-      'same-password',
+      'same-password-1',
     );
 
     await _tapChangePassword(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('New password must be different'), findsOneWidget);
+    expect(actionCalled, isFalse);
+  });
+
+  testWidgets('letter-only new password is rejected before the action', (
+    tester,
+  ) async {
+    var actionCalled = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ChangePasswordScreen(
+          changePassword:
+              ({
+                required String currentPassword,
+                required String newPassword,
+              }) async {
+                actionCalled = true;
+              },
+        ),
+      ),
+    );
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Enter current password'),
+      'old-password-123',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Enter new password'),
+      'abcdefgh',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Confirm new password'),
+      'abcdefgh',
+    );
+
+    await _tapChangePassword(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text(PasswordPolicy.errorText), findsOneWidget);
     expect(actionCalled, isFalse);
   });
 
