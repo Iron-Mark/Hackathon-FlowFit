@@ -1994,8 +1994,12 @@ SUPABASE_PUBLISHABLE_KEY=sb_publishable_abcdefghijklmnopqrstuvwxyz123456
   });
 
   test('legacy Kiro specs do not pin retired Supabase credentials', () {
-    final kiroSpecs = Directory('.kiro')
-        .listSync(recursive: true)
+    // Retired specs moved from .kiro/specs to docs/archive/kiro-specs; check
+    // both so the guard still holds wherever the content currently lives.
+    final kiroSpecs = ['.kiro', 'docs/archive/kiro-specs']
+        .map(Directory.new)
+        .where((dir) => dir.existsSync())
+        .expand((dir) => dir.listSync(recursive: true))
         .whereType<File>()
         .where((file) => file.path.endsWith('.md'))
         .toList();

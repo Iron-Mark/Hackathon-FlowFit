@@ -1,7 +1,8 @@
 # FlowFit Documentation Index
 
 Living docs for the maintained fork. Dated packs under `docs/release/` and
-`.kiro/specs/` are historical snapshots, not current status.
+`docs/archive/` are historical snapshots, not current status. Hackathon-era
+material and retired `.kiro/specs/` entries live under `docs/archive/`.
 
 ## Start here
 
@@ -38,12 +39,6 @@ Living docs for the maintained fork. Dated packs under `docs/release/` and
 - [architecture/PROFILE_UNIFICATION_PLAN_2026-07-20.md](architecture/PROFILE_UNIFICATION_PLAN_2026-07-20.md)
 - [code/lib/ARCHITECTURE.md](code/lib/ARCHITECTURE.md)
 
-## Presentation (`docs/presentation/`)
-
-- [PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md](presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md)
-- [SAMSUNG_TECHNOLOGIES_USED.md](presentation/SAMSUNG_TECHNOLOGIES_USED.md)
-- [WEAR_OS_INTEGRATION_SUMMARY.md](presentation/WEAR_OS_INTEGRATION_SUMMARY.md)
-
 ## Features and implementation
 
 - [features/](features/) - AI detection, wellness, share
@@ -60,6 +55,12 @@ Keep for evidence; prefer the living docs above for status.
 - [release/RELEASE_HANDOFF_NEXT_ACTIONS_2026-07-04.md](release/RELEASE_HANDOFF_NEXT_ACTIONS_2026-07-04.md)
 - [BUILD_STATUS.md](BUILD_STATUS.md) - June 2026 local recovery notes
 - [audits/](audits/) and [qa/](qa/) - dated audits
+- [archive/presentation/](archive/presentation/) - hackathon judging/pitch
+  deck material (guide, Samsung tech list, Wear OS summary)
+- [archive/kiro-specs/advanced-sensor-integration/](archive/kiro-specs/advanced-sensor-integration/) -
+  unimplemented Galaxy Watch 6 sensor spec, stale since 2025-11
+- [archive/kiro-specs/dashboard-refactoring-merge/](archive/kiro-specs/dashboard-refactoring-merge/) -
+  dashboard refactor spec/tasks, retired nearly-complete
 
 ## Scripts (`scripts/`)
 
@@ -85,9 +86,9 @@ Common release helpers: `fetch_fonts.ps1`, `release_preflight.ps1`,
 2. [RELEASE_READINESS_RUNBOOK.md](RELEASE_READINESS_RUNBOOK.md)
 3. [STORE_SUBMISSION_CHECKLIST.md](STORE_SUBMISSION_CHECKLIST.md)
 
-### Presentation
+### Presentation (archived)
 
-1. [presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md](presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md)
+1. [archive/presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md](archive/presentation/PRESENTATION_GUIDE_WATCH_AI_INTEGRATION.md)
 
 ---
 

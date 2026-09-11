@@ -161,7 +161,7 @@ While the automated tests cover most scenarios, some aspects require manual veri
 
 ## Related Documentation
 
-- [Requirements Document](../../../.kiro/specs/dashboard-refactoring-merge/requirements.md)
-- [Design Document](../../../.kiro/specs/dashboard-refactoring-merge/design.md)
-- [Task List](../../../.kiro/specs/dashboard-refactoring-merge/tasks.md)
+- [Requirements Document](../../archive/kiro-specs/dashboard-refactoring-merge/requirements.md) (archived)
+- [Design Document](../../archive/kiro-specs/dashboard-refactoring-merge/design.md) (archived)
+- [Task List](../../archive/kiro-specs/dashboard-refactoring-merge/tasks.md) (archived)
 - [Integration Testing Guide](./README.md)
