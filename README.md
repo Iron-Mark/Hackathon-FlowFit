@@ -1,5 +1,3 @@
-> **Status (2026-08-28):** Parked — Outside two-product focus this week.
-
 # FlowFit
 
 Parent-supervised kids fitness for Wear OS, Android, and Flutter web. Built with
