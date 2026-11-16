@@ -7,6 +7,15 @@ This directory contains the active FlowFit Supabase migration set.
 - `20260614062844_recreate_flowfit_backend.sql`
 - `20260703010000_add_support_requests.sql` and later incremental migrations
 - `20260821000000_harden_support_deletion_and_auth.sql`
+- `20260919180554_create_keepalive_table.sql`
+
+The keepalive migration was recovered from the linked project's applied history
+after its source file was missing from Git. It creates the synthetic `_keepalive`
+heartbeat table with RLS and anonymous read access; it does not contain customer
+rows. Keep its original version so preview deployments can reconcile migration
+history. A pinned CLI dry run with the restored six-file chain and Vault sync
+skipped reported no pending production migrations, seeds, or roles. Do not repair
+remote migration history or replace this file with an empty placeholder.
 
 `20260614062844_recreate_flowfit_backend.sql` is the canonical recovery
 migration for the maintained fork. It creates or
