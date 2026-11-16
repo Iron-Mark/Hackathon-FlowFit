@@ -5,6 +5,6 @@
     "web:smoke": "node scripts/verify_web_app_smoke.mjs"
   },
   "devDependencies": {
-    "playwright": "1.57.0"
+    "playwright": "1.65.1"
   }
 }

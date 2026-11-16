@@ -82,6 +82,14 @@ Example hardware IDs below are from past local sessions. Always run
 - Samsung Health app installed on watch
 - Supabase account (for backend)
 
+Browser smoke checks use the exact Playwright version in `package-lock.json`
+and require Node.js 20 or newer. Install with `npm ci`, then
+`npx playwright install chromium`; CI also installs the browser's system
+dependencies with `npx playwright install --with-deps chromium`.
+Keep Playwright at 1.61 or newer for GitHub's Ubuntu 26.04 runners:
+[Playwright 1.61 added Ubuntu 26.04 support](https://github.com/microsoft/playwright/releases/tag/v1.61.0).
+The older 1.57 pin fails before browser tests start on that runner image.
+
 ### Installation
 
 1. **Clone and setup**
