@@ -1,12 +1,17 @@
 name: Supabase Keep-Alive
 
-# Supabase pauses free-tier projects after ~7 days without activity. This
-# workflow pings the project every 3 days so the pause timer never expires,
-# with enough margin that one failed or delayed run does not matter.
+# Backup keep-alive trigger for Supabase Cloud + external watchdog for PandeVPS.
+# Primary keep-alives run every 6 hours on PandeVPS (Uptime Kuma). This public
+# GitHub Actions workflow runs every 3 days as an independent cloud fallback:
+#   1. Queries public._keepalive via PostgREST (real Postgres activity) and
+#      verifies /auth/v1/health so the 7-day inactivity pause timer resets even
+#      if PandeVPS is offline.
+#   2. Probes https://n8n.marksiazon.dev/healthz/readiness as a zero-cost
+#      external dead-man's switch for PandeVPS itself.
 #
-# Cost: a single curl on a public repo (Actions minutes are free), ~10 seconds
-# per run. Uses only the public SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repo
-# variables — no secrets, and no GITHUB_TOKEN permissions.
+# Cost: ~15 seconds on a public repo (GitHub Actions minutes are free).
+# Uses only public SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repo variables —
+# no secrets, and no GITHUB_TOKEN permissions.
 
 on:
   schedule:
@@ -17,37 +22,53 @@ permissions: {}
 
 jobs:
   ping:
-    name: Ping Supabase project
+    name: Backup Supabase keep-alive & VPS watchdog
+    if: github.repository == 'Iron-Mark/Hackathon-FlowFit'
     runs-on: ubuntu-latest
     timeout-minutes: 6
     env:
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      VPS_HEALTH_URL: https://n8n.marksiazon.dev/healthz/readiness
     steps:
-      - name: Ping auth health endpoint
+      - name: Ping Supabase Postgres (_keepalive) & Auth health
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
             echo "SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repo variables are not set" >&2
             exit 1
           fi
-          # --retry-all-errors + a wide delay ride out transient runner DNS
-          # outages (a 30s blip failed the 2026-07-19 run) without emailing a
-          # false alarm; the 3-day cadence leaves margin either way.
-          status=$(curl -sS -o /dev/null -w '%{http_code}' \
+
+          # Real Postgres read through PostgREST (matches Uptime Kuma keepalive).
+          db_status=$(curl -sS -o /dev/null -w '%{http_code}' \
             --retry 5 --retry-delay 45 --retry-all-errors --max-time 30 \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-            "$SUPABASE_URL/auth/v1/health")
-          echo "auth health: HTTP $status"
-          if [ "$status" != "200" ]; then
-            echo "Supabase auth health check failed" >&2
+            -H "Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/rest/v1/_keepalive?select=id&limit=1")
+          echo "postgres _keepalive: HTTP $db_status"
+          if [ "$db_status" != "200" ]; then
+            echo "Supabase Postgres _keepalive check failed (HTTP $db_status)" >&2
             exit 1
           fi
 
-      - name: Ping REST gateway (best effort)
-        run: |
-          # The publishable key cannot read the REST root (expected 401), but
-          # the request still lands in the project's API logs as activity.
-          status=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 \
+          # Auth health check with wide retry window for transient runner DNS blips.
+          auth_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            --retry 5 --retry-delay 45 --retry-all-errors --max-time 30 \
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-            "$SUPABASE_URL/rest/v1/" || true)
-          echo "rest gateway: HTTP $status (informational only)"
+            "$SUPABASE_URL/auth/v1/health")
+          echo "auth health: HTTP $auth_status"
+          if [ "$auth_status" != "200" ]; then
+            echo "Supabase auth health check failed (HTTP $auth_status)" >&2
+            exit 1
+          fi
+
+      - name: External PandeVPS dead-man's switch
+        run: |
+          # Runs after Supabase keep-alive so a VPS outage never blocks DB activity.
+          vps_status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            --retry 3 --retry-delay 15 --retry-all-errors --max-time 20 \
+            "$VPS_HEALTH_URL" || true)
+          echo "PandeVPS readiness ($VPS_HEALTH_URL): HTTP $vps_status"
+          if [ "$vps_status" != "200" ]; then
+            echo "WARNING: Primary PandeVPS watchdog appears unreachable (HTTP $vps_status). Supabase was still kept alive by this backup workflow." >&2
+            exit 1
+          fi
