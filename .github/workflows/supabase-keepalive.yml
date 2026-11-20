@@ -1,17 +1,16 @@
 name: Supabase Keep-Alive
 
-# Backup keep-alive trigger for Supabase Cloud + external watchdog for PandeVPS.
+# Backup keep-alive trigger for all 4 Supabase Cloud projects + external watchdog for PandeVPS.
 # Primary keep-alives run every 6 hours on PandeVPS (Uptime Kuma). This public
 # GitHub Actions workflow runs every 3 days as an independent cloud fallback:
-#   1. Queries public._keepalive via PostgREST (real Postgres activity) and
-#      verifies /auth/v1/health so the 7-day inactivity pause timer resets even
-#      if PandeVPS is offline.
-#   2. Probes https://n8n.marksiazon.dev/healthz/readiness as a zero-cost
+#   1. Queries public._keepalive via PostgREST on FlowFit, Pulsify, LexInsights,
+#      and LinawAI so every free-tier 7-day pause timer resets even if PandeVPS is offline.
+#   2. Verifies FlowFit /auth/v1/health.
+#   3. Probes https://n8n.marksiazon.dev/healthz/readiness as a zero-cost
 #      external dead-man's switch for PandeVPS itself.
 #
 # Cost: ~15 seconds on a public repo (GitHub Actions minutes are free).
-# Uses only public SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repo variables —
-# no secrets, and no GITHUB_TOKEN permissions.
+# Zero GITHUB_TOKEN permissions; keys are masked in Actions secrets/vars.
 
 on:
   schedule:
@@ -22,53 +21,73 @@ permissions: {}
 
 jobs:
   ping:
-    name: Backup Supabase keep-alive & VPS watchdog
+    name: Backup Supabase keep-alive (4 projects) & VPS watchdog
     if: github.repository == 'Iron-Mark/Hackathon-FlowFit'
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     env:
-      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
-      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      FLOWFIT_URL: ${{ vars.SUPABASE_URL }}
+      FLOWFIT_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      PULSIFY_URL: ${{ secrets.PULSIFY_SUPABASE_URL }}
+      PULSIFY_KEY: ${{ secrets.PULSIFY_SUPABASE_ANON }}
+      LEXINSIGHTS_URL: ${{ secrets.LEXINSIGHTS_SUPABASE_URL }}
+      LEXINSIGHTS_KEY: ${{ secrets.LEXINSIGHTS_SUPABASE_ANON }}
+      LINAWAI_URL: ${{ secrets.LINAWAI_SUPABASE_URL }}
+      LINAWAI_KEY: ${{ secrets.LINAWAI_SUPABASE_ANON }}
       VPS_HEALTH_URL: https://n8n.marksiazon.dev/healthz/readiness
     steps:
-      - name: Ping Supabase Postgres (_keepalive) & Auth health
+      - name: Ping all 4 Supabase Cloud _keepalive tables & FlowFit Auth
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
-            echo "SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY repo variables are not set" >&2
-            exit 1
-          fi
+          set -euo pipefail
+          failed=0
 
-          # Real Postgres read through PostgREST (matches Uptime Kuma keepalive).
-          db_status=$(curl -sS -o /dev/null -w '%{http_code}' \
-            --retry 5 --retry-delay 45 --retry-all-errors --max-time 30 \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_PUBLISHABLE_KEY" \
-            "$SUPABASE_URL/rest/v1/_keepalive?select=id&limit=1")
-          echo "postgres _keepalive: HTTP $db_status"
-          if [ "$db_status" != "200" ]; then
-            echo "Supabase Postgres _keepalive check failed (HTTP $db_status)" >&2
-            exit 1
-          fi
+          ping_project() {
+            local name="$1"
+            local url="$2"
+            local key="$3"
+            if [ -z "$url" ] || [ -z "$key" ]; then
+              echo "ERROR: $name URL/key missing" >&2
+              failed=1
+              return
+            fi
+            local status
+            status=$(curl -sS -o /dev/null -w '%{http_code}' \
+              --retry 5 --retry-delay 45 --retry-all-errors --max-time 30 \
+              -H "apikey: $key" \
+              -H "Authorization: Bearer $key" \
+              "${url%/}/rest/v1/_keepalive?select=id&limit=1" || true)
+            echo "$name postgres _keepalive: HTTP $status"
+            if [ "$status" != "200" ]; then
+              echo "ERROR: $name _keepalive check failed (HTTP $status)" >&2
+              failed=1
+            fi
+          }
 
-          # Auth health check with wide retry window for transient runner DNS blips.
+          ping_project "FlowFit"     "$FLOWFIT_URL"     "$FLOWFIT_KEY"
+          ping_project "Pulsify"     "$PULSIFY_URL"     "$PULSIFY_KEY"
+          ping_project "LexInsights" "$LEXINSIGHTS_URL" "$LEXINSIGHTS_KEY"
+          ping_project "LinawAI"     "$LINAWAI_URL"     "$LINAWAI_KEY"
+
           auth_status=$(curl -sS -o /dev/null -w '%{http_code}' \
             --retry 5 --retry-delay 45 --retry-all-errors --max-time 30 \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-            "$SUPABASE_URL/auth/v1/health")
-          echo "auth health: HTTP $auth_status"
+            -H "apikey: $FLOWFIT_KEY" \
+            "${FLOWFIT_URL%/}/auth/v1/health" || true)
+          echo "FlowFit auth health: HTTP $auth_status"
           if [ "$auth_status" != "200" ]; then
-            echo "Supabase auth health check failed (HTTP $auth_status)" >&2
-            exit 1
+            echo "ERROR: FlowFit auth health check failed (HTTP $auth_status)" >&2
+            failed=1
           fi
+
+          exit "$failed"
 
       - name: External PandeVPS dead-man's switch
         run: |
-          # Runs after Supabase keep-alive so a VPS outage never blocks DB activity.
+          # Runs after all 4 Supabase keep-alives so a VPS outage never blocks DB activity.
           vps_status=$(curl -sS -o /dev/null -w '%{http_code}' \
             --retry 3 --retry-delay 15 --retry-all-errors --max-time 20 \
             "$VPS_HEALTH_URL" || true)
           echo "PandeVPS readiness ($VPS_HEALTH_URL): HTTP $vps_status"
           if [ "$vps_status" != "200" ]; then
-            echo "WARNING: Primary PandeVPS watchdog appears unreachable (HTTP $vps_status). Supabase was still kept alive by this backup workflow." >&2
+            echo "WARNING: Primary PandeVPS watchdog appears unreachable (HTTP $vps_status). All 4 Supabase Cloud projects were still kept alive by this backup workflow." >&2
             exit 1
           fi
